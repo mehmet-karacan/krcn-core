@@ -1,11 +1,11 @@
 {
   "schema_ref": "schemas/current-work.schema.json",
   "schema_version": 1,
-  "phase_id": "phase-4",
-  "workstream_id": "context-knowledge-memory",
-  "status": "completed",
-  "goal": "Build revision-aware retrieval, evidence-bounded context packages, and approval-gated durable memory",
-  "plan_ref": "docs/plans/PLAN-005-CONTEXT-KNOWLEDGE-MEMORY.md",
+  "phase_id": "phase-5",
+  "workstream_id": "orchestrator-natural-language-task-flow",
+  "status": "active",
+  "goal": "Turn natural-language intent into capability-bounded plans, authorized execution, and evidence-backed verification",
+  "plan_ref": "docs/plans/PLAN-006-ORCHESTRATOR-DOGAL-DIL-GOREV-AKISI.md",
   "progress_refs": [
     "docs/progress/PHASE-1-FOUNDATION.md",
     "docs/progress/PHASE-1-PACKAGE-1.md",
@@ -44,13 +44,14 @@
     "docs/progress/PHASE-4-MEMORY-GATE.md",
     "docs/progress/PHASE-4-CLIENT-SERVICES.md",
     "docs/progress/PHASE-4-INTEGRATION-TESTS.md",
-    "docs/progress/PHASE-4-COMPLETION.md"
+    "docs/progress/PHASE-4-COMPLETION.md",
+    "docs/progress/PHASE-5-KICKOFF.md"
   ],
   "next_actions": [
-    "review the completed Phase 4 baseline before opening Phase 5",
-    "start Phase 5 only after explicit user instruction"
+    "define a typed intent model that separates explicit input, safe assumptions, and unresolved ambiguity",
+    "block planning when ambiguity would change scope, authority, user data, external systems, or irreversible effects"
   ],
-  "baseline_commit": "6005611",
+  "baseline_commit": "c16c333",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

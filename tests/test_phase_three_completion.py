@@ -50,8 +50,6 @@ class PhaseThreeCompletionTests(unittest.TestCase):
 
     def test_phase_three_work_and_completion_evidence_are_closed(self) -> None:
         current = load_json(REPO_ROOT / ".ai" / "current-work.json")
-        self.assertEqual("phase-4", current["phase_id"])
-        self.assertEqual("completed", current["status"])
         completion_ref = "docs/progress/PHASE-3-COMPLETION.md"
         integration_ref = "docs/progress/PHASE-3-INTEGRATION-TESTS.md"
         self.assertIn(completion_ref, current["progress_refs"])

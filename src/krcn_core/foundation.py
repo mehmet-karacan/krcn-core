@@ -43,6 +43,34 @@ REQUIRED_INFORMATION_CLASSES = {
     "derived",
 }
 
+REQUIRED_ORCHESTRATION_ROLES = {"planner", "worker", "verifier"}
+REQUIRED_ORCHESTRATION_STAGES = (
+    "intake",
+    "context",
+    "plan",
+    "approval",
+    "execute",
+    "verify",
+    "record",
+)
+REQUIRED_TASK_CONTRACT_FIELDS = {
+    "goal",
+    "scope",
+    "sources",
+    "constraints",
+    "acceptance_criteria",
+    "ownership_impact",
+    "verification_evidence",
+}
+REQUIRED_APPROVAL_TRIGGERS = {
+    "scope-change",
+    "user-data-mutation",
+    "remote-provider-use",
+    "irreversible-effect",
+    "policy-change",
+    "capability-escalation",
+}
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -210,6 +238,57 @@ def validate_information_classes(data: dict) -> list[str]:
     return errors
 
 
+def validate_orchestration_boundary(data: dict) -> list[str]:
+    errors: list[str] = []
+    if data.get("schema_ref") != "schemas/orchestration-boundary.schema.json":
+        errors.append("orchestration boundary schema reference is invalid")
+    if data.get("schema_version") != 1:
+        errors.append("orchestration boundary schema_version must be 1")
+    if data.get("baseline_ref") != ".ai/phase-4-baseline.json":
+        errors.append("orchestration must start from the Phase 4 baseline")
+
+    roles = data.get("roles")
+    if not isinstance(roles, list):
+        return errors + ["orchestration roles must be a list"]
+    by_id = {
+        item.get("id"): item
+        for item in roles
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    if set(by_id) != REQUIRED_ORCHESTRATION_ROLES or len(roles) != 3:
+        errors.append("orchestration roles must be planner, worker, and verifier")
+    if by_id.get("planner", {}).get("may_mutate") is not False:
+        errors.append("planner must not mutate")
+    if by_id.get("worker", {}).get("may_mutate") is not True:
+        errors.append("worker must be the only mutation-capable role")
+    if by_id.get("verifier", {}).get("may_mutate") is not False:
+        errors.append("verifier must not mutate")
+    if any(item.get("may_approve") is not False for item in by_id.values()):
+        errors.append("orchestration roles must not self-approve")
+
+    if tuple(data.get("stages", ())) != REQUIRED_ORCHESTRATION_STAGES:
+        errors.append("orchestration stages are incomplete or out of order")
+    if set(data.get("task_contract_fields", ())) != REQUIRED_TASK_CONTRACT_FIELDS:
+        errors.append("orchestration task contract fields are incomplete")
+    if set(data.get("approval_triggers", ())) != REQUIRED_APPROVAL_TRIGGERS:
+        errors.append("orchestration approval triggers are incomplete")
+
+    invariants = data.get("invariants")
+    expected_invariants = {
+        "chat_history_is_authority": False,
+        "plan_grants_execution": False,
+        "worker_self_approves": False,
+        "verification_required": True,
+        "critical_change_requires_user_approval": True,
+        "exact_plan_required_for_mutation": True,
+        "resume_from_persistent_state": True,
+        "client_rules_may_diverge": False,
+    }
+    if invariants != expected_invariants:
+        errors.append("orchestration safety invariants are invalid")
+    return errors
+
+
 def validate_foundation(repo_root: Path) -> list[str]:
     config_root = repo_root / "config"
     errors: list[str] = []
@@ -218,6 +297,7 @@ def validate_foundation(repo_root: Path) -> list[str]:
         ("provider-policy.json", validate_provider_policy),
         ("import-policy.json", validate_import_policy),
         ("information-classes.json", validate_information_classes),
+        ("orchestration-boundary.json", validate_orchestration_boundary),
     ]
     for filename, validator in validators:
         try:

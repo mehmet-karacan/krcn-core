@@ -21,7 +21,7 @@ Git'ten gelen yeni core sürümünde aşağıdaki işlemler uygulanır:
 
 ## Güncel geliştirme durumu
 
-Faz 1, Faz 2, Faz 3 ve Faz 4 tamamlandı. Revision-aware bilgi kataloğu, exact, dependency ve provider kontrollü semantic retrieval, kanıt taşıyan bütçeli context paketleri, onay kontrollü Memory Gate ve ortak istemci servisleri hazırdır. Faz 5 henüz başlatılmamıştır. Yerel referans kaynaklarındaki kullanıcı verileri içeri alınmamıştır.
+Faz 1, Faz 2, Faz 3 ve Faz 4 tamamlandı. Revision-aware bilgi kataloğu, retrieval, bütçeli context paketleri, onay kontrollü Memory Gate ve ortak istemci servisleri hazırdır. Faz 5 orchestrator ve doğal dil görev akışı geliştirmesi aktif olarak yürütülmektedir. Yerel referans kaynaklarındaki kullanıcı verileri içeri alınmamıştır.
 
 Kök çalışma kuralları için `AGENTS.md`, araçtan bağımsız başlangıç bağlamı için `AI-CONTEXT.md` dosyasını okuyun. Codex doğrudan `AGENTS.md` kullanır. Claude Code için `CLAUDE.md` aynı ortak kaynakları içe aktarır. Diğer istemciler ve plugin'ler `.ai/repository-context.json` manifestini okuyabilir.
 

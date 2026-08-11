@@ -18,19 +18,14 @@ def load_json(path: Path) -> dict:
 
 
 class PhaseFourKickoffTests(unittest.TestCase):
-    def test_current_work_points_to_completed_phase_four_plan(self) -> None:
-        current = load_json(REPO_ROOT / ".ai" / "current-work.json")
-        self.assertEqual("phase-4", current["phase_id"])
-        self.assertEqual("completed", current["status"])
-        self.assertEqual("6005611", current["baseline_commit"])
-        self.assertEqual(
-            "docs/plans/PLAN-005-CONTEXT-KNOWLEDGE-MEMORY.md",
-            current["plan_ref"],
-        )
-        self.assertIn(
-            "docs/progress/PHASE-4-KICKOFF.md",
-            current["progress_refs"],
-        )
+    def test_phase_four_kickoff_and_baseline_remain_versioned(self) -> None:
+        kickoff = (
+            REPO_ROOT / "docs" / "progress" / "PHASE-4-KICKOFF.md"
+        ).read_text(encoding="utf-8")
+        baseline = load_json(REPO_ROOT / ".ai" / "phase-4-baseline.json")
+        self.assertIn("`6005611`", kickoff)
+        self.assertEqual("phase-4", baseline["phase_id"])
+        self.assertEqual("ready", baseline["status"])
 
     def test_information_class_registry_is_complete_and_safe(self) -> None:
         registry = load_json(REPO_ROOT / "config" / "information-classes.json")

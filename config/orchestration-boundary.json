@@ -1,0 +1,74 @@
+{
+  "schema_ref": "schemas/orchestration-boundary.schema.json",
+  "schema_version": 1,
+  "baseline_ref": ".ai/phase-4-baseline.json",
+  "roles": [
+    {
+      "id": "planner",
+      "may_mutate": false,
+      "may_approve": false,
+      "responsibilities": [
+        "normalize-intent",
+        "select-capabilities",
+        "build-plan",
+        "declare-approval-gates"
+      ]
+    },
+    {
+      "id": "worker",
+      "may_mutate": true,
+      "may_approve": false,
+      "responsibilities": [
+        "execute-authorized-plan",
+        "record-checkpoints",
+        "report-effects"
+      ]
+    },
+    {
+      "id": "verifier",
+      "may_mutate": false,
+      "may_approve": false,
+      "responsibilities": [
+        "evaluate-acceptance",
+        "verify-evidence",
+        "verify-preserved-areas"
+      ]
+    }
+  ],
+  "stages": [
+    "intake",
+    "context",
+    "plan",
+    "approval",
+    "execute",
+    "verify",
+    "record"
+  ],
+  "task_contract_fields": [
+    "goal",
+    "scope",
+    "sources",
+    "constraints",
+    "acceptance_criteria",
+    "ownership_impact",
+    "verification_evidence"
+  ],
+  "approval_triggers": [
+    "scope-change",
+    "user-data-mutation",
+    "remote-provider-use",
+    "irreversible-effect",
+    "policy-change",
+    "capability-escalation"
+  ],
+  "invariants": {
+    "chat_history_is_authority": false,
+    "plan_grants_execution": false,
+    "worker_self_approves": false,
+    "verification_required": true,
+    "critical_change_requires_user_approval": true,
+    "exact_plan_required_for_mutation": true,
+    "resume_from_persistent_state": true,
+    "client_rules_may_diverge": false
+  }
+}

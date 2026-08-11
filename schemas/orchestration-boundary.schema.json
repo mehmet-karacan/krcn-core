@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:orchestration-boundary:1",
+  "title": "KRCN Core orchestration authority boundary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_ref", "schema_version", "baseline_ref", "roles", "stages", "task_contract_fields", "approval_triggers", "invariants"],
+  "properties": {
+    "schema_ref": { "const": "schemas/orchestration-boundary.schema.json" },
+    "schema_version": { "const": 1 },
+    "baseline_ref": { "const": ".ai/phase-4-baseline.json" },
+    "roles": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "may_mutate", "may_approve", "responsibilities"],
+        "properties": {
+          "id": { "enum": ["planner", "worker", "verifier"] },
+          "may_mutate": { "type": "boolean" },
+          "may_approve": { "const": false },
+          "responsibilities": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+          }
+        }
+      }
+    },
+    "stages": {
+      "type": "array",
+      "prefixItems": [
+        { "const": "intake" },
+        { "const": "context" },
+        { "const": "plan" },
+        { "const": "approval" },
+        { "const": "execute" },
+        { "const": "verify" },
+        { "const": "record" }
+      ],
+      "items": false,
+      "minItems": 7,
+      "maxItems": 7
+    },
+    "task_contract_fields": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": {
+        "enum": ["goal", "scope", "sources", "constraints", "acceptance_criteria", "ownership_impact", "verification_evidence"]
+      }
+    },
+    "approval_triggers": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "uniqueItems": true,
+      "items": {
+        "enum": ["scope-change", "user-data-mutation", "remote-provider-use", "irreversible-effect", "policy-change", "capability-escalation"]
+      }
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chat_history_is_authority", "plan_grants_execution", "worker_self_approves", "verification_required", "critical_change_requires_user_approval", "exact_plan_required_for_mutation", "resume_from_persistent_state", "client_rules_may_diverge"],
+      "properties": {
+        "chat_history_is_authority": { "const": false },
+        "plan_grants_execution": { "const": false },
+        "worker_self_approves": { "const": false },
+        "verification_required": { "const": true },
+        "critical_change_requires_user_approval": { "const": true },
+        "exact_plan_required_for_mutation": { "const": true },
+        "resume_from_persistent_state": { "const": true },
+        "client_rules_may_diverge": { "const": false }
+      }
+    }
+  }
+}
