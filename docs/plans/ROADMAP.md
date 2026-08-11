@@ -15,6 +15,7 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
 - Faz 4 tamamlandı.
 - Faz 5 tamamlandı.
 - Faz 6 tamamlandı.
+- Faz 7 başlatıldı. Doğal dille ve yalnız dizin girdisiyle proje öğrenme deneyimi uygulanıyor.
 
 ## Temel kullanım modeli
 
@@ -103,6 +104,16 @@ Tamamlanma ölçütü: Kullanıcı yalnızca hedefini söylediğinde sistem güv
 - Başka bir AI veya geliştirici için devir ve geliştirme bağlamını doğrula.
 
 Tamamlanma ölçütü: `clone -> install -> init/onboard -> doctor -> run` ve `pull -> merge into -> verify` akışları belgelenmiş ve test edilmiş olmalı.
+
+## Faz 7 - Doğal dille proje öğrenme ve aktivasyon
+
+- "Öğren", "tanı", "tanıt", "entegre et", `learn`, `register` ve `onboard` niyetlerini ortak core içinde çözümle.
+- Yalnız proje dizininden görünen ad, workspace, project ve binding kimliklerini türet.
+- Onboarding ile ilk read-only discovery sonucunu tek exact planda birleştir.
+- `project.learn` operation değerini CLI, SDK, MCP, plugin, Codex ve Claude için ortaklaştır.
+- Proje dizininde dosya kopyalamadan veya KRCN dosyası oluşturmadan çalış.
+
+Tamamlanma ölçütü: Kullanıcı yalnız mevcut proje dizinini verdiğinde sistem güvenli inference yapıp exact planı sunmalı ve tek onaydan sonra projeyi KRCN'e tanıtıp ilk discovery kaydını tamamlamalı.
 
 ## Değişmez kabul ölçütleri
 

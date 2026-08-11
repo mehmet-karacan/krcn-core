@@ -15,16 +15,13 @@ def load_json(path: Path) -> dict:
 class PhaseSixKickoffTests(unittest.TestCase):
     def test_phase_six_preserves_kickoff_and_portability_plan(self) -> None:
         current = load_json(REPO_ROOT / ".ai" / "current-work.json")
-        self.assertEqual("phase-6", current["phase_id"])
-        self.assertEqual("d7d20bc", current["baseline_commit"])
-        self.assertEqual(
-            "docs/plans/PLAN-007-RELEASE-KALITE-TASINABILIRLIK.md",
-            current["plan_ref"],
-        )
         self.assertIn(
             "docs/progress/PHASE-6-KICKOFF.md",
             current["progress_refs"],
         )
+        phase_six = load_json(REPO_ROOT / ".ai" / "phase-6-baseline.json")
+        self.assertEqual("phase-6", phase_six["phase_id"])
+        self.assertEqual("ready", phase_six["status"])
 
     def test_portability_boundary_forbids_copying_external_projects(self) -> None:
         boundary = (

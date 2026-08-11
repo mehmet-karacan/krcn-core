@@ -1,11 +1,11 @@
 {
   "schema_ref": "schemas/current-work.schema.json",
   "schema_version": 1,
-  "phase_id": "phase-6",
-  "workstream_id": "release-quality-portability",
-  "status": "completed",
-  "goal": "Make KRCN-owned state portable while external project sources remain uncopied and read-only",
-  "plan_ref": "docs/plans/PLAN-007-RELEASE-KALITE-TASINABILIRLIK.md",
+  "phase_id": "phase-7",
+  "workstream_id": "natural-language-project-learning",
+  "status": "active",
+  "goal": "Learn and register a local project from only its directory or a natural-language request without copying source files",
+  "plan_ref": "docs/plans/PLAN-008-DOGAL-DILLE-PROJE-OGRENME.md",
   "progress_refs": [
     "docs/progress/PHASE-1-FOUNDATION.md",
     "docs/progress/PHASE-1-PACKAGE-1.md",
@@ -66,13 +66,14 @@
     "docs/progress/PHASE-6-PLATFORM-CLIENT-PARITY.md",
     "docs/progress/PHASE-6-RELEASE-QUALITY.md",
     "docs/progress/PHASE-6-INTEGRATION-TESTS.md",
-    "docs/progress/PHASE-6-COMPLETION.md"
+    "docs/progress/PHASE-6-COMPLETION.md",
+    "docs/progress/PHASE-7-KICKOFF.md"
   ],
   "next_actions": [
-    "maintain the completed Phase 6 baseline and compatibility contracts",
-    "wait for explicit user approval before starting a new development phase"
+    "implement deterministic Turkish and English project-learning intent recognition",
+    "resolve one existing absolute directory without retaining raw prompt text"
   ],
-  "baseline_commit": "d7d20bc",
+  "baseline_commit": "7ccc16b",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,
