@@ -25,13 +25,14 @@
     "docs/progress/PHASE-2-COMPLETION.md",
     "docs/progress/PHASE-3-KICKOFF.md",
     "docs/progress/PHASE-3-INSTALLATION-INSPECTION.md",
-    "docs/progress/PHASE-3-RELEASE-VALIDATION.md"
+    "docs/progress/PHASE-3-RELEASE-VALIDATION.md",
+    "docs/progress/PHASE-3-RELEASE-DIFF.md"
   ],
   "next_actions": [
-    "produce ownership-aware release diff and conflict reports",
-    "bind conflict-free changes to an exact merge dry-run plan"
+    "bind conflict-free changes to an exact merge dry-run plan",
+    "create recoverable backups and deployment journals before apply"
   ],
-  "baseline_commit": "ed13513",
+  "baseline_commit": "37c6dad",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

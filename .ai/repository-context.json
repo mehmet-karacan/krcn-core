@@ -34,6 +34,7 @@
     "installation_state_schema": "schemas/installation-state.schema.json",
     "installation_inspection_schema": "schemas/installation-inspection.schema.json",
     "release_trust": "docs/specifications/RELEASE-TRUST.md",
+    "release_diff_schema": "schemas/release-diff.schema.json",
     "policy_layers": "docs/specifications/POLICY-LAYERS.md",
     "cli_inventory": ".ai/legacy-cli-inventory.json",
     "cli_baseline": ".ai/cli-baseline.json",

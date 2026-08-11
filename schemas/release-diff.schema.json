@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:release-diff:1",
+  "title": "KRCN Core ownership-aware release diff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "diff_id",
+    "inspection_id",
+    "installation_id",
+    "from_core_version",
+    "release_id",
+    "to_core_version",
+    "manifest_sha256",
+    "applicable",
+    "change_counts",
+    "changes",
+    "conflicts",
+    "pending_migrations",
+    "derived_actions"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "diff_id": { "$ref": "#/$defs/sha256" },
+    "inspection_id": { "$ref": "#/$defs/sha256" },
+    "installation_id": { "$ref": "#/$defs/identifier" },
+    "from_core_version": { "$ref": "#/$defs/semver" },
+    "release_id": { "type": "string", "pattern": "^[a-z][a-z0-9.-]*$" },
+    "to_core_version": { "$ref": "#/$defs/semver" },
+    "manifest_sha256": { "$ref": "#/$defs/sha256" },
+    "applicable": { "type": "boolean" },
+    "change_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["create", "update", "delete", "unchanged"],
+      "properties": {
+        "create": { "type": "integer", "minimum": 0 },
+        "update": { "type": "integer", "minimum": 0 },
+        "delete": { "type": "integer", "minimum": 0 },
+        "unchanged": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "action", "ownership", "previous_sha256", "target_sha256", "target_size"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "action": { "enum": ["create", "update", "delete", "unchanged"] },
+          "ownership": { "const": "core" },
+          "previous_sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+          "target_sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+          "target_size": { "type": ["integer", "null"], "minimum": 0 }
+        }
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["conflict_code", "subject", "path"],
+        "properties": {
+          "conflict_code": {
+            "enum": [
+              "managed-missing",
+              "managed-modified",
+              "unmanaged-overlap",
+              "untracked-delete",
+              "release-base-mismatch",
+              "interrupted-deployment"
+            ]
+          },
+          "subject": { "type": "string", "minLength": 1 },
+          "path": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "pending_migrations": { "$ref": "#/$defs/identifierList" },
+    "derived_actions": { "$ref": "#/$defs/identifierList" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "identifier": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "identifierList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    }
+  }
+}
