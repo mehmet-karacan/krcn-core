@@ -19,13 +19,14 @@
     "docs/progress/PHASE-2-READ-ONLY-DISCOVERY.md",
     "docs/progress/PHASE-2-ADAPTER-GATE.md",
     "docs/progress/PHASE-2-INTEGRATION-METADATA.md",
-    "docs/progress/PHASE-2-RESCAN.md"
+    "docs/progress/PHASE-2-RESCAN.md",
+    "docs/progress/PHASE-2-CLIENT-SERVICES.md"
   ],
   "next_actions": [
-    "connect onboarding, list, inspect, and rescan services to the shared CLI",
-    "define MCP and SDK service boundaries on the same application services"
+    "complete hermetic integration and protection tests for shared client services",
+    "verify clean-install and existing-workspace compatibility before Phase 2 closure"
   ],
-  "baseline_commit": "5943981",
+  "baseline_commit": "8b906cb",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

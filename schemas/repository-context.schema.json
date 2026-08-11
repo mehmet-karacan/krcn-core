@@ -48,6 +48,8 @@
         "integration_schema",
         "source_state_schema",
         "rescan_plan_schema",
+        "application_request_schema",
+        "application_response_schema",
         "policy_layers",
         "cli_inventory",
         "cli_baseline",
@@ -72,6 +74,8 @@
         "integration_schema": { "$ref": "#/$defs/repoPath" },
         "source_state_schema": { "$ref": "#/$defs/repoPath" },
         "rescan_plan_schema": { "$ref": "#/$defs/repoPath" },
+        "application_request_schema": { "$ref": "#/$defs/repoPath" },
+        "application_response_schema": { "$ref": "#/$defs/repoPath" },
         "policy_layers": { "$ref": "#/$defs/repoPath" },
         "cli_inventory": { "$ref": "#/$defs/repoPath" },
         "cli_baseline": { "$ref": "#/$defs/repoPath" },
@@ -117,7 +121,7 @@
     "client_adapters": {
       "type": "object",
       "additionalProperties": { "$ref": "#/$defs/clientAdapter" },
-      "required": ["codex", "claude-code", "generic-ai", "plugin"]
+      "required": ["codex", "claude-code", "generic-ai", "plugin", "sdk", "mcp"]
     },
     "data_policy": {
       "type": "object",

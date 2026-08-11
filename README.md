@@ -39,6 +39,17 @@ python tools/krcn.py context --format json
 python tools/krcn.py catalog
 ```
 
+Kayıtlı projeleri ortak ve istemciden bağımsız servis sözleşmesi üzerinden yönetmek için:
+
+```bash
+python tools/krcn.py project list
+python tools/krcn.py project inspect <project-id>
+python tools/krcn.py project onboard --workspace-id <workspace-id> --project-id <project-id> --binding-id <binding-id> --name <project-name> --source <source-directory>
+python tools/krcn.py project rescan <project-id>
+```
+
+Onboarding ve rescan komutları varsayılan olarak yalnızca plan üretir. Uygulama için önceki dry-run sonucundaki plan kimliği ve user-data değişikliği varsa açık onay kimliği gerekir. CLI, SDK, MCP, plugin ve yapay zekâ istemcileri aynı servis katmanını kullanır.
+
 Repository paketini ağ kullanmadan mevcut Python ortamına kurmak ve sağlık kontrolünü çalıştırmak için:
 
 ```bash

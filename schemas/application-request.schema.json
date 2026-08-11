@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:application-request:1",
+  "title": "KRCN Core transport-neutral application request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "client_kind", "operation", "arguments", "apply"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "client_kind": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "operation": {
+      "enum": [
+        "project.list",
+        "project.inspect",
+        "project.onboard",
+        "project.rescan"
+      ]
+    },
+    "arguments": { "type": "object", "additionalProperties": true },
+    "apply": { "type": "boolean" },
+    "expected_plan_id": {
+      "type": ["string", "null"],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "approval_id": { "type": ["string", "null"], "minLength": 1 }
+  }
+}

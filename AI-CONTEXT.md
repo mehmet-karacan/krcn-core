@@ -43,7 +43,9 @@ The output contains relative references and current work metadata. It must not c
 - Codex uses `AGENTS.md` as its repository instruction entrypoint.
 - Claude Code uses `CLAUDE.md`, which imports the shared instruction and context files.
 - Other AI clients and plugins use this file or `.ai/repository-context.json`.
-- Future MCP, SDK, IDE, or automation adapters must expose the same canonical context instead of maintaining a separate copy.
+- MCP, SDK, plugin, IDE, and automation adapters use the transport-neutral services in `src/krcn_core/application.py` for supported actions.
+- The CLI exposes the same services through `krcn project`; it does not define separate product rules.
+- Future adapters must expose the same canonical context and application contracts instead of maintaining a separate copy or bypassing their safety gates.
 
 ## Safety boundary
 

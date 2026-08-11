@@ -28,6 +28,8 @@ REQUIRED_CANONICAL_KEYS = {
     "integration_schema",
     "source_state_schema",
     "rescan_plan_schema",
+    "application_request_schema",
+    "application_response_schema",
     "policy_layers",
     "cli_inventory",
     "cli_baseline",

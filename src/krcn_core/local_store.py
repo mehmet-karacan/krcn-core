@@ -178,16 +178,23 @@ class LocalWorkspaceStore:
         )
 
     def list_summaries(self, record_type: str) -> tuple[dict[str, object], ...]:
+        return tuple(
+            record.public_summary() for record in self.list_records(record_type)
+        )
+
+    def list_records(self, record_type: str) -> tuple[StoredRecord, ...]:
+        """Read a collection in portable identifier order."""
+
         directory = self._target(record_type, "placeholder").parent
         if not directory.exists():
             return ()
         if directory.is_symlink() or not directory.is_dir():
             raise LocalStoreError("record collection must be a regular directory")
-        records = []
+        records: list[StoredRecord] = []
         for path in sorted(directory.glob("*.json")):
             record = self.read(record_type, path.stem)
             if record is not None:
-                records.append(record.public_summary())
+                records.append(record)
         return tuple(records)
 
     def prepare_put(

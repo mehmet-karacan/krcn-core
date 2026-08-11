@@ -29,7 +29,7 @@ class RepositoryContextTests(unittest.TestCase):
         resolved = resolve_repository_context(REPO_ROOT)
         adapters = resolved.manifest["client_adapters"]
         self.assertEqual(
-            {"claude-code", "codex", "generic-ai", "plugin"},
+            {"claude-code", "codex", "generic-ai", "plugin", "sdk", "mcp"},
             set(adapters),
         )
         self.assertEqual("AGENTS.md", adapters["codex"]["entrypoint"])
