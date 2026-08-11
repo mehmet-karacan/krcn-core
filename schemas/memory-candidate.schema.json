@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:memory-candidate:1",
+  "title": "KRCN Core durable memory candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_ref", "schema_version", "candidate_id", "origin", "proposed_memory", "conflict_refs", "policy_promotion", "candidate_digest"],
+  "properties": {
+    "schema_ref": { "const": "schemas/memory-candidate.schema.json" },
+    "schema_version": { "const": 1 },
+    "candidate_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "origin": { "enum": ["explicit-user", "conversation-summary", "inference", "source-derived"] },
+    "proposed_memory": { "type": "object" },
+    "conflict_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$" }
+    },
+    "policy_promotion": { "const": false },
+    "candidate_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

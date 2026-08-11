@@ -14,7 +14,7 @@
   ],
   "properties": {
     "schema_version": { "const": 1 },
-    "record_type": { "enum": ["workspaces", "projects", "source-bindings", "integrations", "source-states", "authoritative-sources", "knowledge", "information-relations"] },
+    "record_type": { "enum": ["workspaces", "projects", "source-bindings", "integrations", "source-states", "authoritative-sources", "knowledge", "information-relations", "memory"] },
     "record_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
     "revision": { "type": "integer", "minimum": 1 },
     "payload": { "type": "object" },

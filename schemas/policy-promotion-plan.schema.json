@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:policy-promotion-plan:1",
+  "title": "KRCN Core separate policy promotion plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_ref", "schema_version", "memory_id", "memory_revision", "memory_digest", "policy_id", "policy_revision", "policy_payload_digest", "separate_policy_mutation"],
+  "properties": {
+    "schema_ref": { "const": "schemas/policy-promotion-plan.schema.json" },
+    "schema_version": { "const": 1 },
+    "memory_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "memory_revision": { "type": "integer", "minimum": 1 },
+    "memory_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "policy_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "policy_revision": { "type": "integer", "minimum": 1 },
+    "policy_payload_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "separate_policy_mutation": { "type": "object" }
+  }
+}

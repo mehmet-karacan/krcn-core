@@ -18,7 +18,11 @@ from .mutation_gate import (
     plan_mutation,
 )
 from .integrations import parse_integration_metadata
-from .information_records import InformationRecordError, parse_information_record
+from .information_records import (
+    InformationRecordError,
+    parse_information_record,
+    validate_memory_record,
+)
 from .dependency_retrieval import (
     DependencyRetrievalError,
     parse_information_relation,
@@ -45,10 +49,12 @@ COLLECTIONS = {
         "knowledge/relations",
         "user-data",
     ),
+    "memory": ("record_id", "memory", "user-data"),
 }
 INFORMATION_COLLECTIONS = {
     "authoritative-sources": "authoritative-source",
     "knowledge": "knowledge",
+    "memory": "memory",
 }
 
 
@@ -146,6 +152,11 @@ def _validate_record_identity(
             raise LocalStoreError(
                 "information class does not match the local collection"
             )
+        if record_type == "memory":
+            try:
+                validate_memory_record(information_record)
+            except InformationRecordError as exc:
+                raise LocalStoreError(str(exc)) from exc
         return information_record.revision
     return None
 

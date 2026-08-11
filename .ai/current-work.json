@@ -40,11 +40,12 @@
     "docs/progress/PHASE-4-EXACT-RETRIEVAL.md",
     "docs/progress/PHASE-4-DEPENDENCY-RETRIEVAL.md",
     "docs/progress/PHASE-4-SEMANTIC-RETRIEVAL.md",
-    "docs/progress/PHASE-4-CONTEXT-BUILDER.md"
+    "docs/progress/PHASE-4-CONTEXT-BUILDER.md",
+    "docs/progress/PHASE-4-MEMORY-GATE.md"
   ],
   "next_actions": [
-    "build the approval-gated durable Memory Gate workflow",
-    "separate memory proposal, review, persist, supersede, revoke, and policy promotion"
+    "expose Phase 4 retrieval, context, and memory operations through the shared application service",
+    "add CLI commands without creating client-specific authority or approval behavior"
   ],
   "baseline_commit": "6005611",
   "approval_gates": {

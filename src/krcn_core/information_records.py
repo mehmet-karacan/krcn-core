@@ -51,6 +51,8 @@ EVIDENCE_RELATIONS = {
     "contradicts",
 }
 LIFECYCLE_STATES = {"current", "superseded", "stale", "archived"}
+MEMORY_TYPES = {"fact", "preference", "decision", "procedure"}
+MEMORY_SENSITIVITY = {"non-sensitive", "personal", "restricted"}
 SENSITIVE_KEY = re.compile(
     r"(?:password|passwd|token|api[-_]?key|secret|credential|private[-_]?key)",
     re.IGNORECASE,
@@ -348,3 +350,31 @@ def record_is_stale(
         if current is None or current != (evidence.revision_id, evidence.digest):
             return True
     return False
+
+
+def validate_memory_record(record: InformationRecord) -> None:
+    """Validate the class-specific payload of a durable memory record."""
+
+    if record.information_class != "memory" or record.ownership != "user-data":
+        raise InformationRecordError("record must be user-owned memory")
+    expected = {
+        "memory_type",
+        "title",
+        "text",
+        "scope_ref",
+        "retention_purpose",
+        "sensitivity",
+    }
+    if set(record.payload) != expected:
+        raise InformationRecordError("memory payload fields are invalid")
+    memory_type = record.payload.get("memory_type")
+    if not isinstance(memory_type, str) or memory_type not in MEMORY_TYPES:
+        raise InformationRecordError("memory type is invalid")
+    for field in ("title", "text", "retention_purpose"):
+        value = record.payload.get(field)
+        if not isinstance(value, str) or not value.strip():
+            raise InformationRecordError(f"memory {field} must be non-empty")
+    _logical_ref(record.payload.get("scope_ref"), "memory scope_ref")
+    sensitivity = record.payload.get("sensitivity")
+    if not isinstance(sensitivity, str) or sensitivity not in MEMORY_SENSITIVITY:
+        raise InformationRecordError("memory sensitivity is invalid")
