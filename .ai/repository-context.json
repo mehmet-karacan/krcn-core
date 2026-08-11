@@ -48,6 +48,7 @@
     "project_learning_boundary": "docs/specifications/PROJECT-LEARNING-BOUNDARY.md",
     "project_learning_intent_schema": "schemas/project-learning-intent.schema.json",
     "project_metadata_inference_schema": "schemas/project-metadata-inference.schema.json",
+    "project_learning_plan_schema": "schemas/project-learning-plan.schema.json",
     "phase_six_boundary": "docs/specifications/PHASE-6-PORTABILITY-BOUNDARY.md",
     "orchestration_boundary": "config/orchestration-boundary.json",
     "orchestration_boundary_schema": "schemas/orchestration-boundary.schema.json",

@@ -69,11 +69,12 @@
     "docs/progress/PHASE-6-COMPLETION.md",
     "docs/progress/PHASE-7-KICKOFF.md",
     "docs/progress/PHASE-7-PROJECT-LEARNING-INTENT.md",
-    "docs/progress/PHASE-7-PROJECT-METADATA.md"
+    "docs/progress/PHASE-7-PROJECT-METADATA.md",
+    "docs/progress/PHASE-7-UNIFIED-PROJECT-LEARNING.md"
   ],
   "next_actions": [
-    "combine onboarding and first read-only discovery into one exact plan",
-    "preserve the source directory while preparing all local records"
+    "expose project.learn through the shared application service",
+    "add directory-only project learn and natural-language ask CLI entries"
   ],
   "baseline_commit": "7ccc16b",
   "approval_gates": {
