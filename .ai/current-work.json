@@ -18,12 +18,14 @@
     "docs/progress/PHASE-2-READ-ONLY-ONBOARDING.md",
     "docs/progress/PHASE-2-READ-ONLY-DISCOVERY.md",
     "docs/progress/PHASE-2-ADAPTER-GATE.md",
-    "docs/progress/PHASE-2-INTEGRATION-METADATA.md"
+    "docs/progress/PHASE-2-INTEGRATION-METADATA.md",
+    "docs/progress/PHASE-2-RESCAN.md"
   ],
   "next_actions": [
-    "implement revision-aware rescan and change detection"
+    "connect onboarding, list, inspect, and rescan services to the shared CLI",
+    "define MCP and SDK service boundaries on the same application services"
   ],
-  "baseline_commit": "8da6816",
+  "baseline_commit": "5943981",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

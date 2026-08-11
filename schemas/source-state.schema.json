@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:source-state:1",
+  "title": "KRCN Core derived source state",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "binding_id",
+    "binding_revision",
+    "root_digest",
+    "files",
+    "technologies"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "binding_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "binding_revision": { "type": "integer", "minimum": 1 },
+    "root_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["relative_path", "kind", "size", "sha256"],
+        "properties": {
+          "relative_path": { "type": "string", "minLength": 1 },
+          "kind": { "enum": ["source", "document", "configuration"] },
+          "size": { "type": "integer", "minimum": 0 },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    },
+    "technologies": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

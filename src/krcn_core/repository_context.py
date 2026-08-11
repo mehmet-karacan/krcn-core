@@ -26,6 +26,8 @@ REQUIRED_CANONICAL_KEYS = {
     "adapter_schema",
     "adapter_operation_schema",
     "integration_schema",
+    "source_state_schema",
+    "rescan_plan_schema",
     "policy_layers",
     "cli_inventory",
     "cli_baseline",

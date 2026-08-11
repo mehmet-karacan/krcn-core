@@ -1,4 +1,4 @@
-"""Atomic and revision-aware local user-data record storage."""
+"""Atomic and revision-aware local user-data and derived record storage."""
 
 from __future__ import annotations
 
@@ -19,14 +19,16 @@ from .mutation_gate import (
 )
 from .integrations import parse_integration_metadata
 from .source_bindings import parse_source_binding
+from .source_state import parse_source_state
 
 
 IDENTIFIER = re.compile(r"^[a-z][a-z0-9-]*$")
-COLLECTION_IDENTITIES = {
-    "workspaces": "workspace_id",
-    "projects": "project_id",
-    "source-bindings": "binding_id",
-    "integrations": "integration_id",
+COLLECTIONS = {
+    "workspaces": ("workspace_id", "workspaces", "user-data"),
+    "projects": ("project_id", "projects", "user-data"),
+    "source-bindings": ("binding_id", "source-bindings", "user-data"),
+    "integrations": ("integration_id", "integrations", "user-data"),
+    "source-states": ("binding_id", "derived/source-states", "derived"),
 }
 
 
@@ -92,9 +94,10 @@ def _validate_record_identity(
     record_id: str,
     payload: Mapping[str, object],
 ) -> None:
-    identity_field = COLLECTION_IDENTITIES.get(record_type)
-    if identity_field is None:
+    collection = COLLECTIONS.get(record_type)
+    if collection is None:
         raise LocalStoreError("record type is invalid")
+    identity_field = collection[0]
     if not IDENTIFIER.fullmatch(record_id):
         raise LocalStoreError("record id must be portable")
     if payload.get("schema_version") != 1:
@@ -105,6 +108,8 @@ def _validate_record_identity(
         parse_source_binding(payload)
     if record_type == "integrations":
         parse_integration_metadata(payload)
+    if record_type == "source-states":
+        parse_source_state(payload)
 
 
 class LocalWorkspaceStore:
@@ -119,14 +124,16 @@ class LocalWorkspaceStore:
         return self._data_root
 
     def _target(self, record_type: str, record_id: str) -> Path:
-        if record_type not in COLLECTION_IDENTITIES:
+        collection = COLLECTIONS.get(record_type)
+        if collection is None:
             raise LocalStoreError("record type is invalid")
         if not IDENTIFIER.fullmatch(record_id):
             raise LocalStoreError("record id must be portable")
-        return self._data_root / record_type / f"{record_id}.json"
+        return self._data_root.joinpath(*collection[1].split("/")) / f"{record_id}.json"
 
     def _target_ref(self, record_type: str, record_id: str) -> str:
-        return f".krcn/{record_type}/{record_id}.json"
+        collection = COLLECTIONS[record_type]
+        return f".krcn/{collection[1]}/{record_id}.json"
 
     def read(self, record_type: str, record_id: str) -> StoredRecord | None:
         target = self._target(record_type, record_id)
@@ -213,7 +220,7 @@ class LocalWorkspaceStore:
             self._ownership,
             operation="create" if current is None else "update",
             target_ref=self._target_ref(record_type, record_id),
-            expected_ownership="user-data",
+            expected_ownership=COLLECTIONS[record_type][2],
             change_digest=payload_sha256,
             reversible=True,
         )
@@ -234,8 +241,10 @@ class LocalWorkspaceStore:
     ) -> StoredRecord:
         if authorization.plan.plan_id != plan.mutation.plan_id:
             raise LocalStoreError("mutation authorization does not match write plan")
-        if not authorization.dry_run_verified or not authorization.approval_verified:
-            raise LocalStoreError("verified dry-run and user approval are required")
+        if not authorization.dry_run_verified:
+            raise LocalStoreError("verified dry-run is required")
+        if plan.mutation.approval_required and not authorization.approval_verified:
+            raise LocalStoreError("user approval is required")
         self.assert_plan_current(plan)
         if plan.mutation.change_digest != plan.payload_sha256:
             raise LocalStoreError("mutation change digest does not match payload")
