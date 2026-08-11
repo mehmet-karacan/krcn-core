@@ -71,6 +71,8 @@ from .orchestration_service import (
 from .orchestration_verifier import VerifierHandlerRegistry
 from .orchestration_worker import WorkerHandlerRegistry
 from .policies import load_user_policies
+from .project_learning import apply_project_learning, prepare_project_learning
+from .project_learning_intent import parse_project_learning_intent
 from .portable_backup import apply_portable_backup, prepare_portable_backup
 from .portable_restore import apply_portable_restore, prepare_portable_restore
 from .provider_gate import ProviderApproval, load_provider_gate_policy
@@ -112,6 +114,7 @@ OPERATIONS = {
     "deployment.rollback",
     "project.list",
     "project.inspect",
+    "project.learn",
     "project.onboard",
     "project.rescan",
     "project.rebind",
@@ -330,6 +333,7 @@ class KrcnApplicationService:
             "deployment.rollback": self._rollback_deployment,
             "project.list": self._list_projects,
             "project.inspect": self._inspect_project,
+            "project.learn": self._learn_project,
             "project.onboard": self._onboard_project,
             "project.rescan": self._rescan_project,
             "project.rebind": self._rebind_project,
@@ -699,6 +703,45 @@ class KrcnApplicationService:
         )
         result = apply_read_only_onboarding(self._store, plan, authorizations)
         return "applied", {"plan": plan.public_summary(), **result.public_summary()}
+
+    def _learn_project(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"request_text"},
+            optional={"source_root"},
+        )
+        source_root = None
+        if "source_root" in request.arguments:
+            source_root = self._absolute_path_argument(
+                request.arguments,
+                "source_root",
+            )
+        intent = parse_project_learning_intent(
+            _string_argument(request.arguments, "request_text"),
+            source_root=source_root,
+        )
+        plan = prepare_project_learning(self._repo_root, self._store, intent)
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        authorizations = self._authorize_record_plans(
+            request,
+            plan.plan_id,
+            plan.record_plans,
+        )
+        result = apply_project_learning(
+            self._repo_root,
+            self._store,
+            plan,
+            authorizations,
+        )
+        return "applied", {
+            "plan": plan.public_summary(),
+            **result.public_summary(),
+            "applied": True,
+        }
 
     def _binding_for_project(
         self,

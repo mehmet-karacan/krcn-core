@@ -180,7 +180,7 @@ def prepare_project_learning(
     binding_plan, _, workspace_plan = onboarding.record_plans
     record_plans = (binding_plan, project_plan, workspace_plan, state_plan)
     identity = {
-        "intent_digest": intent.request_digest,
+        "action": intent.action,
         "metadata_digest": metadata.inference_digest,
         "adapter_request_id": adapter_request_id,
         "root_digest": discovery.root_digest,

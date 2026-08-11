@@ -17,6 +17,7 @@
         "deployment.rollback",
         "project.list",
         "project.inspect",
+        "project.learn",
         "project.onboard",
         "project.rescan",
         "knowledge.catalog",

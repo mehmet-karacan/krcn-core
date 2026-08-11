@@ -53,6 +53,13 @@ def build_parser() -> argparse.ArgumentParser:
         )
         doctor.add_argument("--repo", type=Path)
         doctor.add_argument("--format", choices=("text", "json"), default="text")
+    ask = subparsers.add_parser(
+        "ask",
+        help="Route a natural-language request through shared services",
+    )
+    ask.add_argument("request")
+    ask.add_argument("--source", type=Path)
+    _add_service_options(ask, mutation=True)
     project = subparsers.add_parser(
         "project",
         help="Manage local project registrations through shared services",
@@ -69,6 +76,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     project_inspect.add_argument("project_id")
     _add_service_options(project_inspect)
+    project_learn = project_commands.add_parser(
+        "learn",
+        help="Learn a local project from only its directory",
+    )
+    project_learn.add_argument("source", type=Path)
+    _add_service_options(project_learn, mutation=True)
     project_onboard = project_commands.add_parser(
         "onboard",
         help="Plan or apply read-only local project onboarding",
@@ -301,6 +314,12 @@ def _project_service_request(args: argparse.Namespace) -> ServiceRequest:
     elif args.project_command == "inspect":
         operation = "project.inspect"
         arguments = {"project_id": args.project_id}
+    elif args.project_command == "learn":
+        operation = "project.learn"
+        arguments = {
+            "request_text": str(args.source.resolve()),
+            "source_root": str(args.source.resolve()),
+        }
     elif args.project_command == "onboard":
         operation = "project.onboard"
         arguments = {
@@ -351,6 +370,33 @@ def _run_project_command(args: argparse.Namespace) -> int:
     payload = response.as_dict()
     if args.format == "json":
         print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(f"{response.status}\t{response.operation}")
+        print(json.dumps(response.data, ensure_ascii=False, indent=2))
+    return 0
+
+
+def _run_ask_command(args: argparse.Namespace) -> int:
+    try:
+        repo_root = args.repo.resolve() if args.repo else discover_repo_root()
+        data_root = resolve_user_home(args.data_root).path
+        arguments: dict[str, object] = {"request_text": args.request}
+        if args.source is not None:
+            arguments["source_root"] = str(args.source.resolve())
+        request = ServiceRequest(
+            client_kind="cli",
+            operation="project.learn",
+            arguments=arguments,
+            apply=args.apply,
+            expected_plan_id=args.expected_plan,
+            approval_id=args.approval_id,
+        )
+        response = create_application_service(repo_root, data_root).execute(request)
+    except (ApplicationServiceError, OSError, ValueError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+    if args.format == "json":
+        print(json.dumps(response.as_dict(), ensure_ascii=False, indent=2))
     else:
         print(f"{response.status}\t{response.operation}")
         print(json.dumps(response.data, ensure_ascii=False, indent=2))
@@ -571,6 +617,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.project_command is None:
             parser.parse_args(["project", "--help"])
         return _run_project_command(args)
+
+    if args.command == "ask":
+        return _run_ask_command(args)
 
     if args.command in {"installation", "release", "deployment"}:
         return _run_core_service_command(args)
