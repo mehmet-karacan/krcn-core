@@ -1,193 +1,114 @@
 # KRCN Core
 
-KRCN Core; projeleri, belgeleri, işleri ve talepleri, kararları, kalıcı bağlamı ve belleği ortak bir çekirdeğe bağlayan yerel öncelikli bir platformdur.
+**KRCN Core**, projeleri, belgeleri, iş taleplerini, kararları, kalıcı bağlamı ve belleği ortak bir çekirdek üzerinden birbirine bağlayan, yerel öncelikli (local-first) bir platformdur. Kullanıcı hedefini doğal dille anlatır; sistem bu hedefi somut bir göreve, kaynak ilişkisine ve doğrulanabilir bir plana dönüştürür - kullanıcı verisine asla sessizce dokunmadan.
 
-KRCN Core'un temel yaklaşımı ve özgün mimarisi Mehmet KARACAN tarafından oluşturulmuştur. Proje, bu mimari vizyonu sürdürülebilir ve geliştirilebilir bir açık teknik yapıya dönüştürmek amacıyla yürütülmektedir.
+KRCN Core'un temel yaklaşımı ve özgün mimarisi **Mehmet KARACAN** tarafından tasarlanmıştır. Bu repository, o mimari vizyonu sürdürülebilir ve açık bir teknik yapıya dönüştürmek için yürütülür.
 
-## Temel hedef
+## Neden KRCN Core
 
-Kullanıcı bir CLI'a veya yapay zekâya hedefini doğal dille anlatır. Sistem gerekli görev tanımını, kaynak ilişkilerini, bağlamı, güvenlik sınırlarını ve doğrulama adımlarını üretir. Bunu yaparken mevcut kullanıcı verisini korur ve yalnızca kontrollü core güncellemeleri uygular.
+Çoğu araç ya ürünü kullanıcı verisiyle aynı yere gömer (güncelleme veri kaybı riski taşır) ya da kullanıcı verisini bir buluta taşır (yerel öncelik ve gizlilik kaybolur). KRCN Core bu ikisini birbirinden ayırır:
+
+- **Çekirdek** (kod, şema, politika, migration) Git ile sürümlenir ve kontrollü şekilde güncellenir.
+- **Kullanıcı verisi** (projeler, belgeler, talepler, kararlar, bellek) kullanıcının kendi makinesinde, `KRCN_HOME` altında kalır ve hiçbir güncelleme onu sessizce değiştiremez.
+- **Dış kaynaklar** (proje dizinleri, veritabanları) yerinde okunur; KRCN içine kopyalanmaz.
+
+Bu ayrım sayesinde çekirdek her güncellendiğinde kullanıcının projeleri, ayarları ve geçmişi bozulmadan kalır.
 
 ## Mimari genel görünüm
 
-Aşağıdaki görünüm, Mehmet KARACAN tarafından oluşturulan özgün mimarinin ana çalışma ve veri sahipliği sınırlarını özetler:
+İstek bir istemciden girer, tek bir ortak servisten geçer, policy ve onay kapısından süzülür; sonuç yalnızca kendi sahiplik sınıfına ait alana yazılır.
 
 ```mermaid
-flowchart TB
-    U["Kullanıcı hedefi"] --> C["CLI, Codex, Claude, MCP veya plugin"]
+flowchart LR
+    classDef client fill:#e8eefc,stroke:#3b5bdb,color:#1a1a2e
+    classDef service fill:#e6f4ea,stroke:#2f9e44,color:#1a1a2e
+    classDef gate fill:#fff4e6,stroke:#e8590c,color:#1a1a2e
+    classDef home fill:#f3ecfb,stroke:#7048e8,color:#1a1a2e
+    classDef external fill:#f1f3f5,stroke:#868e96,color:#1a1a2e,stroke-dasharray: 4 3
 
-    subgraph CORE["Git ile sürümlenen KRCN Core"]
-        V["Kod, şema, migration ve teknik belgeler"]
-        R["Ortak bağlam ve intent yönlendirmesi"]
-        A["Transport bağımsız application service"]
-        G["Policy, capability, dry-run, exact plan ve approval kapıları"]
-        X["Context, knowledge, memory ve orchestrator"]
-        M["Merge, migration, verify ve rollback"]
-        R --> A
-        A --> G
-        G --> X
-        G --> M
-        M --> V
+    goal(["Kullanici hedefi"]):::client --> entry["CLI / Codex / Claude Code / MCP / plugin"]:::client
+    entry --> svc
+
+    subgraph core["KRCN Core - Git ile surumlenir"]
+        direction TB
+        svc["Application Service"]:::service
+        gate{{"Policy - Capability<br/>Dry-run - Approval"}}:::gate
+        engine["Context - Knowledge<br/>Memory - Orchestrator"]:::service
+        merge["Merge - Migration<br/>Verify - Rollback"]:::service
+        svc --> gate
+        gate --> engine
+        gate --> merge
     end
 
-    subgraph HOME["KRCN kullanıcı veri kökü"]
-        P["Workspace, project ve source binding kayıtları"]
-        D["Kullanıcı belgeleri, talepler, kararlar ve policy kayıtları"]
-        S["Runtime, checkpoint ve yeniden üretilebilir derived state"]
+    subgraph home["KRCN_HOME - kullanici veri koku"]
+        direction TB
+        proj[("Workspace / Project<br/>Binding")]:::home
+        data[("Belge / Talep<br/>Karar / Policy")]:::home
+        state[("Runtime / Checkpoint<br/>Derived state")]:::home
     end
 
-    subgraph EXTERNAL["Yerinde kullanılan dış kaynaklar"]
-        E["Proje dizinleri"]
-        DB["Veritabanları ve entegrasyonlar"]
+    subgraph ext["Yerinde kullanilan dis kaynaklar"]
+        direction TB
+        src[("Proje dizinleri")]:::external
+        db[("Veritabani ve entegrasyonlar")]:::external
     end
 
-    C --> R
-    G -->|"Onaylı yerel kayıt"| P
-    X --> D
-    X --> S
-    E -->|"Varsayılan salt okunur binding"| P
-    DB -->|"Policy ve capability kontrollü adapter"| P
+    gate -. "onayli kayit" .-> proj
+    engine --> data
+    engine --> state
+    src -. "salt okunur" .-> proj
+    db -. "adapter uzerinden" .-> proj
 ```
+
+| Katman | Sorumluluk |
+| --- | --- |
+| **İstemci** | CLI, Codex, Claude Code, MCP sunucusu veya bir plugin. Doğal dili tipli bir isteğe çevirir; ürün kuralı tanımlamaz. |
+| **Application Service** | Tüm istemcilerin çağırdığı tek, transport-bağımsız servis katmanı. |
+| **Policy / Capability / Approval kapısı** | Her yan etkiyi dry-run ve exact-plan olarak görünür kılar, gerekiyorsa kullanıcı onayı ister; hiçbir istemci bu kapıyı atlayamaz. |
+| **Context / Knowledge / Memory / Orchestrator** | Bilgiyi getirir, görev planlar, işi bir worker'a yürütür, sonucu bağımsız bir verifier ile doğrular. |
+| **Merge / Migration / Verify / Rollback** | Core güncellemelerini kullanıcı verisine dokunmadan uygular; başarısız doğrulamada geri alır. |
 
 ### Veri sahipliği haritası
 
 | Alan | Konum | Temel kural |
 | --- | --- | --- |
 | Ürün çekirdeği | Git repository | Kod, şema, migration, policy tanımı ve teknik belgeler sürümlenir. |
-| Kullanıcı verisi | `KRCN_HOME` | Projeler, belgeler, talepler, kararlar, memory ve kullanıcı policy'leri korunur. |
+| Kullanıcı verisi | `KRCN_HOME` | Projeler, belgeler, talepler, kararlar, bellek ve kullanıcı policy'leri korunur. |
 | Runtime ve derived state | `KRCN_HOME` | İş durumu korunur; türetilmiş içerik gerektiğinde yeniden üretilebilir. |
-| Dış proje ve kaynaklar | Kendi fiziksel dizinleri | Yerinde okunur, KRCN içine kopyalanmaz ve varsayılan olarak değiştirilmez. |
-| Secret değerleri | Yerel veya harici secret store | Git'e, loglara, context paketlerine veya portable backup içine yazılmaz. |
+| Dış proje ve kaynaklar | Kendi fiziksel dizinleri | Yerinde okunur, KRCN içine kopyalanmaz, varsayılan olarak değiştirilmez. |
+| Secret değerleri | Yerel veya harici secret store | Git'e, loglara veya backup içine yazılmaz. |
 
 ### Bir isteğin çalışma akışı
 
-1. İstemci doğal dil hedefini ortak bağlamla birlikte application service katmanına iletir.
+1. İstemci, doğal dil hedefini ortak bağlamla birlikte application service katmanına iletir.
 2. Sistem ilgili proje, kaynak, policy, capability ve mevcut çalışma durumunu çözümler.
-3. Yan etkiler dry-run ve exact plan olarak görünür hale getirilir.
+3. Yan etkiler `dry-run` ve exact plan olarak görünür hale getirilir.
 4. Gereken kullanıcı onayından sonra işlem ortak servis üzerinden uygulanır.
 5. Sonuç kanıtlarla doğrulanır; kullanıcı verisi ve dış kaynak sınırları korunur.
 
-## Güncelleme ilkesi
+Core güncellemeleri de aynı disiplinle ilerler: incele, `dry-run` göster, yedekle, uygula, gerekiyorsa migration çalıştır, doğrula; doğrulama başarısız olursa otomatik rollback devreye girer. Tam sözleşme için `docs/specifications/UPDATE-MERGE-CONTRACT.md`.
 
-Git'ten gelen yeni core sürümünde aşağıdaki işlemler uygulanır:
+## Geliştirme durumu
 
-1. Mevcut kurulum ve veri sahipliği incelenir.
-2. Değişiklikler `dry-run` olarak gösterilir.
-3. Kullanıcı verisi ve yerel secret'lar korunur.
-4. Gerekiyorsa şema migration'ı ve türetilmiş indekslerin yeniden oluşturulması planlanır.
-5. Güncelleme, yedekleme ve uyumluluk kontrollerinden sonra uygulanır.
-6. Doğrulama başarısız olursa doğrulanmış backup üzerinden otomatik rollback uygulanır.
+Faz 0 - Faz 7 tamamlandı: revision-aware bilgi kataloğu, retrieval, bütçeli context paketleri, onay kontrollü Memory Gate, capability-bound orchestrator, taşınabilir kullanıcı evi ve doğal dille proje öğrenme dahil olmak üzere platformun uçtan uca temel akışı çalışır durumda. Yerel referans kaynaklarındaki kullanıcı verileri repository içine alınmamıştır. Faz detayları için `docs/plans/ROADMAP.md`.
 
-## Güncel geliştirme durumu
-
-Faz 1 ile Faz 7 arasındaki bütün geliştirme aşamaları tamamlandı. Revision-aware bilgi kataloğu, retrieval, bütçeli context paketleri, onay kontrollü Memory Gate, capability-bound orchestrator, idempotent worker, bağımsız verifier, kalıcı resume, taşınabilir kullanıcı evi, secret-safe backup, atomic restore, doğrulanmış dış proje rebind, doğal dille proje öğrenme ve cross-platform kalite kapıları hazırdır. Yerel referans kaynaklarındaki kullanıcı verileri içeri alınmamıştır.
-
-KRCN kullanıcı bağlamı repository dışında tek bir `KRCN_HOME` altında korunabilir. Uyumlu bir core clone ve bu kullanıcı evinin portable backup paketi recovery için yeterlidir. Dış proje kaynakları özellikle kopyalanmaz; yeni bilgisayarda ayrıca bulunmalı ve `project.rebind` ile doğrulanarak bağlanmalıdır.
-
-Kök çalışma kuralları için `AGENTS.md`, araçtan bağımsız başlangıç bağlamı için `AI-CONTEXT.md` dosyasını okuyun. Codex doğrudan `AGENTS.md` kullanır. Claude Code için `CLAUDE.md` aynı ortak kaynakları içe aktarır. Diğer istemciler ve plugin'ler `.ai/repository-context.json` manifestini okuyabilir.
-
-Geliştirme sırası `docs/plans/ROADMAP.md`, güncelleme güvenlik sözleşmesi `docs/specifications/UPDATE-MERGE-CONTRACT.md` içindedir. Mevcut baseline bulguları `docs/progress/PHASE-0-BASELINE.md`, aktarım sınırı ise `docs/specifications/IMPORT-BOUNDARY.md` içinde tutulur.
-
-Aktif bağlamı makinece çözümlemek için:
-
-```bash
-python tools/krcn.py context --format json
-```
-
-İncelenen eski komut sözleşmelerini herhangi bir işlem çalıştırmadan görmek için:
-
-```bash
-python tools/krcn.py catalog
-```
-
-Kayıtlı projeleri ortak ve istemciden bağımsız servis sözleşmesi üzerinden yönetmek için:
-
-```bash
-python tools/krcn.py project learn "<source-directory>"
-python tools/krcn.py ask "<source-directory> projesini öğren"
-python tools/krcn.py project list
-python tools/krcn.py project inspect <project-id>
-python tools/krcn.py project onboard --workspace-id <workspace-id> --project-id <project-id> --binding-id <binding-id> --name <project-name> --source <source-directory>
-python tools/krcn.py project rescan <project-id>
-```
-
-Yeni bir projeyi tanıtmak için yalnızca dizini vermek yeterlidir. Sistem proje adını ve teknik kimlikleri kendisi çıkarır, projeyi yerinde ve salt okunur inceler, dosyaları kopyalamadan exact planı gösterir. Kalıcı kayıt için aynı plan kimliği ve tek açık onay kimliği gerekir.
-
-Onboarding ve rescan komutları da varsayılan olarak yalnızca plan üretir. Uygulama için önceki dry-run sonucundaki plan kimliği ve user-data değişikliği varsa açık onay kimliği gerekir. CLI, SDK, MCP, plugin ve yapay zekâ istemcileri aynı servis katmanını kullanır.
-
-Revision-aware bilgi kataloğunu ve Faz 4 ortak servislerini kullanmak için:
-
-```bash
-python tools/krcn.py knowledge catalog
-python tools/krcn.py knowledge exact --request-file <application-arguments.json>
-python tools/krcn.py knowledge dependencies --request-file <application-arguments.json>
-python tools/krcn.py knowledge semantic --request-file <application-arguments.json>
-python tools/krcn.py context-package build --request-file <application-arguments.json>
-python tools/krcn.py memory propose --request-file <application-arguments.json>
-python tools/krcn.py memory review --request-file <application-arguments.json>
-python tools/krcn.py memory persist --request-file <application-arguments.json>
-```
-
-Bu komutlar ürün kuralı tanımlamaz; doğrudan ortak application service sözleşmesini çağırır. Uzak semantic arama için exact oturum onayı ve istemci tarafından açıkça bağlanmış bir scorer gerekir. Memory persist varsayılan olarak yalnızca plan üretir; kalıcı yazım aynı plan kimliği ve review ile eşleşen kullanıcı onayı olmadan çalışmaz.
-
-Doğal dil görev akışını ortak orchestrator servisi üzerinden kullanmak için:
-
-```bash
-python tools/krcn.py orchestrator intent --request-file <application-arguments.json>
-python tools/krcn.py orchestrator plan --request-file <application-arguments.json>
-python tools/krcn.py orchestrator authorize --request-file <application-arguments.json>
-python tools/krcn.py orchestrator start --request-file <application-arguments.json> --apply --expected-plan <plan-id>
-python tools/krcn.py orchestrator execute --request-file <application-arguments.json> --apply --expected-plan <plan-id>
-python tools/krcn.py orchestrator verify --request-file <application-arguments.json> --apply --expected-plan <plan-id>
-python tools/krcn.py orchestrator status --request-file <application-arguments.json>
-python tools/krcn.py orchestrator resume --request-file <application-arguments.json>
-```
-
-CLI yalnız taşıma katmanıdır. Plan, policy, approval, handler, checkpoint ve verification kuralları ortak application service içinde uygulanır. Worker ve verifier handler'ları kullanılmadan önce açıkça kaydedilmelidir; istemci seçimi ek yetki vermez.
-
-Yerel bir kurulumu incelemek, trusted release farkını görmek ve exact plan üretmek için:
-
-```bash
-python tools/krcn.py installation inspect --installation <installation-directory>
-python tools/krcn.py installation verify --installation <installation-directory>
-python tools/krcn.py release diff --installation <installation-directory> --release <release-directory> --trusted-manifest-sha256 <sha256>
-python tools/krcn.py release merge --installation <installation-directory> --release <release-directory> --trusted-manifest-sha256 <sha256>
-```
-
-`release merge` varsayılan olarak yalnızca plan üretir. Apply için aynı komut `--apply --expected-plan <plan-id>` seçenekleriyle yeniden çalıştırılır. Plan user-data migration veya delete içeriyorsa `--approval-id <approval-id>` de gerekir. Tamamlanmış veya kesintiye uğramış bir deployment için rollback de önce planlanır, sonra exact plan ve gerekli onayla uygulanır:
-
-```bash
-python tools/krcn.py deployment rollback <deployment-id> --installation <installation-directory>
-```
-
-Repository paketini ağ kullanmadan mevcut Python ortamına kurmak ve sağlık kontrolünü çalıştırmak için:
-
-```bash
-python -m pip install --no-index --no-deps --no-build-isolation .
-krcn doctor
-```
-
-Kurulum yapmadan aynı sağlık kontrolünü çalıştırmak için:
+## Başlarken
 
 ```bash
 python tools/krcn.py doctor
 ```
 
-## Foundation doğrulaması
+Bu komut kurulum gerektirmeden sağlık kontrolünü çalıştırır ve ortamın hazır olup olmadığını gösterir. Tüm komutlar, proje öğrenme, bilgi/bağlam/bellek servisleri, orchestrator ve release/rollback akışları dahil, `docs/specifications/CLI-REFERENCE.md` dosyasında toplanmıştır.
 
-Repository sahiplik, provider ve import politikalarını ek bağımlılık olmadan doğrulamak için:
+## Daha fazla bilgi
 
-```bash
-python tools/verify_repository.py
-```
+- Çalışma kuralları: `AGENTS.md`
+- Araçtan bağımsız başlangıç bağlamı: `AI-CONTEXT.md`
+- Komut referansı: `docs/specifications/CLI-REFERENCE.md`
+- Yol haritası: `docs/plans/ROADMAP.md`
+- Güncelleme sözleşmesi: `docs/specifications/UPDATE-MERGE-CONTRACT.md`
 
-Bir import adayını mevcut güvenlik politikasıyla taramak için:
-
-```bash
-python tools/verify_repository.py --source <source-directory>
-```
-
-Doğrulama aracı secret, makineye özel yol, hassas bağlantı bilgisi, engellenmiş dosya türü ve uzun tire bulgularında başarısız olur. Ağ erişimi kullanmaz.
+Codex doğrudan `AGENTS.md` kullanır; Claude Code için `CLAUDE.md` aynı ortak kaynakları içe aktarır; diğer istemciler ve plugin'ler `.ai/repository-context.json` manifestini okuyabilir.
 
 ## Kurucu ve mimari sahibi
 
