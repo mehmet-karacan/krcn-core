@@ -117,6 +117,38 @@ class ReadOnlyDiscoveryTests(unittest.TestCase):
         result = discover(binding_for(self.root), policy)
         self.assertGreater(result.skipped["too_large"], 0)
 
+    def test_generated_dependency_trees_are_pruned_before_file_limit(self) -> None:
+        for directory_name in ("node_modules", ".next", "target", "dist", "build"):
+            generated = self.root / directory_name
+            generated.mkdir()
+            for index in range(20):
+                (generated / f"generated-{index}.txt").write_text(
+                    "generated dependency output\n",
+                    encoding="utf-8",
+                )
+        result = discover_local_source(
+            binding_for(self.root),
+            self.policy,
+            authorize_adapter_operation(
+                prepare_adapter_operation(
+                    LOCAL_DISCOVERY_ADAPTER,
+                    binding_for(self.root),
+                    "discover",
+                    [],
+                )
+            ),
+            maximum_files=4,
+        )
+        paths = {item.relative_path for item in result.files}
+        self.assertFalse(
+            any(
+                path.split("/", 1)[0]
+                in {"node_modules", ".next", "target", "dist", "build"}
+                for path in paths
+            )
+        )
+        self.assertGreaterEqual(result.skipped["blocked"], 5)
+
     def test_read_write_binding_is_rejected(self) -> None:
         binding = binding_for(
             self.root,
