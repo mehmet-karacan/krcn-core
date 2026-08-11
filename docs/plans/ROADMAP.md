@@ -10,7 +10,7 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
 
 - Faz 0 tamamlandı.
 - Faz 1 tamamlandı.
-- Sıradaki çalışma Faz 2 - yerel çalışma alanı ve entegrasyon modelidir.
+- Faz 2 aktif: yerel çalışma alanı ve entegrasyon modeli uygulanıyor.
 
 ## Temel kullanım modeli
 

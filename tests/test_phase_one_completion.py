@@ -13,13 +13,10 @@ def load_json(path: Path) -> dict:
 
 
 class PhaseOneCompletionTests(unittest.TestCase):
-    def test_current_work_marks_phase_one_completed(self) -> None:
-        current = load_json(REPO_ROOT / ".ai" / "current-work.json")
-        self.assertEqual("phase-1", current["phase_id"])
-        self.assertEqual("completed", current["status"])
-        self.assertIn(
-            "docs/progress/PHASE-1-COMPLETION.md", current["progress_refs"]
-        )
+    def test_phase_one_completion_evidence_is_preserved(self) -> None:
+        completion = REPO_ROOT / "docs" / "progress" / "PHASE-1-COMPLETION.md"
+        self.assertTrue(completion.is_file())
+        self.assertIn("Faz 1 - repository ve sahiplik temeli tamamlandı", completion.read_text(encoding="utf-8"))
 
     def test_sanitized_cli_baseline_is_ready(self) -> None:
         baseline = load_json(REPO_ROOT / ".ai" / "cli-baseline.json")

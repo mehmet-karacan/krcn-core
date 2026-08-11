@@ -96,13 +96,12 @@ def run_doctor(repo_root: Path) -> tuple[DoctorCheck, ...]:
             "no local user data is tracked",
         )
     )
-    current_work = load_json(repo_root / ".ai" / "current-work.json")
     cli_baseline = load_json(repo_root / ".ai" / "cli-baseline.json")
     phase_errors = []
-    if current_work.get("phase_id") != "phase-1" or current_work.get("status") != "completed":
-        phase_errors.append("phase state")
     if cli_baseline.get("status") != "ready":
         phase_errors.append("CLI baseline state")
+    if not (repo_root / "docs" / "progress" / "PHASE-1-COMPLETION.md").is_file():
+        phase_errors.append("Phase 1 completion evidence")
     checks.append(
         _check(
             "phase-one-baseline",

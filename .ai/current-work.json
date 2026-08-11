@@ -1,25 +1,26 @@
 {
   "schema_ref": "schemas/current-work.schema.json",
   "schema_version": 1,
-  "phase_id": "phase-1",
-  "workstream_id": "package-2-context-and-cli",
-  "status": "completed",
-  "goal": "Complete the Phase 1 repository, ownership, context, and sanitized CLI baseline",
-  "plan_ref": "docs/plans/PLAN-002-ARACTAN-BAGIMSIZ-BAGLAM-VE-CLI.md",
+  "phase_id": "phase-2",
+  "workstream_id": "local-workspace-and-integrations",
+  "status": "active",
+  "goal": "Implement local workspaces and capability-gated integrations without copying or mutating source content",
+  "plan_ref": "docs/plans/PLAN-003-YEREL-CALISMA-ALANI-VE-ENTEGRASYON.md",
   "progress_refs": [
     "docs/progress/PHASE-1-FOUNDATION.md",
     "docs/progress/PHASE-1-PACKAGE-1.md",
     "docs/progress/PACKAGE-2-CONTEXT-FOUNDATION.md",
     "docs/progress/PACKAGE-2-CLI-INVENTORY.md",
     "docs/progress/PACKAGE-2-STAGING-BASELINE.md",
-    "docs/progress/PHASE-1-COMPLETION.md"
+    "docs/progress/PHASE-1-COMPLETION.md",
+    "docs/progress/PHASE-2-KICKOFF.md"
   ],
   "next_actions": [
-    "prepare the Phase 2 local workspace and integration plan",
-    "define adapter capabilities on source bindings and shared safety gates",
-    "implement synthetic read-only project onboarding before live user-data migration"
+    "implement an atomic revision-aware local workspace record store",
+    "implement synthetic read-only project onboarding through source bindings",
+    "define adapter capabilities on source bindings and shared safety gates"
   ],
-  "baseline_commit": "6469d93",
+  "baseline_commit": "4a6981d",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,
