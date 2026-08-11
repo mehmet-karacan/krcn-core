@@ -11,6 +11,7 @@ from typing import Mapping
 
 from .local_store import LocalWorkspaceStore, RecordWritePlan, StoredRecord
 from .mutation_gate import MutationAuthorization
+from .source_identity import SourceIdentityError, assert_external_source
 
 
 IDENTIFIER = re.compile(r"^[a-z][a-z0-9-]*$")
@@ -95,11 +96,9 @@ def _validate_request(request: OnboardingRequest, store: LocalWorkspaceStore) ->
     if not source_root.is_dir():
         raise OnboardingError("source root must be an existing directory")
     try:
-        source_root.relative_to(store.data_root)
-    except ValueError:
-        pass
-    else:
-        raise OnboardingError("source root may not be inside KRCN user-data")
+        assert_external_source(source_root, store.data_root)
+    except SourceIdentityError as exc:
+        raise OnboardingError(str(exc)) from exc
     return source_root
 
 

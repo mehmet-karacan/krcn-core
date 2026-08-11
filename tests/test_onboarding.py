@@ -121,8 +121,16 @@ class ReadOnlyOnboardingTests(unittest.TestCase):
                 "source_root": Path(self.data_temp.name),
             }
         )
-        with self.assertRaisesRegex(OnboardingError, "user-data"):
+        with self.assertRaisesRegex(OnboardingError, "KRCN user home"):
             prepare_read_only_onboarding(self.store, request)
+
+    def test_user_home_inside_source_is_rejected(self) -> None:
+        nested_store = LocalWorkspaceStore(
+            self.source_root / ".krcn-user-home",
+            OwnershipResolver.from_repository(REPO_ROOT),
+        )
+        with self.assertRaisesRegex(OnboardingError, "inside external source"):
+            prepare_read_only_onboarding(nested_store, self.request)
 
     def test_relative_source_path_is_rejected(self) -> None:
         request = OnboardingRequest(

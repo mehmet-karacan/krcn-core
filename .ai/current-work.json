@@ -57,11 +57,12 @@
     "docs/progress/PHASE-5-INTEGRATION-TESTS.md",
     "docs/progress/PHASE-5-COMPLETION.md",
     "docs/progress/PHASE-6-KICKOFF.md",
-    "docs/progress/PHASE-6-PORTABLE-USER-HOME.md"
+    "docs/progress/PHASE-6-PORTABLE-USER-HOME.md",
+    "docs/progress/PHASE-6-EXTERNAL-SOURCE-IDENTITY.md"
   ],
   "next_actions": [
-    "strengthen external source bindings with a read-only identity fingerprint",
-    "prove that project files are never copied into the KRCN user home"
+    "implement exact-plan source rebind with identity verification",
+    "keep missing external projects registered instead of deleting their context"
   ],
   "baseline_commit": "d7d20bc",
   "approval_gates": {

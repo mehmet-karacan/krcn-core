@@ -14,6 +14,8 @@
     "roadmap": "docs/plans/ROADMAP.md",
     "ownership": "config/ownership-manifest.json",
     "source_binding_schema": "schemas/source-binding.schema.json",
+    "source_identity_schema": "schemas/source-identity.schema.json",
+    "external_source_no_copy": "docs/specifications/EXTERNAL-SOURCE-NO-COPY.md",
     "user_policy_schema": "schemas/user-policy.schema.json",
     "mutation_plan_schema": "schemas/mutation-plan.schema.json",
     "provider_request_schema": "schemas/provider-request.schema.json",
