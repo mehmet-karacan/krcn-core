@@ -17,6 +17,7 @@ from krcn_core.doctor import run_doctor
 from krcn_core.local_store import LocalWorkspaceStore
 from krcn_core.mutation_gate import OwnershipResolver
 from krcn_core.repository_context import main as context_main
+from krcn_core.user_home import resolve_user_home
 
 from .registry import compatibility_registry
 
@@ -303,7 +304,7 @@ def _project_service_request(args: argparse.Namespace) -> ServiceRequest:
 def _run_project_command(args: argparse.Namespace) -> int:
     try:
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
-        data_root = args.data_root.resolve() if args.data_root else repo_root / ".krcn"
+        data_root = resolve_user_home(args.data_root).path
         store = LocalWorkspaceStore(
             data_root,
             OwnershipResolver.from_repository(repo_root),
@@ -427,7 +428,7 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
 def _run_phase_four_service_command(args: argparse.Namespace) -> int:
     try:
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
-        data_root = args.data_root.resolve() if args.data_root else repo_root / ".krcn"
+        data_root = resolve_user_home(args.data_root).path
         store = LocalWorkspaceStore(
             data_root,
             OwnershipResolver.from_repository(repo_root),
@@ -452,7 +453,7 @@ def _run_orchestrator_command(args: argparse.Namespace) -> int:
         if args.orchestrator_command is None:
             raise ApplicationServiceError("orchestrator command is required")
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
-        data_root = args.data_root.resolve() if args.data_root else repo_root / ".krcn"
+        data_root = resolve_user_home(args.data_root).path
         store = LocalWorkspaceStore(
             data_root,
             OwnershipResolver.from_repository(repo_root),

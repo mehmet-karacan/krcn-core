@@ -56,11 +56,12 @@
     "docs/progress/PHASE-5-CLIENT-SERVICES.md",
     "docs/progress/PHASE-5-INTEGRATION-TESTS.md",
     "docs/progress/PHASE-5-COMPLETION.md",
-    "docs/progress/PHASE-6-KICKOFF.md"
+    "docs/progress/PHASE-6-KICKOFF.md",
+    "docs/progress/PHASE-6-PORTABLE-USER-HOME.md"
   ],
   "next_actions": [
-    "implement canonical portable KRCN user-home resolution",
-    "preserve external project directories through no-copy bindings and verified rebind"
+    "strengthen external source bindings with a read-only identity fingerprint",
+    "prove that project files are never copied into the KRCN user home"
   ],
   "baseline_commit": "d7d20bc",
   "approval_gates": {
