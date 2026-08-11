@@ -14,14 +14,15 @@
     "docs/progress/PACKAGE-2-STAGING-BASELINE.md",
     "docs/progress/PHASE-1-COMPLETION.md",
     "docs/progress/PHASE-2-KICKOFF.md",
-    "docs/progress/PHASE-2-LOCAL-STORE.md"
+    "docs/progress/PHASE-2-LOCAL-STORE.md",
+    "docs/progress/PHASE-2-READ-ONLY-ONBOARDING.md"
   ],
   "next_actions": [
-    "implement synthetic read-only project onboarding through source bindings",
     "define adapter capabilities on source bindings and shared safety gates",
-    "implement read-only project and document discovery with synthetic fixtures"
+    "implement read-only project and document discovery with synthetic fixtures",
+    "define integration metadata with secret references and no literal credentials"
   ],
-  "baseline_commit": "daea241",
+  "baseline_commit": "18d1adb",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

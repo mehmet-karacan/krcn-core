@@ -21,6 +21,7 @@ REQUIRED_CANONICAL_KEYS = {
     "mutation_plan_schema",
     "provider_request_schema",
     "local_record_schema",
+    "onboarding_plan_schema",
     "policy_layers",
     "cli_inventory",
     "cli_baseline",

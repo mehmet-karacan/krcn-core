@@ -110,6 +110,10 @@ class LocalWorkspaceStore:
         self._data_root = data_root.resolve()
         self._ownership = ownership
 
+    @property
+    def data_root(self) -> Path:
+        return self._data_root
+
     def _target(self, record_type: str, record_id: str) -> Path:
         if record_type not in COLLECTION_IDENTITIES:
             raise LocalStoreError("record type is invalid")
@@ -228,10 +232,24 @@ class LocalWorkspaceStore:
             raise LocalStoreError("mutation authorization does not match write plan")
         if not authorization.dry_run_verified or not authorization.approval_verified:
             raise LocalStoreError("verified dry-run and user approval are required")
-        current = self.read(plan.record_type, plan.record_id)
-        current_revision = current.revision if current else 0
-        if current_revision != plan.previous_revision:
-            raise RevisionConflictError("record revision changed after planning")
+        self.assert_plan_current(plan)
+        if plan.mutation.change_digest != plan.payload_sha256:
+            raise LocalStoreError("mutation change digest does not match payload")
+        try:
+            planned_envelope = json.loads(plan.document)
+        except json.JSONDecodeError as exc:
+            raise LocalStoreError("planned record document is invalid") from exc
+        if (
+            not isinstance(planned_envelope, dict)
+            or planned_envelope.get("payload_sha256") != plan.payload_sha256
+            or planned_envelope.get("revision") != plan.next_revision
+            or planned_envelope.get("record_id") != plan.record_id
+            or planned_envelope.get("record_type") != plan.record_type
+        ):
+            raise LocalStoreError("planned record document does not match write plan")
+        planned_payload = planned_envelope.get("payload")
+        if not isinstance(planned_payload, dict) or _payload_hash(planned_payload) != plan.payload_sha256:
+            raise LocalStoreError("planned payload does not match its change digest")
         target = self._target(plan.record_type, plan.record_id)
         target.parent.mkdir(parents=True, exist_ok=True)
         if target.parent.is_symlink() or target.is_symlink():
@@ -258,3 +276,11 @@ class LocalWorkspaceStore:
         if stored is None or stored.revision != plan.next_revision:
             raise LocalStoreError("record verification failed after atomic write")
         return stored
+
+    def assert_plan_current(self, plan: RecordWritePlan) -> None:
+        """Verify optimistic concurrency without performing a write."""
+
+        current = self.read(plan.record_type, plan.record_id)
+        current_revision = current.revision if current else 0
+        if current_revision != plan.previous_revision:
+            raise RevisionConflictError("record revision changed after planning")

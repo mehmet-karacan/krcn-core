@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:onboarding-plan:1",
+  "title": "KRCN Core read-only project onboarding plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "plan_id",
+    "workspace_id",
+    "project_id",
+    "binding_id",
+    "source_access",
+    "record_plans"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "workspace_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "project_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "binding_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "source_access": { "const": "read-only" },
+    "record_plans": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "record_type",
+          "record_id",
+          "previous_revision",
+          "next_revision",
+          "payload_sha256",
+          "mutation_plan_id"
+        ],
+        "properties": {
+          "record_type": { "enum": ["workspaces", "projects", "source-bindings"] },
+          "record_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "previous_revision": { "type": "integer", "minimum": 0 },
+          "next_revision": { "type": "integer", "minimum": 1 },
+          "payload_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "mutation_plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    }
+  }
+}
