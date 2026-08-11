@@ -13,6 +13,7 @@
     "from_core_version",
     "to_core_version",
     "manifest_sha256",
+    "source_state_sha256",
     "approval_required",
     "has_effects",
     "file_mutations",
@@ -30,6 +31,7 @@
     "from_core_version": { "$ref": "#/$defs/semver" },
     "to_core_version": { "$ref": "#/$defs/semver" },
     "manifest_sha256": { "$ref": "#/$defs/sha256" },
+    "source_state_sha256": { "$ref": "#/$defs/sha256" },
     "approval_required": { "type": "boolean" },
     "has_effects": { "type": "boolean" },
     "file_mutations": {

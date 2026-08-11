@@ -39,6 +39,8 @@ REQUIRED_CANONICAL_KEYS = {
     "release_trust",
     "release_diff_schema",
     "merge_plan_schema",
+    "backup_manifest_schema",
+    "deployment_journal_schema",
     "policy_layers",
     "cli_inventory",
     "cli_baseline",

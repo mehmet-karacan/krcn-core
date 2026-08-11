@@ -23,6 +23,7 @@ from .mutation_gate import (
     plan_mutation,
 )
 from .release_diff import ReleaseDiff
+from .release_diff import FileChange
 from .update_effects import (
     DerivedActionRegistry,
     DerivedActionSpec,
@@ -48,6 +49,8 @@ class MergePlan:
     from_core_version: str
     to_core_version: str
     manifest_sha256: str
+    source_state_sha256: str
+    file_changes: tuple[FileChange, ...]
     file_mutations: tuple[MutationPlan, ...]
     state_mutation: MutationPlan | None
     migrations: tuple[MigrationSpec, ...]
@@ -74,6 +77,7 @@ class MergePlan:
             "from_core_version": self.from_core_version,
             "to_core_version": self.to_core_version,
             "manifest_sha256": self.manifest_sha256,
+            "source_state_sha256": self.source_state_sha256,
             "approval_required": self.approval_required,
             "has_effects": self.has_effects,
             "file_mutations": [item.as_dict() for item in self.file_mutations],
@@ -185,6 +189,13 @@ def prepare_merge_plan(
         derived_specs = derived_actions.resolve(release_diff.derived_actions)
     except UpdateEffectError as exc:
         raise MergePlanError(str(exc)) from exc
+    for migration in migration_specs:
+        resolved = ownership.resolve(f"{migration.target_ref}/placeholder")
+        if resolved != migration.ownership:
+            raise MergePlanError("migration target ownership does not match descriptor")
+    for action in derived_specs:
+        if ownership.resolve(f"{action.target_ref}/placeholder") != "derived":
+            raise MergePlanError("derived action target ownership is invalid")
     file_mutations = []
     for change in release_diff.changes:
         if change.action == "unchanged":
@@ -242,6 +253,7 @@ def prepare_merge_plan(
         "installation_id": state.installation_id,
         "release_id": release_diff.release_id,
         "manifest_sha256": release_diff.manifest_sha256,
+        "source_state_sha256": installation_state_sha256(state),
         "file_mutation_ids": [item.plan_id for item in file_mutations],
         "state_mutation_id": state_mutation.plan_id if state_mutation else None,
         "migrations": [item.as_dict() for item in migration_specs],
@@ -256,6 +268,8 @@ def prepare_merge_plan(
         from_core_version=release_diff.from_core_version,
         to_core_version=release_diff.to_core_version,
         manifest_sha256=release_diff.manifest_sha256,
+        source_state_sha256=installation_state_sha256(state),
+        file_changes=release_diff.changes,
         file_mutations=tuple(file_mutations),
         state_mutation=state_mutation,
         migrations=migration_specs,

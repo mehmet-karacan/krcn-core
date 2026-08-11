@@ -29,6 +29,7 @@ class MigrationSpec:
     from_version: int
     to_version: int
     ownership: str
+    target_ref: str
     reversible: bool = True
 
     def __post_init__(self) -> None:
@@ -47,6 +48,16 @@ class MigrationSpec:
             raise UpdateEffectError("migration version transition is invalid")
         if self.ownership not in OWNERSHIP_CLASSES:
             raise UpdateEffectError("migration ownership is invalid")
+        if self.ownership not in {"runtime", "user-data", "derived"}:
+            raise UpdateEffectError("migration may not target this ownership class")
+        if (
+            not isinstance(self.target_ref, str)
+            or not self.target_ref.startswith(".krcn/")
+            or "\\" in self.target_ref
+            or ".." in self.target_ref.split("/")
+            or self.target_ref.endswith("/")
+        ):
+            raise UpdateEffectError("migration target must be portable local data")
         if not self.reversible:
             raise UpdateEffectError("irreversible migration is prohibited")
 
@@ -61,6 +72,7 @@ class MigrationSpec:
             "from_version": self.from_version,
             "to_version": self.to_version,
             "ownership": self.ownership,
+            "target_ref": self.target_ref,
             "reversible": self.reversible,
             "approval_required": self.approval_required,
         }
@@ -81,6 +93,7 @@ class DerivedActionSpec:
             or not self.target_ref.startswith(".krcn/derived/")
             or "\\" in self.target_ref
             or ".." in self.target_ref.split("/")
+            or self.target_ref.endswith("/")
         ):
             raise UpdateEffectError("derived action target must stay in derived data")
         if self.action not in {"rebuild", "validate"}:

@@ -92,6 +92,7 @@ class MergePlanTests(unittest.TestCase):
                     1,
                     2,
                     "user-data",
+                    ".krcn/workspaces",
                 )
             ]
         )

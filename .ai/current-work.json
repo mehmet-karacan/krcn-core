@@ -27,13 +27,14 @@
     "docs/progress/PHASE-3-INSTALLATION-INSPECTION.md",
     "docs/progress/PHASE-3-RELEASE-VALIDATION.md",
     "docs/progress/PHASE-3-RELEASE-DIFF.md",
-    "docs/progress/PHASE-3-MERGE-PLAN.md"
+    "docs/progress/PHASE-3-MERGE-PLAN.md",
+    "docs/progress/PHASE-3-BACKUP-JOURNAL.md"
   ],
   "next_actions": [
-    "create recoverable backups and deployment journals before apply",
-    "apply managed core files atomically through authorized plans"
+    "apply managed core files atomically through authorized plans",
+    "run trusted versioned migrations after managed file application"
   ],
-  "baseline_commit": "c2a5a1b",
+  "baseline_commit": "b1b1a9e",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

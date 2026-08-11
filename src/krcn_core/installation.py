@@ -21,6 +21,7 @@ COMMIT = re.compile(r"^[a-f0-9]{40}$")
 INCOMPLETE_DEPLOYMENT_STATUSES = {
     "preparing",
     "backing-up",
+    "backed-up",
     "applying",
     "migrating",
     "rebuilding",
