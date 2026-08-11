@@ -26,6 +26,6 @@ Doğrulanmış backup sonrasında yalnızca exact plan içindeki managed core do
 
 Manifest içeriği kod olarak çalıştırılmaz. Core dosyası yalnızca release payload kanıtıyla, user-data kaydı yalnızca trusted migration çıktısı ve açık onayla değişebilir. Her iki alan da önceden oluşturulmuş local backup ile geri alınabilir.
 
-## Sonraki adım
+## Devam kaydı
 
-Trusted derived action'lar çalıştırılacak, installation ve korunan veri doğrulanacak, başarılı state commit edilecek; herhangi bir hatada otomatik rollback uygulanacak.
+Derived action, zorunlu verify ve rollback sonucu `docs/progress/PHASE-3-DERIVED-VERIFY-ROLLBACK.md` içinde tamamlandı.

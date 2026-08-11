@@ -2,7 +2,7 @@
 
 ## Durum
 
-Aktif. Faz 2 baseline'ı üzerinde Faz 3 uygulaması başlatıldı.
+Tamamlandı. On adımın tamamı doğrulandı ve Faz 3 baseline'ı oluşturuldu.
 
 ## Amaç
 

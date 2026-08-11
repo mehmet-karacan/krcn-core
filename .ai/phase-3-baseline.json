@@ -1,0 +1,54 @@
+{
+  "schema_ref": "schemas/phase-3-baseline.schema.json",
+  "schema_version": 1,
+  "baseline_id": "phase-3-safe-merge",
+  "phase_id": "phase-3",
+  "status": "ready",
+  "completed_steps": 10,
+  "capabilities": [
+    "installation-inspection",
+    "trusted-release-validation",
+    "ownership-aware-release-diff",
+    "exact-plan-merge",
+    "verified-checkpoint-backup",
+    "trusted-migrations",
+    "trusted-derived-rebuild",
+    "mandatory-post-merge-verification",
+    "automatic-and-explicit-rollback",
+    "transport-neutral-merge-services"
+  ],
+  "safe_operations": [
+    "installation.inspect",
+    "installation.verify",
+    "release.diff",
+    "release.merge",
+    "deployment.rollback"
+  ],
+  "guarantees": {
+    "live_reference_imported": false,
+    "local_data_tracked": false,
+    "implicit_network_access": false,
+    "literal_secrets_stored": false,
+    "user_data_preserved": true,
+    "user_policy_preserved": true,
+    "unmanaged_files_preserved": true,
+    "automatic_rollback": true,
+    "exact_plan_required": true
+  },
+  "verification": {
+    "hermetic_tests": "passed",
+    "foundation": "passed",
+    "doctor": "passed",
+    "offline_install": "passed",
+    "clean_installation": "passed",
+    "existing_installation": "passed",
+    "conflict_scenarios": "passed",
+    "rollback": "passed",
+    "client_parity": "passed"
+  },
+  "next_phase": {
+    "phase_id": "phase-4",
+    "plan_ref": "docs/plans/ROADMAP.md",
+    "implementation_started": false
+  }
+}

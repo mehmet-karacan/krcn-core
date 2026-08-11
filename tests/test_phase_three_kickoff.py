@@ -13,10 +13,10 @@ def load_json(path: Path) -> dict:
 
 
 class PhaseThreeKickoffTests(unittest.TestCase):
-    def test_current_work_points_to_active_phase_three_plan(self) -> None:
+    def test_current_work_preserves_phase_three_plan_identity(self) -> None:
         current = load_json(REPO_ROOT / ".ai" / "current-work.json")
         self.assertEqual("phase-3", current["phase_id"])
-        self.assertEqual("active", current["status"])
+        self.assertEqual("completed", current["status"])
         self.assertEqual(
             "docs/plans/PLAN-004-GUVENLI-MERGE-INTO-MOTORU.md",
             current["plan_ref"],

@@ -3,7 +3,7 @@
   "schema_version": 1,
   "phase_id": "phase-3",
   "workstream_id": "safe-merge-into-engine",
-  "status": "active",
+  "status": "completed",
   "goal": "Implement inspect, diff, exact-plan merge, backup, migration, verification, and rollback while preserving local data",
   "plan_ref": "docs/plans/PLAN-004-GUVENLI-MERGE-INTO-MOTORU.md",
   "progress_refs": [
@@ -29,13 +29,16 @@
     "docs/progress/PHASE-3-RELEASE-DIFF.md",
     "docs/progress/PHASE-3-MERGE-PLAN.md",
     "docs/progress/PHASE-3-BACKUP-JOURNAL.md",
-    "docs/progress/PHASE-3-MANAGED-APPLY-MIGRATION.md"
+    "docs/progress/PHASE-3-MANAGED-APPLY-MIGRATION.md",
+    "docs/progress/PHASE-3-DERIVED-VERIFY-ROLLBACK.md",
+    "docs/progress/PHASE-3-CLIENT-SERVICES.md",
+    "docs/progress/PHASE-3-INTEGRATION-TESTS.md",
+    "docs/progress/PHASE-3-COMPLETION.md"
   ],
   "next_actions": [
-    "run trusted derived actions and mandatory post-merge verification",
-    "implement automatic and explicit rollback from verified backups"
+    "open a separate Phase 4 plan before implementing context, knowledge, and memory capabilities"
   ],
-  "baseline_commit": "278fdac",
+  "baseline_commit": "2a2affe",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

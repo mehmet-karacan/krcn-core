@@ -63,6 +63,42 @@ class MergeApplicationServiceTests(unittest.TestCase):
             json.dumps(self.state.as_payload(), sort_keys=True),
             encoding="utf-8",
         )
+        policy_directory = self.root / ".krcn" / "policies"
+        policy_directory.mkdir()
+        self.policy_path = policy_directory / "database-read-only.json"
+        self.policy_path.write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "policy_id": "database-read-only",
+                    "rules": [{"effect": "deny", "operations": ["delete"]}],
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        integration_directory = self.root / ".krcn" / "integrations"
+        integration_directory.mkdir()
+        self.integration_path = integration_directory / "sample.json"
+        self.integration_path.write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "integration_id": "sample",
+                    "secret_refs": {"credential": "keyring://sample/credential"},
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        secret_directory = self.root / ".krcn" / "secrets"
+        secret_directory.mkdir()
+        self.secret_path = secret_directory / "credential.ref"
+        self.secret_path.write_bytes(b"local-only\n")
+        self.unmanaged_path = self.root / "notes.local"
+        self.unmanaged_path.write_text("Preserve me\n", encoding="utf-8")
         payload = self.release / "payload"
         (payload / "src").mkdir(parents=True)
         (payload / "README.md").write_bytes(self.new_readme)
@@ -74,7 +110,7 @@ class MergeApplicationServiceTests(unittest.TestCase):
             "core_version": "0.2.0",
             "compatibility": {
                 "minimum_core_version": "0.1.0",
-                "maximum_core_version": "0.1.0",
+                "maximum_core_version": "0.2.0",
             },
             "source_commit": "b" * 40,
             "files": [
@@ -145,6 +181,10 @@ class MergeApplicationServiceTests(unittest.TestCase):
         self.assertNotIn(str(self.release), json.dumps(plans[0]))
 
     def test_shared_service_inspects_merges_verifies_and_rolls_back(self) -> None:
+        policy_before = self.policy_path.read_bytes()
+        integration_before = self.integration_path.read_bytes()
+        secret_before = self.secret_path.read_bytes()
+        unmanaged_before = self.unmanaged_path.read_bytes()
         inspection = self.service.execute(
             ServiceRequest(
                 "plugin",
@@ -181,6 +221,10 @@ class MergeApplicationServiceTests(unittest.TestCase):
             )
         )
         self.assertEqual("completed", applied.data["result"]["status"])
+        self.assertEqual(policy_before, self.policy_path.read_bytes())
+        self.assertEqual(integration_before, self.integration_path.read_bytes())
+        self.assertEqual(secret_before, self.secret_path.read_bytes())
+        self.assertEqual(unmanaged_before, self.unmanaged_path.read_bytes())
         verified = self.service.execute(
             ServiceRequest(
                 "claude",
@@ -211,6 +255,82 @@ class MergeApplicationServiceTests(unittest.TestCase):
         self.assertEqual("rolled-back", rolled_back.data["result"]["status"])
         self.assertEqual(self.old_readme, (self.root / "README.md").read_bytes())
         self.assertFalse((self.root / "src" / "new.py").exists())
+        self.assertEqual(policy_before, self.policy_path.read_bytes())
+        self.assertEqual(integration_before, self.integration_path.read_bytes())
+        self.assertEqual(secret_before, self.secret_path.read_bytes())
+        self.assertEqual(unmanaged_before, self.unmanaged_path.read_bytes())
+
+    def test_reapplying_same_release_is_a_true_no_op(self) -> None:
+        planned = self.service.execute(
+            ServiceRequest("sdk", "release.merge", self.release_arguments)
+        )
+        self.service.execute(
+            ServiceRequest(
+                "sdk",
+                "release.merge",
+                self.release_arguments,
+                apply=True,
+                expected_plan_id=planned.data["plan"]["plan_id"],
+            )
+        )
+        before = {
+            path.relative_to(self.root).as_posix(): sha256(path.read_bytes())
+            for path in self.root.rglob("*")
+            if path.is_file()
+        }
+        repeated = self.service.execute(
+            ServiceRequest("plugin", "release.merge", self.release_arguments)
+        )
+        after = {
+            path.relative_to(self.root).as_posix(): sha256(path.read_bytes())
+            for path in self.root.rglob("*")
+            if path.is_file()
+        }
+        self.assertEqual("ok", repeated.status)
+        self.assertTrue(repeated.data["no_op"])
+        self.assertEqual(before, after)
+
+    def test_local_managed_change_is_reported_as_conflict(self) -> None:
+        (self.root / "README.md").write_text(
+            "Local user change\n",
+            encoding="utf-8",
+        )
+        diff = self.service.execute(
+            ServiceRequest("codex", "release.diff", self.release_arguments)
+        )
+        self.assertFalse(diff.data["diff"]["applicable"])
+        self.assertEqual(
+            "managed-modified",
+            diff.data["diff"]["conflicts"][0]["conflict_code"],
+        )
+
+    def test_interrupted_deployment_blocks_merge_plan(self) -> None:
+        deployments = self.root / ".krcn" / "runtime" / "deployments"
+        deployments.mkdir()
+        (deployments / "deploy-interrupted.json").write_text(
+            json.dumps(
+                {
+                    "deployment_id": "deploy-interrupted",
+                    "status": "applying",
+                }
+            ),
+            encoding="utf-8",
+        )
+        diff = self.service.execute(
+            ServiceRequest("mcp", "release.diff", self.release_arguments)
+        )
+        conflicts = {
+            item["conflict_code"] for item in diff.data["diff"]["conflicts"]
+        }
+        self.assertIn("interrupted-deployment", conflicts)
+
+    def test_untrusted_release_is_rejected_before_planning(self) -> None:
+        arguments = dict(self.release_arguments)
+        arguments["trusted_manifest_sha256"] = "0" * 64
+        with self.assertRaisesRegex(ValueError, "trusted digest"):
+            self.service.execute(
+                ServiceRequest("cli", "release.merge", arguments)
+            )
 
     def test_cli_routes_installation_and_release_through_shared_service(self) -> None:
         result, output, error = self._run_cli(

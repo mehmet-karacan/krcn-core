@@ -21,7 +21,7 @@ Git'ten gelen yeni core sürümünde aşağıdaki işlemler uygulanır:
 
 ## Güncel geliştirme durumu
 
-Faz 1 ve Faz 2 tamamlandı. Faz 3'te installation inspection, release doğrulama, ownership-aware diff, exact-plan merge, backup, migration, derived rebuild, zorunlu doğrulama, otomatik ve açık rollback ile ortak istemci servisleri tamamlandı. Entegrasyon testleri ve Faz 3 kapanış kanıtları hazırlanmaktadır. Yerel referans kaynaklarındaki kullanıcı verileri içeri alınmamıştır.
+Faz 1, Faz 2 ve Faz 3 tamamlandı. Installation inspection, release doğrulama, ownership-aware diff, exact-plan merge, backup, migration, derived rebuild, zorunlu doğrulama, otomatik ve açık rollback ile ortak istemci servisleri çalışır durumdadır. Sıradaki planlı çalışma Faz 4 context, knowledge ve memory katmanıdır. Yerel referans kaynaklarındaki kullanıcı verileri içeri alınmamıştır.
 
 Kök çalışma kuralları için `AGENTS.md`, araçtan bağımsız başlangıç bağlamı için `AI-CONTEXT.md` dosyasını okuyun. Codex doğrudan `AGENTS.md` kullanır. Claude Code için `CLAUDE.md` aynı ortak kaynakları içe aktarır. Diğer istemciler ve plugin'ler `.ai/repository-context.json` manifestini okuyabilir.
 

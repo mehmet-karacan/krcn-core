@@ -28,6 +28,7 @@ class DoctorTests(unittest.TestCase):
                 "tracked-local-data",
                 "phase-one-baseline",
                 "phase-two-baseline",
+                "phase-three-baseline",
             },
             {item.check_id for item in checks},
         )
