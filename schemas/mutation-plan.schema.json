@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:mutation-plan:1",
+  "title": "KRCN Core mutation plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "plan_id",
+    "operation",
+    "target_ref",
+    "ownership",
+    "dry_run_required",
+    "approval_required",
+    "reversible"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "operation": { "enum": ["create", "update", "delete", "move"] },
+    "target_ref": { "type": "string", "minLength": 1 },
+    "ownership": {
+      "enum": ["core", "runtime", "user-data", "derived", "secrets", "unmanaged"]
+    },
+    "dry_run_required": { "const": true },
+    "approval_required": { "type": "boolean" },
+    "reversible": { "type": "boolean" }
+  }
+}

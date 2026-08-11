@@ -15,6 +15,7 @@
     "ownership": "config/ownership-manifest.json",
     "source_binding_schema": "schemas/source-binding.schema.json",
     "user_policy_schema": "schemas/user-policy.schema.json",
+    "mutation_plan_schema": "schemas/mutation-plan.schema.json",
     "policy_layers": "docs/specifications/POLICY-LAYERS.md",
     "cli_inventory": ".ai/legacy-cli-inventory.json",
     "provider_policy": "config/provider-policy.json",
