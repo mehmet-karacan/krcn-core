@@ -183,6 +183,7 @@ class DeploymentPlan:
 @dataclass(frozen=True)
 class DeploymentAuthorization:
     plan_id: str
+    approval_id: str | None
     merge_authorization: MergeAuthorization
     support_authorizations: Mapping[str, MutationAuthorization]
     migration_authorizations: Mapping[str, MutationAuthorization]
@@ -623,6 +624,7 @@ def authorize_deployment_plan(
         )
     return DeploymentAuthorization(
         plan_id=plan.plan_id,
+        approval_id=approval_id,
         merge_authorization=merge_authorization,
         support_authorizations=support_authorizations,
         migration_authorizations=migration_authorizations,

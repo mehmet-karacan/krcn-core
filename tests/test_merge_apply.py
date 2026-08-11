@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -22,7 +23,12 @@ from krcn_core.merge_apply import (  # noqa: E402
     apply_managed_files,
     apply_migrations,
 )
+from krcn_core.merge_engine import (  # noqa: E402
+    MergeExecutionError,
+    execute_deployment,
+)
 from krcn_core.verification import verify_and_commit  # noqa: E402
+from krcn_core.verification import VerificationError  # noqa: E402
 from krcn_core.merge_plan import prepare_merge_plan  # noqa: E402
 from krcn_core.migrations import (  # noqa: E402
     MigrationHandler,
@@ -350,6 +356,69 @@ class ManagedApplyAndMigrationTests(unittest.TestCase):
                 plan.deployment_id,
                 self.ownership,
             )
+
+    def test_execution_engine_completes_all_required_stages(self) -> None:
+        plan = prepare_deployment_plan(
+            self.root,
+            self.merge_plan,
+            self.ownership,
+            self.handlers,
+        )
+        authorization = authorize_deployment_plan(
+            plan,
+            expected_plan_id=plan.plan_id,
+            approval_id="merge-approval",
+        )
+        result = execute_deployment(
+            self.root,
+            self.release,
+            self.bundle,
+            plan,
+            authorization,
+            self.ownership,
+        )
+        self.assertEqual("completed", result.verification.status)
+        self.assertIsNotNone(result.migration)
+        self.assertIsNone(result.derived)
+
+    def test_verification_failure_automatically_restores_original_state(self) -> None:
+        original_state = self.state_path.read_bytes()
+        original_workspace = self.workspace_path.read_bytes()
+        original_policy = self.policy_path.read_bytes()
+        plan = prepare_deployment_plan(
+            self.root,
+            self.merge_plan,
+            self.ownership,
+            self.handlers,
+        )
+        authorization = authorize_deployment_plan(
+            plan,
+            expected_plan_id=plan.plan_id,
+            approval_id="merge-approval",
+        )
+        with patch(
+            "krcn_core.merge_engine.verify_and_commit",
+            side_effect=VerificationError("forced verification failure"),
+        ):
+            with self.assertRaises(MergeExecutionError) as captured:
+                execute_deployment(
+                    self.root,
+                    self.release,
+                    self.bundle,
+                    plan,
+                    authorization,
+                    self.ownership,
+                )
+        self.assertTrue(captured.exception.rolled_back)
+        self.assertEqual(self.old_readme, (self.root / "README.md").read_bytes())
+        self.assertEqual(
+            self.old_config,
+            (self.root / "config" / "old.txt").read_bytes(),
+        )
+        self.assertFalse((self.root / "src" / "new.py").exists())
+        self.assertEqual(original_workspace, self.workspace_path.read_bytes())
+        self.assertEqual(original_state, self.state_path.read_bytes())
+        self.assertEqual(original_policy, self.policy_path.read_bytes())
 
 
 if __name__ == "__main__":
