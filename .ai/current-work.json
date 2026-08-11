@@ -62,11 +62,12 @@
     "docs/progress/PHASE-6-SOURCE-REBIND.md",
     "docs/progress/PHASE-6-PORTABLE-BACKUP.md",
     "docs/progress/PHASE-6-PORTABLE-RESTORE.md",
-    "docs/progress/PHASE-6-REPO-LOCAL-MIGRATION.md"
+    "docs/progress/PHASE-6-REPO-LOCAL-MIGRATION.md",
+    "docs/progress/PHASE-6-PLATFORM-CLIENT-PARITY.md"
   ],
   "next_actions": [
-    "verify Windows and macOS path portability through the shared application service",
-    "prove CLI, SDK, MCP, plugin, Codex, and Claude use the same portability operations"
+    "extend doctor, packaging, CI, release, and rollback quality gates for Phase 6",
+    "verify the installed wheel exposes portability and migration services offline"
   ],
   "baseline_commit": "d7d20bc",
   "approval_gates": {

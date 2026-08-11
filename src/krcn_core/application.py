@@ -99,6 +99,7 @@ from .semantic_retrieval import (
     retrieve_semantic,
 )
 from .update_effects import DerivedActionRegistry, MigrationRegistry
+from .user_home import resolve_user_home
 from .verification import verify_installation
 
 
@@ -1261,3 +1262,18 @@ class KrcnApplicationService:
                 approval=approval,
             )
         return authorizations
+
+
+def create_application_service(
+    repo_root: Path,
+    data_root: Path | None = None,
+    **options: object,
+) -> KrcnApplicationService:
+    """Create the shared service with the same portable user home for every client."""
+
+    repository = repo_root.resolve()
+    store = LocalWorkspaceStore(
+        resolve_user_home(data_root).path,
+        OwnershipResolver.from_repository(repository),
+    )
+    return KrcnApplicationService(repository, store, **options)

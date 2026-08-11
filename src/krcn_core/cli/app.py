@@ -10,12 +10,10 @@ from pathlib import Path
 
 from krcn_core.application import (
     ApplicationServiceError,
-    KrcnApplicationService,
     ServiceRequest,
+    create_application_service,
 )
 from krcn_core.doctor import run_doctor
-from krcn_core.local_store import LocalWorkspaceStore
-from krcn_core.mutation_gate import OwnershipResolver
 from krcn_core.repository_context import main as context_main
 from krcn_core.user_home import resolve_user_home
 
@@ -344,11 +342,7 @@ def _run_project_command(args: argparse.Namespace) -> int:
     try:
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
         data_root = resolve_user_home(args.data_root).path
-        store = LocalWorkspaceStore(
-            data_root,
-            OwnershipResolver.from_repository(repo_root),
-        )
-        response = KrcnApplicationService(repo_root, store).execute(
+        response = create_application_service(repo_root, data_root).execute(
             _project_service_request(args)
         )
     except (ApplicationServiceError, OSError, ValueError) as exc:
@@ -401,11 +395,10 @@ def _run_core_service_command(args: argparse.Namespace) -> int:
     try:
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
         installation_root = args.installation.resolve()
-        store = LocalWorkspaceStore(
+        response = create_application_service(
+            repo_root,
             installation_root / ".krcn",
-            OwnershipResolver.from_repository(repo_root),
-        )
-        response = KrcnApplicationService(repo_root, store).execute(
+        ).execute(
             _core_service_request(args)
         )
     except (ApplicationServiceError, OSError, ValueError) as exc:
@@ -468,11 +461,7 @@ def _run_phase_four_service_command(args: argparse.Namespace) -> int:
     try:
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
         data_root = resolve_user_home(args.data_root).path
-        store = LocalWorkspaceStore(
-            data_root,
-            OwnershipResolver.from_repository(repo_root),
-        )
-        response = KrcnApplicationService(repo_root, store).execute(
+        response = create_application_service(repo_root, data_root).execute(
             _phase_four_service_request(args)
         )
     except (ApplicationServiceError, OSError, ValueError) as exc:
@@ -493,10 +482,6 @@ def _run_orchestrator_command(args: argparse.Namespace) -> int:
             raise ApplicationServiceError("orchestrator command is required")
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
         data_root = resolve_user_home(args.data_root).path
-        store = LocalWorkspaceStore(
-            data_root,
-            OwnershipResolver.from_repository(repo_root),
-        )
         request = ServiceRequest(
             client_kind="cli",
             operation=f"orchestrator.{args.orchestrator_command}",
@@ -504,7 +489,7 @@ def _run_orchestrator_command(args: argparse.Namespace) -> int:
             apply=args.apply,
             expected_plan_id=args.expected_plan,
         )
-        response = KrcnApplicationService(repo_root, store).execute(request)
+        response = create_application_service(repo_root, data_root).execute(request)
     except (ApplicationServiceError, OSError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
@@ -526,10 +511,6 @@ def _run_portability_command(args: argparse.Namespace) -> int:
             raise ApplicationServiceError("portability command is required")
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
         data_root = resolve_user_home(args.data_root).path
-        store = LocalWorkspaceStore(
-            data_root,
-            OwnershipResolver.from_repository(repo_root),
-        )
         operation = f"portability.{args.portability_command}"
         if args.portability_command == "backup":
             arguments = {"archive_path": str(args.output.resolve())}
@@ -545,7 +526,7 @@ def _run_portability_command(args: argparse.Namespace) -> int:
             expected_plan_id=args.expected_plan,
             approval_id=args.approval_id,
         )
-        response = KrcnApplicationService(repo_root, store).execute(request)
+        response = create_application_service(repo_root, data_root).execute(request)
     except (ApplicationServiceError, OSError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
