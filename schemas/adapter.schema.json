@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:adapter:1",
+  "title": "KRCN Core adapter descriptor",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "adapter_id",
+    "version",
+    "source_kinds",
+    "resource_type",
+    "operations"
+  ],
+  "properties": {
+    "schema_ref": { "const": "schemas/adapter.schema.json" },
+    "adapter_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "source_kinds": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["project", "document", "directory", "database", "integration"] }
+    },
+    "resource_type": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "operation_id",
+          "required_capabilities",
+          "default_effect",
+          "mutation_effect",
+          "network_effect"
+        ],
+        "properties": {
+          "operation_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "required_capabilities": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "enum": ["read", "write", "metadata", "search", "index", "execute"] }
+          },
+          "default_effect": { "enum": ["allow", "deny"] },
+          "mutation_effect": { "type": "boolean" },
+          "network_effect": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

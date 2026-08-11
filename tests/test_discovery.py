@@ -14,10 +14,15 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from krcn_core.discovery import (  # noqa: E402
     DiscoveryError,
+    LOCAL_DISCOVERY_ADAPTER,
     discover_local_source,
     load_discovery_policy,
 )
 from krcn_core.source_bindings import parse_source_binding  # noqa: E402
+from krcn_core.adapter_gate import (  # noqa: E402
+    authorize_adapter_operation,
+    prepare_adapter_operation,
+)
 
 
 def tree_snapshot(root: Path) -> dict[str, tuple[int, int, str]]:
@@ -49,6 +54,17 @@ def binding_for(root: Path, *, access: str = "read-only", capabilities=None):
     )
 
 
+def discover(binding, policy):
+    request = prepare_adapter_operation(
+        LOCAL_DISCOVERY_ADAPTER,
+        binding,
+        "discover",
+        [],
+    )
+    authorization = authorize_adapter_operation(request)
+    return discover_local_source(binding, policy, authorization)
+
+
 class ReadOnlyDiscoveryTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -74,8 +90,8 @@ class ReadOnlyDiscoveryTests(unittest.TestCase):
 
     def test_discovery_is_deterministic_read_only_and_redacted(self) -> None:
         before = tree_snapshot(self.root)
-        first = discover_local_source(binding_for(self.root), self.policy)
-        second = discover_local_source(binding_for(self.root), self.policy)
+        first = discover(binding_for(self.root), self.policy)
+        second = discover(binding_for(self.root), self.policy)
         self.assertEqual(before, tree_snapshot(self.root))
         self.assertEqual(first.root_digest, second.root_digest)
         payload = first.as_dict()
@@ -89,7 +105,7 @@ class ReadOnlyDiscoveryTests(unittest.TestCase):
         self.assertGreaterEqual(first.skipped["blocked"], 2)
 
     def test_discovery_returns_hashes_not_file_content(self) -> None:
-        result = discover_local_source(binding_for(self.root), self.policy)
+        result = discover(binding_for(self.root), self.policy)
         serialized = json.dumps(result.as_dict())
         self.assertNotIn("Secret-like sample", serialized)
         for item in result.files:
@@ -98,7 +114,7 @@ class ReadOnlyDiscoveryTests(unittest.TestCase):
     def test_large_files_are_skipped(self) -> None:
         policy = dict(self.policy)
         policy["maximum_text_file_bytes"] = 4
-        result = discover_local_source(binding_for(self.root), policy)
+        result = discover(binding_for(self.root), policy)
         self.assertGreater(result.skipped["too_large"], 0)
 
     def test_read_write_binding_is_rejected(self) -> None:
@@ -108,12 +124,19 @@ class ReadOnlyDiscoveryTests(unittest.TestCase):
             capabilities=["read", "write", "metadata"],
         )
         with self.assertRaisesRegex(DiscoveryError, "read-only"):
-            discover_local_source(binding, self.policy)
+            request = prepare_adapter_operation(
+                LOCAL_DISCOVERY_ADAPTER, binding, "discover", []
+            )
+            discover_local_source(
+                binding,
+                self.policy,
+                authorize_adapter_operation(request),
+            )
 
     def test_missing_metadata_capability_is_rejected(self) -> None:
         binding = binding_for(self.root, capabilities=["read"])
-        with self.assertRaisesRegex(DiscoveryError, "metadata"):
-            discover_local_source(binding, self.policy)
+        with self.assertRaisesRegex(ValueError, "metadata"):
+            discover(binding, self.policy)
 
     def test_symlink_is_not_followed_when_supported(self) -> None:
         target = self.root / "src" / "main.py"
@@ -122,7 +145,7 @@ class ReadOnlyDiscoveryTests(unittest.TestCase):
             os.symlink(target, link)
         except OSError:
             self.skipTest("symbolic links are unavailable in this environment")
-        result = discover_local_source(binding_for(self.root), self.policy)
+        result = discover(binding_for(self.root), self.policy)
         self.assertNotIn("linked.py", {item.relative_path for item in result.files})
         self.assertEqual(1, result.skipped["symlink"])
 

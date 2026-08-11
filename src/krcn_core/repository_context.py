@@ -23,6 +23,8 @@ REQUIRED_CANONICAL_KEYS = {
     "local_record_schema",
     "onboarding_plan_schema",
     "discovery_result_schema",
+    "adapter_schema",
+    "adapter_operation_schema",
     "policy_layers",
     "cli_inventory",
     "cli_baseline",

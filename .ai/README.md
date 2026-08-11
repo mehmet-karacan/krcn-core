@@ -5,6 +5,7 @@ This directory contains versioned, machine-readable defaults used by KRCN Core.
 - `engines/` declares core engine responsibilities.
 - `policies/` declares safe execution defaults.
 - `registry/agents/` declares generic agent roles and capabilities.
+- `registry/adapters/` declares integration adapter operations and required capabilities.
 - `repository-context.json` is the client-neutral repository context manifest.
 - `current-work.json` points to the active plan, progress records, and next actions.
 - `legacy-cli-inventory.json` records reviewed legacy behavior without importing source code.

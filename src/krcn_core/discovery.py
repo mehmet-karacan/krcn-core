@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Mapping
 
+from .adapter_gate import AdapterAuthorization, AdapterDescriptor, AdapterOperation
 from .foundation import load_json
 from .source_bindings import SourceBinding
 
@@ -33,6 +34,23 @@ CONFIGURATION_NAMES = {
 
 class DiscoveryError(ValueError):
     """Raised when a source cannot be inspected within the safe boundary."""
+
+
+LOCAL_DISCOVERY_ADAPTER = AdapterDescriptor(
+    adapter_id="local-discovery",
+    version="1.0.0",
+    source_kinds=("project", "document", "directory"),
+    resource_type="source",
+    operations=(
+        AdapterOperation(
+            operation_id="discover",
+            required_capabilities=("read", "metadata"),
+            default_effect="allow",
+            mutation_effect=False,
+            network_effect=False,
+        ),
+    ),
+)
 
 
 @dataclass(frozen=True)
@@ -136,11 +154,23 @@ def _stable_hash(path: Path) -> tuple[int, str] | None:
 def discover_local_source(
     binding: SourceBinding,
     policy: dict,
+    authorization: AdapterAuthorization,
     *,
     maximum_files: int = 10_000,
 ) -> DiscoveryResult:
     """Inspect a local source without changing it or exposing its root path."""
 
+    request = authorization.request
+    if (
+        request.adapter_id != LOCAL_DISCOVERY_ADAPTER.adapter_id
+        or request.operation != "discover"
+        or request.binding_id != binding.binding_id
+        or request.binding_revision != binding.revision
+        or request.policy_effect == "deny"
+        or request.mutation_effect
+        or request.network_effect
+    ):
+        raise DiscoveryError("adapter authorization does not match discovery request")
     if binding.locator.kind != "local-path":
         raise DiscoveryError("discovery requires a local-path source binding")
     if binding.default_access != "read-only" or "write" in binding.capabilities:

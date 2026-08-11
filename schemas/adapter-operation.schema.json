@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:adapter-operation:1",
+  "title": "KRCN Core adapter operation request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "adapter_id",
+    "operation",
+    "binding_id",
+    "binding_revision",
+    "required_capabilities",
+    "policy_effect",
+    "matched_policy_ids",
+    "matched_rule_ids",
+    "mutation_effect",
+    "network_effect"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "request_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "adapter_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "operation": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "binding_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "binding_revision": { "type": "integer", "minimum": 1 },
+    "required_capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "enum": ["read", "write", "metadata", "search", "index", "execute"] }
+    },
+    "policy_effect": { "enum": ["allow", "deny", "require-approval"] },
+    "matched_policy_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+    },
+    "matched_rule_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+    },
+    "mutation_effect": { "type": "boolean" },
+    "network_effect": { "type": "boolean" }
+  }
+}

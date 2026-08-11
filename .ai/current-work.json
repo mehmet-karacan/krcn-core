@@ -16,13 +16,14 @@
     "docs/progress/PHASE-2-KICKOFF.md",
     "docs/progress/PHASE-2-LOCAL-STORE.md",
     "docs/progress/PHASE-2-READ-ONLY-ONBOARDING.md",
-    "docs/progress/PHASE-2-READ-ONLY-DISCOVERY.md"
+    "docs/progress/PHASE-2-READ-ONLY-DISCOVERY.md",
+    "docs/progress/PHASE-2-ADAPTER-GATE.md"
   ],
   "next_actions": [
-    "define adapter capabilities on source bindings and shared safety gates",
-    "define integration metadata with secret references and no literal credentials"
+    "define integration metadata with secret references and no literal credentials",
+    "implement revision-aware rescan and change detection"
   ],
-  "baseline_commit": "6e7cd8e",
+  "baseline_commit": "f254d39",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

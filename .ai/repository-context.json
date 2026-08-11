@@ -20,6 +20,8 @@
     "local_record_schema": "schemas/local-record.schema.json",
     "onboarding_plan_schema": "schemas/onboarding-plan.schema.json",
     "discovery_result_schema": "schemas/discovery-result.schema.json",
+    "adapter_schema": "schemas/adapter.schema.json",
+    "adapter_operation_schema": "schemas/adapter-operation.schema.json",
     "policy_layers": "docs/specifications/POLICY-LAYERS.md",
     "cli_inventory": ".ai/legacy-cli-inventory.json",
     "cli_baseline": ".ai/cli-baseline.json",
