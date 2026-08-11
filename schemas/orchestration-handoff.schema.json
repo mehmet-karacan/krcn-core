@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:orchestration-handoff:1",
+  "title": "KRCN Core client-neutral orchestration handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_ref", "schema_version", "handoff_id", "task_id", "plan_id", "authorization_id", "state_digest", "event_head_digest", "status", "completed_step_ids", "pending_step_ids", "approval_triggers", "failure_codes", "context_refs", "resume_token", "revision", "handoff_digest"],
+  "properties": {
+    "schema_ref": { "const": "schemas/orchestration-handoff.schema.json" },
+    "schema_version": { "const": 1 },
+    "handoff_id": { "$ref": "#/$defs/id" },
+    "task_id": { "$ref": "#/$defs/id" },
+    "plan_id": { "$ref": "#/$defs/digest" },
+    "authorization_id": { "$ref": "#/$defs/nullableDigest" },
+    "state_digest": { "$ref": "#/$defs/digest" },
+    "event_head_digest": { "$ref": "#/$defs/digest" },
+    "status": { "enum": ["planned", "awaiting-approval", "authorized", "running", "verifying", "completed", "failed", "interrupted", "blocked"] },
+    "completed_step_ids": { "$ref": "#/$defs/ids" },
+    "pending_step_ids": { "$ref": "#/$defs/ids" },
+    "approval_triggers": { "$ref": "#/$defs/ids" },
+    "failure_codes": { "$ref": "#/$defs/ids" },
+    "context_refs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "resume_token": { "$ref": "#/$defs/digest" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "handoff_digest": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "nullableDigest": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+    "ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/id" } }
+  }
+}

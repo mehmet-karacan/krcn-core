@@ -50,6 +50,26 @@ COLLECTIONS = {
         "user-data",
     ),
     "memory": ("record_id", "memory", "user-data"),
+    "orchestration-states": (
+        "state_id",
+        "runtime/orchestration-states",
+        "runtime",
+    ),
+    "orchestration-events": (
+        "event_id",
+        "events/orchestration",
+        "runtime",
+    ),
+    "orchestration-checkpoints": (
+        "checkpoint_record_id",
+        "checkpoints/orchestration",
+        "runtime",
+    ),
+    "orchestration-handoffs": (
+        "handoff_id",
+        "runtime/orchestration-handoffs",
+        "runtime",
+    ),
 }
 INFORMATION_COLLECTIONS = {
     "authoritative-sources": "authoritative-source",
@@ -142,6 +162,24 @@ def _validate_record_identity(
         except DependencyRetrievalError as exc:
             raise LocalStoreError(str(exc)) from exc
         return relation.revision
+    if record_type.startswith("orchestration-"):
+        from .orchestration_state import (
+            parse_orchestration_checkpoint,
+            parse_orchestration_event,
+            parse_orchestration_handoff,
+            parse_orchestration_state,
+        )
+
+        try:
+            if record_type == "orchestration-states":
+                return parse_orchestration_state(payload).revision
+            if record_type == "orchestration-events":
+                return parse_orchestration_event(payload).revision
+            if record_type == "orchestration-checkpoints":
+                return parse_orchestration_checkpoint(payload)[0]
+            return parse_orchestration_handoff(payload).revision
+        except ValueError as exc:
+            raise LocalStoreError(str(exc)) from exc
     expected_information_class = INFORMATION_COLLECTIONS.get(record_type)
     if expected_information_class is not None:
         try:

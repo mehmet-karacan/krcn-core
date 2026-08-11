@@ -51,11 +51,12 @@
     "docs/progress/PHASE-5-TASK-PLANNER.md",
     "docs/progress/PHASE-5-TASK-AUTHORIZATION.md",
     "docs/progress/PHASE-5-WORKER-EXECUTION.md",
-    "docs/progress/PHASE-5-TASK-VERIFICATION.md"
+    "docs/progress/PHASE-5-TASK-VERIFICATION.md",
+    "docs/progress/PHASE-5-ORCHESTRATION-STATE.md"
   ],
   "next_actions": [
-    "persist orchestration state, events, checkpoints, and handoff records in local runtime storage",
-    "resume interrupted tasks without chat history or duplicate effects"
+    "expose orchestration operations through the shared application service",
+    "keep CLI, SDK, MCP, plugin, Codex, and Claude adapters policy-neutral"
   ],
   "baseline_commit": "c16c333",
   "approval_gates": {

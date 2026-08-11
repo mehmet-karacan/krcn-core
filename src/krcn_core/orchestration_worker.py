@@ -186,6 +186,122 @@ class WorkerHandlerRegistry:
         return self._handlers.get(handler_id)
 
 
+def parse_worker_execution(payload: object) -> WorkerExecution:
+    """Parse persisted worker records; plan-bound validation remains separate."""
+
+    if not isinstance(payload, dict) or set(payload) != {
+        "schema_ref",
+        "schema_version",
+        "checkpoint",
+        "journal",
+        "replayed",
+    }:
+        raise WorkerExecutionError("worker execution fields are invalid")
+    if (
+        payload.get("schema_ref") != "schemas/worker-execution.schema.json"
+        or payload.get("schema_version") != 1
+        or not isinstance(payload.get("replayed"), bool)
+    ):
+        raise WorkerExecutionError("worker execution header is invalid")
+    checkpoint_payload = payload.get("checkpoint")
+    journal_payload = payload.get("journal")
+    checkpoint_fields = {
+        "checkpoint_id",
+        "task_id",
+        "plan_id",
+        "authorization_id",
+        "step_id",
+        "step_digest",
+        "idempotency_key",
+        "status",
+        "result_digest",
+        "failure_digest",
+    }
+    journal_fields = {
+        "journal_id",
+        "task_id",
+        "plan_id",
+        "authorization_id",
+        "step_id",
+        "handler_id",
+        "input_digest",
+        "idempotency_key",
+        "status",
+        "effects",
+        "result_digest",
+        "failure_digest",
+    }
+    if not isinstance(checkpoint_payload, dict) or set(checkpoint_payload) != checkpoint_fields:
+        raise WorkerExecutionError("worker checkpoint fields are invalid")
+    if not isinstance(journal_payload, dict) or set(journal_payload) != journal_fields:
+        raise WorkerExecutionError("worker journal fields are invalid")
+    digest_fields = {
+        "checkpoint_id",
+        "plan_id",
+        "authorization_id",
+        "step_digest",
+        "idempotency_key",
+    }
+    if any(not SHA256.fullmatch(str(checkpoint_payload.get(item, ""))) for item in digest_fields):
+        raise WorkerExecutionError("worker checkpoint digest is invalid")
+    for item in ("task_id", "step_id"):
+        if not IDENTIFIER.fullmatch(str(checkpoint_payload.get(item, ""))):
+            raise WorkerExecutionError("worker checkpoint identifier is invalid")
+    effects_payload = journal_payload.get("effects")
+    if not isinstance(effects_payload, list):
+        raise WorkerExecutionError("worker effects are invalid")
+    effects = []
+    effect_fields = {
+        "effect_id",
+        "effect_type",
+        "mutation_plan_id",
+        "provider_request_id",
+        "evidence_digests",
+    }
+    for item in effects_payload:
+        if not isinstance(item, dict) or set(item) != effect_fields:
+            raise WorkerExecutionError("worker effect fields are invalid")
+        evidence = item.get("evidence_digests")
+        if not isinstance(evidence, list) or any(not SHA256.fullmatch(str(value)) for value in evidence):
+            raise WorkerExecutionError("worker effect evidence is invalid")
+        effects.append(
+            WorkerEffect(
+                str(item.get("effect_id")),
+                str(item.get("effect_type")),
+                item.get("mutation_plan_id") if isinstance(item.get("mutation_plan_id"), str) else None,
+                item.get("provider_request_id") if isinstance(item.get("provider_request_id"), str) else None,
+                tuple(evidence),
+            )
+        )
+    checkpoint = WorkerCheckpoint(
+        str(checkpoint_payload["checkpoint_id"]),
+        str(checkpoint_payload["task_id"]),
+        str(checkpoint_payload["plan_id"]),
+        str(checkpoint_payload["authorization_id"]),
+        str(checkpoint_payload["step_id"]),
+        str(checkpoint_payload["step_digest"]),
+        str(checkpoint_payload["idempotency_key"]),
+        str(checkpoint_payload["status"]),
+        checkpoint_payload["result_digest"] if isinstance(checkpoint_payload["result_digest"], str) else None,
+        checkpoint_payload["failure_digest"] if isinstance(checkpoint_payload["failure_digest"], str) else None,
+    )
+    journal = WorkerEffectJournal(
+        str(journal_payload["journal_id"]),
+        str(journal_payload["task_id"]),
+        str(journal_payload["plan_id"]),
+        str(journal_payload["authorization_id"]),
+        str(journal_payload["step_id"]),
+        str(journal_payload["handler_id"]),
+        str(journal_payload["input_digest"]),
+        str(journal_payload["idempotency_key"]),
+        str(journal_payload["status"]),
+        tuple(effects),
+        journal_payload["result_digest"] if isinstance(journal_payload["result_digest"], str) else None,
+        journal_payload["failure_digest"] if isinstance(journal_payload["failure_digest"], str) else None,
+    )
+    return WorkerExecution(checkpoint, journal, bool(payload["replayed"]))
+
+
 def _contains_sensitive_value(value: object) -> bool:
     if isinstance(value, Mapping):
         return any(
