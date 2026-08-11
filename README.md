@@ -8,6 +8,65 @@ KRCN Core'un temel yaklaşımı ve özgün mimarisi Mehmet KARACAN tarafından o
 
 Kullanıcı bir CLI'a veya yapay zekâya hedefini doğal dille anlatır. Sistem gerekli görev tanımını, kaynak ilişkilerini, bağlamı, güvenlik sınırlarını ve doğrulama adımlarını üretir. Bunu yaparken mevcut kullanıcı verisini korur ve yalnızca kontrollü core güncellemeleri uygular.
 
+## Mimari genel görünüm
+
+Aşağıdaki görünüm, Mehmet KARACAN tarafından oluşturulan özgün mimarinin ana çalışma ve veri sahipliği sınırlarını özetler:
+
+```mermaid
+flowchart TB
+    U["Kullanıcı hedefi"] --> C["CLI, Codex, Claude, MCP veya plugin"]
+
+    subgraph CORE["Git ile sürümlenen KRCN Core"]
+        V["Kod, şema, migration ve teknik belgeler"]
+        R["Ortak bağlam ve intent yönlendirmesi"]
+        A["Transport bağımsız application service"]
+        G["Policy, capability, dry-run, exact plan ve approval kapıları"]
+        X["Context, knowledge, memory ve orchestrator"]
+        M["Merge, migration, verify ve rollback"]
+        R --> A
+        A --> G
+        G --> X
+        G --> M
+        M --> V
+    end
+
+    subgraph HOME["KRCN kullanıcı veri kökü"]
+        P["Workspace, project ve source binding kayıtları"]
+        D["Kullanıcı belgeleri, talepler, kararlar ve policy kayıtları"]
+        S["Runtime, checkpoint ve yeniden üretilebilir derived state"]
+    end
+
+    subgraph EXTERNAL["Yerinde kullanılan dış kaynaklar"]
+        E["Proje dizinleri"]
+        DB["Veritabanları ve entegrasyonlar"]
+    end
+
+    C --> R
+    G -->|"Onaylı yerel kayıt"| P
+    X --> D
+    X --> S
+    E -->|"Varsayılan salt okunur binding"| P
+    DB -->|"Policy ve capability kontrollü adapter"| P
+```
+
+### Veri sahipliği haritası
+
+| Alan | Konum | Temel kural |
+| --- | --- | --- |
+| Ürün çekirdeği | Git repository | Kod, şema, migration, policy tanımı ve teknik belgeler sürümlenir. |
+| Kullanıcı verisi | `KRCN_HOME` | Projeler, belgeler, talepler, kararlar, memory ve kullanıcı policy'leri korunur. |
+| Runtime ve derived state | `KRCN_HOME` | İş durumu korunur; türetilmiş içerik gerektiğinde yeniden üretilebilir. |
+| Dış proje ve kaynaklar | Kendi fiziksel dizinleri | Yerinde okunur, KRCN içine kopyalanmaz ve varsayılan olarak değiştirilmez. |
+| Secret değerleri | Yerel veya harici secret store | Git'e, loglara, context paketlerine veya portable backup içine yazılmaz. |
+
+### Bir isteğin çalışma akışı
+
+1. İstemci doğal dil hedefini ortak bağlamla birlikte application service katmanına iletir.
+2. Sistem ilgili proje, kaynak, policy, capability ve mevcut çalışma durumunu çözümler.
+3. Yan etkiler dry-run ve exact plan olarak görünür hale getirilir.
+4. Gereken kullanıcı onayından sonra işlem ortak servis üzerinden uygulanır.
+5. Sonuç kanıtlarla doğrulanır; kullanıcı verisi ve dış kaynak sınırları korunur.
+
 ## Güncelleme ilkesi
 
 Git'ten gelen yeni core sürümünde aşağıdaki işlemler uygulanır:
