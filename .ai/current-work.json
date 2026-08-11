@@ -36,11 +36,12 @@
     "docs/progress/PHASE-3-COMPLETION.md",
     "docs/progress/PHASE-4-KICKOFF.md",
     "docs/progress/PHASE-4-INFORMATION-RECORDS.md",
-    "docs/progress/PHASE-4-KNOWLEDGE-CATALOG.md"
+    "docs/progress/PHASE-4-KNOWLEDGE-CATALOG.md",
+    "docs/progress/PHASE-4-EXACT-RETRIEVAL.md"
   ],
   "next_actions": [
-    "implement deterministic exact retrieval over current catalog records",
-    "rank exact matches by authority, availability, revision, and evidence"
+    "build dependency graph retrieval over exact catalog results",
+    "enforce direction, relation, depth, cycle, stale-edge, and budget rules"
   ],
   "baseline_commit": "6005611",
   "approval_gates": {
