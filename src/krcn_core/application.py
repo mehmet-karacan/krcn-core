@@ -64,6 +64,12 @@ from .onboarding import (
     apply_read_only_onboarding,
     prepare_read_only_onboarding,
 )
+from .orchestration_service import (
+    ORCHESTRATION_OPERATIONS,
+    OrchestrationApplicationService,
+)
+from .orchestration_verifier import VerifierHandlerRegistry
+from .orchestration_worker import WorkerHandlerRegistry
 from .policies import load_user_policies
 from .provider_gate import ProviderApproval, load_provider_gate_policy
 from .rescan import apply_rescan, prepare_rescan
@@ -105,7 +111,7 @@ OPERATIONS = {
     "memory.review",
     "memory.persist",
     "memory.lifecycle",
-}
+} | ORCHESTRATION_OPERATIONS
 
 
 class ApplicationServiceError(ValueError):
@@ -256,6 +262,8 @@ class KrcnApplicationService:
         migration_handlers: MigrationHandlerRegistry | None = None,
         derived_handlers: DerivedActionHandlerRegistry | None = None,
         semantic_remote_scorers: Mapping[str, RemoteSemanticScorer] | None = None,
+        orchestration_worker_handlers: WorkerHandlerRegistry | None = None,
+        orchestration_verifier_handlers: VerifierHandlerRegistry | None = None,
     ) -> None:
         self._repo_root = repo_root.resolve()
         self._store = store
@@ -277,8 +285,27 @@ class KrcnApplicationService:
         ):
             raise ApplicationServiceError("semantic remote scorers are invalid")
         self._semantic_remote_scorers = scorers
+        self._orchestration = OrchestrationApplicationService(
+            self._repo_root,
+            self._store,
+            worker_handlers=orchestration_worker_handlers,
+            verifier_handlers=orchestration_verifier_handlers,
+        )
 
     def execute(self, request: ServiceRequest) -> ServiceResponse:
+        if request.operation in ORCHESTRATION_OPERATIONS:
+            status, data = self._orchestration.execute(
+                request.operation,
+                request.arguments,
+                apply=request.apply,
+                expected_plan_id=request.expected_plan_id,
+            )
+            return ServiceResponse(
+                request_id=request.request_id,
+                operation=request.operation,
+                status=status,
+                data=data,
+            )
         handlers = {
             "installation.inspect": self._inspect_installation,
             "installation.verify": self._verify_installation,

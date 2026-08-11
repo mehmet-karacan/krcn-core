@@ -27,7 +27,15 @@
         "memory.propose",
         "memory.review",
         "memory.persist",
-        "memory.lifecycle"
+        "memory.lifecycle",
+        "orchestrator.intent",
+        "orchestrator.plan",
+        "orchestrator.authorize",
+        "orchestrator.start",
+        "orchestrator.execute",
+        "orchestrator.verify",
+        "orchestrator.status",
+        "orchestrator.resume"
       ]
     },
     "arguments": { "type": "object", "additionalProperties": true },

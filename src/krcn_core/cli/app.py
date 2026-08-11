@@ -177,6 +177,33 @@ def build_parser() -> argparse.ArgumentParser:
             help=f"Plan or apply shared memory {operation} from a JSON request",
         )
         _add_phase_four_options(command, mutation=True)
+    orchestrator = subparsers.add_parser(
+        "orchestrator",
+        help="Use the shared client-neutral orchestration service",
+    )
+    orchestrator_commands = orchestrator.add_subparsers(
+        dest="orchestrator_command"
+    )
+    for operation in (
+        "intent",
+        "plan",
+        "authorize",
+        "start",
+        "execute",
+        "verify",
+        "status",
+        "resume",
+    ):
+        command = orchestrator_commands.add_parser(
+            operation,
+            help=f"Run shared orchestrator {operation} from a JSON request",
+        )
+        command.add_argument("--repo", type=Path)
+        command.add_argument("--data-root", type=Path)
+        command.add_argument("--request-file", type=Path, required=True)
+        command.add_argument("--format", choices=("text", "json"), default="json")
+        command.add_argument("--apply", action="store_true")
+        command.add_argument("--expected-plan")
     return parser
 
 
@@ -420,6 +447,35 @@ def _run_phase_four_service_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_orchestrator_command(args: argparse.Namespace) -> int:
+    try:
+        if args.orchestrator_command is None:
+            raise ApplicationServiceError("orchestrator command is required")
+        repo_root = args.repo.resolve() if args.repo else discover_repo_root()
+        data_root = args.data_root.resolve() if args.data_root else repo_root / ".krcn"
+        store = LocalWorkspaceStore(
+            data_root,
+            OwnershipResolver.from_repository(repo_root),
+        )
+        request = ServiceRequest(
+            client_kind="cli",
+            operation=f"orchestrator.{args.orchestrator_command}",
+            arguments=_load_phase_four_arguments(args.request_file),
+            apply=args.apply,
+            expected_plan_id=args.expected_plan,
+        )
+        response = KrcnApplicationService(repo_root, store).execute(request)
+    except (ApplicationServiceError, OSError, ValueError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+    if args.format == "json":
+        print(json.dumps(response.as_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(f"{response.status}\t{response.operation}")
+        print(json.dumps(response.data, ensure_ascii=False, indent=2))
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -459,6 +515,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command in {"knowledge", "context-package", "memory"}:
         return _run_phase_four_service_command(args)
+
+    if args.command == "orchestrator":
+        return _run_orchestrator_command(args)
 
     if args.command != "catalog":
         parser.print_help()
