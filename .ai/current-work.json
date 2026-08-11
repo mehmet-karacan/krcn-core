@@ -13,14 +13,15 @@
     "docs/progress/PACKAGE-2-CLI-INVENTORY.md",
     "docs/progress/PACKAGE-2-STAGING-BASELINE.md",
     "docs/progress/PHASE-1-COMPLETION.md",
-    "docs/progress/PHASE-2-KICKOFF.md"
+    "docs/progress/PHASE-2-KICKOFF.md",
+    "docs/progress/PHASE-2-LOCAL-STORE.md"
   ],
   "next_actions": [
-    "implement an atomic revision-aware local workspace record store",
     "implement synthetic read-only project onboarding through source bindings",
-    "define adapter capabilities on source bindings and shared safety gates"
+    "define adapter capabilities on source bindings and shared safety gates",
+    "implement read-only project and document discovery with synthetic fixtures"
   ],
-  "baseline_commit": "4a6981d",
+  "baseline_commit": "daea241",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

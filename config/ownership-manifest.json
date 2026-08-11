@@ -42,6 +42,7 @@
       "description": "User-owned projects, documents, work items, decisions, and memory",
       "merge_strategy": "preserve",
       "paths": [
+        ".krcn/workspaces/**",
         ".krcn/projects/**",
         ".krcn/documents/**",
         ".krcn/work-items/**",

@@ -19,8 +19,12 @@ class PhaseTwoKickoffTests(unittest.TestCase):
             "docs/plans/PLAN-003-YEREL-CALISMA-ALANI-VE-ENTEGRASYON.md",
             current["plan_ref"],
         )
-        self.assertEqual("4a6981d", current["baseline_commit"])
+        self.assertRegex(current["baseline_commit"], r"^[0-9a-f]{7,40}$")
         self.assertIn("docs/progress/PHASE-2-KICKOFF.md", current["progress_refs"])
+        kickoff = (
+            REPO_ROOT / "docs" / "progress" / "PHASE-2-KICKOFF.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("`4a6981d`", kickoff)
 
     def test_phase_two_plan_keeps_live_data_behind_approval(self) -> None:
         plan = (
