@@ -9,6 +9,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT / "tests"))
 
 from krcn_core.exact_retrieval import (  # noqa: E402
     ExactRetrievalError,
@@ -20,7 +21,7 @@ from krcn_core.information_records import (  # noqa: E402
     payload_digest,
 )
 from krcn_core.knowledge_catalog import build_information_catalog  # noqa: E402
-from tests.test_knowledge_catalog import (  # noqa: E402
+from phase_four_fixtures import (  # noqa: E402
     knowledge_record,
     source_binding,
     source_record,

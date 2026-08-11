@@ -37,11 +37,12 @@
     "docs/progress/PHASE-4-KICKOFF.md",
     "docs/progress/PHASE-4-INFORMATION-RECORDS.md",
     "docs/progress/PHASE-4-KNOWLEDGE-CATALOG.md",
-    "docs/progress/PHASE-4-EXACT-RETRIEVAL.md"
+    "docs/progress/PHASE-4-EXACT-RETRIEVAL.md",
+    "docs/progress/PHASE-4-DEPENDENCY-RETRIEVAL.md"
   ],
   "next_actions": [
-    "build dependency graph retrieval over exact catalog results",
-    "enforce direction, relation, depth, cycle, stale-edge, and budget rules"
+    "place semantic retrieval behind the existing provider gate",
+    "preserve an offline deterministic fallback without implicit remote access"
   ],
   "baseline_commit": "6005611",
   "approval_gates": {

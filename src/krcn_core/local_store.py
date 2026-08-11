@@ -19,6 +19,10 @@ from .mutation_gate import (
 )
 from .integrations import parse_integration_metadata
 from .information_records import InformationRecordError, parse_information_record
+from .dependency_retrieval import (
+    DependencyRetrievalError,
+    parse_information_relation,
+)
 from .source_bindings import parse_source_binding
 from .source_state import parse_source_state
 
@@ -36,6 +40,11 @@ COLLECTIONS = {
         "user-data",
     ),
     "knowledge": ("record_id", "knowledge/records", "user-data"),
+    "information-relations": (
+        "relation_id",
+        "knowledge/relations",
+        "user-data",
+    ),
 }
 INFORMATION_COLLECTIONS = {
     "authoritative-sources": "authoritative-source",
@@ -121,6 +130,12 @@ def _validate_record_identity(
         parse_integration_metadata(payload)
     if record_type == "source-states":
         parse_source_state(payload)
+    if record_type == "information-relations":
+        try:
+            relation = parse_information_relation(payload)
+        except DependencyRetrievalError as exc:
+            raise LocalStoreError(str(exc)) from exc
+        return relation.revision
     expected_information_class = INFORMATION_COLLECTIONS.get(record_type)
     if expected_information_class is not None:
         try:
