@@ -25,7 +25,7 @@ Repository şu anda foundation/baseline hazırlığındadır. Yerel referans kay
 
 Kök çalışma kuralları için `AGENTS.md` dosyasını okuyun.
 
-Gelistirme sirasi icin `docs/plans/ROADMAP.md`, guncelleme guvenlik sozlesmesi icin `docs/specifications/UPDATE-MERGE-CONTRACT.md` kullanilir.
+Gelistirme sirasi icin `docs/plans/ROADMAP.md`, guncelleme guvenlik sozlesmesi icin `docs/specifications/UPDATE-MERGE-CONTRACT.md` kullanilir. Mevcut baseline bulgulari `docs/progress/PHASE-0-BASELINE.md`, aktarim siniri `docs/specifications/IMPORT-BOUNDARY.md` icindedir.
 
 ## Kurucu ve mimari sahibi
 
