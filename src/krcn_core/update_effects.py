@@ -58,6 +58,12 @@ class MigrationSpec:
             or self.target_ref.endswith("/")
         ):
             raise UpdateEffectError("migration target must be portable local data")
+        if self.target_ref == ".krcn/policies" or self.target_ref.startswith(
+            ".krcn/policies/"
+        ):
+            raise UpdateEffectError(
+                "policy migration requires a dedicated semantic preservation contract"
+            )
         if not self.reversible:
             raise UpdateEffectError("irreversible migration is prohibited")
 

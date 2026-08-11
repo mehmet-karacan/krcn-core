@@ -38,6 +38,7 @@
     "merge_plan_schema": "schemas/merge-plan.schema.json",
     "backup_manifest_schema": "schemas/backup-manifest.schema.json",
     "deployment_journal_schema": "schemas/deployment-journal.schema.json",
+    "migration_execution": "docs/specifications/MIGRATION-EXECUTION.md",
     "policy_layers": "docs/specifications/POLICY-LAYERS.md",
     "cli_inventory": ".ai/legacy-cli-inventory.json",
     "cli_baseline": ".ai/cli-baseline.json",

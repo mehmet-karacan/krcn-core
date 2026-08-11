@@ -20,6 +20,10 @@ from krcn_core.deployment import (  # noqa: E402
 )
 from krcn_core.installation import InstallationState, ManagedFile  # noqa: E402
 from krcn_core.merge_plan import prepare_merge_plan  # noqa: E402
+from krcn_core.migrations import (  # noqa: E402
+    MigrationHandler,
+    MigrationHandlerRegistry,
+)
 from krcn_core.mutation_gate import OwnershipResolver  # noqa: E402
 from krcn_core.release_diff import FileChange, ReleaseDiff  # noqa: E402
 from krcn_core.update_effects import (  # noqa: E402
@@ -150,6 +154,14 @@ class DeploymentBackupTests(unittest.TestCase):
             self.derived,
             source_commit="b" * 40,
         )
+        self.handlers = MigrationHandlerRegistry(
+            [MigrationHandler("workspace-v2", self._migrate_workspace)]
+        )
+
+    @staticmethod
+    def _migrate_workspace(payload):
+        payload["schema_version"] = 2
+        return payload
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
@@ -159,6 +171,7 @@ class DeploymentBackupTests(unittest.TestCase):
             self.root,
             self.merge_plan,
             self.ownership,
+            self.handlers,
         )
         entries = {item.target_ref: item for item in plan.backup_manifest.entries}
         self.assertTrue(entries["README.md"].existed)
@@ -174,6 +187,7 @@ class DeploymentBackupTests(unittest.TestCase):
             self.root,
             self.merge_plan,
             self.ownership,
+            self.handlers,
         )
         with self.assertRaisesRegex(DeploymentError, "exact dry-run"):
             authorize_deployment_plan(
@@ -226,6 +240,7 @@ class DeploymentBackupTests(unittest.TestCase):
             self.root,
             self.merge_plan,
             self.ownership,
+            self.handlers,
         )
         authorization = authorize_deployment_plan(
             plan,
@@ -249,6 +264,7 @@ class DeploymentBackupTests(unittest.TestCase):
             self.root,
             self.merge_plan,
             self.ownership,
+            self.handlers,
         )
         self.workspace_path.write_text(
             '{"schema_version":1,"workspace_id":"changed"}\n',
@@ -258,6 +274,7 @@ class DeploymentBackupTests(unittest.TestCase):
             self.root,
             self.merge_plan,
             self.ownership,
+            self.handlers,
         )
         self.assertNotEqual(first.plan_id, second.plan_id)
 
@@ -266,6 +283,7 @@ class DeploymentBackupTests(unittest.TestCase):
             self.root,
             self.merge_plan,
             self.ownership,
+            self.handlers,
         )
         authorization = authorize_deployment_plan(
             plan,

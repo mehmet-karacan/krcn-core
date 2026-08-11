@@ -21,7 +21,13 @@ from .merge_plan import (
     MergePlan,
     authorize_merge_plan,
 )
+from .migrations import (
+    MigrationHandlerRegistry,
+    MigrationWrite,
+    plan_migration_writes,
+)
 from .mutation_gate import (
+    ApprovalEvidence,
     DryRunEvidence,
     MutationAuthorization,
     MutationPlan,
@@ -122,6 +128,7 @@ class DeploymentPlan:
     merge_plan: MergePlan
     backup_manifest: BackupManifest
     backup_manifest_sha256: str
+    migration_writes: tuple[MigrationWrite, ...]
     content_mutations: tuple[MutationPlan, ...]
     backup_manifest_mutation: MutationPlan
     journal_mutations: Mapping[str, MutationPlan]
@@ -138,6 +145,9 @@ class DeploymentPlan:
             ],
             "backup_scopes": [
                 item.as_dict() for item in self.backup_manifest.scopes
+            ],
+            "migration_writes": [
+                item.public_summary() for item in self.migration_writes
             ],
             "support_mutations": {
                 "content": [item.as_dict() for item in self.content_mutations],
@@ -156,6 +166,7 @@ class DeploymentAuthorization:
     plan_id: str
     merge_authorization: MergeAuthorization
     support_authorizations: Mapping[str, MutationAuthorization]
+    migration_authorizations: Mapping[str, MutationAuthorization]
 
 
 @dataclass(frozen=True)
@@ -317,6 +328,7 @@ def prepare_deployment_plan(
     installation_root: Path,
     merge_plan: MergePlan,
     ownership: OwnershipResolver,
+    migration_handlers: MigrationHandlerRegistry | None = None,
 ) -> DeploymentPlan:
     """Plan exact backup and journal writes without changing the installation."""
 
@@ -326,6 +338,13 @@ def prepare_deployment_plan(
     state, state_sha256 = load_installation_state(root)
     if state is None or state_sha256 != merge_plan.source_state_sha256:
         raise DeploymentError("installation state changed after merge planning")
+    handlers = migration_handlers or MigrationHandlerRegistry()
+    migration_writes = plan_migration_writes(
+        root,
+        merge_plan.migrations,
+        handlers,
+        ownership,
+    )
     deployment_id = _deployment_id(root, merge_plan)
     checkpoint_ref = f".krcn/checkpoints/{deployment_id}"
     journal_ref = f".krcn/runtime/deployments/{deployment_id}.json"
@@ -442,6 +461,9 @@ def prepare_deployment_plan(
         "backup_manifest_sha256": manifest_digest,
         "content_mutation_ids": [item.plan_id for item in content_mutations],
         "backup_manifest_mutation_id": backup_manifest_mutation.plan_id,
+        "migration_mutation_ids": [
+            item.mutation.plan_id for item in migration_writes
+        ],
         "journal_mutation_ids": {
             status: item.plan_id for status, item in journal_mutations.items()
         },
@@ -453,6 +475,7 @@ def prepare_deployment_plan(
         merge_plan=merge_plan,
         backup_manifest=backup_manifest,
         backup_manifest_sha256=manifest_digest,
+        migration_writes=migration_writes,
         content_mutations=content_mutations,
         backup_manifest_mutation=backup_manifest_mutation,
         journal_mutations=journal_mutations,
@@ -485,10 +508,26 @@ def authorize_deployment_plan(
             mutation,
             dry_run=DryRunEvidence(mutation.plan_id, True),
         )
+    migration_authorizations = {}
+    for write in plan.migration_writes:
+        mutation = write.mutation
+        approval = None
+        if mutation.approval_required:
+            approval = ApprovalEvidence(
+                mutation.plan_id,
+                approval_id or "",
+                approved=True,
+            )
+        migration_authorizations[mutation.plan_id] = authorize_mutation(
+            mutation,
+            dry_run=DryRunEvidence(mutation.plan_id, True),
+            approval=approval,
+        )
     return DeploymentAuthorization(
         plan_id=plan.plan_id,
         merge_authorization=merge_authorization,
         support_authorizations=support_authorizations,
+        migration_authorizations=migration_authorizations,
     )
 
 

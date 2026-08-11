@@ -28,13 +28,14 @@
     "docs/progress/PHASE-3-RELEASE-VALIDATION.md",
     "docs/progress/PHASE-3-RELEASE-DIFF.md",
     "docs/progress/PHASE-3-MERGE-PLAN.md",
-    "docs/progress/PHASE-3-BACKUP-JOURNAL.md"
+    "docs/progress/PHASE-3-BACKUP-JOURNAL.md",
+    "docs/progress/PHASE-3-MANAGED-APPLY-MIGRATION.md"
   ],
   "next_actions": [
-    "apply managed core files atomically through authorized plans",
-    "run trusted versioned migrations after managed file application"
+    "run trusted derived actions and mandatory post-merge verification",
+    "implement automatic and explicit rollback from verified backups"
   ],
-  "baseline_commit": "b1b1a9e",
+  "baseline_commit": "278fdac",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

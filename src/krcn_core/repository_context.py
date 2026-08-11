@@ -41,6 +41,7 @@ REQUIRED_CANONICAL_KEYS = {
     "merge_plan_schema",
     "backup_manifest_schema",
     "deployment_journal_schema",
+    "migration_execution",
     "policy_layers",
     "cli_inventory",
     "cli_baseline",
