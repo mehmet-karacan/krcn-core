@@ -39,11 +39,12 @@
     "docs/progress/PHASE-4-KNOWLEDGE-CATALOG.md",
     "docs/progress/PHASE-4-EXACT-RETRIEVAL.md",
     "docs/progress/PHASE-4-DEPENDENCY-RETRIEVAL.md",
-    "docs/progress/PHASE-4-SEMANTIC-RETRIEVAL.md"
+    "docs/progress/PHASE-4-SEMANTIC-RETRIEVAL.md",
+    "docs/progress/PHASE-4-CONTEXT-BUILDER.md"
   ],
   "next_actions": [
-    "build deterministic evidence-bounded context packages",
-    "enforce byte, item, authority, mandatory-context, and truncation budgets"
+    "build the approval-gated durable Memory Gate workflow",
+    "separate memory proposal, review, persist, supersede, revoke, and policy promotion"
   ],
   "baseline_commit": "6005611",
   "approval_gates": {

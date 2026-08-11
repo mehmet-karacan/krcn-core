@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:context-build-request:1",
+  "title": "KRCN Core evidence-bounded context build request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_ref", "schema_version", "context_id", "task_ref", "project_ref", "budget_unit", "budget_limit", "item_limit", "allow_optional_truncation", "minimum_fragment_units", "required_record_ids"],
+  "properties": {
+    "schema_ref": { "const": "schemas/context-build-request.schema.json" },
+    "schema_version": { "const": 1 },
+    "context_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "task_ref": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$" },
+    "project_ref": {
+      "type": ["string", "null"],
+      "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$"
+    },
+    "budget_unit": { "enum": ["bytes", "characters", "tokens"] },
+    "budget_limit": { "type": "integer", "minimum": 1, "maximum": 10000000 },
+    "item_limit": { "type": "integer", "minimum": 1, "maximum": 10000 },
+    "allow_optional_truncation": { "type": "boolean" },
+    "minimum_fragment_units": { "type": "integer", "minimum": 1, "maximum": 10000000 },
+    "required_record_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+    }
+  }
+}

@@ -43,6 +43,8 @@
     "dependency_result_schema": "schemas/dependency-result.schema.json",
     "semantic_query_schema": "schemas/semantic-query.schema.json",
     "semantic_result_schema": "schemas/semantic-result.schema.json",
+    "context_build_request_schema": "schemas/context-build-request.schema.json",
+    "context_package_v2_schema": "schemas/context-package-v2.schema.json",
     "release_manifest_schema": "schemas/release-manifest.schema.json",
     "installation_state_schema": "schemas/installation-state.schema.json",
     "installation_inspection_schema": "schemas/installation-inspection.schema.json",

@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:context-package:2",
+  "title": "KRCN Core evidence-bounded context package",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_ref", "schema_version", "context_id", "task_ref", "project_ref", "request_digest", "candidate_digest", "context_digest", "required_record_ids", "budget", "items", "exclusions"],
+  "properties": {
+    "schema_ref": { "const": "schemas/context-package-v2.schema.json" },
+    "schema_version": { "const": 2 },
+    "context_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "task_ref": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$" },
+    "project_ref": { "type": ["string", "null"], "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$" },
+    "request_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "candidate_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "context_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "required_record_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+    },
+    "budget": { "$ref": "#/$defs/budget" },
+    "items": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/item" }
+    },
+    "exclusions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/exclusion" }
+    }
+  },
+  "$defs": {
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unit", "limit", "used", "remaining", "item_limit", "item_used"],
+      "properties": {
+        "unit": { "enum": ["bytes", "characters", "tokens"] },
+        "limit": { "type": "integer", "minimum": 1 },
+        "used": { "type": "integer", "minimum": 0 },
+        "remaining": { "type": "integer", "minimum": 0 },
+        "item_limit": { "type": "integer", "minimum": 1 },
+        "item_used": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_ref", "revision_id", "digest", "relation"],
+      "properties": {
+        "source_ref": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$" },
+        "revision_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
+        "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "relation": { "enum": ["supports", "derived-from", "observed-at", "supersedes", "contradicts"] }
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_id", "source_ref", "revision", "digest", "information_class", "ownership", "authority_rank", "layer", "selection_sources", "selection_reasons", "required", "content", "original_units", "included_units", "truncated", "truncation_reason", "projection_digest", "evidence"],
+      "properties": {
+        "record_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "source_ref": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "information_class": { "enum": ["authoritative-source", "knowledge", "memory", "state", "history", "derived"] },
+        "ownership": { "enum": ["runtime", "user-data", "derived"] },
+        "authority_rank": { "enum": [0, 1, 2, 3, 4, 5] },
+        "layer": { "enum": ["static", "task", "persistent"] },
+        "selection_sources": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["policy", "static", "exact", "dependency", "semantic", "task-state", "memory"] }
+        },
+        "selection_reasons": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 200 } },
+        "required": { "type": "boolean" },
+        "content": { "type": "string", "minLength": 1 },
+        "original_units": { "type": "integer", "minimum": 1 },
+        "included_units": { "type": "integer", "minimum": 1 },
+        "truncated": { "type": "boolean" },
+        "truncation_reason": { "type": ["string", "null"], "enum": ["budget", null] },
+        "projection_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "evidence": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/evidence" } }
+      }
+    },
+    "exclusion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_id", "content_digest", "reason"],
+      "properties": {
+        "record_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+        "content_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "reason": { "enum": ["stale-or-unavailable", "item-budget", "content-budget"] }
+      }
+    }
+  }
+}
