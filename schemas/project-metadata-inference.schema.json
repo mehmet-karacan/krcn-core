@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:project-metadata-inference:1",
+  "title": "KRCN Core inferred project metadata",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_ref", "schema_version", "project_name", "project_id", "workspace_id", "binding_id", "metadata_source", "collision_index", "inference_digest", "path_disclosed"],
+  "properties": {
+    "schema_ref": { "const": "schemas/project-metadata-inference.schema.json" },
+    "schema_version": { "const": 1 },
+    "project_name": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "project_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "maxLength": 53 },
+    "workspace_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*-workspace$", "maxLength": 63 },
+    "binding_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*-local$", "maxLength": 59 },
+    "metadata_source": { "enum": ["pyproject", "package-json", "cargo", "csproj", "directory"] },
+    "collision_index": { "type": "integer", "minimum": 1 },
+    "inference_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "path_disclosed": { "const": false }
+  }
+}

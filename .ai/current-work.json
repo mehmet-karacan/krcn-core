@@ -68,11 +68,12 @@
     "docs/progress/PHASE-6-INTEGRATION-TESTS.md",
     "docs/progress/PHASE-6-COMPLETION.md",
     "docs/progress/PHASE-7-KICKOFF.md",
-    "docs/progress/PHASE-7-PROJECT-LEARNING-INTENT.md"
+    "docs/progress/PHASE-7-PROJECT-LEARNING-INTENT.md",
+    "docs/progress/PHASE-7-PROJECT-METADATA.md"
   ],
   "next_actions": [
-    "infer project display name from reviewed markers or directory name",
-    "derive collision-safe portable workspace, project, and binding identifiers"
+    "combine onboarding and first read-only discovery into one exact plan",
+    "preserve the source directory while preparing all local records"
   ],
   "baseline_commit": "7ccc16b",
   "approval_gates": {
