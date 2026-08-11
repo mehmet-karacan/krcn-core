@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:worker-execution:1",
+  "title": "KRCN Core worker checkpoint and effect journal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_ref", "schema_version", "checkpoint", "journal", "replayed"],
+  "properties": {
+    "schema_ref": { "const": "schemas/worker-execution.schema.json" },
+    "schema_version": { "const": 1 },
+    "checkpoint": { "$ref": "#/$defs/checkpoint" },
+    "journal": { "$ref": "#/$defs/journal" },
+    "replayed": { "type": "boolean" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "nullableDigest": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+    "digests": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/digest" } },
+    "effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["effect_id", "effect_type", "mutation_plan_id", "provider_request_id", "evidence_digests"],
+      "properties": {
+        "effect_id": { "$ref": "#/$defs/id" },
+        "effect_type": { "enum": ["read", "write", "execute", "network"] },
+        "mutation_plan_id": { "$ref": "#/$defs/nullableDigest" },
+        "provider_request_id": { "$ref": "#/$defs/nullableDigest" },
+        "evidence_digests": { "$ref": "#/$defs/digests" }
+      }
+    },
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checkpoint_id", "task_id", "plan_id", "authorization_id", "step_id", "step_digest", "idempotency_key", "status", "result_digest", "failure_digest"],
+      "properties": {
+        "checkpoint_id": { "$ref": "#/$defs/digest" },
+        "task_id": { "$ref": "#/$defs/id" },
+        "plan_id": { "$ref": "#/$defs/digest" },
+        "authorization_id": { "$ref": "#/$defs/digest" },
+        "step_id": { "$ref": "#/$defs/id" },
+        "step_digest": { "$ref": "#/$defs/digest" },
+        "idempotency_key": { "$ref": "#/$defs/digest" },
+        "status": { "enum": ["completed", "failed"] },
+        "result_digest": { "$ref": "#/$defs/nullableDigest" },
+        "failure_digest": { "$ref": "#/$defs/nullableDigest" }
+      }
+    },
+    "journal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["journal_id", "task_id", "plan_id", "authorization_id", "step_id", "handler_id", "input_digest", "idempotency_key", "status", "effects", "result_digest", "failure_digest"],
+      "properties": {
+        "journal_id": { "$ref": "#/$defs/digest" },
+        "task_id": { "$ref": "#/$defs/id" },
+        "plan_id": { "$ref": "#/$defs/digest" },
+        "authorization_id": { "$ref": "#/$defs/digest" },
+        "step_id": { "$ref": "#/$defs/id" },
+        "handler_id": { "$ref": "#/$defs/id" },
+        "input_digest": { "$ref": "#/$defs/digest" },
+        "idempotency_key": { "$ref": "#/$defs/digest" },
+        "status": { "enum": ["completed", "failed"] },
+        "effects": { "type": "array", "items": { "$ref": "#/$defs/effect" } },
+        "result_digest": { "$ref": "#/$defs/nullableDigest" },
+        "failure_digest": { "$ref": "#/$defs/nullableDigest" }
+      }
+    }
+  }
+}

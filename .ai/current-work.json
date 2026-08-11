@@ -49,11 +49,12 @@
     "docs/progress/PHASE-5-TASK-INTENT.md",
     "docs/progress/PHASE-5-CAPABILITY-REGISTRY.md",
     "docs/progress/PHASE-5-TASK-PLANNER.md",
-    "docs/progress/PHASE-5-TASK-AUTHORIZATION.md"
+    "docs/progress/PHASE-5-TASK-AUTHORIZATION.md",
+    "docs/progress/PHASE-5-WORKER-EXECUTION.md"
   ],
   "next_actions": [
-    "execute only exact authorized worker steps through explicitly registered handlers",
-    "record deterministic checkpoints and effect journals for idempotent recovery"
+    "verify worker checkpoints and effect journals against every acceptance criterion",
+    "require digest-bound evidence before any task can reach completed status"
   ],
   "baseline_commit": "c16c333",
   "approval_gates": {

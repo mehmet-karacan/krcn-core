@@ -41,6 +41,7 @@
     "capability_registry_schema": "schemas/capability-registry.schema.json",
     "task_plan_schema": "schemas/task-plan.schema.json",
     "task_authorization_schema": "schemas/task-authorization.schema.json",
+    "worker_execution_schema": "schemas/worker-execution.schema.json",
     "information_classes": "config/information-classes.json",
     "information_classes_schema": "schemas/information-classes.schema.json",
     "information_record_schema": "schemas/information-record.schema.json",
