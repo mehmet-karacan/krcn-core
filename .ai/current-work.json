@@ -24,13 +24,14 @@
     "docs/progress/PHASE-2-INTEGRATION-TESTS.md",
     "docs/progress/PHASE-2-COMPLETION.md",
     "docs/progress/PHASE-3-KICKOFF.md",
-    "docs/progress/PHASE-3-INSTALLATION-INSPECTION.md"
+    "docs/progress/PHASE-3-INSTALLATION-INSPECTION.md",
+    "docs/progress/PHASE-3-RELEASE-VALIDATION.md"
   ],
   "next_actions": [
-    "validate release manifests, payload integrity, and version compatibility",
-    "produce ownership-aware release diff and conflict reports"
+    "produce ownership-aware release diff and conflict reports",
+    "bind conflict-free changes to an exact merge dry-run plan"
   ],
-  "baseline_commit": "1f1b1ca",
+  "baseline_commit": "ed13513",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

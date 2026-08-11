@@ -36,6 +36,7 @@ REQUIRED_CANONICAL_KEYS = {
     "release_manifest_schema",
     "installation_state_schema",
     "installation_inspection_schema",
+    "release_trust",
     "policy_layers",
     "cli_inventory",
     "cli_baseline",
