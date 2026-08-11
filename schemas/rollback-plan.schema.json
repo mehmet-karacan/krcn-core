@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:rollback-plan:1",
+  "title": "KRCN Core exact rollback plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "plan_id", "deployment_id", "merge_plan_id", "source_status", "writes", "approval_required"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "deployment_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "merge_plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "source_status": { "enum": ["backed-up", "applying", "migrating", "rebuilding", "verifying", "completed", "failed"] },
+    "writes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target_ref", "action", "expected_current_sha256", "restore_size", "mutation"],
+        "properties": {
+          "target_ref": { "type": "string", "minLength": 1 },
+          "action": { "enum": ["create", "update", "delete"] },
+          "expected_current_sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+          "restore_size": { "type": ["integer", "null"], "minimum": 0 },
+          "mutation": { "$ref": "mutation-plan.schema.json" }
+        }
+      }
+    },
+    "approval_required": { "type": "boolean" }
+  }
+}

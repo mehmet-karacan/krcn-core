@@ -31,6 +31,12 @@ from krcn_core.migrations import (  # noqa: E402
 from krcn_core.mutation_gate import OwnershipResolver  # noqa: E402
 from krcn_core.release import manifest_sha256, validate_release_bundle  # noqa: E402
 from krcn_core.release_diff import create_release_diff  # noqa: E402
+from krcn_core.rollback import (  # noqa: E402
+    RollbackError,
+    apply_rollback,
+    authorize_rollback_plan,
+    prepare_rollback_plan,
+)
 from krcn_core.update_effects import (  # noqa: E402
     DerivedActionRegistry,
     MigrationRegistry,
@@ -276,6 +282,74 @@ class ManagedApplyAndMigrationTests(unittest.TestCase):
         )
         journal = json.loads(journal_path.read_text(encoding="utf-8"))
         self.assertEqual("completed", journal["status"])
+
+    def test_completed_deployment_can_be_rolled_back_exactly(self) -> None:
+        original_state = self.state_path.read_bytes()
+        original_workspace = self.workspace_path.read_bytes()
+        original_policy = self.policy_path.read_bytes()
+        plan, authorization = self._started()
+        apply_managed_files(
+            self.root,
+            self.release,
+            self.bundle,
+            plan,
+            authorization,
+        )
+        apply_migrations(self.root, plan, authorization)
+        verify_and_commit(self.root, plan, authorization)
+        rollback = prepare_rollback_plan(
+            self.root,
+            plan.deployment_id,
+            self.ownership,
+        )
+        with self.assertRaisesRegex(RollbackError, "explicit approval"):
+            authorize_rollback_plan(
+                rollback,
+                expected_plan_id=rollback.plan_id,
+                approval_id=None,
+            )
+        rollback_authorization = authorize_rollback_plan(
+            rollback,
+            expected_plan_id=rollback.plan_id,
+            approval_id="rollback-approval",
+        )
+        result = apply_rollback(
+            self.root,
+            rollback,
+            rollback_authorization,
+        )
+        self.assertEqual("rolled-back", result.status)
+        self.assertEqual(self.old_readme, (self.root / "README.md").read_bytes())
+        self.assertEqual(
+            self.old_config,
+            (self.root / "config" / "old.txt").read_bytes(),
+        )
+        self.assertFalse((self.root / "src" / "new.py").exists())
+        self.assertEqual(original_workspace, self.workspace_path.read_bytes())
+        self.assertEqual(original_state, self.state_path.read_bytes())
+        self.assertEqual(original_policy, self.policy_path.read_bytes())
+
+    def test_rollback_refuses_to_overwrite_post_deployment_user_change(self) -> None:
+        plan, authorization = self._started()
+        apply_managed_files(
+            self.root,
+            self.release,
+            self.bundle,
+            plan,
+            authorization,
+        )
+        apply_migrations(self.root, plan, authorization)
+        verify_and_commit(self.root, plan, authorization)
+        self.workspace_path.write_text(
+            '{"schema_version":2,"workspace_id":"user-change"}\n',
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(RollbackError, "rollback conflict"):
+            prepare_rollback_plan(
+                self.root,
+                plan.deployment_id,
+                self.ownership,
+            )
 
 
 if __name__ == "__main__":
