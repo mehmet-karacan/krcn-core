@@ -2,7 +2,7 @@
 
 ## Durum
 
-Bölüm 1 tamamlandı. Ortak context girişi, istemci adaptörleri, current-work işaretçisi ve context resolver hazırlandı. Çalışma Bölüm 2 - CLI davranış envanteri ile devam edecek.
+Bölüm 1 ve Bölüm 2 tamamlandı. Ortak context girişi, istemci adaptörleri, current-work işaretçisi ve context resolver hazırlandı. Eski CLI kaynak kodu aktarılmadan komut ve etki envanteri çıkarıldı. Çalışma Bölüm 3 - arındırılmış CLI staging ile devam edecek.
 
 ## Amaç
 
@@ -34,7 +34,7 @@ Depoda tek bir kaynak doğrusu korunacak:
 - Mevcut komutları salt okunur, mutasyon yapan ve ağ kullanabilen gruplara ayır.
 - Her komutun core, runtime, user-data, derived ve secrets etkisini kaydet.
 - Otomatik provider keşfi ve makineye özel yol bağımlılıklarını belirle.
-- Korunacak mevcut davranışlar için kabul testleri yaz.
+- Envanter bütünlüğü ve kritik risk sınıflandırmaları için kabul testleri yaz.
 
 ### Bölüm 3 - Arındırılmış CLI staging
 
@@ -54,6 +54,7 @@ Depoda tek bir kaynak doğrusu korunacak:
 - Resolver yalnızca göreli depo yolları üretmeli.
 - Context çözümleme ağ erişimi ve harici Python bağımlılığı gerektirmemeli.
 - Yerel kaynak yolları, kullanıcı verisi ve secret değerleri context çıktısına girmemeli.
+- Açık ve onaylanmış kullanıcı politikaları core güncellemesiyle zayıflatılmamalı veya ezilmemeli.
 - Tüm testler ve foundation doğrulaması geçmeli.
 
 ## Onay kapısı

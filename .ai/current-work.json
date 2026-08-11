@@ -9,14 +9,15 @@
   "progress_refs": [
     "docs/progress/PHASE-1-FOUNDATION.md",
     "docs/progress/PHASE-1-PACKAGE-1.md",
-    "docs/progress/PACKAGE-2-CONTEXT-FOUNDATION.md"
+    "docs/progress/PACKAGE-2-CONTEXT-FOUNDATION.md",
+    "docs/progress/PACKAGE-2-CLI-INVENTORY.md"
   ],
   "next_actions": [
-    "inventory the legacy CLI by command and ownership effect",
     "prepare the sanitized CLI baseline outside Git",
+    "implement user policy validation and effective policy evaluation before external actions",
     "design MCP and SDK adapters on the repository context contract"
   ],
-  "baseline_commit": "8dcbc54",
+  "baseline_commit": "7062b00",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

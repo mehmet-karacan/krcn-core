@@ -37,6 +37,7 @@ At the start of each task:
 - Git is the source of truth for the product core and versioned schemas, not for all live user data.
 - Core, runtime state, user data, derived data, and secrets are separate ownership classes.
 - Updates preserve existing projects, documents, work requests, memory, settings, secrets, and indexes by default.
+- Explicit and approved user policies are user-owned data. Core updates may migrate their schema but must never weaken, replace, or delete their meaning without explicit user approval.
 - Never delete, overwrite, rename, or commit user data without explicit authorization.
 - Deploy/update operations must support inspection, dry-run, backup, compatibility checks, verification, and rollback.
 - Derived indexes must be reproducible and must never replace authoritative sources.

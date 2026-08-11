@@ -36,6 +36,8 @@
         "current_work",
         "roadmap",
         "ownership",
+        "policy_layers",
+        "cli_inventory",
         "provider_policy",
         "import_policy"
       ],
@@ -45,6 +47,8 @@
         "current_work": { "$ref": "#/$defs/repoPath" },
         "roadmap": { "$ref": "#/$defs/repoPath" },
         "ownership": { "$ref": "#/$defs/repoPath" },
+        "policy_layers": { "$ref": "#/$defs/repoPath" },
+        "cli_inventory": { "$ref": "#/$defs/repoPath" },
         "provider_policy": { "$ref": "#/$defs/repoPath" },
         "import_policy": { "$ref": "#/$defs/repoPath" }
       }

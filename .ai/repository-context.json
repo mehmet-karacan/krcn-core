@@ -13,6 +13,8 @@
     "current_work": ".ai/current-work.json",
     "roadmap": "docs/plans/ROADMAP.md",
     "ownership": "config/ownership-manifest.json",
+    "policy_layers": "docs/specifications/POLICY-LAYERS.md",
+    "cli_inventory": ".ai/legacy-cli-inventory.json",
     "provider_policy": "config/provider-policy.json",
     "import_policy": "config/import-policy.json"
   },
@@ -22,7 +24,8 @@
       "AI-CONTEXT.md",
       ".ai/current-work.json",
       "docs/plans/ROADMAP.md",
-      "config/ownership-manifest.json"
+      "config/ownership-manifest.json",
+      "docs/specifications/POLICY-LAYERS.md"
     ],
     "task_contract": [
       "goal",

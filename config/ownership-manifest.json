@@ -46,7 +46,8 @@
         ".krcn/documents/**",
         ".krcn/work-items/**",
         ".krcn/decisions/**",
-        ".krcn/memory/**"
+        ".krcn/memory/**",
+        ".krcn/policies/**"
       ]
     },
     {
