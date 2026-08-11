@@ -19,11 +19,22 @@ from .discovery import (
     discover_local_source,
     load_discovery_policy,
 )
+from .deployment import authorize_deployment_plan, prepare_deployment_plan
+from .derived_actions import DerivedActionHandlerRegistry
+from .foundation import load_json
+from .installation import (
+    inspect_installation,
+    load_installation_state,
+)
 from .local_store import LocalWorkspaceStore, RecordWritePlan
+from .merge_engine import execute_deployment
+from .merge_plan import prepare_merge_plan
+from .migrations import MigrationHandlerRegistry
 from .mutation_gate import (
     ApprovalEvidence,
     DryRunEvidence,
     MutationAuthorization,
+    OwnershipResolver,
     authorize_mutation,
 )
 from .onboarding import (
@@ -33,11 +44,25 @@ from .onboarding import (
 )
 from .policies import load_user_policies
 from .rescan import apply_rescan, prepare_rescan
+from .release import validate_release_bundle
+from .release_diff import create_release_diff
+from .rollback import (
+    apply_rollback,
+    authorize_rollback_plan,
+    prepare_rollback_plan,
+)
 from .source_bindings import SourceBinding, parse_source_binding
+from .update_effects import DerivedActionRegistry, MigrationRegistry
+from .verification import verify_installation
 
 
 IDENTIFIER = re.compile(r"^[a-z][a-z0-9-]*$")
 OPERATIONS = {
+    "installation.inspect",
+    "installation.verify",
+    "release.diff",
+    "release.merge",
+    "deployment.rollback",
     "project.list",
     "project.inspect",
     "project.onboard",
@@ -170,12 +195,31 @@ class KrcnApplicationService:
         self,
         repo_root: Path,
         store: LocalWorkspaceStore,
+        *,
+        migration_registry: MigrationRegistry | None = None,
+        derived_registry: DerivedActionRegistry | None = None,
+        migration_handlers: MigrationHandlerRegistry | None = None,
+        derived_handlers: DerivedActionHandlerRegistry | None = None,
     ) -> None:
         self._repo_root = repo_root.resolve()
         self._store = store
+        self._ownership = OwnershipResolver.from_repository(self._repo_root)
+        self._migration_registry = migration_registry or MigrationRegistry()
+        self._derived_registry = derived_registry or DerivedActionRegistry()
+        self._migration_handlers = (
+            migration_handlers or MigrationHandlerRegistry()
+        )
+        self._derived_handlers = (
+            derived_handlers or DerivedActionHandlerRegistry()
+        )
 
     def execute(self, request: ServiceRequest) -> ServiceResponse:
         handlers = {
+            "installation.inspect": self._inspect_installation,
+            "installation.verify": self._verify_installation,
+            "release.diff": self._diff_release,
+            "release.merge": self._merge_release,
+            "deployment.rollback": self._rollback_deployment,
             "project.list": self._list_projects,
             "project.inspect": self._inspect_project,
             "project.onboard": self._onboard_project,
@@ -188,6 +232,221 @@ class KrcnApplicationService:
             status=status,
             data=data,
         )
+
+    @staticmethod
+    def _absolute_path_argument(
+        arguments: Mapping[str, object],
+        name: str,
+    ) -> Path:
+        value = _string_argument(arguments, name)
+        path = Path(value)
+        if not path.is_absolute():
+            raise ApplicationServiceError(f"{name} must be absolute")
+        return path.resolve()
+
+    def _inspect_installation(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"installation_root"})
+        if request.apply:
+            raise ApplicationServiceError("read operation cannot be applied")
+        root = self._absolute_path_argument(
+            request.arguments,
+            "installation_root",
+        )
+        inspection = inspect_installation(root, self._ownership)
+        return "ok", {"inspection": inspection.public_summary()}
+
+    def _verify_installation(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"installation_root"})
+        if request.apply:
+            raise ApplicationServiceError("read operation cannot be applied")
+        root = self._absolute_path_argument(
+            request.arguments,
+            "installation_root",
+        )
+        result = verify_installation(root, self._ownership)
+        return "ok", {"verification": result.public_summary()}
+
+    def _release_inputs(
+        self,
+        arguments: Mapping[str, object],
+    ):
+        root = self._absolute_path_argument(arguments, "installation_root")
+        release_root = self._absolute_path_argument(arguments, "release_root")
+        trusted_digest = _string_argument(
+            arguments,
+            "trusted_manifest_sha256",
+        )
+        state, _ = load_installation_state(root)
+        if state is None:
+            raise ApplicationServiceError(
+                "release operation requires registered installation state"
+            )
+        bundle = validate_release_bundle(
+            release_root,
+            self._ownership,
+            trusted_manifest_sha256=trusted_digest,
+            installed_core_version=state.core_version,
+            import_policy=load_json(
+                self._repo_root / "config" / "import-policy.json"
+            ),
+        )
+        return root, release_root, state, bundle
+
+    def _diff_release(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={
+                "installation_root",
+                "release_root",
+                "trusted_manifest_sha256",
+            },
+        )
+        if request.apply:
+            raise ApplicationServiceError("read operation cannot be applied")
+        root, _, _, bundle = self._release_inputs(request.arguments)
+        release_diff = create_release_diff(root, bundle, self._ownership)
+        return "ok", {
+            "release": bundle.public_summary(),
+            "diff": release_diff.public_summary(),
+        }
+
+    def _prepare_release_deployment(
+        self,
+        arguments: Mapping[str, object],
+    ):
+        root, release_root, state, bundle = self._release_inputs(arguments)
+        release_diff = create_release_diff(root, bundle, self._ownership)
+        merge_plan = prepare_merge_plan(
+            release_diff,
+            state,
+            self._ownership,
+            self._migration_registry,
+            self._derived_registry,
+            source_commit=bundle.manifest.source_commit,
+        )
+        if not merge_plan.has_effects:
+            return root, release_root, bundle, release_diff, merge_plan, None
+        deployment_plan = prepare_deployment_plan(
+            root,
+            merge_plan,
+            self._ownership,
+            self._migration_handlers,
+            self._derived_handlers,
+        )
+        return (
+            root,
+            release_root,
+            bundle,
+            release_diff,
+            merge_plan,
+            deployment_plan,
+        )
+
+    def _merge_release(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={
+                "installation_root",
+                "release_root",
+                "trusted_manifest_sha256",
+            },
+        )
+        (
+            root,
+            release_root,
+            bundle,
+            release_diff,
+            merge_plan,
+            deployment_plan,
+        ) = self._prepare_release_deployment(request.arguments)
+        if deployment_plan is None:
+            if request.apply and request.expected_plan_id != merge_plan.plan_id:
+                raise ApplicationServiceError(
+                    "apply requires the exact plan id returned by a prior dry-run"
+                )
+            return "ok", {
+                "plan": merge_plan.public_summary(),
+                "diff": release_diff.public_summary(),
+                "applied": False,
+                "no_op": True,
+            }
+        if not request.apply:
+            return "planned", {
+                "plan": deployment_plan.public_summary(),
+                "diff": release_diff.public_summary(),
+                "applied": False,
+                "no_op": False,
+            }
+        if request.expected_plan_id != deployment_plan.plan_id:
+            raise ApplicationServiceError(
+                "apply requires the exact plan id returned by a prior dry-run"
+            )
+        authorization = authorize_deployment_plan(
+            deployment_plan,
+            expected_plan_id=request.expected_plan_id,
+            approval_id=request.approval_id,
+        )
+        result = execute_deployment(
+            root,
+            release_root,
+            bundle,
+            deployment_plan,
+            authorization,
+            self._ownership,
+        )
+        return "applied", {
+            "plan": deployment_plan.public_summary(),
+            "result": result.public_summary(),
+            "applied": True,
+            "no_op": False,
+        }
+
+    def _rollback_deployment(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"installation_root", "deployment_id"},
+        )
+        root = self._absolute_path_argument(
+            request.arguments,
+            "installation_root",
+        )
+        deployment_id = _identifier_argument(
+            request.arguments,
+            "deployment_id",
+        )
+        plan = prepare_rollback_plan(root, deployment_id, self._ownership)
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        if request.expected_plan_id != plan.plan_id:
+            raise ApplicationServiceError(
+                "apply requires the exact plan id returned by a prior dry-run"
+            )
+        authorization = authorize_rollback_plan(
+            plan,
+            expected_plan_id=request.expected_plan_id,
+            approval_id=request.approval_id,
+        )
+        result = apply_rollback(root, plan, authorization)
+        return "applied", {
+            "plan": plan.public_summary(),
+            "result": result.public_summary(),
+            "applied": True,
+        }
 
     def _list_projects(
         self,

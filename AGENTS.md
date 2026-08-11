@@ -75,7 +75,7 @@ Before starting work, inspect repository state, relevant manifests, and existing
 - Codex reads this `AGENTS.md` directly.
 - Claude Code reads `CLAUDE.md`, which imports this file and `AI-CONTEXT.md`.
 - Other AI clients and plugins start with `AI-CONTEXT.md` or `.ai/repository-context.json`.
-- Action-capable clients use `src/krcn_core/application.py` or the `krcn project` CLI commands for project onboarding, listing, inspection, and rescan operations.
+- Action-capable clients use `src/krcn_core/application.py`. The `krcn project`, `krcn installation`, `krcn release`, and `krcn deployment` commands are thin CLI adapters over the same service used by SDK, MCP, plugins, Codex, Claude, and other clients.
 - Client requests and responses follow `schemas/application-request.schema.json` and `schemas/application-response.schema.json`.
 - Client adapters must remain thin. Product rules, ownership boundaries, and current work state must not be duplicated in provider-specific files.
 - No client adapter may bypass or reinterpret the shared capability, policy, dry-run, exact-plan, approval, or ownership gates.

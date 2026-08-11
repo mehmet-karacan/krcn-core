@@ -10,6 +10,11 @@
     "client_kind": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
     "operation": {
       "enum": [
+        "installation.inspect",
+        "installation.verify",
+        "release.diff",
+        "release.merge",
+        "deployment.rollback",
         "project.list",
         "project.inspect",
         "project.onboard",

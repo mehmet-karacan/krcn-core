@@ -90,6 +90,45 @@ def build_parser() -> argparse.ArgumentParser:
     project_rescan.add_argument("project_id")
     project_rescan.add_argument("--binding-id")
     _add_service_options(project_rescan, mutation=True)
+    installation = subparsers.add_parser(
+        "installation",
+        help="Inspect or verify a local KRCN Core installation",
+    )
+    installation_commands = installation.add_subparsers(
+        dest="installation_command"
+    )
+    for operation in ("inspect", "verify"):
+        command = installation_commands.add_parser(
+            operation,
+            help=f"{operation.capitalize()} a local installation without mutation",
+        )
+        _add_installation_options(command)
+    release = subparsers.add_parser(
+        "release",
+        help="Diff or merge a trusted local release package",
+    )
+    release_commands = release.add_subparsers(dest="release_command")
+    release_diff = release_commands.add_parser(
+        "diff",
+        help="Compare a trusted release without mutation",
+    )
+    _add_release_options(release_diff)
+    release_merge = release_commands.add_parser(
+        "merge",
+        help="Plan or apply a trusted release merge",
+    )
+    _add_release_options(release_merge, mutation=True)
+    deployment = subparsers.add_parser(
+        "deployment",
+        help="Manage recoverable local deployments",
+    )
+    deployment_commands = deployment.add_subparsers(dest="deployment_command")
+    rollback = deployment_commands.add_parser(
+        "rollback",
+        help="Plan or apply an exact checkpoint rollback",
+    )
+    rollback.add_argument("deployment_id")
+    _add_installation_options(rollback, mutation=True)
     return parser
 
 
@@ -105,6 +144,30 @@ def _add_service_options(
         parser.add_argument("--apply", action="store_true")
         parser.add_argument("--expected-plan")
         parser.add_argument("--approval-id")
+
+
+def _add_installation_options(
+    parser: argparse.ArgumentParser,
+    *,
+    mutation: bool = False,
+) -> None:
+    parser.add_argument("--repo", type=Path)
+    parser.add_argument("--installation", type=Path, required=True)
+    parser.add_argument("--format", choices=("text", "json"), default="json")
+    if mutation:
+        parser.add_argument("--apply", action="store_true")
+        parser.add_argument("--expected-plan")
+        parser.add_argument("--approval-id")
+
+
+def _add_release_options(
+    parser: argparse.ArgumentParser,
+    *,
+    mutation: bool = False,
+) -> None:
+    _add_installation_options(parser, mutation=mutation)
+    parser.add_argument("--release", dest="release_path", type=Path, required=True)
+    parser.add_argument("--trusted-manifest-sha256", required=True)
 
 
 def _project_service_request(args: argparse.Namespace) -> ServiceRequest:
@@ -166,6 +229,63 @@ def _run_project_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _core_service_request(args: argparse.Namespace) -> ServiceRequest:
+    installation_root = str(args.installation.resolve())
+    if args.command == "installation":
+        if args.installation_command not in {"inspect", "verify"}:
+            raise ApplicationServiceError("installation command is required")
+        operation = f"installation.{args.installation_command}"
+        arguments = {"installation_root": installation_root}
+    elif args.command == "release":
+        if args.release_command not in {"diff", "merge"}:
+            raise ApplicationServiceError("release command is required")
+        operation = f"release.{args.release_command}"
+        arguments = {
+            "installation_root": installation_root,
+            "release_root": str(args.release_path.resolve()),
+            "trusted_manifest_sha256": args.trusted_manifest_sha256,
+        }
+    elif args.command == "deployment" and args.deployment_command == "rollback":
+        operation = "deployment.rollback"
+        arguments = {
+            "installation_root": installation_root,
+            "deployment_id": args.deployment_id,
+        }
+    else:
+        raise ApplicationServiceError("core service command is required")
+    return ServiceRequest(
+        client_kind="cli",
+        operation=operation,
+        arguments=arguments,
+        apply=getattr(args, "apply", False),
+        expected_plan_id=getattr(args, "expected_plan", None),
+        approval_id=getattr(args, "approval_id", None),
+    )
+
+
+def _run_core_service_command(args: argparse.Namespace) -> int:
+    try:
+        repo_root = args.repo.resolve() if args.repo else discover_repo_root()
+        installation_root = args.installation.resolve()
+        store = LocalWorkspaceStore(
+            installation_root / ".krcn",
+            OwnershipResolver.from_repository(repo_root),
+        )
+        response = KrcnApplicationService(repo_root, store).execute(
+            _core_service_request(args)
+        )
+    except (ApplicationServiceError, OSError, ValueError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+    payload = response.as_dict()
+    if args.format == "json":
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(f"{response.status}\t{response.operation}")
+        print(json.dumps(response.data, ensure_ascii=False, indent=2))
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -199,6 +319,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.project_command is None:
             parser.parse_args(["project", "--help"])
         return _run_project_command(args)
+
+    if args.command in {"installation", "release", "deployment"}:
+        return _run_core_service_command(args)
 
     if args.command != "catalog":
         parser.print_help()

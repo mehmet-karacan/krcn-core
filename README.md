@@ -17,11 +17,11 @@ Git'ten gelen yeni core sürümünde aşağıdaki işlemler uygulanır:
 3. Kullanıcı verisi ve yerel secret'lar korunur.
 4. Gerekiyorsa şema migration'ı ve türetilmiş indekslerin yeniden oluşturulması planlanır.
 5. Güncelleme, yedekleme ve uyumluluk kontrollerinden sonra uygulanır.
-6. Doğrulama başarısız olursa güvenli rollback sunulur.
+6. Doğrulama başarısız olursa doğrulanmış backup üzerinden otomatik rollback uygulanır.
 
 ## Güncel geliştirme durumu
 
-Faz 1 ve Faz 2 tamamlandı. Repository foundation, sahiplik sınırları, ortak AI context, modüler CLI baseline, yerel çalışma alanı, salt okunur onboarding ve discovery, revision-aware rescan, entegrasyon metadata sınırı ve ortak istemci servisleri çalışır durumdadır. Yerel referans kaynaklarındaki kullanıcı verileri içeri alınmamıştır.
+Faz 1 ve Faz 2 tamamlandı. Faz 3'te installation inspection, release doğrulama, ownership-aware diff, exact-plan merge, backup, migration, derived rebuild, zorunlu doğrulama, otomatik ve açık rollback ile ortak istemci servisleri tamamlandı. Entegrasyon testleri ve Faz 3 kapanış kanıtları hazırlanmaktadır. Yerel referans kaynaklarındaki kullanıcı verileri içeri alınmamıştır.
 
 Kök çalışma kuralları için `AGENTS.md`, araçtan bağımsız başlangıç bağlamı için `AI-CONTEXT.md` dosyasını okuyun. Codex doğrudan `AGENTS.md` kullanır. Claude Code için `CLAUDE.md` aynı ortak kaynakları içe aktarır. Diğer istemciler ve plugin'ler `.ai/repository-context.json` manifestini okuyabilir.
 
@@ -49,6 +49,21 @@ python tools/krcn.py project rescan <project-id>
 ```
 
 Onboarding ve rescan komutları varsayılan olarak yalnızca plan üretir. Uygulama için önceki dry-run sonucundaki plan kimliği ve user-data değişikliği varsa açık onay kimliği gerekir. CLI, SDK, MCP, plugin ve yapay zekâ istemcileri aynı servis katmanını kullanır.
+
+Yerel bir kurulumu incelemek, trusted release farkını görmek ve exact plan üretmek için:
+
+```bash
+python tools/krcn.py installation inspect --installation <installation-directory>
+python tools/krcn.py installation verify --installation <installation-directory>
+python tools/krcn.py release diff --installation <installation-directory> --release <release-directory> --trusted-manifest-sha256 <sha256>
+python tools/krcn.py release merge --installation <installation-directory> --release <release-directory> --trusted-manifest-sha256 <sha256>
+```
+
+`release merge` varsayılan olarak yalnızca plan üretir. Apply için aynı komut `--apply --expected-plan <plan-id>` seçenekleriyle yeniden çalıştırılır. Plan user-data migration veya delete içeriyorsa `--approval-id <approval-id>` de gerekir. Tamamlanmış veya kesintiye uğramış bir deployment için rollback de önce planlanır, sonra exact plan ve gerekli onayla uygulanır:
+
+```bash
+python tools/krcn.py deployment rollback <deployment-id> --installation <installation-directory>
+```
 
 Repository paketini ağ kullanmadan mevcut Python ortamına kurmak ve sağlık kontrolünü çalıştırmak için:
 

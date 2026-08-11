@@ -20,6 +20,7 @@ from .installation import (
     load_installation_state,
     safe_installation_target,
 )
+from .mutation_gate import OwnershipResolver
 
 
 class VerificationError(ValueError):
@@ -42,6 +43,26 @@ class VerificationResult:
             "protected_json_verified": self.protected_json_verified,
             "backup_entries_verified": self.backup_entries_verified,
             "state_sha256": self.state_sha256,
+            "status": self.status,
+        }
+
+
+@dataclass(frozen=True)
+class InstallationVerificationResult:
+    inspection_id: str
+    installation_id: str
+    core_version: str
+    managed_files_verified: int
+    protected_json_verified: int
+    status: str
+
+    def public_summary(self) -> dict[str, object]:
+        return {
+            "inspection_id": self.inspection_id,
+            "installation_id": self.installation_id,
+            "core_version": self.core_version,
+            "managed_files_verified": self.managed_files_verified,
+            "protected_json_verified": self.protected_json_verified,
             "status": self.status,
         }
 
@@ -273,4 +294,37 @@ def verify_and_commit(
         backup_entries_verified=max(backup_verified, post_verified),
         state_sha256=desired_digest,
         status="completed",
+    )
+
+
+def verify_installation(
+    installation_root: Path,
+    ownership: OwnershipResolver,
+) -> InstallationVerificationResult:
+    """Verify the current installation without requiring an in-memory plan."""
+
+    from .installation import inspect_installation
+
+    root = installation_root.resolve()
+    inspection = inspect_installation(root, ownership)
+    if (
+        not inspection.state_present
+        or inspection.installation_id is None
+        or inspection.core_version is None
+    ):
+        raise VerificationError("installation state is missing")
+    if not inspection.managed_clean:
+        raise VerificationError("managed installation files are not clean")
+    if inspection.symlink_count:
+        raise VerificationError("installation contains symbolic links")
+    if inspection.interrupted_deployments:
+        raise VerificationError("installation has an interrupted deployment")
+    protected_verified = _verify_protected_json(root)
+    return InstallationVerificationResult(
+        inspection_id=inspection.inspection_id,
+        installation_id=inspection.installation_id,
+        core_version=inspection.core_version,
+        managed_files_verified=len(inspection.managed_verified),
+        protected_json_verified=protected_verified,
+        status="verified",
     )

@@ -10,6 +10,11 @@
     "request_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
     "operation": {
       "enum": [
+        "installation.inspect",
+        "installation.verify",
+        "release.diff",
+        "release.merge",
+        "deployment.rollback",
         "project.list",
         "project.inspect",
         "project.onboard",
