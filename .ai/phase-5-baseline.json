@@ -1,0 +1,65 @@
+{
+  "schema_ref": "schemas/phase-5-baseline.schema.json",
+  "schema_version": 1,
+  "baseline_id": "phase-5-orchestrator-task-flow",
+  "phase_id": "phase-5",
+  "status": "ready",
+  "completed_steps": 10,
+  "capabilities": [
+    "typed-natural-language-intent",
+    "capability-registry",
+    "deterministic-task-planning",
+    "exact-plan-authorization",
+    "checkpointed-idempotent-workers",
+    "evidence-bound-verification",
+    "persistent-orchestration-state",
+    "deterministic-resume-handoff",
+    "transport-neutral-orchestrator-services",
+    "cross-client-task-completion"
+  ],
+  "safe_operations": [
+    "orchestrator.intent",
+    "orchestrator.plan",
+    "orchestrator.authorize",
+    "orchestrator.start",
+    "orchestrator.execute",
+    "orchestrator.verify",
+    "orchestrator.status",
+    "orchestrator.resume"
+  ],
+  "guarantees": {
+    "live_reference_imported": false,
+    "local_data_tracked": false,
+    "implicit_network_access": false,
+    "literal_secrets_stored": false,
+    "user_data_preserved": true,
+    "user_policy_preserved": true,
+    "exact_plan_required": true,
+    "planner_grants_execution": false,
+    "verification_required": true,
+    "idempotent_worker_execution": true,
+    "remote_provider_approval_required": true,
+    "client_parity": true,
+    "chat_history_required": false
+  },
+  "verification": {
+    "hermetic_tests": "passed",
+    "foundation": "passed",
+    "doctor": "passed",
+    "offline_install": "passed",
+    "read_only_task": "passed",
+    "controlled_core_effect": "passed",
+    "user_data_approval": "passed",
+    "policy_preservation": "passed",
+    "provider_gate": "passed",
+    "scope_change": "passed",
+    "interruption_resume": "passed",
+    "client_parity": "passed"
+  },
+  "next_phase": {
+    "phase_id": "phase-6",
+    "plan_ref": "docs/plans/ROADMAP.md",
+    "implementation_started": false,
+    "user_approval_required": true
+  }
+}

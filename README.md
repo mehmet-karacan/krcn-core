@@ -21,7 +21,7 @@ Git'ten gelen yeni core sürümünde aşağıdaki işlemler uygulanır:
 
 ## Güncel geliştirme durumu
 
-Faz 1, Faz 2, Faz 3 ve Faz 4 tamamlandı. Revision-aware bilgi kataloğu, retrieval, bütçeli context paketleri, onay kontrollü Memory Gate ve ortak istemci servisleri hazırdır. Faz 5 orchestrator ve doğal dil görev akışı geliştirmesi aktif olarak yürütülmektedir. Yerel referans kaynaklarındaki kullanıcı verileri içeri alınmamıştır.
+Faz 1, Faz 2, Faz 3, Faz 4 ve Faz 5 tamamlandı. Revision-aware bilgi kataloğu, retrieval, bütçeli context paketleri, onay kontrollü Memory Gate, capability-bound orchestrator, idempotent worker, bağımsız verifier, kalıcı resume ve ortak istemci servisleri hazırdır. Faz 6 başlatılmamıştır ve açık kullanıcı onayı beklenmektedir. Yerel referans kaynaklarındaki kullanıcı verileri içeri alınmamıştır.
 
 Kök çalışma kuralları için `AGENTS.md`, araçtan bağımsız başlangıç bağlamı için `AI-CONTEXT.md` dosyasını okuyun. Codex doğrudan `AGENTS.md` kullanır. Claude Code için `CLAUDE.md` aynı ortak kaynakları içe aktarır. Diğer istemciler ve plugin'ler `.ai/repository-context.json` manifestini okuyabilir.
 
@@ -64,6 +64,21 @@ python tools/krcn.py memory persist --request-file <application-arguments.json>
 ```
 
 Bu komutlar ürün kuralı tanımlamaz; doğrudan ortak application service sözleşmesini çağırır. Uzak semantic arama için exact oturum onayı ve istemci tarafından açıkça bağlanmış bir scorer gerekir. Memory persist varsayılan olarak yalnızca plan üretir; kalıcı yazım aynı plan kimliği ve review ile eşleşen kullanıcı onayı olmadan çalışmaz.
+
+Doğal dil görev akışını ortak orchestrator servisi üzerinden kullanmak için:
+
+```bash
+python tools/krcn.py orchestrator intent --request-file <application-arguments.json>
+python tools/krcn.py orchestrator plan --request-file <application-arguments.json>
+python tools/krcn.py orchestrator authorize --request-file <application-arguments.json>
+python tools/krcn.py orchestrator start --request-file <application-arguments.json> --apply --expected-plan <plan-id>
+python tools/krcn.py orchestrator execute --request-file <application-arguments.json> --apply --expected-plan <plan-id>
+python tools/krcn.py orchestrator verify --request-file <application-arguments.json> --apply --expected-plan <plan-id>
+python tools/krcn.py orchestrator status --request-file <application-arguments.json>
+python tools/krcn.py orchestrator resume --request-file <application-arguments.json>
+```
+
+CLI yalnız taşıma katmanıdır. Plan, policy, approval, handler, checkpoint ve verification kuralları ortak application service içinde uygulanır. Worker ve verifier handler'ları kullanılmadan önce açıkça kaydedilmelidir; istemci seçimi ek yetki vermez.
 
 Yerel bir kurulumu incelemek, trusted release farkını görmek ve exact plan üretmek için:
 

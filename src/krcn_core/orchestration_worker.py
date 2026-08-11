@@ -250,6 +250,23 @@ def parse_worker_execution(payload: object) -> WorkerExecution:
     effects_payload = journal_payload.get("effects")
     if not isinstance(effects_payload, list):
         raise WorkerExecutionError("worker effects are invalid")
+    journal_digest_fields = {
+        "journal_id",
+        "plan_id",
+        "authorization_id",
+        "input_digest",
+        "idempotency_key",
+    }
+    if any(not SHA256.fullmatch(str(journal_payload.get(item, ""))) for item in journal_digest_fields):
+        raise WorkerExecutionError("worker journal digest is invalid")
+    for item in ("task_id", "step_id", "handler_id"):
+        if not IDENTIFIER.fullmatch(str(journal_payload.get(item, ""))):
+            raise WorkerExecutionError("worker journal identifier is invalid")
+    for record in (checkpoint_payload, journal_payload):
+        for item in ("result_digest", "failure_digest"):
+            value = record.get(item)
+            if value is not None and (not isinstance(value, str) or not SHA256.fullmatch(value)):
+                raise WorkerExecutionError("worker result or failure digest is invalid")
     effects = []
     effect_fields = {
         "effect_id",
@@ -262,8 +279,21 @@ def parse_worker_execution(payload: object) -> WorkerExecution:
         if not isinstance(item, dict) or set(item) != effect_fields:
             raise WorkerExecutionError("worker effect fields are invalid")
         evidence = item.get("evidence_digests")
-        if not isinstance(evidence, list) or any(not SHA256.fullmatch(str(value)) for value in evidence):
+        if (
+            not isinstance(evidence, list)
+            or len(set(evidence)) != len(evidence)
+            or any(not SHA256.fullmatch(str(value)) for value in evidence)
+        ):
             raise WorkerExecutionError("worker effect evidence is invalid")
+        if (
+            not IDENTIFIER.fullmatch(str(item.get("effect_id", "")))
+            or item.get("effect_type") not in {"read", "write", "execute", "network"}
+        ):
+            raise WorkerExecutionError("worker effect identity is invalid")
+        for field in ("mutation_plan_id", "provider_request_id"):
+            value = item.get(field)
+            if value is not None and (not isinstance(value, str) or not SHA256.fullmatch(value)):
+                raise WorkerExecutionError("worker effect authorization digest is invalid")
         effects.append(
             WorkerEffect(
                 str(item.get("effect_id")),

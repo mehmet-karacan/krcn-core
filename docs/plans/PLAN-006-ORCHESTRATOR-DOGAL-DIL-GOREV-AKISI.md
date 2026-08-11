@@ -2,7 +2,7 @@
 
 ## Durum
 
-Aktif. Faz 5, tamamlanmış Faz 4 context, knowledge ve memory baseline'ı üzerinde başlatıldı.
+Tamamlandı. On adımın tamamı hermetik testler, repository doğrulamaları, doctor ve offline wheel kurulumu ile kapatıldı. Faz 6 başlatılmadı.
 
 ## Amaç
 
@@ -99,3 +99,7 @@ Kullanıcının doğal dille belirttiği hedefi; açık kapsam, kaynaklar, kıs�
 ## Onay kapıları
 
 Sentetik kayıtlarla intake, planlama, registry seçimi, state transition ve doğrulama geliştirilebilir. Gerçek user-data mutasyonu, policy değişikliği, uzak provider veya entegrasyon kullanımı, capability escalation, geri döndürülemez etki ve kullanıcı kapsamını büyüten plan değişikliği ayrı exact plan ve açık kullanıcı onayı gerektirir.
+
+## Tamamlanma kanıtı
+
+Faz 5 baseline kaydı `.ai/phase-5-baseline.json`, bütünleşik senaryolar `docs/progress/PHASE-5-INTEGRATION-TESTS.md`, kapanış sonucu ise `docs/progress/PHASE-5-COMPLETION.md` içinde tutulur. Faz 6'ya geçiş için ayrı kullanıcı onayı gerekir.

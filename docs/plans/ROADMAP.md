@@ -13,7 +13,8 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
 - Faz 2 tamamlandı.
 - Faz 3 tamamlandı.
 - Faz 4 tamamlandı.
-- Faz 5 aktif: orchestrator ve doğal dil görev akışı geliştiriliyor.
+- Faz 5 tamamlandı.
+- Faz 6 planlandı ancak başlatılmadı; açık kullanıcı onayı bekleniyor.
 
 ## Temel kullanım modeli
 

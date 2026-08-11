@@ -231,6 +231,8 @@ def _validate_approval(
         raise TaskAuthorizationError("matching exact-plan user approval is required")
     if tuple(sorted(set(approval.approved_triggers))) != plan.approval_triggers:
         raise TaskAuthorizationError("approval triggers must match the exact task plan")
+    if len(set(approval.approved_triggers)) != len(approval.approved_triggers):
+        raise TaskAuthorizationError("approved triggers must be unique")
     if len(set(approval.mutation_plan_ids)) != len(approval.mutation_plan_ids):
         raise TaskAuthorizationError("approved mutation plan ids must be unique")
     if len(set(approval.provider_request_ids)) != len(approval.provider_request_ids):

@@ -18,10 +18,10 @@ def load_json(path: Path) -> dict:
 
 
 class PhaseFiveKickoffTests(unittest.TestCase):
-    def test_current_work_points_to_active_phase_five_plan(self) -> None:
+    def test_current_work_preserves_kickoff_and_completed_phase_five_plan(self) -> None:
         current = load_json(REPO_ROOT / ".ai" / "current-work.json")
         self.assertEqual("phase-5", current["phase_id"])
-        self.assertEqual("active", current["status"])
+        self.assertEqual("completed", current["status"])
         self.assertEqual("c16c333", current["baseline_commit"])
         self.assertEqual(
             "docs/plans/PLAN-006-ORCHESTRATOR-DOGAL-DIL-GOREV-AKISI.md",
@@ -29,6 +29,10 @@ class PhaseFiveKickoffTests(unittest.TestCase):
         )
         self.assertIn(
             "docs/progress/PHASE-5-KICKOFF.md",
+            current["progress_refs"],
+        )
+        self.assertIn(
+            "docs/progress/PHASE-5-COMPLETION.md",
             current["progress_refs"],
         )
         phase_four = load_json(REPO_ROOT / ".ai" / "phase-4-baseline.json")

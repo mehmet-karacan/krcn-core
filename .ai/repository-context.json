@@ -34,6 +34,7 @@
     "phase_four_boundary": "docs/specifications/PHASE-4-CONTEXT-KNOWLEDGE-MEMORY-BOUNDARY.md",
     "phase_four_baseline": ".ai/phase-4-baseline.json",
     "phase_five_boundary": "docs/specifications/PHASE-5-ORCHESTRATION-BOUNDARY.md",
+    "phase_five_baseline": ".ai/phase-5-baseline.json",
     "orchestration_boundary": "config/orchestration-boundary.json",
     "orchestration_boundary_schema": "schemas/orchestration-boundary.schema.json",
     "task_intent_schema": "schemas/task-intent.schema.json",

@@ -3,7 +3,7 @@
   "schema_version": 1,
   "phase_id": "phase-5",
   "workstream_id": "orchestrator-natural-language-task-flow",
-  "status": "active",
+  "status": "completed",
   "goal": "Turn natural-language intent into capability-bounded plans, authorized execution, and evidence-backed verification",
   "plan_ref": "docs/plans/PLAN-006-ORCHESTRATOR-DOGAL-DIL-GOREV-AKISI.md",
   "progress_refs": [
@@ -53,11 +53,13 @@
     "docs/progress/PHASE-5-WORKER-EXECUTION.md",
     "docs/progress/PHASE-5-TASK-VERIFICATION.md",
     "docs/progress/PHASE-5-ORCHESTRATION-STATE.md",
-    "docs/progress/PHASE-5-CLIENT-SERVICES.md"
+    "docs/progress/PHASE-5-CLIENT-SERVICES.md",
+    "docs/progress/PHASE-5-INTEGRATION-TESTS.md",
+    "docs/progress/PHASE-5-COMPLETION.md"
   ],
   "next_actions": [
-    "run hermetic end-to-end orchestration security and interruption scenarios",
-    "publish the Phase 5 baseline and completion evidence after offline package verification"
+    "wait for explicit user approval before starting Phase 6",
+    "after approval, create the Phase 6 release, quality, and portability implementation plan"
   ],
   "baseline_commit": "c16c333",
   "approval_gates": {
