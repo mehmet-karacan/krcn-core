@@ -16,6 +16,11 @@ from .installation import (
     load_installation_state,
     safe_installation_target,
 )
+from .derived_actions import (
+    DerivedActionHandlerRegistry,
+    DerivedWrite,
+    plan_derived_writes,
+)
 from .merge_plan import (
     MergeAuthorization,
     MergePlan,
@@ -74,6 +79,8 @@ class BackupEntry:
     sha256: str | None
     size: int | None
     content_ref: str | None
+    expected_post_existed: bool
+    expected_post_sha256: str | None
 
     def as_dict(self) -> dict[str, object]:
         return {
@@ -82,6 +89,8 @@ class BackupEntry:
             "sha256": self.sha256,
             "size": self.size,
             "content_ref": self.content_ref,
+            "expected_post_existed": self.expected_post_existed,
+            "expected_post_sha256": self.expected_post_sha256,
         }
 
 
@@ -129,6 +138,7 @@ class DeploymentPlan:
     backup_manifest: BackupManifest
     backup_manifest_sha256: str
     migration_writes: tuple[MigrationWrite, ...]
+    derived_writes: tuple[DerivedWrite, ...]
     content_mutations: tuple[MutationPlan, ...]
     backup_manifest_mutation: MutationPlan
     journal_mutations: Mapping[str, MutationPlan]
@@ -149,6 +159,9 @@ class DeploymentPlan:
             "migration_writes": [
                 item.public_summary() for item in self.migration_writes
             ],
+            "derived_writes": [
+                item.public_summary() for item in self.derived_writes
+            ],
             "support_mutations": {
                 "content": [item.as_dict() for item in self.content_mutations],
                 "manifest": self.backup_manifest_mutation.as_dict(),
@@ -157,8 +170,14 @@ class DeploymentPlan:
                     for status, mutation in self.journal_mutations.items()
                 },
             },
-            "approval_required": self.merge_plan.approval_required,
+            "approval_required": self.approval_required,
         }
+
+    @property
+    def approval_required(self) -> bool:
+        return self.merge_plan.approval_required or any(
+            item.mutation.approval_required for item in self.derived_writes
+        )
 
 
 @dataclass(frozen=True)
@@ -167,6 +186,7 @@ class DeploymentAuthorization:
     merge_authorization: MergeAuthorization
     support_authorizations: Mapping[str, MutationAuthorization]
     migration_authorizations: Mapping[str, MutationAuthorization]
+    derived_authorizations: Mapping[str, MutationAuthorization]
 
 
 @dataclass(frozen=True)
@@ -266,6 +286,8 @@ def _add_existing_entry(
         sha256=digest,
         size=size,
         content_ref=None,
+        expected_post_existed=True,
+        expected_post_sha256=digest,
     )
 
 
@@ -329,6 +351,7 @@ def prepare_deployment_plan(
     merge_plan: MergePlan,
     ownership: OwnershipResolver,
     migration_handlers: MigrationHandlerRegistry | None = None,
+    derived_handlers: DerivedActionHandlerRegistry | None = None,
 ) -> DeploymentPlan:
     """Plan exact backup and journal writes without changing the installation."""
 
@@ -343,6 +366,13 @@ def prepare_deployment_plan(
         root,
         merge_plan.migrations,
         handlers,
+        ownership,
+    )
+    resolved_derived_handlers = derived_handlers or DerivedActionHandlerRegistry()
+    derived_writes = plan_derived_writes(
+        root,
+        merge_plan.derived_actions,
+        resolved_derived_handlers,
         ownership,
     )
     deployment_id = _deployment_id(root, merge_plan)
@@ -370,6 +400,8 @@ def prepare_deployment_plan(
                 sha256=None,
                 size=None,
                 content_ref=None,
+                expected_post_existed=False,
+                expected_post_sha256=None,
             )
             continue
         if change.previous_sha256 is None:
@@ -405,7 +437,52 @@ def prepare_deployment_plan(
                 sha256=entry.sha256,
                 size=entry.size,
                 content_ref=_content_ref(deployment_id, entry.sha256),
+                expected_post_existed=entry.expected_post_existed,
+                expected_post_sha256=entry.expected_post_sha256,
             )
+    for write in derived_writes:
+        if write.target_ref not in entries and write.action == "create":
+            entries[write.target_ref] = BackupEntry(
+                target_ref=write.target_ref,
+                existed=False,
+                sha256=None,
+                size=None,
+                content_ref=None,
+                expected_post_existed=False,
+                expected_post_sha256=None,
+            )
+    expected_post = {
+        target_ref: (entry.existed, entry.sha256)
+        for target_ref, entry in entries.items()
+    }
+    for change in merge_plan.file_changes:
+        if change.action in {"create", "update", "unchanged"}:
+            expected_post[change.path] = (True, change.target_sha256)
+        elif change.action == "delete":
+            expected_post[change.path] = (False, None)
+    for write in migration_writes:
+        expected_post[write.target_ref] = (True, write.target_sha256)
+    for write in derived_writes:
+        expected_post[write.target_ref] = (
+            write.action != "delete",
+            write.target_sha256,
+        )
+    expected_post[state_ref] = (
+        True,
+        _document_sha256(merge_plan.desired_state.as_payload()),
+    )
+    entries = {
+        target_ref: BackupEntry(
+            target_ref=entry.target_ref,
+            existed=entry.existed,
+            sha256=entry.sha256,
+            size=entry.size,
+            content_ref=entry.content_ref,
+            expected_post_existed=expected_post[target_ref][0],
+            expected_post_sha256=expected_post[target_ref][1],
+        )
+        for target_ref, entry in entries.items()
+    }
     backup_manifest = BackupManifest(
         deployment_id=deployment_id,
         merge_plan_id=merge_plan.plan_id,
@@ -464,6 +541,9 @@ def prepare_deployment_plan(
         "migration_mutation_ids": [
             item.mutation.plan_id for item in migration_writes
         ],
+        "derived_mutation_ids": [
+            item.mutation.plan_id for item in derived_writes
+        ],
         "journal_mutation_ids": {
             status: item.plan_id for status, item in journal_mutations.items()
         },
@@ -476,6 +556,7 @@ def prepare_deployment_plan(
         backup_manifest=backup_manifest,
         backup_manifest_sha256=manifest_digest,
         migration_writes=migration_writes,
+        derived_writes=derived_writes,
         content_mutations=content_mutations,
         backup_manifest_mutation=backup_manifest_mutation,
         journal_mutations=journal_mutations,
@@ -492,6 +573,8 @@ def authorize_deployment_plan(
 
     if expected_plan_id != plan.plan_id:
         raise DeploymentError("deployment requires the exact dry-run plan id")
+    if plan.approval_required and not (approval_id and approval_id.strip()):
+        raise DeploymentError("deployment effects require explicit approval")
     merge_authorization = authorize_merge_plan(
         plan.merge_plan,
         expected_plan_id=plan.merge_plan.plan_id,
@@ -523,11 +606,27 @@ def authorize_deployment_plan(
             dry_run=DryRunEvidence(mutation.plan_id, True),
             approval=approval,
         )
+    derived_authorizations = {}
+    for write in plan.derived_writes:
+        mutation = write.mutation
+        approval = None
+        if mutation.approval_required:
+            approval = ApprovalEvidence(
+                mutation.plan_id,
+                approval_id or "",
+                approved=True,
+            )
+        derived_authorizations[mutation.plan_id] = authorize_mutation(
+            mutation,
+            dry_run=DryRunEvidence(mutation.plan_id, True),
+            approval=approval,
+        )
     return DeploymentAuthorization(
         plan_id=plan.plan_id,
         merge_authorization=merge_authorization,
         support_authorizations=support_authorizations,
         migration_authorizations=migration_authorizations,
+        derived_authorizations=derived_authorizations,
     )
 
 

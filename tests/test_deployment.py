@@ -18,7 +18,12 @@ from krcn_core.deployment import (  # noqa: E402
     start_deployment,
     write_deployment_status,
 )
+from krcn_core.derived_actions import (  # noqa: E402
+    DerivedActionHandler,
+    DerivedActionHandlerRegistry,
+)
 from krcn_core.installation import InstallationState, ManagedFile  # noqa: E402
+from krcn_core.merge_apply import apply_derived_actions  # noqa: E402
 from krcn_core.merge_plan import prepare_merge_plan  # noqa: E402
 from krcn_core.migrations import (  # noqa: E402
     MigrationHandler,
@@ -157,11 +162,25 @@ class DeploymentBackupTests(unittest.TestCase):
         self.handlers = MigrationHandlerRegistry(
             [MigrationHandler("workspace-v2", self._migrate_workspace)]
         )
+        self.derived_handlers = DerivedActionHandlerRegistry(
+            [
+                DerivedActionHandler(
+                    "rebuild-source-state",
+                    self._rebuild_source_state,
+                )
+            ]
+        )
 
     @staticmethod
     def _migrate_workspace(payload):
         payload["schema_version"] = 2
         return payload
+
+    @staticmethod
+    def _rebuild_source_state(payload):
+        result = dict(payload)
+        result["sample.json"] = {"derived": True, "rebuilt": True}
+        return result
 
     def tearDown(self) -> None:
         self.temporary.cleanup()
@@ -172,6 +191,7 @@ class DeploymentBackupTests(unittest.TestCase):
             self.merge_plan,
             self.ownership,
             self.handlers,
+            self.derived_handlers,
         )
         entries = {item.target_ref: item for item in plan.backup_manifest.entries}
         self.assertTrue(entries["README.md"].existed)
@@ -188,6 +208,7 @@ class DeploymentBackupTests(unittest.TestCase):
             self.merge_plan,
             self.ownership,
             self.handlers,
+            self.derived_handlers,
         )
         with self.assertRaisesRegex(DeploymentError, "exact dry-run"):
             authorize_deployment_plan(
@@ -241,6 +262,7 @@ class DeploymentBackupTests(unittest.TestCase):
             self.merge_plan,
             self.ownership,
             self.handlers,
+            self.derived_handlers,
         )
         authorization = authorize_deployment_plan(
             plan,
@@ -265,6 +287,7 @@ class DeploymentBackupTests(unittest.TestCase):
             self.merge_plan,
             self.ownership,
             self.handlers,
+            self.derived_handlers,
         )
         self.workspace_path.write_text(
             '{"schema_version":1,"workspace_id":"changed"}\n',
@@ -275,6 +298,7 @@ class DeploymentBackupTests(unittest.TestCase):
             self.merge_plan,
             self.ownership,
             self.handlers,
+            self.derived_handlers,
         )
         self.assertNotEqual(first.plan_id, second.plan_id)
 
@@ -284,6 +308,7 @@ class DeploymentBackupTests(unittest.TestCase):
             self.merge_plan,
             self.ownership,
             self.handlers,
+            self.derived_handlers,
         )
         authorization = authorize_deployment_plan(
             plan,
@@ -298,6 +323,36 @@ class DeploymentBackupTests(unittest.TestCase):
                 authorization,
                 "completed",
             )
+
+    def test_exact_derived_rebuild_runs_after_preceding_stages(self) -> None:
+        plan = prepare_deployment_plan(
+            self.root,
+            self.merge_plan,
+            self.ownership,
+            self.handlers,
+            self.derived_handlers,
+        )
+        authorization = authorize_deployment_plan(
+            plan,
+            expected_plan_id=plan.plan_id,
+            approval_id="deployment-approval",
+        )
+        start_deployment(self.root, plan, authorization)
+        write_deployment_status(self.root, plan, authorization, "applying")
+        write_deployment_status(self.root, plan, authorization, "migrating")
+        result = apply_derived_actions(self.root, plan, authorization)
+        self.assertEqual(
+            ("rebuild-source-state",),
+            result.completed_actions,
+        )
+        self.assertEqual(
+            (
+                str(self.derived_path.relative_to(self.root)).replace("\\", "/"),
+            ),
+            result.written_records,
+        )
+        rebuilt = json.loads(self.derived_path.read_text(encoding="utf-8"))
+        self.assertEqual({"derived": True, "rebuilt": True}, rebuilt)
 
     def test_secret_migration_descriptor_is_prohibited(self) -> None:
         with self.assertRaisesRegex(UpdateEffectError, "may not target"):

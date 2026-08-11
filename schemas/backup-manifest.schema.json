@@ -17,13 +17,15 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["target_ref", "existed", "sha256", "size", "content_ref"],
+        "required": ["target_ref", "existed", "sha256", "size", "content_ref", "expected_post_existed", "expected_post_sha256"],
         "properties": {
           "target_ref": { "type": "string", "minLength": 1 },
           "existed": { "type": "boolean" },
           "sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
           "size": { "type": ["integer", "null"], "minimum": 0 },
-          "content_ref": { "type": ["string", "null"] }
+          "content_ref": { "type": ["string", "null"] },
+          "expected_post_existed": { "type": "boolean" },
+          "expected_post_sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" }
         }
       }
     },

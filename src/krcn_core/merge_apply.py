@@ -49,6 +49,22 @@ class MigrationApplyResult:
         }
 
 
+@dataclass(frozen=True)
+class DerivedApplyResult:
+    deployment_id: str
+    completed_actions: tuple[str, ...]
+    written_records: tuple[str, ...]
+    deleted_records: tuple[str, ...]
+
+    def public_summary(self) -> dict[str, object]:
+        return {
+            "deployment_id": self.deployment_id,
+            "completed_actions": list(self.completed_actions),
+            "written_records": list(self.written_records),
+            "deleted_records": list(self.deleted_records),
+        }
+
+
 def _stable_hash(path: Path) -> tuple[int, str]:
     before = path.stat(follow_symlinks=False)
     digest = hashlib.sha256()
@@ -204,4 +220,61 @@ def apply_migrations(
             item.migration_id for item in plan.merge_plan.migrations
         ),
         updated_records=tuple(updated),
+    )
+
+
+def apply_derived_actions(
+    installation_root: Path,
+    plan: DeploymentPlan,
+    authorization: DeploymentAuthorization,
+) -> DerivedApplyResult:
+    """Apply only the exact JSON rebuild effects captured by the dry-run."""
+
+    root = installation_root.resolve()
+    if authorization.plan_id != plan.plan_id:
+        raise MergeApplyError("deployment authorization does not match plan")
+    expected_status = "migrating" if plan.merge_plan.migrations else "applying"
+    if _journal_status(root, plan) != expected_status:
+        raise MergeApplyError("derived rebuild requires the preceding apply stage")
+    for write in plan.derived_writes:
+        auth = authorization.derived_authorizations.get(write.mutation.plan_id)
+        _assert_mutation_authorized(write.mutation, auth)
+        target = safe_installation_target(root, write.target_ref)
+        if write.action == "create":
+            if target.exists():
+                raise MergeApplyError("planned derived create target now exists")
+        else:
+            if not target.is_file() or target.is_symlink():
+                raise MergeApplyError("derived target is missing")
+            _, digest = _stable_hash(target)
+            if digest != write.previous_sha256:
+                raise MergeApplyError("derived target changed after dry-run")
+        if write.action in {"create", "update"}:
+            if write.document is None or write.target_sha256 is None:
+                raise MergeApplyError("planned derived document is missing")
+            if hashlib.sha256(write.document).hexdigest() != write.target_sha256:
+                raise MergeApplyError("planned derived document is invalid")
+    write_deployment_status(root, plan, authorization, "rebuilding")
+    written = []
+    deleted = []
+    for write in plan.derived_writes:
+        target = safe_installation_target(root, write.target_ref)
+        if write.action in {"create", "update"}:
+            _atomic_write(target, write.document or b"")
+            _, digest = _stable_hash(target)
+            if digest != write.target_sha256:
+                raise MergeApplyError("derived verification failed after write")
+            written.append(write.target_ref)
+        else:
+            target.unlink()
+            if target.exists():
+                raise MergeApplyError("derived delete verification failed")
+            deleted.append(write.target_ref)
+    return DerivedApplyResult(
+        deployment_id=plan.deployment_id,
+        completed_actions=tuple(
+            item.action_id for item in plan.merge_plan.derived_actions
+        ),
+        written_records=tuple(written),
+        deleted_records=tuple(deleted),
     )
