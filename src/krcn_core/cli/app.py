@@ -91,6 +91,14 @@ def build_parser() -> argparse.ArgumentParser:
     project_rescan.add_argument("project_id")
     project_rescan.add_argument("--binding-id")
     _add_service_options(project_rescan, mutation=True)
+    project_rebind = project_commands.add_parser(
+        "rebind",
+        help="Plan or apply verified relocation of an external project",
+    )
+    project_rebind.add_argument("project_id")
+    project_rebind.add_argument("--binding-id")
+    project_rebind.add_argument("--source", type=Path, required=True)
+    _add_service_options(project_rebind, mutation=True)
     installation = subparsers.add_parser(
         "installation",
         help="Inspect or verify a local KRCN Core installation",
@@ -287,6 +295,14 @@ def _project_service_request(args: argparse.Namespace) -> ServiceRequest:
     elif args.project_command == "rescan":
         operation = "project.rescan"
         arguments = {"project_id": args.project_id}
+        if args.binding_id:
+            arguments["binding_id"] = args.binding_id
+    elif args.project_command == "rebind":
+        operation = "project.rebind"
+        arguments = {
+            "project_id": args.project_id,
+            "candidate_root": str(args.source.resolve()),
+        }
         if args.binding_id:
             arguments["binding_id"] = args.binding_id
     else:

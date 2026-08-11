@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:source-rebind-plan:1",
+  "title": "KRCN Core external source rebind plan summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "plan_id",
+    "binding_id",
+    "source_id",
+    "previous_binding_revision",
+    "next_binding_revision",
+    "identity_verified",
+    "candidate_path_disclosed",
+    "source_effect",
+    "record_plans"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "binding_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "source_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "previous_binding_revision": { "type": "integer", "minimum": 1 },
+    "next_binding_revision": { "type": "integer", "minimum": 2 },
+    "identity_verified": { "const": true },
+    "candidate_path_disclosed": { "const": false },
+    "source_effect": { "const": "read-only" },
+    "record_plans": { "type": "array", "minItems": 2, "maxItems": 2 }
+  }
+}

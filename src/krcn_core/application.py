@@ -81,6 +81,11 @@ from .rollback import (
     prepare_rollback_plan,
 )
 from .source_bindings import SourceBinding, parse_source_binding
+from .source_rebind import (
+    apply_source_rebind,
+    candidate_binding,
+    prepare_source_rebind,
+)
 from .semantic_retrieval import (
     RemoteSemanticScorer,
     create_semantic_provider_request,
@@ -102,6 +107,7 @@ OPERATIONS = {
     "project.inspect",
     "project.onboard",
     "project.rescan",
+    "project.rebind",
     "knowledge.catalog",
     "knowledge.search-exact",
     "knowledge.search-dependencies",
@@ -316,6 +322,7 @@ class KrcnApplicationService:
             "project.inspect": self._inspect_project,
             "project.onboard": self._onboard_project,
             "project.rescan": self._rescan_project,
+            "project.rebind": self._rebind_project,
             "knowledge.catalog": self._knowledge_catalog,
             "knowledge.search-exact": self._search_exact,
             "knowledge.search-dependencies": self._search_dependencies,
@@ -776,6 +783,58 @@ class KrcnApplicationService:
             "record_count": len(result.records),
             "applied": True,
         }
+
+    def _rebind_project(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"project_id", "candidate_root"},
+            optional={"binding_id"},
+        )
+        project_id = _identifier_argument(request.arguments, "project_id")
+        binding = self._binding_for_project(
+            project_id,
+            request.arguments.get("binding_id"),
+        )
+        root = self._absolute_path_argument(request.arguments, "candidate_root")
+        candidate = candidate_binding(binding, root)
+        policies = load_user_policies(self._store.data_root / "policies")
+        adapter_request = prepare_adapter_operation(
+            LOCAL_DISCOVERY_ADAPTER,
+            candidate,
+            "discover",
+            policies,
+        )
+        adapter_approval = None
+        if request.approval_id is not None:
+            adapter_approval = AdapterApproval(
+                request_id=adapter_request.request_id,
+                approval_id=request.approval_id,
+                approved=True,
+            )
+        discovery = discover_local_source(
+            candidate,
+            load_discovery_policy(self._repo_root),
+            authorize_adapter_operation(adapter_request, adapter_approval),
+        )
+        plan = prepare_source_rebind(self._store, binding, root, discovery)
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        authorizations = self._authorize_record_plans(
+            request,
+            plan.plan_id,
+            plan.record_plans,
+        )
+        result = apply_source_rebind(
+            self._store,
+            plan,
+            authorizations,
+            candidate,
+            discovery,
+        )
+        return "applied", {"plan": plan.public_summary(), **result.public_summary()}
 
     def _information_catalog(self) -> InformationCatalog:
         bindings = tuple(

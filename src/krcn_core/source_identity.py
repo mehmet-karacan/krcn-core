@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .discovery import DiscoveryResult
+from .source_state import SourceState
 
 
 SHA256 = re.compile(r"^[a-f0-9]{64}$")
@@ -47,6 +48,23 @@ def source_identity_from_discovery(result: DiscoveryResult) -> SourceIdentity:
         algorithm=ALGORITHM,
         digest=result.root_digest,
         file_count=len(result.files),
+    )
+
+
+def source_identity_from_state(
+    source_id: str,
+    state: SourceState,
+) -> SourceIdentity:
+    """Create the last accepted identity from preserved derived source state."""
+
+    if not SHA256.fullmatch(state.root_digest):
+        raise SourceIdentityError("source state root digest is invalid")
+    return SourceIdentity(
+        source_id=source_id,
+        binding_id=state.binding_id,
+        algorithm=ALGORITHM,
+        digest=state.root_digest,
+        file_count=len(state.files),
     )
 
 
@@ -106,4 +124,3 @@ def assert_external_source(source_root: Path, user_home: Path) -> tuple[Path, Pa
     else:
         raise SourceIdentityError("KRCN user home may not be inside external source")
     return source, home
-
