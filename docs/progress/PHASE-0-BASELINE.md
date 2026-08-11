@@ -1,143 +1,143 @@
 # Faz 0 baseline inceleme raporu
 
-## Amac
+## Amaç
 
-Mevcut canli sistem ile baseline adayini veri kaybi, bilgi sizintisi ve davranis bozulmasi riski olusturmadan incelemek. Bu rapor aktarim karari degildir. Kaynak kod veya yerel veri repository'ye alinmamistir.
+Mevcut canlı sistem ile baseline adayını veri kaybı, bilgi sızıntısı ve davranış bozulması riski oluşturmadan incelemek. Bu rapor bir aktarım kararı değildir. Kaynak kod veya yerel veri repository'ye alınmamıştır.
 
-## Inceleme yontemi
+## İnceleme yöntemi
 
-- Kaynaklar salt okunur olarak tarandi.
-- Dosyalar goreli yol ve SHA-256 ile karsilastirildi.
-- Core adayi, runtime, user-data, derived, secrets ve gelistirme artifaktlari ayri degerlendirildi.
-- Secret ve tasinabilirlik taramasinda degerler raporlanmadi. Yalniz risk kategorileri kullanildi.
-- Testler gecici bir kopyada ve ag erisimi teknik olarak engellenmis durumda calistirildi.
-- Yerel kaynak konumlari ve ozel proje kimlikleri repository belgelerine yazilmadi.
+- Kaynaklar salt okunur olarak tarandı.
+- Dosyalar göreli yol ve SHA-256 ile karşılaştırıldı.
+- Core adayı, runtime, user-data, derived, secrets ve geliştirme artifaktları ayrı değerlendirildi.
+- Secret ve taşınabilirlik taramasında değerler raporlanmadı. Yalnızca risk kategorileri kullanıldı.
+- Testler geçici bir kopyada ve ağ erişimi teknik olarak engellenmiş durumda çalıştırıldı.
+- Yerel kaynak konumları ve özel proje kimlikleri repository belgelerine yazılmadı.
 
-## Envanter ozeti
+## Envanter özeti
 
-| Kaynak sinifi | Dosya sayisi | Yaklasik boyut | Yorum |
+| Kaynak sınıfı | Dosya sayısı | Yaklaşık boyut | Yorum |
 |---|---:|---:|---|
-| Canli referans | 507 | 698 MB | Isler, proje verisi, indeksler ve runtime durumu iceriyor |
-| Mimari ve baseline calisma alani | 119 | 1.77 MB | Tasarim belgeleri ve baseline adayi iceriyor |
-| Baseline adayi | 86 | 665 KB | Core, test, ornek proje ve runtime kalintilari birlikte bulunuyor |
+| Canlı referans | 507 | 698 MB | İşler, proje verisi, indeksler ve runtime durumu içeriyor |
+| Mimari ve baseline çalışma alanı | 119 | 1,77 MB | Tasarım belgeleri ve baseline adayı içeriyor |
+| Baseline adayı | 86 | 665 KB | Core, test, örnek proje ve runtime kalıntıları birlikte bulunuyor |
 
-Canli referans ile baseline adayi arasindaki ham karsilastirma:
+Canlı referans ile baseline adayı arasındaki ham karşılaştırma:
 
-| Durum | Dosya sayisi | Yorum |
+| Durum | Dosya sayısı | Yorum |
 |---|---:|---|
-| Ayni | 62 | Ortak core, sema, agent, skill ve test dosyalari agirlikta |
-| Farkli | 7 | Olay gunlugu, README, proje konumu ve cache farklari |
-| Yalniz baseline adayinda | 17 | Test fixture ve cache/runtime kalintilari |
-| Yalniz canli referansta | 438 | Buyuk oranda is, proje, runtime ve derived veri |
+| Aynı | 62 | Ortak core, şema, agent, skill ve test dosyaları ağırlıkta |
+| Farklı | 7 | Olay günlüğü, README, proje konumu ve cache farkları |
+| Yalnızca baseline adayında | 17 | Test fixture ve cache/runtime kalıntıları |
+| Yalnızca canlı referansta | 438 | Büyük oranda iş, proje, runtime ve derived veri |
 
-Core odakli filtrede cache dosyalari disarida birakildiginda 29 dosya canli sistem ile birebir aynidir. Baseline adayina ozel sekiz dosya test fixture kapsamindadir.
+Core odaklı filtrede cache dosyaları dışarıda bırakıldığında 29 dosya canlı sistem ile birebir aynıdır. Baseline adayına özel sekiz dosya test fixture kapsamındadır.
 
-## Mevcut calisan yuzey
+## Mevcut çalışan yüzey
 
-Baseline surumu `0.1.0-taslak` olarak kayitlidir. CLI su ana gruplari icerir:
+Baseline sürümü `0.1.0-taslak` olarak kayıtlıdır. CLI şu ana grupları içerir:
 
 - workspace root ve validate;
 - project onboard, list ve rescan;
-- task list, checkpoint ve kaldigi yer;
+- task list, checkpoint ve kaldığı yer;
 - source index build, status ve query;
 - memory index ve semantic query;
 - database connection metadata ve database index;
-- birlesik arama;
-- lock yonetimi;
+- birleşik arama;
+- lock yönetimi;
 - handoff;
 - skill list ve show.
 
-CLI tek bir Python dosyasinda 3.669 satir ve 163.852 byte boyutundadir. Komut ayrıştırma elle yapilmaktadir ve standart bir `--help` yuzeyi yoktur.
+CLI tek bir Python dosyasında 3.669 satır ve 163.852 byte boyutundadır. Komut ayrıştırma elle yapılmaktadır ve standart bir `--help` yüzeyi yoktur.
 
 ## Test sonucu
 
-Testler gecici kopyada calistirildi. Ag cagrilari engellendi.
+Testler geçici kopyada çalıştırıldı. Ağ çağrıları engellendi.
 
-- Skill yukleme testi: 23 kontrol gecti.
-- Regresyon testi: 38 kontrol gecti, 1 kontrol kaldi, 8 opsiyonel kontrol uyarili olarak atlandi.
-- Kalan kontrol, gercek bir davranis hatasindan cok testin ortam bagimliligini gosteriyor. Test eksik secret environment degiskenini beklerken CLI once opsiyonel database driver eksikligini bildiriyor.
+- Skill yükleme testi: 23 kontrol geçti.
+- Regresyon testi: 38 kontrol geçti, 1 kontrol kaldı, 8 opsiyonel kontrol uyarılı olarak atlandı.
+- Kalan kontrol, gerçek bir davranış hatasından çok testin ortam bağımlılığını gösteriyor. Test eksik secret environment değişkenini beklerken CLI önce opsiyonel database driver eksikliğini bildiriyor.
 
-Regresyon testi hermetic degildir. Is istasyonuna ozel yollar ve belirli kurulum adlari kod icinde sabitlenmistir. Bu test dogrudan aktarilamaz.
+Regresyon testi hermetic değildir. İş istasyonuna özel yollar ve belirli kurulum adları kod içinde sabitlenmiştir. Bu test doğrudan aktarılamaz.
 
 ## Kritik bulgular
 
-### 1. Yerel veri ile core ayni agacta
+### 1. Yerel veri ile core aynı ağaçta
 
-Core dosyalari, runtime durumu, olay gunlugu, kullanici tercihleri, proje bellegi, gorevler, indeksler ve baglanti metadata dosyalari ayni kok altinda tutuluyor. Bu durum guvenli update ve release islemini zorlastiriyor.
+Core dosyaları, runtime durumu, olay günlüğü, kullanıcı tercihleri, proje belleği, görevler, indeksler ve bağlantı metadata dosyaları aynı kök altında tutuluyor. Bu durum güvenli update ve release işlemini zorlaştırıyor.
 
-### 2. Baseline adayi tasinabilir degil
+### 2. Baseline adayı taşınabilir değil
 
-Agent talimatlari, testler, proje metadata dosyalari ve bazi belgeler is istasyonuna ozel mutlak yollar iceriyor. Testlerde belirli proje ve baglanti ornekleri bulunuyor. Bunlar sanitize edilmeden repository'ye alinamaz.
+Agent talimatları, testler, proje metadata dosyaları ve bazı belgeler iş istasyonuna özel mutlak yollar içeriyor. Testlerde belirli proje ve bağlantı örnekleri bulunuyor. Bunlar sanitize edilmeden repository'ye alınamaz.
 
-### 3. Varsayilan embedding davranisi yerel veri politikasiyla uyusmuyor
+### 3. Varsayılan embedding davranışı yerel veri politikasıyla uyuşmuyor
 
-CLI, host makinedeki baska bir arac ayarini otomatik okuyup erisilebilir bir embedding gateway bulursa metin parcalarini uzak servise gonderebiliyor. KRCN Core'da uzak embedding acik ve bilgilendirilmis opt-in olmadan calismamali. Varsayilan davranis offline olmalidir.
+CLI, host makinedeki başka bir araç ayarını otomatik okuyup erişilebilir bir embedding gateway bulursa metin parçalarını uzak servise gönderebiliyor. KRCN Core'da uzak embedding açık ve bilgilendirilmiş bir opt-in olmadan çalışmamalı. Varsayılan davranış offline olmalıdır.
 
-### 4. Workspace referanslari kirik
+### 4. Workspace referansları kırık
 
-Workspace ayari iki policy dosyasina referans veriyor ancak bu dosyalar baseline adayinda yok. Benzer isimli engine dosyalari mevcut. `validate` yalniz dosya varligi seviyesinde kaldigi icin bu referans sorunu tam olarak yakalanmiyor.
+Workspace ayarı iki policy dosyasına referans veriyor ancak bu dosyalar baseline adayında yok. Benzer isimli engine dosyaları mevcut. `validate` yalnızca dosya varlığı seviyesinde kaldığı için bu referans sorununu tam olarak yakalamıyor.
 
-### 5. Testler ortam ve veri bagimli
+### 5. Testler ortam ve veri bağımlı
 
-Testler makineye ozel dizinleri, kayitli projeleri ve opsiyonel Python paketlerini varsayiyor. Core testleri hermetic fixture ile, entegrasyon testleri ise acik capability kosullariyla ayrilmali.
+Testler makineye özel dizinleri, kayıtlı projeleri ve opsiyonel Python paketlerini varsayıyor. Core testleri hermetic fixture ile, entegrasyon testleri ise açık capability koşullarıyla ayrılmalı.
 
-### 6. Secret degeri bulunmadi ancak hassas metadata var
+### 6. Secret değeri bulunmadı ancak hassas metadata var
 
-Taramada private key veya GitHub PAT bulunmadi. Database baglanti kayitlari parolayi literal olarak tutmuyor ve secret reference kullaniyor. Buna ragmen host, kullanici, servis, sema, IP, e-posta ve connection metadata hassas kabul edilmeli ve core repository disinda kalmali.
+Taramada private key veya GitHub PAT bulunmadı. Database bağlantı kayıtları parolayı literal olarak tutmuyor ve secret reference kullanıyor. Buna rağmen host, kullanıcı, servis, şema, IP, e-posta ve connection metadata hassas kabul edilmeli ve core repository dışında kalmalı.
 
-## Aktarim siniflari
+## Aktarım sınıfları
 
-### A. Dogrudan aday, yine de inceleme gerekli
+### A. Doğrudan aday, yine de inceleme gerekli
 
-- generic schema tanimlari;
-- engine ve policy varsayimlari;
-- generic agent registry tanimlari;
-- platformdan bagimsiz launcher dosyalari;
-- generic skill sozlesmeleri.
+- generic schema tanımları;
+- engine ve policy varsayımları;
+- generic agent registry tanımları;
+- platformdan bağımsız launcher dosyaları;
+- generic skill sözleşmeleri.
 
-### B. Donusturulerek alinabilir
+### B. Dönüştürülerek alınabilir
 
 - monolitik CLI;
-- workspace ayarlari;
-- README ve agent talimatlari;
-- test runner ve fixture dosyalari;
-- model registry ornekleri;
-- generic memory sablonlari.
+- workspace ayarları;
+- README ve agent talimatları;
+- test runner ve fixture dosyaları;
+- model registry örnekleri;
+- generic memory şablonları.
 
-Bu grupta mutlak yollar, yerel kimlikler, otomatik ag davranisi ve canli veri varsayimlari kaldirilmalidir.
+Bu grupta mutlak yollar, yerel kimlikler, otomatik ağ davranışı ve canlı veri varsayımları kaldırılmalıdır.
 
-### C. Yalniz bilgi kaynagi
+### C. Yalnızca bilgi kaynağı
 
-- mimari arastirma belgeleri;
-- canli sistemden ogrenilen davranislar;
-- kullaniciya veya projeye ozel skill ornekleri;
-- gecmis karar ve is kayitlari.
+- mimari araştırma belgeleri;
+- canlı sistemden öğrenilen davranışlar;
+- kullanıcıya veya projeye özel skill örnekleri;
+- geçmiş karar ve iş kayıtları.
 
-Bu bilgiler oldugu gibi kopyalanmaz. Genellestirilmis gereksinim veya test senaryosuna donusturulur.
+Bu bilgiler olduğu gibi kopyalanmaz. Genelleştirilmiş gereksinim veya test senaryosuna dönüştürülür.
 
-### D. Repository'ye alinmayacak
+### D. Repository'ye alınmayacak
 
-- is ve talep dosyalari;
-- proje bellegi ve proje metadata kayitlari;
-- olay gunlukleri ve checkpoint durumu;
-- database baglanti metadata dosyalari;
-- SQLite ve vector index dosyalari;
-- cache, bytecode ve IDE dosyalari;
-- backup ve uretilmis raporlar;
-- e-posta, IP, mutlak yol veya kurum bilgisi iceren yerel belgeler;
-- secret ve yerel arac ayarlari.
+- iş ve talep dosyaları;
+- proje belleği ve proje metadata kayıtları;
+- olay günlükleri ve checkpoint durumu;
+- database bağlantı metadata dosyaları;
+- SQLite ve vector index dosyaları;
+- cache, bytecode ve IDE dosyaları;
+- backup ve üretilmiş raporlar;
+- e-posta, IP, mutlak yol veya kurum bilgisi içeren yerel belgeler;
+- secret ve yerel araç ayarları.
 
-## Sonuc
+## Sonuç
 
-Mevcut baseline tamamen reddedilmeyecek. Calisan core davranisi korunacak ancak kaynak agac oldugu gibi kopyalanmayacak. Ilk uygulama adimi, ownership manifesti ve offline-first provider politikasini olusturmak; ardindan yalniz onaylanan core dosyalarini sanitize edilmis bir staging alanina almaktir.
+Mevcut baseline tamamen reddedilmeyecek. Çalışan core davranışı korunacak ancak kaynak ağaç olduğu gibi kopyalanmayacak. İlk uygulama adımı ownership manifestini ve offline-first provider politikasını oluşturmak, ardından yalnızca onaylanan core dosyalarını sanitize edilmiş bir staging alanına almaktır.
 
-## Sonraki onay noktasi
+## Sonraki onay noktası
 
-Kullanici onayi sonrasinda Faz 1 su sirayla baslayabilir:
+Kullanıcı onayından sonra Faz 1 şu sırayla başlayabilir:
 
-1. ownership manifest semasini tanimlamak;
-2. repository dizin yapisini olusturmak;
-3. offline-first provider politikasini yazmak;
-4. sanitize ve import kontrol listesini makinece dogrulanabilir hale getirmek;
-5. onaylanan core adaylarini staging alanina almak;
-6. hermetic baseline testlerini yeniden yazmak.
+1. Ownership manifest şeması tanımlanır.
+2. Repository dizin yapısı oluşturulur.
+3. Offline-first provider politikası yazılır.
+4. Sanitize ve import kontrol listesi makinece doğrulanabilir hale getirilir.
+5. Onaylanan core adayları staging alanına alınır.
+6. Hermetic baseline testleri yeniden yazılır.

@@ -1,31 +1,31 @@
 # KRCN Core
 
-KRCN Core; projeleri, belgeleri, işleri/talepleri, kararları, kalıcı bağlamı ve belleği ortak bir çekirdeğe bağlayan yerel öncelikli platformdur.
+KRCN Core; projeleri, belgeleri, işleri ve talepleri, kararları, kalıcı bağlamı ve belleği ortak bir çekirdeğe bağlayan yerel öncelikli bir platformdur.
 
-KRCN Core'un temel yaklaşımı ve özgün mimarisi Mehmet KARACAN tarafından oluşturulmuştur. Proje, bu mimari vizyonun sürdürülebilir ve geliştirilebilir bir açık teknik yapıya dönüştürülmesi amacıyla yürütülmektedir.
+KRCN Core'un temel yaklaşımı ve özgün mimarisi Mehmet KARACAN tarafından oluşturulmuştur. Proje, bu mimari vizyonu sürdürülebilir ve geliştirilebilir bir açık teknik yapıya dönüştürmek amacıyla yürütülmektedir.
 
 ## Temel hedef
 
-Kullanıcı bir CLI veya yapay zekâya doğal dille hedefini söyler. Sistem gerekli görev tanımını, kaynak ilişkilerini, bağlamı, güvenlik sınırlarını ve doğrulama adımlarını üretir. Bunu yaparken mevcut kullanıcı verisini korur ve yalnız kontrollü core güncellemeleri uygular.
+Kullanıcı bir CLI'a veya yapay zekâya hedefini doğal dille anlatır. Sistem gerekli görev tanımını, kaynak ilişkilerini, bağlamı, güvenlik sınırlarını ve doğrulama adımlarını üretir. Bunu yaparken mevcut kullanıcı verisini korur ve yalnızca kontrollü core güncellemeleri uygular.
 
 ## Güncelleme ilkesi
 
-Git'ten gelen yeni core sürümü:
+Git'ten gelen yeni core sürümünde aşağıdaki işlemler uygulanır:
 
-1. mevcut kurulumu ve veri sahipliğini inceler,
-2. değişiklikleri dry-run olarak gösterir,
-3. kullanıcı verisini ve yerel secretları korur,
-4. gerekiyorsa şema migration'ı ve türetilmiş indeks rebuild'i planlar,
-5. yedekleme ve uyumluluk kontrollerinden sonra uygular,
-6. doğrulama başarısızsa güvenli rollback sunar.
+1. Mevcut kurulum ve veri sahipliği incelenir.
+2. Değişiklikler `dry-run` olarak gösterilir.
+3. Kullanıcı verisi ve yerel secret'lar korunur.
+4. Gerekiyorsa şema migration'ı ve türetilmiş indekslerin yeniden oluşturulması planlanır.
+5. Güncelleme, yedekleme ve uyumluluk kontrollerinden sonra uygulanır.
+6. Doğrulama başarısız olursa güvenli rollback sunulur.
 
 ## İlk aşama
 
-Repository şu anda foundation/baseline hazırlığındadır. Yerel referans kaynakları henüz içeri alınmamıştır. Aktarım öncesinde core/runtime/user-data/derived/secrets ayrımı çıkarılacaktır.
+Repository şu anda foundation ve baseline hazırlığındadır. Yerel referans kaynakları henüz içeri alınmamıştır. Aktarım öncesinde core, runtime, user-data, derived ve secrets ayrımı çıkarılacaktır.
 
 Kök çalışma kuralları için `AGENTS.md` dosyasını okuyun.
 
-Gelistirme sirasi icin `docs/plans/ROADMAP.md`, guncelleme guvenlik sozlesmesi icin `docs/specifications/UPDATE-MERGE-CONTRACT.md` kullanilir. Mevcut baseline bulgulari `docs/progress/PHASE-0-BASELINE.md`, aktarim siniri `docs/specifications/IMPORT-BOUNDARY.md` icindedir.
+Geliştirme sırası `docs/plans/ROADMAP.md`, güncelleme güvenlik sözleşmesi `docs/specifications/UPDATE-MERGE-CONTRACT.md` içindedir. Mevcut baseline bulguları `docs/progress/PHASE-0-BASELINE.md`, aktarım sınırı ise `docs/specifications/IMPORT-BOUNDARY.md` içinde tutulur.
 
 ## Kurucu ve mimari sahibi
 

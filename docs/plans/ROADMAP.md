@@ -1,101 +1,101 @@
-# KRCN Core gelistirme yol haritasi
+# KRCN Core geliştirme yol haritası
 
 ## Ana hedef
 
-KRCN Core, Git ile dagitilan urun cekirdegini yerel proje ve kullanici verisinden ayiracak. Kullanici yeni surumu cektiginde mevcut projeleri, belgeleri, talepleri, gorevleri, ayarlari ve entegrasyonlari bozulmadan calismaya devam edecek.
+KRCN Core, Git ile dağıtılan ürün çekirdeğini yerel proje ve kullanıcı verisinden ayıracak. Kullanıcı yeni sürümü çektiğinde mevcut projeler, belgeler, talepler, görevler, ayarlar ve entegrasyonlar bozulmadan çalışmaya devam edecek.
 
-Yerel dosyalar varsayilan olarak Git'e veya baska bir uzak servise gonderilmeyecek. Git repository yalnizca core kodunu, surumlenebilir semalari, politikaları, migration tanimlarini, sablonlari ve teknik belgeleri tasiyacak.
+Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilmeyecek. Git repository yalnızca core kodunu, sürümlenebilir şemaları, politikaları, migration tanımlarını, şablonları ve teknik belgeleri taşıyacak.
 
-## Temel kullanim modeli
+## Temel kullanım modeli
 
-Kullanici bir CLI veya yapay zekaya hedefini dogal dille anlatabilecek. Sistem:
+Kullanıcı bir CLI'a veya yapay zekâya hedefini doğal dille anlatabilecek. Sistem aşağıdaki adımları izleyecek:
 
-1. hedefi ve kabul olcutlerini belirleyecek,
-2. ilgili proje, belge, talep ve entegrasyonlari bulacak,
-3. gerekli gorev planini uretecek,
-4. veri sahipligi ve yetki sinirlarini kontrol edecek,
-5. islemi uygulayacak,
-6. sonucu dogrulayip Turkce raporlayacak.
+1. Hedefi ve kabul ölçütlerini belirleyecek.
+2. İlgili proje, belge, talep ve entegrasyonları bulacak.
+3. Gerekli görev planını üretecek.
+4. Veri sahipliği ve yetki sınırlarını kontrol edecek.
+5. İşlemi uygulayacak.
+6. Sonucu doğrulayıp Türkçe raporlayacak.
 
-## Faz 0 - Mevcut durumu dondur ve tanimla
+## Faz 0 - Mevcut durumu dondur ve tanımla
 
-- Mevcut canli sistem ile baseline adayini karsilastir.
-- Calisan komutlari, testleri, semalari ve dizin yapisini kaydet.
-- Canli veriyi core, runtime, user-data, derived ve secrets olarak siniflandir.
-- Secret, kisisel veri ve kuruma ozel bilgi taramasi yap.
-- Aktarilacak ve aktarilmayacak dosyalar icin kullanici onayi al.
+- Mevcut canlı sistem ile baseline adayını karşılaştır.
+- Çalışan komutları, testleri, şemaları ve dizin yapısını kaydet.
+- Canlı veriyi core, runtime, user-data, derived ve secrets olarak sınıflandır.
+- Secret, kişisel veri ve kuruma özel bilgi taraması yap.
+- Aktarılacak ve aktarılmayacak dosyalar için kullanıcı onayı al.
 
-Tamamlanma olcutu: Calisan mevcut davranis ve veri sinirlari yeniden uretilebilir bir baseline raporuyla kayit altinda olmali.
+Tamamlanma ölçütü: Çalışan mevcut davranış ve veri sınırları, yeniden üretilebilir bir baseline raporuyla kayıt altına alınmış olmalı.
 
 ## Faz 1 - Repository ve sahiplik temeli
 
-- Urun kaynak kodunu KRCN Core repository yapisina yerlestir.
-- `ownership-manifest.yaml` olustur.
-- Core, runtime, user-data, derived ve secrets yollarini makinece tanimla.
-- Yerel veri dizinlerini `.gitignore` ve dogrulama kurallariyla koru.
-- Kurulum, test ve doctor komutlarinin temelini hazirla.
+- Ürün kaynak kodunu KRCN Core repository yapısına yerleştir.
+- `ownership-manifest.yaml` oluştur.
+- Core, runtime, user-data, derived ve secrets yollarını makinece tanımla.
+- Yerel veri dizinlerini `.gitignore` ve doğrulama kurallarıyla koru.
+- Kurulum, test ve doctor komutlarının temelini hazırla.
 
-Tamamlanma olcutu: Repository temiz bir bilgisayarda kurulabilmeli ve hicbir canli veri Git'e eklenmemeli.
+Tamamlanma ölçütü: Repository temiz bir bilgisayarda kurulabilmeli ve hiçbir canlı veri Git'e eklenmemeli.
 
-## Faz 2 - Yerel calisma alani ve entegrasyon modeli
+## Faz 2 - Yerel çalışma alanı ve entegrasyon modeli
 
-- Proje kimligi ile fiziksel proje yolunu ayir.
-- Proje, belge, talep, gorev ve entegrasyon kayit semalarini tanimla.
-- Kaynak projeleri varsayilan olarak salt okunur bagla.
-- Her entegrasyon icin adapter ve capability sozlesmesi olustur.
-- Yerel secret store ve ortam bazli ayarlari tanimla.
+- Proje kimliği ile fiziksel proje yolunu ayır.
+- Proje, belge, talep, görev ve entegrasyon kayıt şemalarını tanımla.
+- Kaynak projeleri varsayılan olarak salt okunur bağla.
+- Her entegrasyon için adapter ve capability sözleşmesi oluştur.
+- Yerel secret store ve ortam bazlı ayarları tanımla.
 
-Tamamlanma olcutu: Bir proje veya belge kaynagi kopyalanmadan KRCN Core'a tanitilabilmeli.
+Tamamlanma ölçütü: Bir proje veya belge kaynağı kopyalanmadan KRCN Core'a tanıtılabilmeli.
 
-## Faz 3 - Guvenli `merge into` guncelleme motoru
+## Faz 3 - Güvenli `merge into` güncelleme motoru
 
-- `inspect`, `diff`, `merge into`, `verify` ve `rollback` akisini uygula.
-- Her surum icin release manifesti ve uyumluluk araligi tanimla.
-- Uygulama oncesinde dry-run, yedekleme ve conflict raporu uret.
-- Yalniz core tarafindan yonetilen dosyalari guncelle.
-- Yerel degisiklikleri ve kullaniciya ait dosyalari koru.
-- Sema migrationlarini surumlu ve tekrar calistirilabilir yap.
-- Derived veriyi gerektiğinde migrate et veya yeniden olustur.
-- Basarisiz dogrulamada otomatik geri donus sagla.
+- `inspect`, `diff`, `merge into`, `verify` ve `rollback` akışını uygula.
+- Her sürüm için release manifesti ve uyumluluk aralığı tanımla.
+- Uygulama öncesinde `dry-run`, yedekleme ve conflict raporu üret.
+- Yalnızca core tarafından yönetilen dosyaları güncelle.
+- Yerel değişiklikleri ve kullanıcıya ait dosyaları koru.
+- Şema migration'larını sürümlü ve tekrar çalıştırılabilir yap.
+- Derived veriyi gerektiğinde migrate et veya yeniden oluştur.
+- Başarısız doğrulamada otomatik geri dönüş sağla.
 
-Tamamlanma olcutu: Yeni core surumu mevcut bir kuruluma uygulandiginda projeler, belgeler, talepler ve entegrasyonlar veri kaybi olmadan calismaya devam etmeli.
+Tamamlanma ölçütü: Yeni core sürümü mevcut bir kuruluma uygulandığında projeler, belgeler, talepler ve entegrasyonlar veri kaybı olmadan çalışmaya devam etmeli.
 
 ## Faz 4 - Context, knowledge ve memory
 
-- Authoritative source, knowledge, memory, state, history ve derived data ayrimini uygula.
+- Authoritative source, knowledge, memory, state, history ve derived data ayrımını uygula.
 - Revision-aware kaynak ve indeks modelini kur.
-- Exact, semantic ve dependency tabanli retrieval katmanlarini olustur.
-- Token butcesi, kanit ve kaynak referanslari tasiyan context paketleri uret.
-- Memory Gate ile yalniz uygun ve dogrulanmis bilgiyi kalicilastir.
+- Exact, semantic ve dependency tabanlı retrieval katmanlarını oluştur.
+- Token bütçesi, kanıt ve kaynak referansları taşıyan context paketleri üret.
+- Memory Gate ile yalnızca uygun ve doğrulanmış bilgiyi kalıcılaştır.
 
-Tamamlanma olcutu: Ajanlar ayni proje baglamini model veya oturum degisse bile guvenilir bicimde kullanabilmeli.
+Tamamlanma ölçütü: Ajanlar aynı proje bağlamını model veya oturum değişse bile güvenilir biçimde kullanabilmeli.
 
-## Faz 5 - Orchestrator ve dogal dil gorev akisi
+## Faz 5 - Orchestrator ve doğal dil görev akışı
 
-- Istegi hedef, plan, capability ve kabul olcutlerine donustur.
-- Planner, worker ve verifier sorumluluklarini ayir.
-- Ajan, skill, tool ve model registry yapilarini uygula.
-- Sonuclari kanit ve dogrulama bilgisiyle kaydet.
-- Kritik veya kapsam degistiren kararlarda kullanici onayi iste.
+- İsteği hedef, plan, capability ve kabul ölçütlerine dönüştür.
+- Planner, worker ve verifier sorumluluklarını ayır.
+- Ajan, skill, tool ve model registry yapılarını uygula.
+- Sonuçları kanıt ve doğrulama bilgisiyle kaydet.
+- Kritik veya kapsam değiştiren kararlarda kullanıcı onayı iste.
 
-Tamamlanma olcutu: Kullanici yalniz hedefini soylediginde sistem guvenli bir uygulama plani olusturup gorevi sonuca goturebilmeli.
+Tamamlanma ölçütü: Kullanıcı yalnızca hedefini söylediğinde sistem güvenli bir uygulama planı oluşturup görevi sonuca götürebilmeli.
 
-## Faz 6 - Release, kalite ve tasinabilirlik
+## Faz 6 - Release, kalite ve taşınabilirlik
 
-- CI testleri, baseline regresyonlari ve migration testleri ekle.
-- Windows ve macOS kurulum senaryolarini dogrula.
-- Release olusturma, paketleme, doctor ve rollback akisini tamamla.
-- Temiz kurulum ve mevcut kurulum guncelleme testlerini otomatiklestir.
-- Baska bir AI veya gelistirici icin devir ve gelistirme baglamini dogrula.
+- CI testleri, baseline regresyonları ve migration testleri ekle.
+- Windows ve macOS kurulum senaryolarını doğrula.
+- Release oluşturma, paketleme, doctor ve rollback akışını tamamla.
+- Temiz kurulum ve mevcut kurulum güncelleme testlerini otomatikleştir.
+- Başka bir AI veya geliştirici için devir ve geliştirme bağlamını doğrula.
 
-Tamamlanma olcutu: `clone -> install -> init/onboard -> doctor -> run` ve `pull -> merge into -> verify` akislari belgelenmis ve test edilmis olmali.
+Tamamlanma ölçütü: `clone -> install -> init/onboard -> doctor -> run` ve `pull -> merge into -> verify` akışları belgelenmiş ve test edilmiş olmalı.
 
-## Degismez kabul olcutleri
+## Değişmez kabul ölçütleri
 
-- Yerel kullanici verisi acik talimat olmadan uzak sisteme gonderilmez.
-- Core guncellemesi kullanici verisini silmez veya sessizce degistirmez.
-- Her mutasyon oncesinde etki alani gorulebilir.
-- Her uygulama geri alinabilir veya yeniden uretilebilir olmalidir.
-- Tum kritik sonuclar test, hash, schema veya kaynak referansi ile dogrulanir.
-- AI ve CLI calisma sozlesmeleri Ingilizce olabilir; insan operasyon kayitlari Turkce ve ASCII uyumlu yazilir.
-- Uzun tire karakterleri kullanilmaz.
+- Yerel kullanıcı verisi açık talimat olmadan uzak sisteme gönderilmez.
+- Core güncellemesi kullanıcı verisini silmez veya sessizce değiştirmez.
+- Her mutasyon öncesinde etki alanı görülebilir.
+- Her uygulama geri alınabilir veya yeniden üretilebilir olmalıdır.
+- Tüm kritik sonuçlar test, hash, schema veya kaynak referansıyla doğrulanır.
+- AI ve CLI çalışma sözleşmeleri İngilizce olabilir; insan operasyon kayıtları doğal Türkçeyle yazılır.
+- Uzun tire karakterleri kullanılmaz.
