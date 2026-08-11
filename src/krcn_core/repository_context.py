@@ -43,6 +43,7 @@ REQUIRED_CANONICAL_KEYS = {
     "capability_registry",
     "capability_registry_schema",
     "task_plan_schema",
+    "task_authorization_schema",
     "release_manifest_schema",
     "installation_state_schema",
     "installation_inspection_schema",

@@ -48,11 +48,12 @@
     "docs/progress/PHASE-5-KICKOFF.md",
     "docs/progress/PHASE-5-TASK-INTENT.md",
     "docs/progress/PHASE-5-CAPABILITY-REGISTRY.md",
-    "docs/progress/PHASE-5-TASK-PLANNER.md"
+    "docs/progress/PHASE-5-TASK-PLANNER.md",
+    "docs/progress/PHASE-5-TASK-AUTHORIZATION.md"
   ],
   "next_actions": [
-    "bind each task plan to effective policy, ownership, provider, capability, and mutation decisions",
-    "require exact user approval for critical effects without allowing lower-priority rules to weaken restrictions"
+    "execute only exact authorized worker steps through explicitly registered handlers",
+    "record deterministic checkpoints and effect journals for idempotent recovery"
   ],
   "baseline_commit": "c16c333",
   "approval_gates": {
