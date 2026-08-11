@@ -20,13 +20,14 @@
     "docs/progress/PHASE-2-ADAPTER-GATE.md",
     "docs/progress/PHASE-2-INTEGRATION-METADATA.md",
     "docs/progress/PHASE-2-RESCAN.md",
-    "docs/progress/PHASE-2-CLIENT-SERVICES.md"
+    "docs/progress/PHASE-2-CLIENT-SERVICES.md",
+    "docs/progress/PHASE-2-INTEGRATION-TESTS.md"
   ],
   "next_actions": [
-    "complete hermetic integration and protection tests for shared client services",
-    "verify clean-install and existing-workspace compatibility before Phase 2 closure"
+    "verify clean-install and existing-workspace compatibility",
+    "create the Phase 2 baseline and record the Phase 3 merge-into boundary"
   ],
-  "baseline_commit": "8b906cb",
+  "baseline_commit": "7c4e77d",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,
