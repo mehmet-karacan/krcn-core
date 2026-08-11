@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:task-verification:1",
+  "title": "KRCN Core evidence-bound task verification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_ref", "schema_version", "task_id", "plan_id", "authorization_id", "worker_checkpoint_ids", "evidence", "subjects", "failure_codes", "status", "completion_allowed", "verification_id"],
+  "properties": {
+    "schema_ref": { "const": "schemas/task-verification.schema.json" },
+    "schema_version": { "const": 1 },
+    "task_id": { "$ref": "#/$defs/id" },
+    "plan_id": { "$ref": "#/$defs/digest" },
+    "authorization_id": { "$ref": "#/$defs/digest" },
+    "worker_checkpoint_ids": { "$ref": "#/$defs/digests" },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidence_id", "evidence_type", "subject_kind", "subject_digest", "verifier_step_id", "covered_worker_step_ids", "observed_digests", "passed", "evidence_digest"],
+        "properties": {
+          "evidence_id": { "$ref": "#/$defs/id" },
+          "evidence_type": { "enum": ["artifact-digest", "policy-decision", "preservation-check", "state-observation", "test-result"] },
+          "subject_kind": { "$ref": "#/$defs/subjectKind" },
+          "subject_digest": { "$ref": "#/$defs/digest" },
+          "verifier_step_id": { "$ref": "#/$defs/id" },
+          "covered_worker_step_ids": { "$ref": "#/$defs/ids" },
+          "observed_digests": { "$ref": "#/$defs/digests" },
+          "passed": { "type": "boolean" },
+          "evidence_digest": { "$ref": "#/$defs/digest" }
+        }
+      }
+    },
+    "subjects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "subject_digest", "evidence_ids", "passed"],
+        "properties": {
+          "kind": { "$ref": "#/$defs/subjectKind" },
+          "subject_digest": { "$ref": "#/$defs/digest" },
+          "evidence_ids": { "$ref": "#/$defs/ids" },
+          "passed": { "type": "boolean" }
+        }
+      }
+    },
+    "failure_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "enum": ["subject-evidence-missing", "subject-verification-failed", "verifier-handler-failed", "worker-checkpoint-incomplete", "worker-evidence-incomplete"] }
+    },
+    "status": { "enum": ["verified", "failed"] },
+    "completion_allowed": { "type": "boolean" },
+    "verification_id": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+    "digests": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/digest" } },
+    "subjectKind": { "enum": ["acceptance-criterion", "constraint", "verification-requirement"] }
+  }
+}

@@ -50,11 +50,12 @@
     "docs/progress/PHASE-5-CAPABILITY-REGISTRY.md",
     "docs/progress/PHASE-5-TASK-PLANNER.md",
     "docs/progress/PHASE-5-TASK-AUTHORIZATION.md",
-    "docs/progress/PHASE-5-WORKER-EXECUTION.md"
+    "docs/progress/PHASE-5-WORKER-EXECUTION.md",
+    "docs/progress/PHASE-5-TASK-VERIFICATION.md"
   ],
   "next_actions": [
-    "verify worker checkpoints and effect journals against every acceptance criterion",
-    "require digest-bound evidence before any task can reach completed status"
+    "persist orchestration state, events, checkpoints, and handoff records in local runtime storage",
+    "resume interrupted tasks without chat history or duplicate effects"
   ],
   "baseline_commit": "c16c333",
   "approval_gates": {

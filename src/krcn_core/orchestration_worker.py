@@ -404,6 +404,68 @@ def _execution_records(
     return WorkerExecution(checkpoint, journal, False)
 
 
+def validate_worker_execution(
+    plan: TaskPlan,
+    authorization: TaskAuthorization,
+    execution: WorkerExecution,
+) -> None:
+    """Validate persisted worker records before they are trusted as evidence."""
+
+    checkpoint = execution.checkpoint
+    journal = execution.journal
+    request = TaskWorkRequest(
+        checkpoint.task_id,
+        checkpoint.plan_id,
+        checkpoint.authorization_id,
+        checkpoint.step_id,
+        journal.handler_id,
+        {},
+        journal.input_digest,
+        checkpoint.idempotency_key,
+    )
+    step, step_auth = _step_authorization(plan, authorization, request)
+    if (
+        journal.task_id != checkpoint.task_id
+        or journal.plan_id != checkpoint.plan_id
+        or journal.authorization_id != checkpoint.authorization_id
+        or journal.step_id != checkpoint.step_id
+        or journal.idempotency_key != checkpoint.idempotency_key
+        or journal.status != checkpoint.status
+        or journal.result_digest != checkpoint.result_digest
+        or journal.failure_digest != checkpoint.failure_digest
+        or checkpoint.step_digest != step.step_digest
+    ):
+        raise WorkerExecutionError("worker checkpoint and journal do not match")
+    if checkpoint.status not in {"completed", "failed"}:
+        raise WorkerExecutionError("worker checkpoint status is invalid")
+    if checkpoint.status == "completed":
+        if not checkpoint.result_digest or checkpoint.failure_digest is not None:
+            raise WorkerExecutionError("completed worker checkpoint is invalid")
+        _validate_effects(
+            step,
+            step_auth,
+            WorkerHandlerResult({}, journal.effects),
+        )
+    elif (
+        checkpoint.result_digest is not None
+        or not checkpoint.failure_digest
+        or journal.effects
+    ):
+        raise WorkerExecutionError("failed worker checkpoint is invalid")
+    journal_identity = journal.as_dict()
+    journal_identity.pop("journal_id")
+    if hashlib.sha256(canonical_json(journal_identity)).hexdigest() != journal.journal_id:
+        raise WorkerExecutionError("worker journal digest does not match")
+    checkpoint_identity = checkpoint.as_dict()
+    checkpoint_identity.pop("checkpoint_id")
+    checkpoint_identity["journal_id"] = journal.journal_id
+    if (
+        hashlib.sha256(canonical_json(checkpoint_identity)).hexdigest()
+        != checkpoint.checkpoint_id
+    ):
+        raise WorkerExecutionError("worker checkpoint digest does not match")
+
+
 def execute_worker_step(
     plan: TaskPlan,
     authorization: TaskAuthorization,

@@ -45,6 +45,7 @@ REQUIRED_CANONICAL_KEYS = {
     "task_plan_schema",
     "task_authorization_schema",
     "worker_execution_schema",
+    "task_verification_schema",
     "release_manifest_schema",
     "installation_state_schema",
     "installation_inspection_schema",
