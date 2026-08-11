@@ -2,7 +2,7 @@
 
 ## Durum
 
-Aktif. Mehmet KARACAN'ın açık isteğiyle başlatıldı.
+Tamamlandı. Yedi adımın tamamı test, commit ve push sonrasında Faz 7 baseline içine alındı.
 
 ## Amaç
 
@@ -60,4 +60,3 @@ Dizin-only, Türkçe ve İngilizce prompt, path boşluğu, collision, no-copy, s
 - Proje kullanıcı evinin içine kopyalanmaz.
 - Aynı directory yeniden öğrenilmek istendiğinde duplicate kayıt oluşturulmaz.
 - Bütün istemciler aynı plan ve güvenlik kararını alır.
-

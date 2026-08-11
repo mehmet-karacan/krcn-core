@@ -3,7 +3,7 @@
   "schema_version": 1,
   "phase_id": "phase-7",
   "workstream_id": "natural-language-project-learning",
-  "status": "active",
+  "status": "completed",
   "goal": "Learn and register a local project from only its directory or a natural-language request without copying source files",
   "plan_ref": "docs/plans/PLAN-008-DOGAL-DILLE-PROJE-OGRENME.md",
   "progress_refs": [
@@ -72,11 +72,13 @@
     "docs/progress/PHASE-7-PROJECT-METADATA.md",
     "docs/progress/PHASE-7-UNIFIED-PROJECT-LEARNING.md",
     "docs/progress/PHASE-7-SHARED-PROJECT-LEARNING-SERVICE.md",
-    "docs/progress/PHASE-7-CLIENT-INTENT-ROUTING.md"
+    "docs/progress/PHASE-7-CLIENT-INTENT-ROUTING.md",
+    "docs/progress/PHASE-7-INTEGRATION-TESTS.md",
+    "docs/progress/PHASE-7-COMPLETION.md"
   ],
   "next_actions": [
-    "run end-to-end project-learning scenarios with synthetic external sources",
-    "complete the Phase 7 baseline, roadmap, quality checks, and completion report"
+    "maintain the completed Phase 7 baseline",
+    "await explicit approval before starting a new phase"
   ],
   "baseline_commit": "7ccc16b",
   "approval_gates": {

@@ -21,7 +21,7 @@ Git'ten gelen yeni core sürümünde aşağıdaki işlemler uygulanır:
 
 ## Güncel geliştirme durumu
 
-Faz 1 ile Faz 6 arasındaki bütün geliştirme aşamaları tamamlandı. Revision-aware bilgi kataloğu, retrieval, bütçeli context paketleri, onay kontrollü Memory Gate, capability-bound orchestrator, idempotent worker, bağımsız verifier, kalıcı resume, taşınabilir kullanıcı evi, secret-safe backup, atomic restore, doğrulanmış dış proje rebind ve cross-platform kalite kapıları hazırdır. Yerel referans kaynaklarındaki kullanıcı verileri içeri alınmamıştır.
+Faz 1 ile Faz 7 arasındaki bütün geliştirme aşamaları tamamlandı. Revision-aware bilgi kataloğu, retrieval, bütçeli context paketleri, onay kontrollü Memory Gate, capability-bound orchestrator, idempotent worker, bağımsız verifier, kalıcı resume, taşınabilir kullanıcı evi, secret-safe backup, atomic restore, doğrulanmış dış proje rebind, doğal dille proje öğrenme ve cross-platform kalite kapıları hazırdır. Yerel referans kaynaklarındaki kullanıcı verileri içeri alınmamıştır.
 
 KRCN kullanıcı bağlamı repository dışında tek bir `KRCN_HOME` altında korunabilir. Uyumlu bir core clone ve bu kullanıcı evinin portable backup paketi recovery için yeterlidir. Dış proje kaynakları özellikle kopyalanmaz; yeni bilgisayarda ayrıca bulunmalı ve `project.rebind` ile doğrulanarak bağlanmalıdır.
 
@@ -44,13 +44,17 @@ python tools/krcn.py catalog
 Kayıtlı projeleri ortak ve istemciden bağımsız servis sözleşmesi üzerinden yönetmek için:
 
 ```bash
+python tools/krcn.py project learn "<source-directory>"
+python tools/krcn.py ask "<source-directory> projesini öğren"
 python tools/krcn.py project list
 python tools/krcn.py project inspect <project-id>
 python tools/krcn.py project onboard --workspace-id <workspace-id> --project-id <project-id> --binding-id <binding-id> --name <project-name> --source <source-directory>
 python tools/krcn.py project rescan <project-id>
 ```
 
-Onboarding ve rescan komutları varsayılan olarak yalnızca plan üretir. Uygulama için önceki dry-run sonucundaki plan kimliği ve user-data değişikliği varsa açık onay kimliği gerekir. CLI, SDK, MCP, plugin ve yapay zekâ istemcileri aynı servis katmanını kullanır.
+Yeni bir projeyi tanıtmak için yalnızca dizini vermek yeterlidir. Sistem proje adını ve teknik kimlikleri kendisi çıkarır, projeyi yerinde ve salt okunur inceler, dosyaları kopyalamadan exact planı gösterir. Kalıcı kayıt için aynı plan kimliği ve tek açık onay kimliği gerekir.
+
+Onboarding ve rescan komutları da varsayılan olarak yalnızca plan üretir. Uygulama için önceki dry-run sonucundaki plan kimliği ve user-data değişikliği varsa açık onay kimliği gerekir. CLI, SDK, MCP, plugin ve yapay zekâ istemcileri aynı servis katmanını kullanır.
 
 Revision-aware bilgi kataloğunu ve Faz 4 ortak servislerini kullanmak için:
 

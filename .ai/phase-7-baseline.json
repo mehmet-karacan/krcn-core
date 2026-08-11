@@ -1,0 +1,47 @@
+{
+  "schema_ref": "schemas/phase-7-baseline.schema.json",
+  "schema_version": 1,
+  "baseline_id": "phase-7-natural-language-project-learning",
+  "phase_id": "phase-7",
+  "status": "ready",
+  "completed_steps": 7,
+  "capabilities": [
+    "natural-language-project-learning-intent",
+    "directory-only-project-learning",
+    "safe-project-metadata-inference",
+    "unified-onboarding-discovery-plan",
+    "shared-project-learn-service",
+    "client-neutral-intent-routing",
+    "no-copy-end-to-end-verification"
+  ],
+  "safe_operations": ["project.learn"],
+  "guarantees": {
+    "technical_identifiers_required_from_user": false,
+    "external_source_copied": false,
+    "external_source_mutated": false,
+    "physical_source_locator_disclosed": false,
+    "duplicate_source_registration": false,
+    "user_policy_preserved": true,
+    "exact_plan_required": true,
+    "single_user_approval": true,
+    "client_parity": true,
+    "offline_by_default": true
+  },
+  "verification": {
+    "hermetic_tests": "passed",
+    "foundation": "passed",
+    "doctor": "passed",
+    "offline_install": "passed",
+    "directory_only": "passed",
+    "natural_language": "passed",
+    "metadata_inference": "passed",
+    "source_no_copy": "passed",
+    "policy_preservation": "passed",
+    "duplicate_prevention": "passed",
+    "client_parity": "passed"
+  },
+  "maintenance": {
+    "status": "ready",
+    "new_phase_requires_user_approval": true
+  }
+}

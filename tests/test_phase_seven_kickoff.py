@@ -13,10 +13,10 @@ def load_json(path: Path) -> dict:
 
 
 class PhaseSevenKickoffTests(unittest.TestCase):
-    def test_phase_seven_is_active_with_explicit_user_approval(self) -> None:
+    def test_phase_seven_was_started_with_explicit_user_approval(self) -> None:
         current = load_json(REPO_ROOT / ".ai" / "current-work.json")
         self.assertEqual("phase-7", current["phase_id"])
-        self.assertEqual("active", current["status"])
+        self.assertIn(current["status"], {"active", "completed"})
         self.assertEqual("7ccc16b", current["baseline_commit"])
         self.assertEqual(
             "docs/plans/PLAN-008-DOGAL-DILLE-PROJE-OGRENME.md",

@@ -15,7 +15,7 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
 - Faz 4 tamamlandı.
 - Faz 5 tamamlandı.
 - Faz 6 tamamlandı.
-- Faz 7 başlatıldı. Doğal dille ve yalnız dizin girdisiyle proje öğrenme deneyimi uygulanıyor.
+- Faz 7 tamamlandı.
 
 ## Temel kullanım modeli
 
