@@ -18,6 +18,7 @@ from .mutation_gate import (
     plan_mutation,
 )
 from .integrations import parse_integration_metadata
+from .information_records import InformationRecordError, parse_information_record
 from .source_bindings import parse_source_binding
 from .source_state import parse_source_state
 
@@ -29,6 +30,16 @@ COLLECTIONS = {
     "source-bindings": ("binding_id", "source-bindings", "user-data"),
     "integrations": ("integration_id", "integrations", "user-data"),
     "source-states": ("binding_id", "derived/source-states", "derived"),
+    "authoritative-sources": (
+        "record_id",
+        "knowledge/authoritative-sources",
+        "user-data",
+    ),
+    "knowledge": ("record_id", "knowledge/records", "user-data"),
+}
+INFORMATION_COLLECTIONS = {
+    "authoritative-sources": "authoritative-source",
+    "knowledge": "knowledge",
 }
 
 
@@ -93,7 +104,7 @@ def _validate_record_identity(
     record_type: str,
     record_id: str,
     payload: Mapping[str, object],
-) -> None:
+) -> int | None:
     collection = COLLECTIONS.get(record_type)
     if collection is None:
         raise LocalStoreError("record type is invalid")
@@ -110,6 +121,18 @@ def _validate_record_identity(
         parse_integration_metadata(payload)
     if record_type == "source-states":
         parse_source_state(payload)
+    expected_information_class = INFORMATION_COLLECTIONS.get(record_type)
+    if expected_information_class is not None:
+        try:
+            information_record = parse_information_record(payload)
+        except InformationRecordError as exc:
+            raise LocalStoreError(str(exc)) from exc
+        if information_record.information_class != expected_information_class:
+            raise LocalStoreError(
+                "information class does not match the local collection"
+            )
+        return information_record.revision
+    return None
 
 
 class LocalWorkspaceStore:
@@ -160,12 +183,20 @@ class LocalWorkspaceStore:
         payload = envelope.get("payload")
         if not isinstance(payload, dict):
             raise LocalStoreError("stored record payload must be an object")
-        _validate_record_identity(record_type, record_id, payload)
+        information_revision = _validate_record_identity(
+            record_type,
+            record_id,
+            payload,
+        )
         if envelope.get("record_type") != record_type or envelope.get("record_id") != record_id:
             raise LocalStoreError("stored record envelope identity is invalid")
         revision = envelope.get("revision")
         if not isinstance(revision, int) or isinstance(revision, bool) or revision < 1:
             raise LocalStoreError("stored record revision is invalid")
+        if information_revision is not None and information_revision != revision:
+            raise LocalStoreError(
+                "information revision does not match stored record revision"
+            )
         payload_sha256 = _payload_hash(payload)
         if envelope.get("payload_sha256") != payload_sha256:
             raise LocalStoreError("stored record payload hash is invalid")
@@ -208,12 +239,20 @@ class LocalWorkspaceStore:
         if not isinstance(payload, Mapping):
             raise LocalStoreError("record payload must be an object")
         payload_copy = dict(payload)
-        _validate_record_identity(record_type, record_id, payload_copy)
+        information_revision = _validate_record_identity(
+            record_type,
+            record_id,
+            payload_copy,
+        )
         current = self.read(record_type, record_id)
         current_revision = current.revision if current else 0
         if expected_revision != current_revision:
             raise RevisionConflictError("record revision changed before planning")
         next_revision = current_revision + 1
+        if information_revision is not None and information_revision != next_revision:
+            raise LocalStoreError(
+                "information revision must match the planned record revision"
+            )
         payload_sha256 = _payload_hash(payload_copy)
         envelope = {
             "schema_version": 1,

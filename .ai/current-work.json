@@ -35,11 +35,12 @@
     "docs/progress/PHASE-3-INTEGRATION-TESTS.md",
     "docs/progress/PHASE-3-COMPLETION.md",
     "docs/progress/PHASE-4-KICKOFF.md",
-    "docs/progress/PHASE-4-INFORMATION-RECORDS.md"
+    "docs/progress/PHASE-4-INFORMATION-RECORDS.md",
+    "docs/progress/PHASE-4-KNOWLEDGE-CATALOG.md"
   ],
   "next_actions": [
-    "build the authoritative source and curated knowledge catalog",
-    "implement deterministic exact retrieval over current catalog records"
+    "implement deterministic exact retrieval over current catalog records",
+    "rank exact matches by authority, availability, revision, and evidence"
   ],
   "baseline_commit": "6005611",
   "approval_gates": {

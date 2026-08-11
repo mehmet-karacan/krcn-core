@@ -48,6 +48,7 @@
         ".krcn/documents/**",
         ".krcn/work-items/**",
         ".krcn/decisions/**",
+        ".krcn/knowledge/**",
         ".krcn/memory/**",
         ".krcn/policies/**",
         ".krcn/source-bindings/**"

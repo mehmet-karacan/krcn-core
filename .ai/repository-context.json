@@ -35,6 +35,7 @@
     "information_classes": "config/information-classes.json",
     "information_classes_schema": "schemas/information-classes.schema.json",
     "information_record_schema": "schemas/information-record.schema.json",
+    "information_catalog_schema": "schemas/information-catalog.schema.json",
     "release_manifest_schema": "schemas/release-manifest.schema.json",
     "installation_state_schema": "schemas/installation-state.schema.json",
     "installation_inspection_schema": "schemas/installation-inspection.schema.json",
