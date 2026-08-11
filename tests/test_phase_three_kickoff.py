@@ -13,20 +13,21 @@ def load_json(path: Path) -> dict:
 
 
 class PhaseThreeKickoffTests(unittest.TestCase):
-    def test_current_work_preserves_phase_three_plan_identity(self) -> None:
-        current = load_json(REPO_ROOT / ".ai" / "current-work.json")
-        self.assertEqual("phase-3", current["phase_id"])
-        self.assertEqual("completed", current["status"])
-        self.assertEqual(
-            "docs/plans/PLAN-004-GUVENLI-MERGE-INTO-MOTORU.md",
-            current["plan_ref"],
-        )
-        self.assertRegex(current["baseline_commit"], r"^[0-9a-f]{7,40}$")
-        self.assertIn("docs/progress/PHASE-3-KICKOFF.md", current["progress_refs"])
+    def test_phase_three_baseline_preserves_plan_identity(self) -> None:
+        baseline = load_json(REPO_ROOT / ".ai" / "phase-3-baseline.json")
+        self.assertEqual("phase-3", baseline["phase_id"])
+        self.assertEqual("ready", baseline["status"])
         kickoff = (
             REPO_ROOT / "docs" / "progress" / "PHASE-3-KICKOFF.md"
         ).read_text(encoding="utf-8")
         self.assertIn("`cce08b7`", kickoff)
+        plan = (
+            REPO_ROOT
+            / "docs"
+            / "plans"
+            / "PLAN-004-GUVENLI-MERGE-INTO-MOTORU.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("Tamamlandı", plan)
 
     def test_release_and_installation_schemas_are_versioned(self) -> None:
         release = load_json(REPO_ROOT / "schemas" / "release-manifest.schema.json")

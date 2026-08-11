@@ -34,6 +34,15 @@ REQUIRED_IMPORT_GATES = {
     "user-approved",
 }
 
+REQUIRED_INFORMATION_CLASSES = {
+    "authoritative-source",
+    "knowledge",
+    "memory",
+    "state",
+    "history",
+    "derived",
+}
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -154,6 +163,53 @@ def validate_import_policy(data: dict) -> list[str]:
     return errors
 
 
+def validate_information_classes(data: dict) -> list[str]:
+    errors: list[str] = []
+    if data.get("schema_ref") != "schemas/information-classes.schema.json":
+        errors.append("information class schema reference is invalid")
+    if data.get("schema_version") != 1:
+        errors.append("information class schema_version must be 1")
+    classes = data.get("classes")
+    if not isinstance(classes, list):
+        return errors + ["information classes must be a list"]
+    by_id = {}
+    for item in classes:
+        if not isinstance(item, dict):
+            errors.append("each information class must be an object")
+            continue
+        class_id = item.get("id")
+        if not isinstance(class_id, str):
+            errors.append("information class id must be a string")
+            continue
+        if class_id in by_id:
+            errors.append(f"duplicate information class: {class_id}")
+        by_id[class_id] = item
+        ownerships = item.get("allowed_record_ownerships")
+        if not isinstance(ownerships, list) or not ownerships:
+            errors.append(f"information class ownership is invalid: {class_id}")
+        elif "secrets" in ownerships:
+            errors.append(f"secret ownership is prohibited: {class_id}")
+    missing = REQUIRED_INFORMATION_CLASSES - set(by_id)
+    extra = set(by_id) - REQUIRED_INFORMATION_CLASSES
+    if missing:
+        errors.append("missing information classes: " + ", ".join(sorted(missing)))
+    if extra:
+        errors.append("unexpected information classes: " + ", ".join(sorted(extra)))
+    authoritative = by_id.get("authoritative-source", {})
+    if authoritative.get("source_of_truth") is not True:
+        errors.append("authoritative source must be the source of truth")
+    for class_id, item in by_id.items():
+        if class_id != "authoritative-source" and item.get("source_of_truth") is not False:
+            errors.append(f"non-authoritative class claims source of truth: {class_id}")
+    derived = by_id.get("derived", {})
+    if derived.get("rebuildable") is not True or derived.get("durability") != "rebuildable":
+        errors.append("derived information must be rebuildable")
+    memory = by_id.get("memory", {})
+    if memory.get("requires_approval_to_persist") is not True:
+        errors.append("durable memory must require approval")
+    return errors
+
+
 def validate_foundation(repo_root: Path) -> list[str]:
     config_root = repo_root / "config"
     errors: list[str] = []
@@ -161,6 +217,7 @@ def validate_foundation(repo_root: Path) -> list[str]:
         ("ownership-manifest.json", validate_ownership_manifest),
         ("provider-policy.json", validate_provider_policy),
         ("import-policy.json", validate_import_policy),
+        ("information-classes.json", validate_information_classes),
     ]
     for filename, validator in validators:
         try:

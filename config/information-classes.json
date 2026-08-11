@@ -1,0 +1,66 @@
+{
+  "schema_ref": "schemas/information-classes.schema.json",
+  "schema_version": 1,
+  "classes": [
+    {
+      "id": "authoritative-source",
+      "description": "Logical reference to canonical information at an exact revision",
+      "source_of_truth": true,
+      "durability": "durable",
+      "rebuildable": false,
+      "requires_evidence": true,
+      "requires_approval_to_persist": true,
+      "allowed_record_ownerships": ["user-data"]
+    },
+    {
+      "id": "knowledge",
+      "description": "Curated information linked to supporting source evidence",
+      "source_of_truth": false,
+      "durability": "durable",
+      "rebuildable": false,
+      "requires_evidence": true,
+      "requires_approval_to_persist": true,
+      "allowed_record_ownerships": ["user-data"]
+    },
+    {
+      "id": "memory",
+      "description": "Approved durable information intended for later reuse",
+      "source_of_truth": false,
+      "durability": "durable",
+      "rebuildable": false,
+      "requires_evidence": true,
+      "requires_approval_to_persist": true,
+      "allowed_record_ownerships": ["user-data"]
+    },
+    {
+      "id": "state",
+      "description": "Resumable but non-authoritative working state",
+      "source_of_truth": false,
+      "durability": "transient",
+      "rebuildable": false,
+      "requires_evidence": false,
+      "requires_approval_to_persist": false,
+      "allowed_record_ownerships": ["runtime"]
+    },
+    {
+      "id": "history",
+      "description": "Prior decisions, operations, and verification evidence",
+      "source_of_truth": false,
+      "durability": "durable",
+      "rebuildable": false,
+      "requires_evidence": true,
+      "requires_approval_to_persist": false,
+      "allowed_record_ownerships": ["runtime", "user-data"]
+    },
+    {
+      "id": "derived",
+      "description": "Rebuildable index, embedding, summary, or cache data",
+      "source_of_truth": false,
+      "durability": "rebuildable",
+      "rebuildable": true,
+      "requires_evidence": true,
+      "requires_approval_to_persist": false,
+      "allowed_record_ownerships": ["derived"]
+    }
+  ]
+}
