@@ -46,6 +46,7 @@
     "phase_five_baseline": ".ai/phase-5-baseline.json",
     "phase_six_baseline": ".ai/phase-6-baseline.json",
     "project_learning_boundary": "docs/specifications/PROJECT-LEARNING-BOUNDARY.md",
+    "project_learning_intent_schema": "schemas/project-learning-intent.schema.json",
     "phase_six_boundary": "docs/specifications/PHASE-6-PORTABILITY-BOUNDARY.md",
     "orchestration_boundary": "config/orchestration-boundary.json",
     "orchestration_boundary_schema": "schemas/orchestration-boundary.schema.json",

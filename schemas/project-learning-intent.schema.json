@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:project-learning-intent:1",
+  "title": "KRCN Core natural-language project-learning intent summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_ref", "schema_version", "request_digest", "action", "intent_origin", "source_kind", "locator_kind", "directory_provided", "path_disclosed"],
+  "properties": {
+    "schema_ref": { "const": "schemas/project-learning-intent.schema.json" },
+    "schema_version": { "const": 1 },
+    "request_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "action": { "const": "learn-project" },
+    "intent_origin": { "enum": ["explicit-user", "safe-assumption"] },
+    "source_kind": { "const": "project" },
+    "locator_kind": { "const": "local-path" },
+    "directory_provided": { "const": true },
+    "path_disclosed": { "const": false }
+  }
+}

@@ -67,11 +67,12 @@
     "docs/progress/PHASE-6-RELEASE-QUALITY.md",
     "docs/progress/PHASE-6-INTEGRATION-TESTS.md",
     "docs/progress/PHASE-6-COMPLETION.md",
-    "docs/progress/PHASE-7-KICKOFF.md"
+    "docs/progress/PHASE-7-KICKOFF.md",
+    "docs/progress/PHASE-7-PROJECT-LEARNING-INTENT.md"
   ],
   "next_actions": [
-    "implement deterministic Turkish and English project-learning intent recognition",
-    "resolve one existing absolute directory without retaining raw prompt text"
+    "infer project display name from reviewed markers or directory name",
+    "derive collision-safe portable workspace, project, and binding identifiers"
   ],
   "baseline_commit": "7ccc16b",
   "approval_gates": {
