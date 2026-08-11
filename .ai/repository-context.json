@@ -17,6 +17,7 @@
     "source_identity_schema": "schemas/source-identity.schema.json",
     "source_rebind_plan_schema": "schemas/source-rebind-plan.schema.json",
     "portable_backup_manifest_schema": "schemas/portable-backup-manifest.schema.json",
+    "portable_restore_plan_schema": "schemas/portable-restore-plan.schema.json",
     "external_source_no_copy": "docs/specifications/EXTERNAL-SOURCE-NO-COPY.md",
     "user_policy_schema": "schemas/user-policy.schema.json",
     "mutation_plan_schema": "schemas/mutation-plan.schema.json",

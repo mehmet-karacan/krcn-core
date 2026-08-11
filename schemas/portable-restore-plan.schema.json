@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:portable-restore-plan:1",
+  "title": "KRCN Core portable restore plan summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "plan_id", "backup_id", "archive_sha256", "entry_count", "external_dependency_count", "rebind_required_count", "target_must_be_empty", "paths_disclosed", "mutation"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "backup_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "archive_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "entry_count": { "type": "integer", "minimum": 0 },
+    "external_dependency_count": { "type": "integer", "minimum": 0 },
+    "rebind_required_count": { "type": "integer", "minimum": 0 },
+    "target_must_be_empty": { "const": true },
+    "paths_disclosed": { "const": false },
+    "mutation": { "type": "object" }
+  }
+}

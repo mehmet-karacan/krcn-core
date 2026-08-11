@@ -224,6 +224,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     backup.add_argument("--output", type=Path, required=True)
     _add_service_options(backup, mutation=True)
+    restore = portability_commands.add_parser(
+        "restore",
+        help="Plan or restore a portable backup into an empty user home",
+    )
+    restore.add_argument("--input", type=Path, required=True)
+    _add_service_options(restore, mutation=True)
     return parser
 
 
@@ -506,7 +512,7 @@ def _run_orchestrator_command(args: argparse.Namespace) -> int:
 
 def _run_portability_command(args: argparse.Namespace) -> int:
     try:
-        if args.portability_command != "backup":
+        if args.portability_command not in {"backup", "restore"}:
             raise ApplicationServiceError("portability command is required")
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
         data_root = resolve_user_home(args.data_root).path
@@ -514,10 +520,12 @@ def _run_portability_command(args: argparse.Namespace) -> int:
             data_root,
             OwnershipResolver.from_repository(repo_root),
         )
+        operation = f"portability.{args.portability_command}"
+        path = args.output if args.portability_command == "backup" else args.input
         request = ServiceRequest(
             client_kind="cli",
-            operation="portability.backup",
-            arguments={"archive_path": str(args.output.resolve())},
+            operation=operation,
+            arguments={"archive_path": str(path.resolve())},
             apply=args.apply,
             expected_plan_id=args.expected_plan,
             approval_id=args.approval_id,

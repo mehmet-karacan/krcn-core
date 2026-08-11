@@ -60,11 +60,12 @@
     "docs/progress/PHASE-6-PORTABLE-USER-HOME.md",
     "docs/progress/PHASE-6-EXTERNAL-SOURCE-IDENTITY.md",
     "docs/progress/PHASE-6-SOURCE-REBIND.md",
-    "docs/progress/PHASE-6-PORTABLE-BACKUP.md"
+    "docs/progress/PHASE-6-PORTABLE-BACKUP.md",
+    "docs/progress/PHASE-6-PORTABLE-RESTORE.md"
   ],
   "next_actions": [
-    "implement exact-plan restore into a new empty KRCN user home",
-    "verify restored records and report every external source as requiring rebind"
+    "implement explicit migration from repository-local .krcn into a portable user home",
+    "provide backup, exact-plan apply, verification, and rollback without touching live data automatically"
   ],
   "baseline_commit": "d7d20bc",
   "approval_gates": {
