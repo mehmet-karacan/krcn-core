@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "network_required_mode": "offline",
+  "maximum_text_file_bytes": 2000000,
+  "blocked_globs": [
+    "**/.git/**",
+    "**/.idea/**",
+    "**/.vscode/**",
+    "**/__pycache__/**",
+    "**/.pytest_cache/**",
+    "**/*.pyc",
+    "**/*.pyo",
+    "**/*.db",
+    "**/*.sqlite",
+    "**/*.sqlite3",
+    "**/*.pem",
+    "**/*.key",
+    "**/.env",
+    "**/.env.*"
+  ],
+  "content_detectors": [
+    "windows-absolute-path",
+    "posix-user-path",
+    "private-key",
+    "github-token",
+    "aws-access-key",
+    "generic-secret-assignment",
+    "email-address",
+    "ip-address",
+    "unicode-long-dash"
+  ],
+  "required_gates": [
+    "ownership-classified",
+    "secret-scan-clean",
+    "portability-scan-clean",
+    "network-disabled",
+    "synthetic-fixtures-only",
+    "hermetic-tests-pass",
+    "staged-diff-reviewed",
+    "user-approved"
+  ]
+}

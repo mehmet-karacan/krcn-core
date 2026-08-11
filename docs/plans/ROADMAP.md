@@ -30,7 +30,7 @@ Tamamlanma ölçütü: Çalışan mevcut davranış ve veri sınırları, yenide
 ## Faz 1 - Repository ve sahiplik temeli
 
 - Ürün kaynak kodunu KRCN Core repository yapısına yerleştir.
-- `ownership-manifest.yaml` oluştur.
+- `ownership-manifest.json` oluştur.
 - Core, runtime, user-data, derived ve secrets yollarını makinece tanımla.
 - Yerel veri dizinlerini `.gitignore` ve doğrulama kurallarıyla koru.
 - Kurulum, test ve doctor komutlarının temelini hazırla.

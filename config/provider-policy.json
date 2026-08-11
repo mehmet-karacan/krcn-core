@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "default_mode": "offline",
+  "implicit_provider_discovery": false,
+  "network": {
+    "default_action": "deny",
+    "diagnostics_may_upload": false,
+    "tests_may_connect": false,
+    "imports_may_connect": false
+  },
+  "local_providers": {
+    "deterministic_hashing": {
+      "enabled": true,
+      "data_leaves_device": false
+    }
+  },
+  "remote_providers": {
+    "enabled": false,
+    "explicit_opt_in_required": true,
+    "consent_scope": "session",
+    "required_disclosures": [
+      "provider",
+      "endpoint",
+      "data_categories",
+      "operation_scope",
+      "retention_assumptions"
+    ]
+  }
+}

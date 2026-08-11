@@ -64,4 +64,3 @@ Every registered integration must expose a non-destructive health check. After a
 - Conflict policy for locally modified managed core files.
 - Supported migration transaction boundaries.
 - Exact location of runtime and user-data directories on each operating system.
-

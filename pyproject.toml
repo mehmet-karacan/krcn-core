@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "krcn-core"
+version = "0.1.0"
+description = "Local-first context, knowledge, memory, and orchestration core"
+requires-python = ">=3.11"
+authors = [
+  { name = "Mehmet KARACAN" }
+]
+dependencies = []
+
+[project.scripts]
+krcn-verify = "krcn_core.foundation:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]

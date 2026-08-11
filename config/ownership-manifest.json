@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "default_unmatched": {
+    "ownership": "unmanaged",
+    "merge_strategy": "preserve",
+    "approval_required": true
+  },
+  "classes": [
+    {
+      "id": "core",
+      "description": "Versioned product code and managed defaults",
+      "merge_strategy": "replace-managed",
+      "paths": [
+        "AGENTS.md",
+        "README.md",
+        "pyproject.toml",
+        "src/**",
+        "config/**",
+        "docs/**",
+        "schemas/**",
+        "templates/**",
+        "tests/**",
+        "tools/**"
+      ]
+    },
+    {
+      "id": "runtime",
+      "description": "Local execution state, events, locks, and checkpoints",
+      "merge_strategy": "preserve",
+      "paths": [
+        ".krcn/runtime/**",
+        ".krcn/events/**",
+        ".krcn/locks/**",
+        ".krcn/checkpoints/**"
+      ]
+    },
+    {
+      "id": "user-data",
+      "description": "User-owned projects, documents, work items, decisions, and memory",
+      "merge_strategy": "preserve",
+      "paths": [
+        ".krcn/projects/**",
+        ".krcn/documents/**",
+        ".krcn/work-items/**",
+        ".krcn/decisions/**",
+        ".krcn/memory/**"
+      ]
+    },
+    {
+      "id": "derived",
+      "description": "Rebuildable indexes, embeddings, summaries, and caches",
+      "merge_strategy": "migrate-or-rebuild",
+      "paths": [
+        ".krcn/derived/**",
+        ".krcn/indexes/**",
+        ".krcn/cache/**"
+      ]
+    },
+    {
+      "id": "secrets",
+      "description": "Local credentials and secret references",
+      "merge_strategy": "preserve",
+      "paths": [
+        ".krcn/secrets/**",
+        ".env",
+        ".env.*"
+      ]
+    },
+    {
+      "id": "unmanaged",
+      "description": "Files not owned by a KRCN Core release",
+      "merge_strategy": "preserve",
+      "paths": []
+    }
+  ]
+}

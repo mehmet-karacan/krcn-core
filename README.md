@@ -27,6 +27,22 @@ Kök çalışma kuralları için `AGENTS.md` dosyasını okuyun.
 
 Geliştirme sırası `docs/plans/ROADMAP.md`, güncelleme güvenlik sözleşmesi `docs/specifications/UPDATE-MERGE-CONTRACT.md` içindedir. Mevcut baseline bulguları `docs/progress/PHASE-0-BASELINE.md`, aktarım sınırı ise `docs/specifications/IMPORT-BOUNDARY.md` içinde tutulur.
 
+## Foundation doğrulaması
+
+Repository sahiplik, provider ve import politikalarını ek bağımlılık olmadan doğrulamak için:
+
+```bash
+python tools/verify_repository.py
+```
+
+Bir import adayını mevcut güvenlik politikasıyla taramak için:
+
+```bash
+python tools/verify_repository.py --source <source-directory>
+```
+
+Doğrulama aracı secret, makineye özel yol, hassas bağlantı bilgisi, engellenmiş dosya türü ve uzun tire bulgularında başarısız olur. Ağ erişimi kullanmaz.
+
 ## Kurucu ve mimari sahibi
 
 **Mehmet KARACAN** - KRCN Core kurucusu ve özgün mimarinin sahibi

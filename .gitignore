@@ -5,6 +5,7 @@
 !.env.example
 
 # Local runtime and generated data.
+.krcn/
 .runtime/
 runtime/
 *.db
@@ -14,10 +15,14 @@ runtime/
 *.sqlite3
 __pycache__/
 .pytest_cache/
+.coverage
+build/
+dist/
+*.egg-info/
+.venv/
 
 # IDE and operating-system files.
 .idea/
 .vscode/
 .DS_Store
 Thumbs.db
-

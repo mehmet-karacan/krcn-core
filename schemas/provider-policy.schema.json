@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://krcn.dev/schemas/provider-policy.schema.json",
+  "title": "KRCN Core provider policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "default_mode",
+    "implicit_provider_discovery",
+    "network",
+    "local_providers",
+    "remote_providers"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "default_mode": { "const": "offline" },
+    "implicit_provider_discovery": { "const": false },
+    "network": {
+      "type": "object",
+      "required": [
+        "default_action",
+        "diagnostics_may_upload",
+        "tests_may_connect",
+        "imports_may_connect"
+      ],
+      "properties": {
+        "default_action": { "const": "deny" },
+        "diagnostics_may_upload": { "const": false },
+        "tests_may_connect": { "const": false },
+        "imports_may_connect": { "const": false }
+      }
+    },
+    "local_providers": { "type": "object" },
+    "remote_providers": {
+      "type": "object",
+      "required": [
+        "enabled",
+        "explicit_opt_in_required",
+        "consent_scope",
+        "required_disclosures"
+      ],
+      "properties": {
+        "enabled": { "const": false },
+        "explicit_opt_in_required": { "const": true },
+        "consent_scope": { "enum": ["operation", "session"] },
+        "required_disclosures": {
+          "type": "array",
+          "minItems": 5,
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}
