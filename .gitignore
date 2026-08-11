@@ -1,0 +1,23 @@
+# Local secrets: never commit credentials.
+.secrets/
+.env
+.env.*
+!.env.example
+
+# Local runtime and generated data.
+.runtime/
+runtime/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+__pycache__/
+.pytest_cache/
+
+# IDE and operating-system files.
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
