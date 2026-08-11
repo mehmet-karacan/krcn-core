@@ -13,6 +13,7 @@ authors = [
 dependencies = []
 
 [project.scripts]
+krcn = "krcn_core.cli.app:main"
 krcn-context = "krcn_core.repository_context:main"
 krcn-verify = "krcn_core.foundation:main"
 
