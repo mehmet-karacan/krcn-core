@@ -93,8 +93,8 @@ def prepare_source_rebind(
 ) -> SourceRebindPlan:
     """Plan a locator-only update after exact read-only identity verification."""
 
-    if binding.locator.kind != "local-path" or binding.default_access != "read-only":
-        raise SourceRebindError("rebind requires a read-only local-path binding")
+    if binding.locator.kind not in {"local-path", "unbound"} or binding.default_access != "read-only":
+        raise SourceRebindError("rebind requires a read-only local or unbound binding")
     if "write" in binding.capabilities:
         raise SourceRebindError("rebind cannot use a write-capable source binding")
     root, _ = assert_external_source(candidate_root, store.data_root)
@@ -192,4 +192,3 @@ def apply_source_rebind(
         for item in plan.record_plans
     )
     return SourceRebindResult(plan.plan_id, records)
-

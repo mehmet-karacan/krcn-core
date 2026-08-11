@@ -10,7 +10,7 @@ from pathlib import Path
 
 IDENTIFIER = re.compile(r"^[a-z][a-z0-9-]*$")
 SOURCE_KINDS = {"project", "document", "directory", "database", "integration"}
-LOCATOR_KINDS = {"local-path", "connection-ref", "uri"}
+LOCATOR_KINDS = {"local-path", "connection-ref", "uri", "unbound"}
 ACCESS_MODES = {"read-only", "read-write"}
 CAPABILITIES = {"read", "write", "metadata", "search", "index", "execute"}
 

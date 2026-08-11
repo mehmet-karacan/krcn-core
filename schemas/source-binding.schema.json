@@ -27,7 +27,7 @@
       "additionalProperties": false,
       "required": ["kind", "value"],
       "properties": {
-        "kind": { "enum": ["local-path", "connection-ref", "uri"] },
+        "kind": { "enum": ["local-path", "connection-ref", "uri", "unbound"] },
         "value": { "type": "string", "minLength": 1 }
       }
     },

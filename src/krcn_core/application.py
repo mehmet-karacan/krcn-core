@@ -71,6 +71,7 @@ from .orchestration_service import (
 from .orchestration_verifier import VerifierHandlerRegistry
 from .orchestration_worker import WorkerHandlerRegistry
 from .policies import load_user_policies
+from .portable_backup import apply_portable_backup, prepare_portable_backup
 from .provider_gate import ProviderApproval, load_provider_gate_policy
 from .rescan import apply_rescan, prepare_rescan
 from .release import validate_release_bundle
@@ -108,6 +109,7 @@ OPERATIONS = {
     "project.onboard",
     "project.rescan",
     "project.rebind",
+    "portability.backup",
     "knowledge.catalog",
     "knowledge.search-exact",
     "knowledge.search-dependencies",
@@ -323,6 +325,7 @@ class KrcnApplicationService:
             "project.onboard": self._onboard_project,
             "project.rescan": self._rescan_project,
             "project.rebind": self._rebind_project,
+            "portability.backup": self._portable_backup,
             "knowledge.catalog": self._knowledge_catalog,
             "knowledge.search-exact": self._search_exact,
             "knowledge.search-dependencies": self._search_dependencies,
@@ -834,6 +837,37 @@ class KrcnApplicationService:
             candidate,
             discovery,
         )
+        return "applied", {"plan": plan.public_summary(), **result.public_summary()}
+
+    def _portable_backup(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"archive_path"})
+        archive_path = self._absolute_path_argument(request.arguments, "archive_path")
+        plan = prepare_portable_backup(
+            self._store.data_root,
+            archive_path,
+            self._ownership,
+        )
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        if request.expected_plan_id != plan.plan_id:
+            raise ApplicationServiceError(
+                "apply requires the exact plan id returned by a prior dry-run"
+            )
+        if request.approval_id is None:
+            raise ApplicationServiceError("portable backup requires approval id")
+        authorization = authorize_mutation(
+            plan.mutation,
+            dry_run=DryRunEvidence(plan.mutation.plan_id, verified=True),
+            approval=ApprovalEvidence(
+                plan.mutation.plan_id,
+                request.approval_id,
+                approved=True,
+            ),
+        )
+        result = apply_portable_backup(plan, authorization)
         return "applied", {"plan": plan.public_summary(), **result.public_summary()}
 
     def _information_catalog(self) -> InformationCatalog:

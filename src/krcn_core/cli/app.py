@@ -213,6 +213,17 @@ def build_parser() -> argparse.ArgumentParser:
         command.add_argument("--format", choices=("text", "json"), default="json")
         command.add_argument("--apply", action="store_true")
         command.add_argument("--expected-plan")
+    portability = subparsers.add_parser(
+        "portability",
+        help="Back up and restore the portable KRCN user home",
+    )
+    portability_commands = portability.add_subparsers(dest="portability_command")
+    backup = portability_commands.add_parser(
+        "backup",
+        help="Plan or create a secret-safe portable backup",
+    )
+    backup.add_argument("--output", type=Path, required=True)
+    _add_service_options(backup, mutation=True)
     return parser
 
 
@@ -493,6 +504,36 @@ def _run_orchestrator_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_portability_command(args: argparse.Namespace) -> int:
+    try:
+        if args.portability_command != "backup":
+            raise ApplicationServiceError("portability command is required")
+        repo_root = args.repo.resolve() if args.repo else discover_repo_root()
+        data_root = resolve_user_home(args.data_root).path
+        store = LocalWorkspaceStore(
+            data_root,
+            OwnershipResolver.from_repository(repo_root),
+        )
+        request = ServiceRequest(
+            client_kind="cli",
+            operation="portability.backup",
+            arguments={"archive_path": str(args.output.resolve())},
+            apply=args.apply,
+            expected_plan_id=args.expected_plan,
+            approval_id=args.approval_id,
+        )
+        response = KrcnApplicationService(repo_root, store).execute(request)
+    except (ApplicationServiceError, OSError, ValueError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+    if args.format == "json":
+        print(json.dumps(response.as_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(f"{response.status}\t{response.operation}")
+        print(json.dumps(response.data, ensure_ascii=False, indent=2))
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -535,6 +576,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "orchestrator":
         return _run_orchestrator_command(args)
+
+    if args.command == "portability":
+        return _run_portability_command(args)
 
     if args.command != "catalog":
         parser.print_help()

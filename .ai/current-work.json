@@ -59,11 +59,12 @@
     "docs/progress/PHASE-6-KICKOFF.md",
     "docs/progress/PHASE-6-PORTABLE-USER-HOME.md",
     "docs/progress/PHASE-6-EXTERNAL-SOURCE-IDENTITY.md",
-    "docs/progress/PHASE-6-SOURCE-REBIND.md"
+    "docs/progress/PHASE-6-SOURCE-REBIND.md",
+    "docs/progress/PHASE-6-PORTABLE-BACKUP.md"
   ],
   "next_actions": [
-    "create a portable backup that traverses only the KRCN user home",
-    "exclude external project content and secret values from every portable archive"
+    "implement exact-plan restore into a new empty KRCN user home",
+    "verify restored records and report every external source as requiring rebind"
   ],
   "baseline_commit": "d7d20bc",
   "approval_gates": {
