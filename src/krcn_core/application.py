@@ -76,6 +76,10 @@ from .portable_restore import apply_portable_restore, prepare_portable_restore
 from .provider_gate import ProviderApproval, load_provider_gate_policy
 from .rescan import apply_rescan, prepare_rescan
 from .release import validate_release_bundle
+from .repo_local_migration import (
+    apply_repo_local_migration,
+    prepare_repo_local_migration,
+)
 from .release_diff import create_release_diff
 from .rollback import (
     apply_rollback,
@@ -112,6 +116,7 @@ OPERATIONS = {
     "project.rebind",
     "portability.backup",
     "portability.restore",
+    "portability.migrate-repo-local",
     "knowledge.catalog",
     "knowledge.search-exact",
     "knowledge.search-dependencies",
@@ -329,6 +334,7 @@ class KrcnApplicationService:
             "project.rebind": self._rebind_project,
             "portability.backup": self._portable_backup,
             "portability.restore": self._portable_restore,
+            "portability.migrate-repo-local": self._migrate_repo_local,
             "knowledge.catalog": self._knowledge_catalog,
             "knowledge.search-exact": self._search_exact,
             "knowledge.search-dependencies": self._search_dependencies,
@@ -902,6 +908,40 @@ class KrcnApplicationService:
             ),
         )
         result = apply_portable_restore(plan, authorization)
+        return "applied", {"plan": plan.public_summary(), **result.public_summary()}
+
+    def _migrate_repo_local(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"backup_path"})
+        backup_path = self._absolute_path_argument(request.arguments, "backup_path")
+        plan = prepare_repo_local_migration(
+            self._repo_root,
+            self._store.data_root,
+            backup_path,
+            self._ownership,
+        )
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        if request.expected_plan_id != plan.plan_id:
+            raise ApplicationServiceError(
+                "apply requires the exact plan id returned by a prior dry-run"
+            )
+        if request.approval_id is None:
+            raise ApplicationServiceError("repo-local migration requires approval id")
+        authorizations: dict[str, MutationAuthorization] = {}
+        for mutation in plan.effect_plans:
+            authorizations[mutation.plan_id] = authorize_mutation(
+                mutation,
+                dry_run=DryRunEvidence(mutation.plan_id, verified=True),
+                approval=ApprovalEvidence(
+                    mutation.plan_id,
+                    request.approval_id,
+                    approved=True,
+                ),
+            )
+        result = apply_repo_local_migration(plan, authorizations)
         return "applied", {"plan": plan.public_summary(), **result.public_summary()}
 
     def _information_catalog(self) -> InformationCatalog:

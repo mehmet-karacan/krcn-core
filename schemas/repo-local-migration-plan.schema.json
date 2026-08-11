@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:repo-local-migration-plan:1",
+  "title": "KRCN Core repository-local migration plan summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "plan_id", "backup_id", "entry_count", "external_dependency_count", "source_preserved", "source_deleted", "target_must_be_empty", "paths_disclosed", "effect_plans", "rollback"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "backup_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "entry_count": { "type": "integer", "minimum": 0 },
+    "external_dependency_count": { "type": "integer", "minimum": 0 },
+    "source_preserved": { "const": true },
+    "source_deleted": { "const": false },
+    "target_must_be_empty": { "const": true },
+    "paths_disclosed": { "const": false },
+    "effect_plans": { "type": "array", "minItems": 2, "maxItems": 2 },
+    "rollback": { "type": "object" }
+  }
+}

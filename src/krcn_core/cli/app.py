@@ -230,6 +230,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     restore.add_argument("--input", type=Path, required=True)
     _add_service_options(restore, mutation=True)
+    migrate = portability_commands.add_parser(
+        "migrate-repo-local",
+        help="Plan or migrate repository-local .krcn into the portable user home",
+    )
+    migrate.add_argument("--backup-output", type=Path, required=True)
+    _add_service_options(migrate, mutation=True)
     return parser
 
 
@@ -512,7 +518,11 @@ def _run_orchestrator_command(args: argparse.Namespace) -> int:
 
 def _run_portability_command(args: argparse.Namespace) -> int:
     try:
-        if args.portability_command not in {"backup", "restore"}:
+        if args.portability_command not in {
+            "backup",
+            "restore",
+            "migrate-repo-local",
+        }:
             raise ApplicationServiceError("portability command is required")
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
         data_root = resolve_user_home(args.data_root).path
@@ -521,11 +531,16 @@ def _run_portability_command(args: argparse.Namespace) -> int:
             OwnershipResolver.from_repository(repo_root),
         )
         operation = f"portability.{args.portability_command}"
-        path = args.output if args.portability_command == "backup" else args.input
+        if args.portability_command == "backup":
+            arguments = {"archive_path": str(args.output.resolve())}
+        elif args.portability_command == "restore":
+            arguments = {"archive_path": str(args.input.resolve())}
+        else:
+            arguments = {"backup_path": str(args.backup_output.resolve())}
         request = ServiceRequest(
             client_kind="cli",
             operation=operation,
-            arguments={"archive_path": str(path.resolve())},
+            arguments=arguments,
             apply=args.apply,
             expected_plan_id=args.expected_plan,
             approval_id=args.approval_id,

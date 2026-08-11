@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import os
 import re
@@ -268,8 +269,11 @@ def prepare_portable_backup(
     )
 
 
-def _zip_bytes(plan: PortableBackupPlan, destination: Path) -> None:
-    with zipfile.ZipFile(destination, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+def portable_archive_bytes(plan: PortableBackupPlan) -> bytes:
+    """Build deterministic archive bytes for verification and composed migrations."""
+
+    stream = io.BytesIO()
+    with zipfile.ZipFile(stream, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         items = [("manifest.json", _canonical_json(plan.manifest()))]
         items.extend((f"payload/{item.path}", item.content) for item in plan.entries)
         for name, content in items:
@@ -277,6 +281,7 @@ def _zip_bytes(plan: PortableBackupPlan, destination: Path) -> None:
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o600 << 16
             archive.writestr(info, content)
+    return stream.getvalue()
 
 
 def apply_portable_backup(
@@ -309,7 +314,7 @@ def apply_portable_backup(
     os.close(descriptor)
     temporary = Path(temporary_name)
     try:
-        _zip_bytes(plan, temporary)
+        temporary.write_bytes(portable_archive_bytes(plan))
         os.replace(temporary, plan.archive_path)
     finally:
         if temporary.exists():
@@ -321,4 +326,3 @@ def apply_portable_backup(
         archive_sha256,
         len(plan.entries),
     )
-
