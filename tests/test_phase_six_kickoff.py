@@ -13,10 +13,9 @@ def load_json(path: Path) -> dict:
 
 
 class PhaseSixKickoffTests(unittest.TestCase):
-    def test_phase_six_is_active_with_a_portability_plan(self) -> None:
+    def test_phase_six_preserves_kickoff_and_portability_plan(self) -> None:
         current = load_json(REPO_ROOT / ".ai" / "current-work.json")
         self.assertEqual("phase-6", current["phase_id"])
-        self.assertEqual("active", current["status"])
         self.assertEqual("d7d20bc", current["baseline_commit"])
         self.assertEqual(
             "docs/plans/PLAN-007-RELEASE-KALITE-TASINABILIRLIK.md",

@@ -14,7 +14,7 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
 - Faz 3 tamamlandı.
 - Faz 4 tamamlandı.
 - Faz 5 tamamlandı.
-- Faz 6 başlatıldı. Taşınabilir kullanıcı evi, dış proje rebind, backup, restore ve release kalite kapıları uygulanıyor.
+- Faz 6 tamamlandı.
 
 ## Temel kullanım modeli
 

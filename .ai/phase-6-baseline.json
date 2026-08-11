@@ -1,0 +1,56 @@
+{
+  "schema_ref": "schemas/phase-6-baseline.schema.json",
+  "schema_version": 1,
+  "baseline_id": "phase-6-release-quality-portability",
+  "phase_id": "phase-6",
+  "status": "ready",
+  "completed_steps": 10,
+  "capabilities": [
+    "portable-user-home",
+    "external-source-no-copy",
+    "path-independent-source-identity",
+    "exact-plan-source-rebind",
+    "secret-safe-portable-backup",
+    "atomic-portable-restore",
+    "non-destructive-repo-local-migration",
+    "cross-platform-client-parity",
+    "offline-release-quality",
+    "clean-clone-recovery-integration"
+  ],
+  "safe_operations": [
+    "project.rebind",
+    "portability.backup",
+    "portability.restore",
+    "portability.migrate-repo-local"
+  ],
+  "guarantees": {
+    "external_source_copied": false,
+    "external_source_mutated": false,
+    "physical_source_locator_archived": false,
+    "secret_values_archived": false,
+    "local_data_tracked": false,
+    "user_data_preserved": true,
+    "user_policy_preserved": true,
+    "exact_plan_required": true,
+    "repo_local_source_preserved": true,
+    "clean_clone_recovery": true,
+    "update_merge_verify_preserved": true,
+    "client_parity": true
+  },
+  "verification": {
+    "hermetic_tests": "passed",
+    "foundation": "passed",
+    "doctor": "passed",
+    "offline_install": "passed",
+    "portable_backup_restore": "passed",
+    "source_rebind": "passed",
+    "policy_preservation": "passed",
+    "external_source_no_copy": "passed",
+    "clean_clone": "passed",
+    "merge_verify_rollback": "passed"
+  },
+  "maintenance": {
+    "status": "ready",
+    "new_phase_requires_user_approval": true
+  }
+}

@@ -183,4 +183,21 @@ def run_doctor(repo_root: Path) -> tuple[DoctorCheck, ...]:
             "Phase 5 orchestrator baseline is complete and ready",
         )
     )
+    phase_six = load_json(repo_root / ".ai" / "phase-6-baseline.json")
+    phase_six_errors = []
+    if phase_six.get("status") != "ready":
+        phase_six_errors.append("Phase 6 baseline state")
+    if phase_six.get("completed_steps") != 10:
+        phase_six_errors.append("Phase 6 completed steps")
+    if not (
+        repo_root / "docs" / "progress" / "PHASE-6-COMPLETION.md"
+    ).is_file():
+        phase_six_errors.append("Phase 6 completion evidence")
+    checks.append(
+        _check(
+            "phase-six-baseline",
+            phase_six_errors,
+            "Phase 6 release, quality, and portability baseline is complete and ready",
+        )
+    )
     return tuple(checks)

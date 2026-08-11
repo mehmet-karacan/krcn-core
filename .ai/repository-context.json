@@ -44,6 +44,7 @@
     "phase_four_baseline": ".ai/phase-4-baseline.json",
     "phase_five_boundary": "docs/specifications/PHASE-5-ORCHESTRATION-BOUNDARY.md",
     "phase_five_baseline": ".ai/phase-5-baseline.json",
+    "phase_six_baseline": ".ai/phase-6-baseline.json",
     "phase_six_boundary": "docs/specifications/PHASE-6-PORTABILITY-BOUNDARY.md",
     "orchestration_boundary": "config/orchestration-boundary.json",
     "orchestration_boundary_schema": "schemas/orchestration-boundary.schema.json",

@@ -3,7 +3,7 @@
   "schema_version": 1,
   "phase_id": "phase-6",
   "workstream_id": "release-quality-portability",
-  "status": "active",
+  "status": "completed",
   "goal": "Make KRCN-owned state portable while external project sources remain uncopied and read-only",
   "plan_ref": "docs/plans/PLAN-007-RELEASE-KALITE-TASINABILIRLIK.md",
   "progress_refs": [
@@ -64,11 +64,13 @@
     "docs/progress/PHASE-6-PORTABLE-RESTORE.md",
     "docs/progress/PHASE-6-REPO-LOCAL-MIGRATION.md",
     "docs/progress/PHASE-6-PLATFORM-CLIENT-PARITY.md",
-    "docs/progress/PHASE-6-RELEASE-QUALITY.md"
+    "docs/progress/PHASE-6-RELEASE-QUALITY.md",
+    "docs/progress/PHASE-6-INTEGRATION-TESTS.md",
+    "docs/progress/PHASE-6-COMPLETION.md"
   ],
   "next_actions": [
-    "run clean-clone, restore, rebind, update, verify, and rollback integration scenarios",
-    "create the Phase 6 baseline and completion handoff after every quality gate passes"
+    "maintain the completed Phase 6 baseline and compatibility contracts",
+    "wait for explicit user approval before starting a new development phase"
   ],
   "baseline_commit": "d7d20bc",
   "approval_gates": {

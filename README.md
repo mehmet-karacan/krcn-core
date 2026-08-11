@@ -21,7 +21,9 @@ Git'ten gelen yeni core sürümünde aşağıdaki işlemler uygulanır:
 
 ## Güncel geliştirme durumu
 
-Faz 1, Faz 2, Faz 3, Faz 4 ve Faz 5 tamamlandı. Revision-aware bilgi kataloğu, retrieval, bütçeli context paketleri, onay kontrollü Memory Gate, capability-bound orchestrator, idempotent worker, bağımsız verifier, kalıcı resume ve ortak istemci servisleri hazırdır. Faz 6 başlatılmamıştır ve açık kullanıcı onayı beklenmektedir. Yerel referans kaynaklarındaki kullanıcı verileri içeri alınmamıştır.
+Faz 1 ile Faz 6 arasındaki bütün geliştirme aşamaları tamamlandı. Revision-aware bilgi kataloğu, retrieval, bütçeli context paketleri, onay kontrollü Memory Gate, capability-bound orchestrator, idempotent worker, bağımsız verifier, kalıcı resume, taşınabilir kullanıcı evi, secret-safe backup, atomic restore, doğrulanmış dış proje rebind ve cross-platform kalite kapıları hazırdır. Yerel referans kaynaklarındaki kullanıcı verileri içeri alınmamıştır.
+
+KRCN kullanıcı bağlamı repository dışında tek bir `KRCN_HOME` altında korunabilir. Uyumlu bir core clone ve bu kullanıcı evinin portable backup paketi recovery için yeterlidir. Dış proje kaynakları özellikle kopyalanmaz; yeni bilgisayarda ayrıca bulunmalı ve `project.rebind` ile doğrulanarak bağlanmalıdır.
 
 Kök çalışma kuralları için `AGENTS.md`, araçtan bağımsız başlangıç bağlamı için `AI-CONTEXT.md` dosyasını okuyun. Codex doğrudan `AGENTS.md` kullanır. Claude Code için `CLAUDE.md` aynı ortak kaynakları içe aktarır. Diğer istemciler ve plugin'ler `.ai/repository-context.json` manifestini okuyabilir.
 
