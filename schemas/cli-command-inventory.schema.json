@@ -10,6 +10,7 @@
     "baseline_id",
     "status",
     "source_code_imported",
+    "source_fingerprint",
     "global_findings",
     "commands"
   ],
@@ -19,6 +20,28 @@
     "baseline_id": { "type": "string", "minLength": 1 },
     "status": { "const": "reference-only" },
     "source_code_imported": { "const": false },
+    "source_fingerprint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256",
+        "line_count",
+        "byte_count",
+        "staging_location",
+        "content_findings"
+      ],
+      "properties": {
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "line_count": { "type": "integer", "minimum": 1 },
+        "byte_count": { "type": "integer", "minimum": 1 },
+        "staging_location": { "const": "external-local" },
+        "content_findings": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+        }
+      }
+    },
     "global_findings": {
       "type": "array",
       "uniqueItems": true,

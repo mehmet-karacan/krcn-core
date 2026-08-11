@@ -4,6 +4,16 @@
   "baseline_id": "legacy-cli-0.1.0-draft",
   "status": "reference-only",
   "source_code_imported": false,
+  "source_fingerprint": {
+    "sha256": "311c84facd9cfefaabec7b37d3466947a0063e3ead114dce297009b626ce1e87",
+    "line_count": 3669,
+    "byte_count": 163852,
+    "staging_location": "external-local",
+    "content_findings": [
+      "unicode-long-dash",
+      "ip-address"
+    ]
+  },
   "global_findings": [
     "core-and-user-data-share-tree",
     "ownership-checks-are-not-centralized",

@@ -29,6 +29,17 @@ class LegacyCliInventoryTests(unittest.TestCase):
             self.inventory["schema_ref"],
         )
 
+    def test_external_staging_baseline_has_portable_fingerprint(self) -> None:
+        fingerprint = self.inventory["source_fingerprint"]
+        self.assertRegex(fingerprint["sha256"], r"^[a-f0-9]{64}$")
+        self.assertEqual(3669, fingerprint["line_count"])
+        self.assertEqual(163852, fingerprint["byte_count"])
+        self.assertEqual("external-local", fingerprint["staging_location"])
+        self.assertEqual(
+            {"ip-address", "unicode-long-dash"},
+            set(fingerprint["content_findings"]),
+        )
+
     def test_all_legacy_commands_have_unique_identifiers(self) -> None:
         command_list = self.inventory["commands"]
         self.assertEqual(29, len(command_list))
