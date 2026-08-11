@@ -60,6 +60,19 @@ At the start of each task:
 
 Before starting work, inspect repository state, relevant manifests, and existing data. Extract a short goal and acceptance criteria. Proceed with read-only inspection; obtain explicit approval before irreversible operations or operations that affect user data. At completion, report changed files, verification results, and preserved data areas in Turkish.
 
+## Natural-language project learning
+
+When the user provides one existing absolute project directory, or combines that directory with phrases such as `projeyi öğren`, `tanı`, `tanıt`, `entegre et`, `learn`, `register`, or `onboard`:
+
+1. Route the request to the shared `project.learn` application operation.
+2. Do not ask the user for workspace, project, binding, or display-name values. Infer them through the shared service.
+3. Treat a directory supplied by itself as a safe request to prepare project learning.
+4. Show the exact dry-run plan before creating user-data records.
+5. Use one explicit approval to apply that exact plan.
+6. Read the external project in place. Never copy its project files into KRCN Core or the KRCN user home.
+
+The machine-readable route is `config/intent-routing.json`. Client adapters must not maintain their own phrase list or identity inference rules.
+
 ## Development record structure
 
 - `docs/architecture/`: English technical architecture.
@@ -75,7 +88,7 @@ Before starting work, inspect repository state, relevant manifests, and existing
 - Codex reads this `AGENTS.md` directly.
 - Claude Code reads `CLAUDE.md`, which imports this file and `AI-CONTEXT.md`.
 - Other AI clients and plugins start with `AI-CONTEXT.md` or `.ai/repository-context.json`.
-- Action-capable clients use `src/krcn_core/application.py`. The `krcn project`, `krcn portability`, `krcn installation`, `krcn release`, `krcn deployment`, `krcn knowledge`, `krcn context-package`, and `krcn memory` commands are thin CLI adapters over the same service used by SDK, MCP, plugins, Codex, Claude, and other clients.
+- Action-capable clients use `src/krcn_core/application.py`. The `krcn ask`, `krcn project`, `krcn portability`, `krcn installation`, `krcn release`, `krcn deployment`, `krcn knowledge`, `krcn context-package`, and `krcn memory` commands are thin CLI adapters over the same service used by SDK, MCP, plugins, Codex, Claude, and other clients.
 - Client requests and responses follow `schemas/application-request.schema.json` and `schemas/application-response.schema.json`.
 - Client adapters must remain thin. Product rules, ownership boundaries, and current work state must not be duplicated in provider-specific files.
 - No client adapter may bypass or reinterpret the shared capability, policy, dry-run, exact-plan, approval, or ownership gates.

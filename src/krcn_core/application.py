@@ -29,6 +29,7 @@ from .derived_actions import DerivedActionHandlerRegistry
 from .exact_retrieval import parse_exact_retrieval_query, retrieve_exact
 from .foundation import load_json
 from .information_records import parse_information_record
+from .intent_routing import project_learning_route
 from .installation import (
     inspect_installation,
     load_installation_state,
@@ -722,6 +723,7 @@ class KrcnApplicationService:
         intent = parse_project_learning_intent(
             _string_argument(request.arguments, "request_text"),
             source_root=source_root,
+            intent_terms=project_learning_route(self._repo_root).terms,
         )
         plan = prepare_project_learning(self._repo_root, self._store, intent)
         if not request.apply:

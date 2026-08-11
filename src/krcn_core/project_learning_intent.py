@@ -7,6 +7,7 @@ import re
 import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterable
 
 
 MAX_REQUEST_TEXT = 4096
@@ -67,6 +68,14 @@ def _normalized_words(value: str) -> set[str]:
     return set(re.findall(r"[a-z]+", ascii_like))
 
 
+def _normalized_terms(values: Iterable[str]) -> set[str]:
+    return {
+        word
+        for value in values
+        for word in _normalized_words(value)
+    }
+
+
 def _validated_directory(candidate: Path) -> Path | None:
     if not candidate.is_absolute() or candidate.is_symlink():
         return None
@@ -118,6 +127,7 @@ def parse_project_learning_intent(
     request_text: str,
     *,
     source_root: Path | None = None,
+    intent_terms: Iterable[str] | None = None,
 ) -> ProjectLearningIntent:
     """Resolve one existing directory and a supported project-learning intent."""
 
@@ -150,7 +160,12 @@ def parse_project_learning_intent(
         )
     resolved = next(iter(directories))
     direct_only = _direct_directory(normalized) == resolved
-    has_intent = bool(_normalized_words(normalized) & INTENT_TERMS)
+    supported_terms = (
+        INTENT_TERMS
+        if intent_terms is None
+        else _normalized_terms(intent_terms)
+    )
+    has_intent = bool(_normalized_words(normalized) & supported_terms)
     if not direct_only and not has_intent:
         raise ProjectLearningIntentError(
             "project-learning action was not recognized"

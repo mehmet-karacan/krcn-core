@@ -49,6 +49,8 @@
     "project_learning_intent_schema": "schemas/project-learning-intent.schema.json",
     "project_metadata_inference_schema": "schemas/project-metadata-inference.schema.json",
     "project_learning_plan_schema": "schemas/project-learning-plan.schema.json",
+    "intent_routing": "config/intent-routing.json",
+    "intent_routing_schema": "schemas/intent-routing.schema.json",
     "phase_six_boundary": "docs/specifications/PHASE-6-PORTABILITY-BOUNDARY.md",
     "orchestration_boundary": "config/orchestration-boundary.json",
     "orchestration_boundary_schema": "schemas/orchestration-boundary.schema.json",

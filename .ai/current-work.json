@@ -71,11 +71,12 @@
     "docs/progress/PHASE-7-PROJECT-LEARNING-INTENT.md",
     "docs/progress/PHASE-7-PROJECT-METADATA.md",
     "docs/progress/PHASE-7-UNIFIED-PROJECT-LEARNING.md",
-    "docs/progress/PHASE-7-SHARED-PROJECT-LEARNING-SERVICE.md"
+    "docs/progress/PHASE-7-SHARED-PROJECT-LEARNING-SERVICE.md",
+    "docs/progress/PHASE-7-CLIENT-INTENT-ROUTING.md"
   ],
   "next_actions": [
-    "define canonical intent routing for Codex, Claude, MCP, plugins, and generic AI clients",
-    "teach repository agents to route project learning phrases without asking for technical identifiers"
+    "run end-to-end project-learning scenarios with synthetic external sources",
+    "complete the Phase 7 baseline, roadmap, quality checks, and completion report"
   ],
   "baseline_commit": "7ccc16b",
   "approval_gates": {
