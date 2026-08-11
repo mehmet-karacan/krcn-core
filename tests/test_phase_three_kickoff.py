@@ -21,8 +21,12 @@ class PhaseThreeKickoffTests(unittest.TestCase):
             "docs/plans/PLAN-004-GUVENLI-MERGE-INTO-MOTORU.md",
             current["plan_ref"],
         )
-        self.assertEqual("cce08b7", current["baseline_commit"])
+        self.assertRegex(current["baseline_commit"], r"^[0-9a-f]{7,40}$")
         self.assertIn("docs/progress/PHASE-3-KICKOFF.md", current["progress_refs"])
+        kickoff = (
+            REPO_ROOT / "docs" / "progress" / "PHASE-3-KICKOFF.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("`cce08b7`", kickoff)
 
     def test_release_and_installation_schemas_are_versioned(self) -> None:
         release = load_json(REPO_ROOT / "schemas" / "release-manifest.schema.json")

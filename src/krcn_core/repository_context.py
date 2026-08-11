@@ -35,6 +35,7 @@ REQUIRED_CANONICAL_KEYS = {
     "phase_three_merge_boundary",
     "release_manifest_schema",
     "installation_state_schema",
+    "installation_inspection_schema",
     "policy_layers",
     "cli_inventory",
     "cli_baseline",

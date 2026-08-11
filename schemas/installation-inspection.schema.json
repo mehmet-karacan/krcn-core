@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:installation-inspection:1",
+  "title": "KRCN Core installation inspection summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "inspection_id",
+    "state_present",
+    "installation_id",
+    "core_version",
+    "release_id",
+    "state_revision",
+    "state_sha256",
+    "managed_clean",
+    "managed_files",
+    "ownership_counts",
+    "symlink_count",
+    "interrupted_deployments"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "inspection_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "state_present": { "type": "boolean" },
+    "installation_id": { "type": ["string", "null"] },
+    "core_version": { "type": ["string", "null"] },
+    "release_id": { "type": ["string", "null"] },
+    "state_revision": { "type": ["integer", "null"], "minimum": 1 },
+    "state_sha256": {
+      "type": ["string", "null"],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "managed_clean": { "type": "boolean" },
+    "managed_files": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verified", "missing", "modified"],
+      "properties": {
+        "verified": { "$ref": "#/$defs/pathList" },
+        "missing": { "$ref": "#/$defs/pathList" },
+        "modified": { "$ref": "#/$defs/pathList" }
+      }
+    },
+    "ownership_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["core", "runtime", "user-data", "derived", "secrets", "unmanaged"],
+      "properties": {
+        "core": { "type": "integer", "minimum": 0 },
+        "runtime": { "type": "integer", "minimum": 0 },
+        "user-data": { "type": "integer", "minimum": 0 },
+        "derived": { "type": "integer", "minimum": 0 },
+        "secrets": { "type": "integer", "minimum": 0 },
+        "unmanaged": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "symlink_count": { "type": "integer", "minimum": 0 },
+    "interrupted_deployments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["deployment_id", "status"],
+        "properties": {
+          "deployment_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "status": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "pathList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  }
+}

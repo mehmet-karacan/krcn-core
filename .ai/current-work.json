@@ -23,13 +23,14 @@
     "docs/progress/PHASE-2-CLIENT-SERVICES.md",
     "docs/progress/PHASE-2-INTEGRATION-TESTS.md",
     "docs/progress/PHASE-2-COMPLETION.md",
-    "docs/progress/PHASE-3-KICKOFF.md"
+    "docs/progress/PHASE-3-KICKOFF.md",
+    "docs/progress/PHASE-3-INSTALLATION-INSPECTION.md"
   ],
   "next_actions": [
-    "implement read-only installation inspection",
-    "validate release manifests, payload integrity, and version compatibility"
+    "validate release manifests, payload integrity, and version compatibility",
+    "produce ownership-aware release diff and conflict reports"
   ],
-  "baseline_commit": "cce08b7",
+  "baseline_commit": "1f1b1ca",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

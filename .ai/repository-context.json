@@ -32,6 +32,7 @@
     "phase_three_merge_boundary": "docs/specifications/PHASE-3-MERGE-BOUNDARY.md",
     "release_manifest_schema": "schemas/release-manifest.schema.json",
     "installation_state_schema": "schemas/installation-state.schema.json",
+    "installation_inspection_schema": "schemas/installation-inspection.schema.json",
     "policy_layers": "docs/specifications/POLICY-LAYERS.md",
     "cli_inventory": ".ai/legacy-cli-inventory.json",
     "cli_baseline": ".ai/cli-baseline.json",
