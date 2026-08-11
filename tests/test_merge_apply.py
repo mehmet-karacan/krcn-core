@@ -22,6 +22,7 @@ from krcn_core.merge_apply import (  # noqa: E402
     apply_managed_files,
     apply_migrations,
 )
+from krcn_core.verification import verify_and_commit  # noqa: E402
 from krcn_core.merge_plan import prepare_merge_plan  # noqa: E402
 from krcn_core.migrations import (  # noqa: E402
     MigrationHandler,
@@ -247,6 +248,34 @@ class ManagedApplyAndMigrationTests(unittest.TestCase):
         self.assertEqual(self.old_readme, (self.root / "README.md").read_bytes())
         self.assertTrue((self.root / "config" / "old.txt").is_file())
         self.assertFalse((self.root / "src" / "new.py").exists())
+
+    def test_mandatory_verification_commits_state_and_preserves_policy(self) -> None:
+        policy_before = self.policy_path.read_bytes()
+        plan, authorization = self._started()
+        apply_managed_files(
+            self.root,
+            self.release,
+            self.bundle,
+            plan,
+            authorization,
+        )
+        apply_migrations(self.root, plan, authorization)
+        result = verify_and_commit(self.root, plan, authorization)
+        self.assertEqual("completed", result.status)
+        state = json.loads(self.state_path.read_text(encoding="utf-8"))
+        self.assertEqual("0.2.0", state["core_version"])
+        self.assertEqual(2, state["schema_versions"]["workspace"])
+        self.assertEqual(["workspace-v2"], state["completed_migrations"])
+        self.assertEqual(policy_before, self.policy_path.read_bytes())
+        journal_path = (
+            self.root
+            / ".krcn"
+            / "runtime"
+            / "deployments"
+            / f"{plan.deployment_id}.json"
+        )
+        journal = json.loads(journal_path.read_text(encoding="utf-8"))
+        self.assertEqual("completed", journal["status"])
 
 
 if __name__ == "__main__":
