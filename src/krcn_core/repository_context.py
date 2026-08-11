@@ -19,6 +19,7 @@ REQUIRED_CANONICAL_KEYS = {
     "source_binding_schema",
     "user_policy_schema",
     "mutation_plan_schema",
+    "provider_request_schema",
     "policy_layers",
     "cli_inventory",
     "provider_policy",
