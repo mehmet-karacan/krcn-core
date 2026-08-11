@@ -40,6 +40,8 @@ REQUIRED_CANONICAL_KEYS = {
     "orchestration_boundary",
     "orchestration_boundary_schema",
     "task_intent_schema",
+    "capability_registry",
+    "capability_registry_schema",
     "release_manifest_schema",
     "installation_state_schema",
     "installation_inspection_schema",

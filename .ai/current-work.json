@@ -46,11 +46,12 @@
     "docs/progress/PHASE-4-INTEGRATION-TESTS.md",
     "docs/progress/PHASE-4-COMPLETION.md",
     "docs/progress/PHASE-5-KICKOFF.md",
-    "docs/progress/PHASE-5-TASK-INTENT.md"
+    "docs/progress/PHASE-5-TASK-INTENT.md",
+    "docs/progress/PHASE-5-CAPABILITY-REGISTRY.md"
   ],
   "next_actions": [
-    "define revision-aware agent, skill, tool, and model capability records",
-    "select capabilities explicitly without inferring authority from the client or host environment"
+    "build deterministic task plans from ready intent and explicit capability selections",
+    "represent dependencies, effects, verification gates, and rollback expectations in an exact task graph"
   ],
   "baseline_commit": "c16c333",
   "approval_gates": {

@@ -1,0 +1,14 @@
+{
+  "schema_ref": "schemas/capability-registry.schema.json",
+  "schema_version": 1,
+  "revision": 1,
+  "records": [
+    {"record_id":"planner-agent","kind":"agent","role":"planner","revision":1,"capabilities":["intent.read","plan.create"],"side_effects":["read"],"read_ownership":["core","runtime","user-data","derived","unmanaged"],"write_ownership":[],"provider_mode":"none","approval_triggers":[],"status":"active","record_digest":"b505cc1ca32f236e0f7a29055968d30d48f7b8fbabf127267434f3204ecc5b70"},
+    {"record_id":"worker-agent","kind":"agent","role":"worker","revision":1,"capabilities":["effect.report","plan.execute"],"side_effects":["execute","read","write"],"read_ownership":["core","runtime","user-data","derived","unmanaged"],"write_ownership":["core","runtime","user-data","derived"],"provider_mode":"none","approval_triggers":["user-data-mutation"],"status":"active","record_digest":"cd7e08306fca551376d1dfdb01943777e7027c135a829e8a130c2e6996e88b84"},
+    {"record_id":"verifier-agent","kind":"agent","role":"verifier","revision":1,"capabilities":["evidence.verify","result.evaluate"],"side_effects":["read","execute"],"read_ownership":["core","runtime","user-data","derived","unmanaged"],"write_ownership":[],"provider_mode":"none","approval_triggers":[],"status":"active","record_digest":"7e8c8f8ecf945187546efddc46cc5a05d2d7ef663a37758353209906f4f622e7"},
+    {"record_id":"intent-normalizer-skill","kind":"skill","role":null,"revision":1,"capabilities":["intent.normalize"],"side_effects":[],"read_ownership":[],"write_ownership":[],"provider_mode":"none","approval_triggers":[],"status":"active","record_digest":"f48c7f5f3288a4520d70a41041b489093560ae4a4c2255cb7ff93f5e970650b8"},
+    {"record_id":"local-store-reader-tool","kind":"tool","role":null,"revision":1,"capabilities":["record.read"],"side_effects":["read"],"read_ownership":["runtime","user-data","derived"],"write_ownership":[],"provider_mode":"none","approval_triggers":[],"status":"active","record_digest":"61838bd2a723bd4125e4088397d9f0d0cb2ee6a8bda8a56ea775fd499a89089b"},
+    {"record_id":"local-store-writer-tool","kind":"tool","role":null,"revision":1,"capabilities":["record.write"],"side_effects":["write"],"read_ownership":["runtime","user-data","derived"],"write_ownership":["runtime","user-data","derived"],"provider_mode":"none","approval_triggers":["user-data-mutation"],"status":"active","record_digest":"c0a705aec75ce09d10dc5d74577e317c79f3b2b0fef79ca3c6deca0499c22d7a"},
+    {"record_id":"offline-deterministic-model","kind":"model","role":null,"revision":1,"capabilities":["intent.classify"],"side_effects":[],"read_ownership":[],"write_ownership":[],"provider_mode":"local","approval_triggers":[],"status":"active","record_digest":"86427911a797e439f735fe3f3364dbe1176c15143e7d87d1f6cc3d1f5b106203"}
+  ]
+}

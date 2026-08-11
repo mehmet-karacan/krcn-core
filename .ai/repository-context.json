@@ -37,6 +37,8 @@
     "orchestration_boundary": "config/orchestration-boundary.json",
     "orchestration_boundary_schema": "schemas/orchestration-boundary.schema.json",
     "task_intent_schema": "schemas/task-intent.schema.json",
+    "capability_registry": "config/capability-registry.json",
+    "capability_registry_schema": "schemas/capability-registry.schema.json",
     "information_classes": "config/information-classes.json",
     "information_classes_schema": "schemas/information-classes.schema.json",
     "information_record_schema": "schemas/information-record.schema.json",
