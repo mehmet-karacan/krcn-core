@@ -39,6 +39,7 @@
     "task_intent_schema": "schemas/task-intent.schema.json",
     "capability_registry": "config/capability-registry.json",
     "capability_registry_schema": "schemas/capability-registry.schema.json",
+    "task_plan_schema": "schemas/task-plan.schema.json",
     "information_classes": "config/information-classes.json",
     "information_classes_schema": "schemas/information-classes.schema.json",
     "information_record_schema": "schemas/information-record.schema.json",

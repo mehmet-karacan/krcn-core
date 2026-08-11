@@ -47,11 +47,12 @@
     "docs/progress/PHASE-4-COMPLETION.md",
     "docs/progress/PHASE-5-KICKOFF.md",
     "docs/progress/PHASE-5-TASK-INTENT.md",
-    "docs/progress/PHASE-5-CAPABILITY-REGISTRY.md"
+    "docs/progress/PHASE-5-CAPABILITY-REGISTRY.md",
+    "docs/progress/PHASE-5-TASK-PLANNER.md"
   ],
   "next_actions": [
-    "build deterministic task plans from ready intent and explicit capability selections",
-    "represent dependencies, effects, verification gates, and rollback expectations in an exact task graph"
+    "bind each task plan to effective policy, ownership, provider, capability, and mutation decisions",
+    "require exact user approval for critical effects without allowing lower-priority rules to weaken restrictions"
   ],
   "baseline_commit": "c16c333",
   "approval_gates": {
