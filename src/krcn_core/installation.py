@@ -238,6 +238,12 @@ def _canonical_sha256(payload: object) -> str:
     return hashlib.sha256(document).hexdigest()
 
 
+def installation_state_sha256(state: InstallationState) -> str:
+    """Return the canonical digest used to bind installation state mutations."""
+
+    return _canonical_sha256(state.as_payload())
+
+
 def _stable_file_hash(path: Path) -> tuple[int, str]:
     before = path.stat(follow_symlinks=False)
     digest = hashlib.sha256()

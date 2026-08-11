@@ -26,13 +26,14 @@
     "docs/progress/PHASE-3-KICKOFF.md",
     "docs/progress/PHASE-3-INSTALLATION-INSPECTION.md",
     "docs/progress/PHASE-3-RELEASE-VALIDATION.md",
-    "docs/progress/PHASE-3-RELEASE-DIFF.md"
+    "docs/progress/PHASE-3-RELEASE-DIFF.md",
+    "docs/progress/PHASE-3-MERGE-PLAN.md"
   ],
   "next_actions": [
-    "bind conflict-free changes to an exact merge dry-run plan",
-    "create recoverable backups and deployment journals before apply"
+    "create recoverable backups and deployment journals before apply",
+    "apply managed core files atomically through authorized plans"
   ],
-  "baseline_commit": "37c6dad",
+  "baseline_commit": "c2a5a1b",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

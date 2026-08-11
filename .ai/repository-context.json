@@ -35,6 +35,7 @@
     "installation_inspection_schema": "schemas/installation-inspection.schema.json",
     "release_trust": "docs/specifications/RELEASE-TRUST.md",
     "release_diff_schema": "schemas/release-diff.schema.json",
+    "merge_plan_schema": "schemas/merge-plan.schema.json",
     "policy_layers": "docs/specifications/POLICY-LAYERS.md",
     "cli_inventory": ".ai/legacy-cli-inventory.json",
     "cli_baseline": ".ai/cli-baseline.json",

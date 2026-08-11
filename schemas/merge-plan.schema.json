@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:merge-plan:1",
+  "title": "KRCN Core exact merge dry-run plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "plan_id",
+    "diff_id",
+    "installation_id",
+    "release_id",
+    "from_core_version",
+    "to_core_version",
+    "manifest_sha256",
+    "approval_required",
+    "has_effects",
+    "file_mutations",
+    "state_mutation",
+    "desired_state_sha256",
+    "migrations",
+    "derived_actions"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "plan_id": { "$ref": "#/$defs/sha256" },
+    "diff_id": { "$ref": "#/$defs/sha256" },
+    "installation_id": { "$ref": "#/$defs/identifier" },
+    "release_id": { "type": "string", "pattern": "^[a-z][a-z0-9.-]*$" },
+    "from_core_version": { "$ref": "#/$defs/semver" },
+    "to_core_version": { "$ref": "#/$defs/semver" },
+    "manifest_sha256": { "$ref": "#/$defs/sha256" },
+    "approval_required": { "type": "boolean" },
+    "has_effects": { "type": "boolean" },
+    "file_mutations": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "state_mutation": { "type": ["object", "null"] },
+    "desired_state_sha256": { "$ref": "#/$defs/sha256" },
+    "migrations": { "type": "array", "items": { "type": "object" } },
+    "derived_actions": { "type": "array", "items": { "type": "object" } }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "identifier": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    }
+  }
+}
