@@ -10,6 +10,7 @@ from .cli.registry import compatibility_registry
 from .foundation import load_json, validate_foundation, verify_repository
 from .provider_gate import load_provider_gate_policy, select_default_provider
 from .repository_context import validate_repository_context
+from .release_quality import validate_release_quality_repository
 
 
 @dataclass(frozen=True)
@@ -94,6 +95,13 @@ def run_doctor(repo_root: Path) -> tuple[DoctorCheck, ...]:
             "tracked-local-data",
             _tracked_local_data(repo_root),
             "no local user data is tracked",
+        )
+    )
+    checks.append(
+        _check(
+            "release-quality",
+            validate_release_quality_repository(repo_root),
+            "cross-platform release and portability quality gates are valid",
         )
     )
     cli_baseline = load_json(repo_root / ".ai" / "cli-baseline.json")

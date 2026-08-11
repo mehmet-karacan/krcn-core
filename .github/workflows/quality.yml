@@ -1,0 +1,31 @@
+name: KRCN Core quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  cross-platform:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+        python-version: ["3.11", "3.13"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Verify repository
+        run: python tools/verify_repository.py
+      - name: Run full tests
+        run: python tools/run_tests.py
+      - name: Run doctor
+        run: python tools/krcn.py doctor
+      - name: Verify offline wheel
+        run: python tools/verify_wheel.py

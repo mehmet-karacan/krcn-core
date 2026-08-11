@@ -26,6 +26,7 @@ class DoctorTests(unittest.TestCase):
                 "cli-catalog",
                 "offline-provider",
                 "tracked-local-data",
+                "release-quality",
                 "phase-one-baseline",
                 "phase-two-baseline",
                 "phase-three-baseline",

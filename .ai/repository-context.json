@@ -20,6 +20,8 @@
     "portable_restore_plan_schema": "schemas/portable-restore-plan.schema.json",
     "repo_local_migration_plan_schema": "schemas/repo-local-migration-plan.schema.json",
     "portability_client_contract": "docs/specifications/PORTABILITY-CLIENT-CONTRACT.md",
+    "release_quality": "config/release-quality.json",
+    "release_quality_schema": "schemas/release-quality.schema.json",
     "external_source_no_copy": "docs/specifications/EXTERNAL-SOURCE-NO-COPY.md",
     "user_policy_schema": "schemas/user-policy.schema.json",
     "mutation_plan_schema": "schemas/mutation-plan.schema.json",

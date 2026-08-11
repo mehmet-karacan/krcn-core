@@ -51,9 +51,17 @@ class PackageOneContractTests(unittest.TestCase):
                 load_json(document)
 
     def test_machine_contracts_do_not_use_yaml(self) -> None:
-        yaml_documents = list(PROPOSED_ROOT.rglob("*.yaml")) + list(
-            PROPOSED_ROOT.rglob("*.yml")
-        )
+        contract_roots = [
+            PROPOSED_ROOT / ".ai",
+            PROPOSED_ROOT / "config",
+            PROPOSED_ROOT / "schemas",
+        ]
+        yaml_documents = [
+            path
+            for root in contract_roots
+            for pattern in ("*.yaml", "*.yml")
+            for path in root.rglob(pattern)
+        ]
         self.assertEqual(yaml_documents, [])
 
     def test_schema_references_resolve(self) -> None:

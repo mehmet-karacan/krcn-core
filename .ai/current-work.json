@@ -63,11 +63,12 @@
     "docs/progress/PHASE-6-PORTABLE-BACKUP.md",
     "docs/progress/PHASE-6-PORTABLE-RESTORE.md",
     "docs/progress/PHASE-6-REPO-LOCAL-MIGRATION.md",
-    "docs/progress/PHASE-6-PLATFORM-CLIENT-PARITY.md"
+    "docs/progress/PHASE-6-PLATFORM-CLIENT-PARITY.md",
+    "docs/progress/PHASE-6-RELEASE-QUALITY.md"
   ],
   "next_actions": [
-    "extend doctor, packaging, CI, release, and rollback quality gates for Phase 6",
-    "verify the installed wheel exposes portability and migration services offline"
+    "run clean-clone, restore, rebind, update, verify, and rollback integration scenarios",
+    "create the Phase 6 baseline and completion handoff after every quality gate passes"
   ],
   "baseline_commit": "d7d20bc",
   "approval_gates": {
