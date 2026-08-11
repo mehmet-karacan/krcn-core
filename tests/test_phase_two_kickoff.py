@@ -9,18 +9,14 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class PhaseTwoKickoffTests(unittest.TestCase):
-    def test_current_work_preserves_the_completed_phase_two_plan(self) -> None:
-        current = json.loads(
-            (REPO_ROOT / ".ai" / "current-work.json").read_text(encoding="utf-8")
+    def test_phase_two_baseline_preserves_completed_phase_identity(self) -> None:
+        baseline = json.loads(
+            (REPO_ROOT / ".ai" / "phase-2-baseline.json").read_text(
+                encoding="utf-8"
+            )
         )
-        self.assertEqual("phase-2", current["phase_id"])
-        self.assertEqual("completed", current["status"])
-        self.assertEqual(
-            "docs/plans/PLAN-003-YEREL-CALISMA-ALANI-VE-ENTEGRASYON.md",
-            current["plan_ref"],
-        )
-        self.assertRegex(current["baseline_commit"], r"^[0-9a-f]{7,40}$")
-        self.assertIn("docs/progress/PHASE-2-KICKOFF.md", current["progress_refs"])
+        self.assertEqual("phase-2", baseline["phase_id"])
+        self.assertEqual("ready", baseline["status"])
         kickoff = (
             REPO_ROOT / "docs" / "progress" / "PHASE-2-KICKOFF.md"
         ).read_text(encoding="utf-8")

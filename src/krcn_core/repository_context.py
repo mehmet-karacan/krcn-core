@@ -33,6 +33,8 @@ REQUIRED_CANONICAL_KEYS = {
     "phase_baseline_schema",
     "phase_two_baseline",
     "phase_three_merge_boundary",
+    "release_manifest_schema",
+    "installation_state_schema",
     "policy_layers",
     "cli_inventory",
     "cli_baseline",

@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:release-manifest:1",
+  "title": "KRCN Core release manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "release_id",
+    "core_version",
+    "compatibility",
+    "source_commit",
+    "files",
+    "migrations",
+    "derived_actions"
+  ],
+  "properties": {
+    "schema_ref": { "const": "schemas/release-manifest.schema.json" },
+    "schema_version": { "const": 1 },
+    "release_id": { "type": "string", "pattern": "^[a-z][a-z0-9.-]*$" },
+    "core_version": { "$ref": "#/$defs/semver" },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum_core_version", "maximum_core_version"],
+      "properties": {
+        "minimum_core_version": { "$ref": "#/$defs/semver" },
+        "maximum_core_version": { "$ref": "#/$defs/semver" }
+      }
+    },
+    "source_commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "files": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/upsertFile" },
+          { "$ref": "#/$defs/deleteFile" }
+        ]
+      }
+    },
+    "migrations": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/identifier" }
+    },
+    "derived_actions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/identifier" }
+    }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "portablePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+    },
+    "upsertFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "operation", "sha256", "size"],
+      "properties": {
+        "path": { "$ref": "#/$defs/portablePath" },
+        "operation": { "const": "upsert" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "size": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "deleteFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "operation", "previous_sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/portablePath" },
+        "operation": { "const": "delete" },
+        "previous_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    }
+  }
+}

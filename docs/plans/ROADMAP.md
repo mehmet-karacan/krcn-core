@@ -11,7 +11,7 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
 - Faz 0 tamamlandı.
 - Faz 1 tamamlandı.
 - Faz 2 tamamlandı.
-- Faz 3 planlandı: güvenli `merge into` güncelleme motoru.
+- Faz 3 aktif: güvenli `merge into` güncelleme motoru uygulanıyor.
 
 ## Temel kullanım modeli
 

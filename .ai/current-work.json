@@ -1,11 +1,11 @@
 {
   "schema_ref": "schemas/current-work.schema.json",
   "schema_version": 1,
-  "phase_id": "phase-2",
-  "workstream_id": "local-workspace-and-integrations",
-  "status": "completed",
-  "goal": "Implement local workspaces and capability-gated integrations without copying or mutating source content",
-  "plan_ref": "docs/plans/PLAN-003-YEREL-CALISMA-ALANI-VE-ENTEGRASYON.md",
+  "phase_id": "phase-3",
+  "workstream_id": "safe-merge-into-engine",
+  "status": "active",
+  "goal": "Implement inspect, diff, exact-plan merge, backup, migration, verification, and rollback while preserving local data",
+  "plan_ref": "docs/plans/PLAN-004-GUVENLI-MERGE-INTO-MOTORU.md",
   "progress_refs": [
     "docs/progress/PHASE-1-FOUNDATION.md",
     "docs/progress/PHASE-1-PACKAGE-1.md",
@@ -22,12 +22,14 @@
     "docs/progress/PHASE-2-RESCAN.md",
     "docs/progress/PHASE-2-CLIENT-SERVICES.md",
     "docs/progress/PHASE-2-INTEGRATION-TESTS.md",
-    "docs/progress/PHASE-2-COMPLETION.md"
+    "docs/progress/PHASE-2-COMPLETION.md",
+    "docs/progress/PHASE-3-KICKOFF.md"
   ],
   "next_actions": [
-    "start Phase 3 with read-only installation inspection and release manifest contracts"
+    "implement read-only installation inspection",
+    "validate release manifests, payload integrity, and version compatibility"
   ],
-  "baseline_commit": "f662204",
+  "baseline_commit": "cce08b7",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

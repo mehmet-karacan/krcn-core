@@ -94,9 +94,9 @@ class PhaseTwoCompletionTests(unittest.TestCase):
             "The first slice is read-only",
             boundary.read_text(encoding="utf-8"),
         )
-        current_work = load_json(REPO_ROOT / ".ai" / "current-work.json")
-        self.assertEqual("phase-2", current_work["phase_id"])
-        self.assertEqual("completed", current_work["status"])
+        baseline = load_json(REPO_ROOT / ".ai" / "phase-2-baseline.json")
+        self.assertEqual("phase-2", baseline["phase_id"])
+        self.assertEqual("ready", baseline["status"])
 
     def test_wheel_installs_offline_and_exposes_phase_two_services(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
