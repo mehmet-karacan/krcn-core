@@ -50,6 +50,21 @@ python tools/krcn.py project rescan <project-id>
 
 Onboarding ve rescan komutları varsayılan olarak yalnızca plan üretir. Uygulama için önceki dry-run sonucundaki plan kimliği ve user-data değişikliği varsa açık onay kimliği gerekir. CLI, SDK, MCP, plugin ve yapay zekâ istemcileri aynı servis katmanını kullanır.
 
+Revision-aware bilgi kataloğunu ve Faz 4 ortak servislerini kullanmak için:
+
+```bash
+python tools/krcn.py knowledge catalog
+python tools/krcn.py knowledge exact --request-file <application-arguments.json>
+python tools/krcn.py knowledge dependencies --request-file <application-arguments.json>
+python tools/krcn.py knowledge semantic --request-file <application-arguments.json>
+python tools/krcn.py context-package build --request-file <application-arguments.json>
+python tools/krcn.py memory propose --request-file <application-arguments.json>
+python tools/krcn.py memory review --request-file <application-arguments.json>
+python tools/krcn.py memory persist --request-file <application-arguments.json>
+```
+
+Bu komutlar ürün kuralı tanımlamaz; doğrudan ortak application service sözleşmesini çağırır. Uzak semantic arama için exact oturum onayı ve istemci tarafından açıkça bağlanmış bir scorer gerekir. Memory persist varsayılan olarak yalnızca plan üretir; kalıcı yazım aynı plan kimliği ve review ile eşleşen kullanıcı onayı olmadan çalışmaz.
+
 Yerel bir kurulumu incelemek, trusted release farkını görmek ve exact plan üretmek için:
 
 ```bash

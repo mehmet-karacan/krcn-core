@@ -41,11 +41,12 @@
     "docs/progress/PHASE-4-DEPENDENCY-RETRIEVAL.md",
     "docs/progress/PHASE-4-SEMANTIC-RETRIEVAL.md",
     "docs/progress/PHASE-4-CONTEXT-BUILDER.md",
-    "docs/progress/PHASE-4-MEMORY-GATE.md"
+    "docs/progress/PHASE-4-MEMORY-GATE.md",
+    "docs/progress/PHASE-4-CLIENT-SERVICES.md"
   ],
   "next_actions": [
-    "expose Phase 4 retrieval, context, and memory operations through the shared application service",
-    "add CLI commands without creating client-specific authority or approval behavior"
+    "run hermetic cross-session and client-parity integration scenarios for Phase 4",
+    "produce the Phase 4 baseline manifest and Turkish completion report"
   ],
   "baseline_commit": "6005611",
   "approval_gates": {

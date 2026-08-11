@@ -20,13 +20,35 @@ from .discovery import (
     load_discovery_policy,
 )
 from .deployment import authorize_deployment_plan, prepare_deployment_plan
+from .dependency_retrieval import (
+    parse_dependency_query,
+    parse_information_relation,
+    retrieve_dependencies,
+)
 from .derived_actions import DerivedActionHandlerRegistry
+from .exact_retrieval import parse_exact_retrieval_query, retrieve_exact
 from .foundation import load_json
+from .information_records import parse_information_record
 from .installation import (
     inspect_installation,
     load_installation_state,
 )
 from .local_store import LocalWorkspaceStore, RecordWritePlan
+from .knowledge_catalog import CatalogEntry, InformationCatalog, build_information_catalog
+from .context_builder import (
+    build_context_package,
+    context_candidate_from_entry,
+    parse_context_build_request,
+)
+from .memory_gate import (
+    apply_memory_lifecycle,
+    apply_memory_persistence,
+    parse_memory_action,
+    parse_memory_candidate,
+    parse_memory_review,
+    prepare_memory_lifecycle,
+    prepare_memory_persistence,
+)
 from .merge_engine import execute_deployment
 from .merge_plan import prepare_merge_plan
 from .migrations import MigrationHandlerRegistry
@@ -43,6 +65,7 @@ from .onboarding import (
     prepare_read_only_onboarding,
 )
 from .policies import load_user_policies
+from .provider_gate import ProviderApproval, load_provider_gate_policy
 from .rescan import apply_rescan, prepare_rescan
 from .release import validate_release_bundle
 from .release_diff import create_release_diff
@@ -52,6 +75,12 @@ from .rollback import (
     prepare_rollback_plan,
 )
 from .source_bindings import SourceBinding, parse_source_binding
+from .semantic_retrieval import (
+    RemoteSemanticScorer,
+    create_semantic_provider_request,
+    parse_semantic_query,
+    retrieve_semantic,
+)
 from .update_effects import DerivedActionRegistry, MigrationRegistry
 from .verification import verify_installation
 
@@ -67,6 +96,15 @@ OPERATIONS = {
     "project.inspect",
     "project.onboard",
     "project.rescan",
+    "knowledge.catalog",
+    "knowledge.search-exact",
+    "knowledge.search-dependencies",
+    "knowledge.search-semantic",
+    "context.build",
+    "memory.propose",
+    "memory.review",
+    "memory.persist",
+    "memory.lifecycle",
 }
 
 
@@ -188,6 +226,23 @@ def _identifier_argument(arguments: Mapping[str, object], name: str) -> str:
     return value
 
 
+def _object_argument(arguments: Mapping[str, object], name: str) -> dict[str, object]:
+    value = arguments.get(name)
+    if not isinstance(value, dict):
+        raise ApplicationServiceError(f"{name} must be an object")
+    return dict(value)
+
+
+def _nonnegative_integer_argument(
+    arguments: Mapping[str, object],
+    name: str,
+) -> int:
+    value = arguments.get(name)
+    if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+        raise ApplicationServiceError(f"{name} must not be negative")
+    return value
+
+
 class KrcnApplicationService:
     """Expose one policy-preserving contract to CLI, SDK, MCP, and plugins."""
 
@@ -200,6 +255,7 @@ class KrcnApplicationService:
         derived_registry: DerivedActionRegistry | None = None,
         migration_handlers: MigrationHandlerRegistry | None = None,
         derived_handlers: DerivedActionHandlerRegistry | None = None,
+        semantic_remote_scorers: Mapping[str, RemoteSemanticScorer] | None = None,
     ) -> None:
         self._repo_root = repo_root.resolve()
         self._store = store
@@ -212,6 +268,15 @@ class KrcnApplicationService:
         self._derived_handlers = (
             derived_handlers or DerivedActionHandlerRegistry()
         )
+        scorers = dict(semantic_remote_scorers or {})
+        if any(
+            not isinstance(provider, str)
+            or not IDENTIFIER.fullmatch(provider)
+            or not callable(scorer)
+            for provider, scorer in scorers.items()
+        ):
+            raise ApplicationServiceError("semantic remote scorers are invalid")
+        self._semantic_remote_scorers = scorers
 
     def execute(self, request: ServiceRequest) -> ServiceResponse:
         handlers = {
@@ -224,6 +289,15 @@ class KrcnApplicationService:
             "project.inspect": self._inspect_project,
             "project.onboard": self._onboard_project,
             "project.rescan": self._rescan_project,
+            "knowledge.catalog": self._knowledge_catalog,
+            "knowledge.search-exact": self._search_exact,
+            "knowledge.search-dependencies": self._search_dependencies,
+            "knowledge.search-semantic": self._search_semantic,
+            "context.build": self._build_context,
+            "memory.propose": self._propose_memory,
+            "memory.review": self._review_memory,
+            "memory.persist": self._persist_memory,
+            "memory.lifecycle": self._change_memory_lifecycle,
         }
         status, data = handlers[request.operation](request)
         return ServiceResponse(
@@ -673,6 +747,293 @@ class KrcnApplicationService:
         return "applied", {
             "plan": plan.public_summary(),
             "record_count": len(result.records),
+            "applied": True,
+        }
+
+    def _information_catalog(self) -> InformationCatalog:
+        bindings = tuple(
+            parse_source_binding(dict(record.payload))
+            for record in self._store.list_records("source-bindings")
+        )
+        records = tuple(
+            parse_information_record(dict(record.payload))
+            for collection in ("authoritative-sources", "knowledge")
+            for record in self._store.list_records(collection)
+        )
+        return build_information_catalog(bindings, records)
+
+    def _information_relations(self):
+        return tuple(
+            parse_information_relation(dict(record.payload))
+            for record in self._store.list_records("information-relations")
+        )
+
+    def _knowledge_catalog(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required=set())
+        if request.apply:
+            raise ApplicationServiceError("read operation cannot be applied")
+        return "ok", {"catalog": self._information_catalog().as_dict()}
+
+    def _search_exact(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"query"})
+        if request.apply:
+            raise ApplicationServiceError("read operation cannot be applied")
+        query = parse_exact_retrieval_query(
+            _object_argument(request.arguments, "query")
+        )
+        result = retrieve_exact(self._information_catalog(), query)
+        return "ok", {"result": result.as_dict()}
+
+    def _search_dependencies(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"query"})
+        if request.apply:
+            raise ApplicationServiceError("read operation cannot be applied")
+        query = parse_dependency_query(
+            _object_argument(request.arguments, "query")
+        )
+        result = retrieve_dependencies(
+            self._information_catalog(),
+            self._information_relations(),
+            query,
+        )
+        return "ok", {"result": result.as_dict()}
+
+    def _search_semantic(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"query", "endpoint", "retention_assumptions"},
+        )
+        if request.apply:
+            raise ApplicationServiceError("read operation cannot be applied")
+        query = parse_semantic_query(
+            _object_argument(request.arguments, "query")
+        )
+        provider_request = create_semantic_provider_request(
+            query,
+            endpoint=_string_argument(request.arguments, "endpoint"),
+            retention_assumptions=_string_argument(
+                request.arguments,
+                "retention_assumptions",
+            ),
+        )
+        approval = None
+        if request.approval_id is not None:
+            approval = ProviderApproval(
+                request_id=provider_request.request_id,
+                session_id=query.session_id,
+                approval_id=request.approval_id,
+                approved=True,
+            )
+        result = retrieve_semantic(
+            self._information_catalog(),
+            query,
+            load_provider_gate_policy(self._repo_root),
+            provider_request,
+            approval=approval,
+            remote_scorer=self._semantic_remote_scorers.get(query.provider),
+        )
+        return "ok", {"result": result.as_dict()}
+
+    def _context_entries(self, catalog: InformationCatalog) -> dict[str, CatalogEntry]:
+        entries = {entry.record.record_id: entry for entry in catalog.entries}
+        for stored in self._store.list_records("memory"):
+            record = parse_information_record(dict(stored.payload))
+            if record.record_id in entries:
+                raise ApplicationServiceError("context record ids must be unique")
+            entries[record.record_id] = CatalogEntry(
+                record=record,
+                availability=record.lifecycle,
+                binding_ref=None,
+            )
+        return entries
+
+    def _build_context(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"request", "candidates"})
+        if request.apply:
+            raise ApplicationServiceError("read operation cannot be applied")
+        build_request = parse_context_build_request(
+            _object_argument(request.arguments, "request")
+        )
+        candidate_payloads = request.arguments.get("candidates")
+        if not isinstance(candidate_payloads, list) or not candidate_payloads:
+            raise ApplicationServiceError("candidates must be a non-empty list")
+        entries = self._context_entries(self._information_catalog())
+        candidates = []
+        expected_fields = {
+            "record_id",
+            "layer",
+            "selection_source",
+            "selection_reason",
+            "required",
+            "priority",
+            "allow_truncation",
+        }
+        for payload in candidate_payloads:
+            if not isinstance(payload, dict) or set(payload) != expected_fields:
+                raise ApplicationServiceError("context candidate fields are invalid")
+            record_id = _identifier_argument(payload, "record_id")
+            entry = entries.get(record_id)
+            if entry is None:
+                raise ApplicationServiceError("context candidate was not found")
+            candidates.append(
+                context_candidate_from_entry(
+                    entry,
+                    layer=_string_argument(payload, "layer"),
+                    selection_source=_string_argument(payload, "selection_source"),
+                    selection_reason=_string_argument(payload, "selection_reason"),
+                    required=payload.get("required"),
+                    priority=payload.get("priority"),
+                    allow_truncation=payload.get("allow_truncation"),
+                )
+            )
+        package = build_context_package(build_request, candidates)
+        return "ok", {"context": package.as_dict()}
+
+    def _propose_memory(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"candidate"})
+        if request.apply:
+            raise ApplicationServiceError("review operation cannot be applied")
+        candidate = parse_memory_candidate(
+            _object_argument(request.arguments, "candidate")
+        )
+        return "ok", {"candidate": candidate.as_payload(), "persisted": False}
+
+    def _review_memory(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"candidate", "review"})
+        if request.apply:
+            raise ApplicationServiceError("review operation cannot be applied")
+        candidate = parse_memory_candidate(
+            _object_argument(request.arguments, "candidate")
+        )
+        review = parse_memory_review(_object_argument(request.arguments, "review"))
+        if (
+            review.candidate_id != candidate.candidate_id
+            or review.candidate_digest != candidate.candidate_digest
+        ):
+            raise ApplicationServiceError("memory review does not match the candidate")
+        persistence_eligible = False
+        if review.outcome == "approved":
+            stored = self._store.read(
+                "memory",
+                candidate.proposed_memory.record_id,
+            )
+            expected_revision = stored.revision if stored is not None else 0
+            prepare_memory_persistence(
+                self._store,
+                candidate,
+                review,
+                expected_revision=expected_revision,
+            )
+            persistence_eligible = True
+        return "ok", {
+            "review": review.as_payload(),
+            "persistence_eligible": persistence_eligible,
+            "persisted": False,
+        }
+
+    def _persist_memory(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"candidate", "review", "expected_revision"},
+        )
+        candidate = parse_memory_candidate(
+            _object_argument(request.arguments, "candidate")
+        )
+        review = parse_memory_review(_object_argument(request.arguments, "review"))
+        plan = prepare_memory_persistence(
+            self._store,
+            candidate,
+            review,
+            expected_revision=_nonnegative_integer_argument(
+                request.arguments,
+                "expected_revision",
+            ),
+        )
+        plan_summary = {
+            "plan_id": plan.write_plan.mutation.plan_id,
+            **plan.public_summary(),
+        }
+        if not request.apply:
+            return "planned", {"plan": plan_summary, "applied": False}
+        if request.approval_id != review.approval_id:
+            raise ApplicationServiceError(
+                "memory mutation approval must match the approved review"
+            )
+        authorization = self._authorize_record_plans(
+            request,
+            plan.write_plan.mutation.plan_id,
+            (plan.write_plan,),
+        )[plan.write_plan.mutation.plan_id]
+        stored = apply_memory_persistence(
+            self._store,
+            plan,
+            candidate,
+            review,
+            authorization,
+        )
+        return "applied", {
+            "plan": plan_summary,
+            "record": stored.public_summary(),
+            "applied": True,
+        }
+
+    def _change_memory_lifecycle(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"action"})
+        action = parse_memory_action(_object_argument(request.arguments, "action"))
+        plan = prepare_memory_lifecycle(self._store, action)
+        plan_summary = {
+            "plan_id": plan.write_plan.mutation.plan_id,
+            "action_digest": plan.action_digest,
+            "memory": plan.memory_record.public_summary(),
+            "write": plan.write_plan.public_summary(),
+        }
+        if not request.apply:
+            return "planned", {"plan": plan_summary, "applied": False}
+        if request.approval_id != action.approval_id:
+            raise ApplicationServiceError(
+                "memory mutation approval must match the approved action"
+            )
+        authorization = self._authorize_record_plans(
+            request,
+            plan.write_plan.mutation.plan_id,
+            (plan.write_plan,),
+        )[plan.write_plan.mutation.plan_id]
+        stored = apply_memory_lifecycle(
+            self._store,
+            plan,
+            action,
+            authorization,
+        )
+        return "applied", {
+            "plan": plan_summary,
+            "record": stored.public_summary(),
             "applied": True,
         }
 

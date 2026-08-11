@@ -18,7 +18,16 @@
         "project.list",
         "project.inspect",
         "project.onboard",
-        "project.rescan"
+        "project.rescan",
+        "knowledge.catalog",
+        "knowledge.search-exact",
+        "knowledge.search-dependencies",
+        "knowledge.search-semantic",
+        "context.build",
+        "memory.propose",
+        "memory.review",
+        "memory.persist",
+        "memory.lifecycle"
       ]
     },
     "arguments": { "type": "object", "additionalProperties": true },

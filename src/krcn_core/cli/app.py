@@ -129,6 +129,54 @@ def build_parser() -> argparse.ArgumentParser:
     )
     rollback.add_argument("deployment_id")
     _add_installation_options(rollback, mutation=True)
+    knowledge = subparsers.add_parser(
+        "knowledge",
+        help="Use the shared local knowledge catalog and retrieval services",
+    )
+    knowledge_commands = knowledge.add_subparsers(dest="knowledge_command")
+    knowledge_catalog = knowledge_commands.add_parser(
+        "catalog",
+        help="List revision-aware catalog entries without source locations",
+    )
+    _add_phase_four_options(knowledge_catalog, request_required=False)
+    for operation in ("exact", "dependencies"):
+        command = knowledge_commands.add_parser(
+            operation,
+            help=f"Run shared {operation} retrieval from a JSON request",
+        )
+        _add_phase_four_options(command)
+    semantic = knowledge_commands.add_parser(
+        "semantic",
+        help="Run provider-gated semantic retrieval from a JSON request",
+    )
+    _add_phase_four_options(semantic, approval=True)
+    context_package = subparsers.add_parser(
+        "context-package",
+        help="Build an evidence-bounded context package",
+    )
+    context_commands = context_package.add_subparsers(dest="context_package_command")
+    context_build = context_commands.add_parser(
+        "build",
+        help="Build context through the shared service from a JSON request",
+    )
+    _add_phase_four_options(context_build)
+    memory = subparsers.add_parser(
+        "memory",
+        help="Use the shared Memory Gate services",
+    )
+    memory_commands = memory.add_subparsers(dest="memory_command")
+    for operation in ("propose", "review"):
+        command = memory_commands.add_parser(
+            operation,
+            help=f"Run shared memory {operation} validation from a JSON request",
+        )
+        _add_phase_four_options(command)
+    for operation in ("persist", "lifecycle"):
+        command = memory_commands.add_parser(
+            operation,
+            help=f"Plan or apply shared memory {operation} from a JSON request",
+        )
+        _add_phase_four_options(command, mutation=True)
     return parser
 
 
@@ -168,6 +216,25 @@ def _add_release_options(
     _add_installation_options(parser, mutation=mutation)
     parser.add_argument("--release", dest="release_path", type=Path, required=True)
     parser.add_argument("--trusted-manifest-sha256", required=True)
+
+
+def _add_phase_four_options(
+    parser: argparse.ArgumentParser,
+    *,
+    request_required: bool = True,
+    mutation: bool = False,
+    approval: bool = False,
+) -> None:
+    parser.add_argument("--repo", type=Path)
+    parser.add_argument("--data-root", type=Path)
+    if request_required:
+        parser.add_argument("--request-file", type=Path, required=True)
+    parser.add_argument("--format", choices=("text", "json"), default="json")
+    if mutation:
+        parser.add_argument("--apply", action="store_true")
+        parser.add_argument("--expected-plan")
+    if mutation or approval:
+        parser.add_argument("--approval-id")
 
 
 def _project_service_request(args: argparse.Namespace) -> ServiceRequest:
@@ -286,6 +353,73 @@ def _run_core_service_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _load_phase_four_arguments(path: Path) -> dict[str, object]:
+    with path.open(encoding="utf-8") as stream:
+        payload = json.load(stream)
+    if not isinstance(payload, dict):
+        raise ApplicationServiceError("request file must contain a JSON object")
+    return payload
+
+
+def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
+    if args.command == "knowledge":
+        if args.knowledge_command == "catalog":
+            operation = "knowledge.catalog"
+            arguments: dict[str, object] = {}
+        elif args.knowledge_command in {"exact", "dependencies", "semantic"}:
+            operation = f"knowledge.search-{args.knowledge_command}"
+            arguments = _load_phase_four_arguments(args.request_file)
+        else:
+            raise ApplicationServiceError("knowledge command is required")
+    elif (
+        args.command == "context-package"
+        and args.context_package_command == "build"
+    ):
+        operation = "context.build"
+        arguments = _load_phase_four_arguments(args.request_file)
+    elif args.command == "memory" and args.memory_command in {
+        "propose",
+        "review",
+        "persist",
+        "lifecycle",
+    }:
+        operation = f"memory.{args.memory_command}"
+        arguments = _load_phase_four_arguments(args.request_file)
+    else:
+        raise ApplicationServiceError("Phase 4 service command is required")
+    return ServiceRequest(
+        client_kind="cli",
+        operation=operation,
+        arguments=arguments,
+        apply=getattr(args, "apply", False),
+        expected_plan_id=getattr(args, "expected_plan", None),
+        approval_id=getattr(args, "approval_id", None),
+    )
+
+
+def _run_phase_four_service_command(args: argparse.Namespace) -> int:
+    try:
+        repo_root = args.repo.resolve() if args.repo else discover_repo_root()
+        data_root = args.data_root.resolve() if args.data_root else repo_root / ".krcn"
+        store = LocalWorkspaceStore(
+            data_root,
+            OwnershipResolver.from_repository(repo_root),
+        )
+        response = KrcnApplicationService(repo_root, store).execute(
+            _phase_four_service_request(args)
+        )
+    except (ApplicationServiceError, OSError, ValueError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+    payload = response.as_dict()
+    if args.format == "json":
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        print(f"{response.status}\t{response.operation}")
+        print(json.dumps(response.data, ensure_ascii=False, indent=2))
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -322,6 +456,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command in {"installation", "release", "deployment"}:
         return _run_core_service_command(args)
+
+    if args.command in {"knowledge", "context-package", "memory"}:
+        return _run_phase_four_service_command(args)
 
     if args.command != "catalog":
         parser.print_help()
