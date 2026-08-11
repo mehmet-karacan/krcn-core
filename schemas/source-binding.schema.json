@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:source-binding:1",
+  "title": "KRCN Core source binding",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "binding_id",
+    "source_id",
+    "source_kind",
+    "locator",
+    "default_access",
+    "capabilities",
+    "policy_refs",
+    "revision"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "binding_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "source_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "source_kind": {
+      "enum": ["project", "document", "directory", "database", "integration"]
+    },
+    "locator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "value"],
+      "properties": {
+        "kind": { "enum": ["local-path", "connection-ref", "uri"] },
+        "value": { "type": "string", "minLength": 1 }
+      }
+    },
+    "default_access": { "enum": ["read-only", "read-write"] },
+    "capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": ["read", "write", "metadata", "search", "index", "execute"]
+      }
+    },
+    "policy_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+    },
+    "revision": { "type": "integer", "minimum": 1 }
+  }
+}

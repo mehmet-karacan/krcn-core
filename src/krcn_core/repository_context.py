@@ -16,6 +16,7 @@ REQUIRED_CANONICAL_KEYS = {
     "current_work",
     "roadmap",
     "ownership",
+    "source_binding_schema",
     "policy_layers",
     "cli_inventory",
     "provider_policy",

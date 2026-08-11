@@ -13,6 +13,7 @@
     "current_work": ".ai/current-work.json",
     "roadmap": "docs/plans/ROADMAP.md",
     "ownership": "config/ownership-manifest.json",
+    "source_binding_schema": "schemas/source-binding.schema.json",
     "policy_layers": "docs/specifications/POLICY-LAYERS.md",
     "cli_inventory": ".ai/legacy-cli-inventory.json",
     "provider_policy": "config/provider-policy.json",
