@@ -18,10 +18,10 @@ def load_json(path: Path) -> dict:
 
 
 class PhaseFourKickoffTests(unittest.TestCase):
-    def test_current_work_points_to_active_phase_four_plan(self) -> None:
+    def test_current_work_points_to_completed_phase_four_plan(self) -> None:
         current = load_json(REPO_ROOT / ".ai" / "current-work.json")
         self.assertEqual("phase-4", current["phase_id"])
-        self.assertEqual("active", current["status"])
+        self.assertEqual("completed", current["status"])
         self.assertEqual("6005611", current["baseline_commit"])
         self.assertEqual(
             "docs/plans/PLAN-005-CONTEXT-KNOWLEDGE-MEMORY.md",

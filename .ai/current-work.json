@@ -3,7 +3,7 @@
   "schema_version": 1,
   "phase_id": "phase-4",
   "workstream_id": "context-knowledge-memory",
-  "status": "active",
+  "status": "completed",
   "goal": "Build revision-aware retrieval, evidence-bounded context packages, and approval-gated durable memory",
   "plan_ref": "docs/plans/PLAN-005-CONTEXT-KNOWLEDGE-MEMORY.md",
   "progress_refs": [
@@ -42,11 +42,13 @@
     "docs/progress/PHASE-4-SEMANTIC-RETRIEVAL.md",
     "docs/progress/PHASE-4-CONTEXT-BUILDER.md",
     "docs/progress/PHASE-4-MEMORY-GATE.md",
-    "docs/progress/PHASE-4-CLIENT-SERVICES.md"
+    "docs/progress/PHASE-4-CLIENT-SERVICES.md",
+    "docs/progress/PHASE-4-INTEGRATION-TESTS.md",
+    "docs/progress/PHASE-4-COMPLETION.md"
   ],
   "next_actions": [
-    "run hermetic cross-session and client-parity integration scenarios for Phase 4",
-    "produce the Phase 4 baseline manifest and Turkish completion report"
+    "review the completed Phase 4 baseline before opening Phase 5",
+    "start Phase 5 only after explicit user instruction"
   ],
   "baseline_commit": "6005611",
   "approval_gates": {

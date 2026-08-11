@@ -1,0 +1,61 @@
+{
+  "schema_ref": "schemas/phase-4-baseline.schema.json",
+  "schema_version": 1,
+  "baseline_id": "phase-4-context-knowledge-memory",
+  "phase_id": "phase-4",
+  "status": "ready",
+  "completed_steps": 10,
+  "capabilities": [
+    "information-class-contract",
+    "revision-aware-provenance",
+    "authoritative-knowledge-catalog",
+    "deterministic-exact-retrieval",
+    "evidence-bound-dependency-retrieval",
+    "provider-gated-semantic-retrieval",
+    "budgeted-context-packages",
+    "approval-gated-memory",
+    "transport-neutral-phase-four-services",
+    "cross-session-context-reconstruction"
+  ],
+  "safe_operations": [
+    "knowledge.catalog",
+    "knowledge.search-exact",
+    "knowledge.search-dependencies",
+    "knowledge.search-semantic",
+    "context.build",
+    "memory.propose",
+    "memory.review",
+    "memory.persist",
+    "memory.lifecycle"
+  ],
+  "guarantees": {
+    "live_reference_imported": false,
+    "local_data_tracked": false,
+    "implicit_network_access": false,
+    "literal_secrets_stored": false,
+    "user_data_preserved": true,
+    "user_policy_preserved": true,
+    "source_revision_staleness_visible": true,
+    "context_budget_enforced": true,
+    "memory_approval_required": true,
+    "client_parity": true,
+    "chat_history_required": false
+  },
+  "verification": {
+    "hermetic_tests": "passed",
+    "foundation": "passed",
+    "doctor": "passed",
+    "offline_install": "passed",
+    "cross_session": "passed",
+    "stale_source": "passed",
+    "context_budget": "passed",
+    "policy_preservation": "passed",
+    "provider_gate": "passed",
+    "client_parity": "passed"
+  },
+  "next_phase": {
+    "phase_id": "phase-5",
+    "plan_ref": "docs/plans/ROADMAP.md",
+    "implementation_started": false
+  }
+}

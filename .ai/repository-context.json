@@ -32,6 +32,7 @@
     "phase_three_baseline": ".ai/phase-3-baseline.json",
     "phase_three_merge_boundary": "docs/specifications/PHASE-3-MERGE-BOUNDARY.md",
     "phase_four_boundary": "docs/specifications/PHASE-4-CONTEXT-KNOWLEDGE-MEMORY-BOUNDARY.md",
+    "phase_four_baseline": ".ai/phase-4-baseline.json",
     "information_classes": "config/information-classes.json",
     "information_classes_schema": "schemas/information-classes.schema.json",
     "information_record_schema": "schemas/information-record.schema.json",

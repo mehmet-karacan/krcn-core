@@ -2,7 +2,7 @@
 
 ## Durum
 
-Aktif. Faz 4, tamamlanmış Faz 3 güvenli merge baseline'ı üzerinde başlatıldı.
+Tamamlandı. On adımın tamamı doğrulandı ve Faz 4 baseline'ı oluşturuldu.
 
 ## Amaç
 

@@ -14,6 +14,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT / "build_backend"))
 
 import krcn_build_backend  # noqa: E402
+from krcn_core.application import OPERATIONS  # noqa: E402
 from krcn_core.doctor import run_doctor  # noqa: E402
 
 
@@ -21,60 +22,72 @@ def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-class PhaseThreeCompletionTests(unittest.TestCase):
-    def test_phase_three_baseline_is_complete_and_versioned(self) -> None:
-        baseline = load_json(REPO_ROOT / ".ai" / "phase-3-baseline.json")
+class PhaseFourCompletionTests(unittest.TestCase):
+    def test_phase_four_baseline_is_complete_and_versioned(self) -> None:
+        baseline = load_json(REPO_ROOT / ".ai" / "phase-4-baseline.json")
         schema = load_json(
-            REPO_ROOT / "schemas" / "phase-3-baseline.schema.json"
+            REPO_ROOT / "schemas" / "phase-4-baseline.schema.json"
         )
-        self.assertEqual("urn:krcn:schemas:phase-3-baseline:1", schema["$id"])
-        self.assertEqual("phase-3", baseline["phase_id"])
+        self.assertEqual("urn:krcn:schemas:phase-4-baseline:1", schema["$id"])
+        self.assertEqual("phase-4", baseline["phase_id"])
         self.assertEqual("ready", baseline["status"])
         self.assertEqual(10, baseline["completed_steps"])
         self.assertEqual(
             {
-                "installation.inspect",
-                "installation.verify",
-                "release.diff",
-                "release.merge",
-                "deployment.rollback",
+                "knowledge.catalog",
+                "knowledge.search-exact",
+                "knowledge.search-dependencies",
+                "knowledge.search-semantic",
+                "context.build",
+                "memory.propose",
+                "memory.review",
+                "memory.persist",
+                "memory.lifecycle",
             },
             set(baseline["safe_operations"]),
         )
+        self.assertTrue(set(baseline["safe_operations"]).issubset(OPERATIONS))
         self.assertTrue(baseline["guarantees"]["user_data_preserved"])
         self.assertTrue(baseline["guarantees"]["user_policy_preserved"])
-        self.assertTrue(baseline["guarantees"]["automatic_rollback"])
-        self.assertFalse(baseline["guarantees"]["local_data_tracked"])
-        self.assertEqual("phase-4", baseline["next_phase"]["phase_id"])
+        self.assertTrue(baseline["guarantees"]["context_budget_enforced"])
+        self.assertTrue(baseline["guarantees"]["memory_approval_required"])
+        self.assertFalse(baseline["guarantees"]["chat_history_required"])
+        self.assertFalse(baseline["guarantees"]["implicit_network_access"])
+        self.assertEqual("phase-5", baseline["next_phase"]["phase_id"])
         self.assertFalse(baseline["next_phase"]["implementation_started"])
 
-    def test_phase_three_work_and_completion_evidence_are_closed(self) -> None:
+    def test_phase_four_work_and_completion_evidence_are_closed(self) -> None:
         current = load_json(REPO_ROOT / ".ai" / "current-work.json")
         self.assertEqual("phase-4", current["phase_id"])
         self.assertEqual("completed", current["status"])
-        completion_ref = "docs/progress/PHASE-3-COMPLETION.md"
-        integration_ref = "docs/progress/PHASE-3-INTEGRATION-TESTS.md"
+        completion_ref = "docs/progress/PHASE-4-COMPLETION.md"
+        integration_ref = "docs/progress/PHASE-4-INTEGRATION-TESTS.md"
         self.assertIn(completion_ref, current["progress_refs"])
         self.assertIn(integration_ref, current["progress_refs"])
         completion = (REPO_ROOT / completion_ref).read_text(encoding="utf-8")
         self.assertIn(
-            "Faz 3 - güvenli `merge into` güncelleme motoru tamamlandı",
+            "Faz 4 - context, knowledge ve memory tamamlandı",
             completion,
         )
         plan = (
             REPO_ROOT
             / "docs"
             / "plans"
-            / "PLAN-004-GUVENLI-MERGE-INTO-MOTORU.md"
+            / "PLAN-005-CONTEXT-KNOWLEDGE-MEMORY.md"
         ).read_text(encoding="utf-8")
         self.assertIn("Tamamlandı", plan)
 
-    def test_doctor_includes_completed_phase_three_baseline(self) -> None:
+    def test_repository_context_and_doctor_include_phase_four_baseline(self) -> None:
+        context = load_json(REPO_ROOT / ".ai" / "repository-context.json")
+        self.assertEqual(
+            ".ai/phase-4-baseline.json",
+            context["canonical"]["phase_four_baseline"],
+        )
         checks = {item.check_id: item for item in run_doctor(REPO_ROOT)}
-        self.assertIn("phase-three-baseline", checks)
-        self.assertTrue(checks["phase-three-baseline"].passed)
+        self.assertIn("phase-four-baseline", checks)
+        self.assertTrue(checks["phase-four-baseline"].passed)
 
-    def test_wheel_installs_offline_and_exposes_phase_three_services(self) -> None:
+    def test_wheel_installs_offline_and_exposes_phase_four_services(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             wheel_directory = root / "wheel"
@@ -111,13 +124,15 @@ class PhaseThreeCompletionTests(unittest.TestCase):
                         "import sys; "
                         f"sys.path.insert(0, {str(target)!r}); "
                         "from krcn_core.application import KrcnApplicationService; "
-                        "from krcn_core.merge_engine import execute_deployment; "
-                        "from krcn_core.rollback import prepare_rollback_plan; "
-                        "from krcn_core.verification import verify_installation; "
+                        "from krcn_core.context_builder import build_context_package; "
+                        "from krcn_core.dependency_retrieval import retrieve_dependencies; "
+                        "from krcn_core.exact_retrieval import retrieve_exact; "
+                        "from krcn_core.memory_gate import prepare_memory_persistence; "
+                        "from krcn_core.semantic_retrieval import retrieve_semantic; "
                         "print(KrcnApplicationService.__name__, "
-                        "execute_deployment.__name__, "
-                        "prepare_rollback_plan.__name__, "
-                        "verify_installation.__name__)"
+                        "retrieve_exact.__name__, retrieve_dependencies.__name__, "
+                        "retrieve_semantic.__name__, build_context_package.__name__, "
+                        "prepare_memory_persistence.__name__)"
                     ),
                 ],
                 capture_output=True,
@@ -128,8 +143,9 @@ class PhaseThreeCompletionTests(unittest.TestCase):
             self.assertEqual(0, imported.returncode, imported.stderr)
             self.assertEqual(
                 (
-                    "KrcnApplicationService execute_deployment "
-                    "prepare_rollback_plan verify_installation"
+                    "KrcnApplicationService retrieve_exact retrieve_dependencies "
+                    "retrieve_semantic build_context_package "
+                    "prepare_memory_persistence"
                 ),
                 imported.stdout.strip(),
             )

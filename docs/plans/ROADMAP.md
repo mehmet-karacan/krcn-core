@@ -12,7 +12,8 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
 - Faz 1 tamamlandı.
 - Faz 2 tamamlandı.
 - Faz 3 tamamlandı.
-- Faz 4 aktif: context, knowledge ve memory geliştiriliyor.
+- Faz 4 tamamlandı.
+- Faz 5 planlandı ancak henüz başlatılmadı.
 
 ## Temel kullanım modeli
 
