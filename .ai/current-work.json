@@ -34,11 +34,12 @@
     "docs/progress/PHASE-3-CLIENT-SERVICES.md",
     "docs/progress/PHASE-3-INTEGRATION-TESTS.md",
     "docs/progress/PHASE-3-COMPLETION.md",
-    "docs/progress/PHASE-4-KICKOFF.md"
+    "docs/progress/PHASE-4-KICKOFF.md",
+    "docs/progress/PHASE-4-INFORMATION-RECORDS.md"
   ],
   "next_actions": [
-    "implement the provenance and revision-aware information record model",
-    "build the authoritative source and curated knowledge catalog"
+    "build the authoritative source and curated knowledge catalog",
+    "implement deterministic exact retrieval over current catalog records"
   ],
   "baseline_commit": "6005611",
   "approval_gates": {
