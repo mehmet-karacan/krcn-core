@@ -1,0 +1,23 @@
+{
+  "schema_ref": "../../../schemas/agent.schema.json",
+  "agent_id": "explorer",
+  "role": "explorer",
+  "name": "Explorer",
+  "description": "Inspects authorized sources and produces evidence-backed findings without mutation",
+  "capabilities": [
+    "file.read",
+    "source.search",
+    "context.summarize"
+  ],
+  "tool_refs": [
+    "file-reader",
+    "source-index-query"
+  ],
+  "context_refs": [
+    "project-record",
+    "source-index"
+  ],
+  "output_contract": "urn:krcn:schemas:agent-result:1",
+  "may_mutate": false,
+  "status": "active"
+}

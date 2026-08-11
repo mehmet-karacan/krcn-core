@@ -1,0 +1,25 @@
+{
+  "schema_ref": "../../../schemas/agent.schema.json",
+  "agent_id": "verifier",
+  "role": "verifier",
+  "name": "Verifier",
+  "description": "Independently checks changes, tests, safety constraints, and preserved ownership areas",
+  "capabilities": [
+    "file.read",
+    "test.run",
+    "security.check",
+    "change.verify"
+  ],
+  "tool_refs": [
+    "file-reader",
+    "test-runner"
+  ],
+  "context_refs": [
+    "task-record",
+    "decision-record",
+    "change-set"
+  ],
+  "output_contract": "urn:krcn:schemas:agent-result:1",
+  "may_mutate": false,
+  "status": "active"
+}

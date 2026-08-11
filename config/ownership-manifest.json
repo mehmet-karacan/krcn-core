@@ -11,6 +11,7 @@
       "description": "Versioned product code and managed defaults",
       "merge_strategy": "replace-managed",
       "paths": [
+        ".ai/**",
         "AGENTS.md",
         "README.md",
         "pyproject.toml",

@@ -1,0 +1,14 @@
+{
+  "schema_ref": "../../schemas/engine.schema.json",
+  "engine_id": "task",
+  "version": "1.0.0",
+  "purpose": "Manage task lifecycle, checkpoints, and verification gates",
+  "responsibilities": [
+    "validate task records",
+    "enforce state transitions",
+    "coordinate resource locks",
+    "record resumable checkpoints",
+    "require verification before completion"
+  ],
+  "output_schema": "urn:krcn:schemas:task:1"
+}

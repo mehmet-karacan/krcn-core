@@ -1,0 +1,27 @@
+{
+  "schema_ref": "../../../schemas/agent.schema.json",
+  "agent_id": "worker",
+  "role": "worker",
+  "name": "Worker",
+  "description": "Applies an approved task plan within declared ownership and capability boundaries",
+  "capabilities": [
+    "file.read",
+    "file.write",
+    "test.run",
+    "change.report"
+  ],
+  "tool_refs": [
+    "file-reader",
+    "file-writer",
+    "test-runner"
+  ],
+  "context_refs": [
+    "project-record",
+    "task-record",
+    "decision-record",
+    "source-index"
+  ],
+  "output_contract": "urn:krcn:schemas:agent-result:1",
+  "may_mutate": true,
+  "status": "active"
+}

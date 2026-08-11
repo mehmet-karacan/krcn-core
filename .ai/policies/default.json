@@ -1,0 +1,20 @@
+{
+  "schema_ref": "../../schemas/default-policy.schema.json",
+  "policy_id": "default",
+  "version": "1.0.0",
+  "network": {
+    "default": "deny",
+    "explicit_opt_in_required": true,
+    "implicit_provider_discovery": false
+  },
+  "mutation": {
+    "dry_run_required": true,
+    "overwrite_existing": false,
+    "approval_required_for_user_data": true,
+    "rollback_required": true
+  },
+  "audit": {
+    "mask_sensitive_values": true,
+    "record_evidence": true
+  }
+}

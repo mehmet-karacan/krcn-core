@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:workspace:1",
+  "title": "KRCN Core workspace record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "workspace_id", "project_refs"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "workspace_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "project_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+    },
+    "policy_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "metadata": { "type": "object", "additionalProperties": true }
+  }
+}

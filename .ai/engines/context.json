@@ -1,0 +1,13 @@
+{
+  "schema_ref": "../../schemas/engine.schema.json",
+  "engine_id": "context",
+  "version": "1.0.0",
+  "purpose": "Build bounded context packages from authorized sources",
+  "responsibilities": [
+    "collect task-scoped context",
+    "filter irrelevant or unauthorized content",
+    "preserve evidence and source references",
+    "enforce context budgets"
+  ],
+  "output_schema": "urn:krcn:schemas:context-package:1"
+}

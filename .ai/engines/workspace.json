@@ -1,0 +1,13 @@
+{
+  "schema_ref": "../../schemas/engine.schema.json",
+  "engine_id": "workspace",
+  "version": "1.0.0",
+  "purpose": "Coordinate workspace records without owning external source content",
+  "responsibilities": [
+    "validate workspace records",
+    "resolve logical source references",
+    "enforce ownership boundaries",
+    "coordinate project and task records"
+  ],
+  "output_schema": "urn:krcn:schemas:workspace:1"
+}
