@@ -58,7 +58,6 @@ class PhaseFiveCompletionTests(unittest.TestCase):
         current = load_json(REPO_ROOT / ".ai" / "current-work.json")
         completion_ref = "docs/progress/PHASE-5-COMPLETION.md"
         integration_ref = "docs/progress/PHASE-5-INTEGRATION-TESTS.md"
-        self.assertEqual("completed", current["status"])
         self.assertIn(completion_ref, current["progress_refs"])
         self.assertIn(integration_ref, current["progress_refs"])
         completion = (REPO_ROOT / completion_ref).read_text(encoding="utf-8")

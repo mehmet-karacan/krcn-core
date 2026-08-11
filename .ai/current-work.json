@@ -1,11 +1,11 @@
 {
   "schema_ref": "schemas/current-work.schema.json",
   "schema_version": 1,
-  "phase_id": "phase-5",
-  "workstream_id": "orchestrator-natural-language-task-flow",
-  "status": "completed",
-  "goal": "Turn natural-language intent into capability-bounded plans, authorized execution, and evidence-backed verification",
-  "plan_ref": "docs/plans/PLAN-006-ORCHESTRATOR-DOGAL-DIL-GOREV-AKISI.md",
+  "phase_id": "phase-6",
+  "workstream_id": "release-quality-portability",
+  "status": "active",
+  "goal": "Make KRCN-owned state portable while external project sources remain uncopied and read-only",
+  "plan_ref": "docs/plans/PLAN-007-RELEASE-KALITE-TASINABILIRLIK.md",
   "progress_refs": [
     "docs/progress/PHASE-1-FOUNDATION.md",
     "docs/progress/PHASE-1-PACKAGE-1.md",
@@ -55,13 +55,14 @@
     "docs/progress/PHASE-5-ORCHESTRATION-STATE.md",
     "docs/progress/PHASE-5-CLIENT-SERVICES.md",
     "docs/progress/PHASE-5-INTEGRATION-TESTS.md",
-    "docs/progress/PHASE-5-COMPLETION.md"
+    "docs/progress/PHASE-5-COMPLETION.md",
+    "docs/progress/PHASE-6-KICKOFF.md"
   ],
   "next_actions": [
-    "wait for explicit user approval before starting Phase 6",
-    "after approval, create the Phase 6 release, quality, and portability implementation plan"
+    "implement canonical portable KRCN user-home resolution",
+    "preserve external project directories through no-copy bindings and verified rebind"
   ],
-  "baseline_commit": "c16c333",
+  "baseline_commit": "d7d20bc",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

@@ -14,7 +14,7 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
 - Faz 3 tamamlandı.
 - Faz 4 tamamlandı.
 - Faz 5 tamamlandı.
-- Faz 6 planlandı ancak başlatılmadı; açık kullanıcı onayı bekleniyor.
+- Faz 6 başlatıldı. Taşınabilir kullanıcı evi, dış proje rebind, backup, restore ve release kalite kapıları uygulanıyor.
 
 ## Temel kullanım modeli
 
@@ -92,6 +92,10 @@ Tamamlanma ölçütü: Kullanıcı yalnızca hedefini söylediğinde sistem güv
 
 ## Faz 6 - Release, kalite ve taşınabilirlik
 
+- Kullanıcıya ait KRCN kayıtlarını repository dışında tek bir taşınabilir kullanıcı evinde topla.
+- Dış proje dizinlerini kopyalamadan salt okunur binding ile tanı ve yol değişiminde doğrulanmış rebind uygula.
+- Secret değerlerini ve dış proje içeriklerini dışlayan backup ile kontrollü restore akışını oluştur.
+- Repo içindeki eski `.krcn` verisi için ayrı, yedekli ve geri alınabilir migration üret.
 - CI testleri, baseline regresyonları ve migration testleri ekle.
 - Windows ve macOS kurulum senaryolarını doğrula.
 - Release oluşturma, paketleme, doctor ve rollback akışını tamamla.
