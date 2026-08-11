@@ -26,6 +26,7 @@ class DoctorTests(unittest.TestCase):
                 "cli-catalog",
                 "offline-provider",
                 "tracked-local-data",
+                "phase-one-baseline",
             },
             {item.check_id for item in checks},
         )

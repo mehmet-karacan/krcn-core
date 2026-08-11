@@ -19,6 +19,7 @@
     "provider_request_schema": "schemas/provider-request.schema.json",
     "policy_layers": "docs/specifications/POLICY-LAYERS.md",
     "cli_inventory": ".ai/legacy-cli-inventory.json",
+    "cli_baseline": ".ai/cli-baseline.json",
     "provider_policy": "config/provider-policy.json",
     "import_policy": "config/import-policy.json"
   },
@@ -27,6 +28,7 @@
       "AGENTS.md",
       "AI-CONTEXT.md",
       ".ai/current-work.json",
+      ".ai/cli-baseline.json",
       "docs/plans/ROADMAP.md",
       "config/ownership-manifest.json",
       "docs/specifications/POLICY-LAYERS.md"

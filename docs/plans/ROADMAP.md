@@ -6,6 +6,12 @@ KRCN Core, Git ile dağıtılan ürün çekirdeğini yerel proje ve kullanıcı 
 
 Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilmeyecek. Git repository yalnızca core kodunu, sürümlenebilir şemaları, politikaları, migration tanımlarını, şablonları ve teknik belgeleri taşıyacak.
 
+## Durum özeti
+
+- Faz 0 tamamlandı.
+- Faz 1 tamamlandı.
+- Sıradaki çalışma Faz 2 - yerel çalışma alanı ve entegrasyon modelidir.
+
 ## Temel kullanım modeli
 
 Kullanıcı bir CLI'a veya yapay zekâya hedefini doğal dille anlatabilecek. Sistem aşağıdaki adımları izleyecek:

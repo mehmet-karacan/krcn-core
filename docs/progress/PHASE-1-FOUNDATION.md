@@ -2,7 +2,7 @@
 
 ## Durum
 
-Repository ve veri sahipliği temeli tamamlandı. Mevcut core kodunun sanitize edilerek aktarılması henüz başlamadı.
+Bu kayıt Faz 1'in ilk foundation dilimini belgeler. Repository ve veri sahipliği temeli bu dilimde tamamlandı. Faz 1'in tamamı daha sonra arındırılmış core, ortak context ve CLI baseline paketleriyle kapatıldı. Güncel kapanış sonucu `docs/progress/PHASE-1-COMPLETION.md` içindedir.
 
 ## Tamamlanan çalışmalar
 
@@ -68,14 +68,6 @@ Bu sonuç beklenen davranıştır. Baseline doğrudan kopyalanmayacak.
 - `ADR-001`: Veri sahipliği ve güncelleme sınırı.
 - `ADR-002`: Varsayılan offline provider politikası.
 
-## Sonraki aktarım kapısı
+## Tamamlanma bağlantısı
 
-Bir sonraki geliştirme adımı sanitize edilmiş core aktarımıdır. İşlem şu sırayla yürütülecek:
-
-1. Portable şema, agent, policy ve launcher adayları geçici staging alanına alınır.
-2. Her dosya yeni import tarayıcısından geçirilir.
-3. Makineye özel ve kullanıcıya ait içerik kaldırılır.
-4. Monolitik CLI içindeki otomatik ağ davranışı kapatılır.
-5. Canlı projelere bağlı testler sentetik fixture ile değiştirilir.
-6. Kullanıcıya yalnızca temizlenmiş staged diff gösterilir.
-7. Onaylanan dosyalar core repository yapısına eklenir.
+Bu kayıtta belirtilen aktarım kapıları tamamlandı. Eski monolitik CLI doğrudan alınmadı; arındırılmış modüler baseline yeni core kodu olarak geliştirildi. Canlı proje veya kullanıcı verisi aktarılmadı.

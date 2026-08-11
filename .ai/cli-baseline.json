@@ -1,0 +1,27 @@
+{
+  "schema_ref": "schemas/cli-baseline.schema.json",
+  "schema_version": 1,
+  "baseline_id": "krcn-cli-0.1.0",
+  "status": "ready",
+  "legacy_source_imported": false,
+  "entrypoint": "krcn_core.cli.app:main",
+  "safe_commands": [
+    "catalog",
+    "context",
+    "doctor",
+    "validate"
+  ],
+  "compatibility_catalog_count": 29,
+  "safety_gates": [
+    "source-binding",
+    "user-policy",
+    "database-statement",
+    "mutation",
+    "provider"
+  ],
+  "verification": {
+    "hermetic_tests": "passed",
+    "doctor": "passed",
+    "offline_install": "passed"
+  }
+}

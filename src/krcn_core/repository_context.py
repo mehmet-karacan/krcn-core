@@ -22,6 +22,7 @@ REQUIRED_CANONICAL_KEYS = {
     "provider_request_schema",
     "policy_layers",
     "cli_inventory",
+    "cli_baseline",
     "provider_policy",
     "import_policy",
 }

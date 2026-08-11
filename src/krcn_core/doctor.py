@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .cli.registry import compatibility_registry
-from .foundation import validate_foundation, verify_repository
+from .foundation import load_json, validate_foundation, verify_repository
 from .provider_gate import load_provider_gate_policy, select_default_provider
 from .repository_context import validate_repository_context
 
@@ -94,6 +94,20 @@ def run_doctor(repo_root: Path) -> tuple[DoctorCheck, ...]:
             "tracked-local-data",
             _tracked_local_data(repo_root),
             "no local user data is tracked",
+        )
+    )
+    current_work = load_json(repo_root / ".ai" / "current-work.json")
+    cli_baseline = load_json(repo_root / ".ai" / "cli-baseline.json")
+    phase_errors = []
+    if current_work.get("phase_id") != "phase-1" or current_work.get("status") != "completed":
+        phase_errors.append("phase state")
+    if cli_baseline.get("status") != "ready":
+        phase_errors.append("CLI baseline state")
+    checks.append(
+        _check(
+            "phase-one-baseline",
+            phase_errors,
+            "Phase 1 baseline is complete and ready",
         )
     )
     return tuple(checks)

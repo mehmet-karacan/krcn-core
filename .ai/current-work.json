@@ -3,22 +3,23 @@
   "schema_version": 1,
   "phase_id": "phase-1",
   "workstream_id": "package-2-context-and-cli",
-  "status": "active",
-  "goal": "Provide a client-neutral repository context before importing the CLI baseline",
+  "status": "completed",
+  "goal": "Complete the Phase 1 repository, ownership, context, and sanitized CLI baseline",
   "plan_ref": "docs/plans/PLAN-002-ARACTAN-BAGIMSIZ-BAGLAM-VE-CLI.md",
   "progress_refs": [
     "docs/progress/PHASE-1-FOUNDATION.md",
     "docs/progress/PHASE-1-PACKAGE-1.md",
     "docs/progress/PACKAGE-2-CONTEXT-FOUNDATION.md",
     "docs/progress/PACKAGE-2-CLI-INVENTORY.md",
-    "docs/progress/PACKAGE-2-STAGING-BASELINE.md"
+    "docs/progress/PACKAGE-2-STAGING-BASELINE.md",
+    "docs/progress/PHASE-1-COMPLETION.md"
   ],
   "next_actions": [
-    "prepare the sanitized CLI baseline outside Git",
-    "implement user policy validation and effective policy evaluation before external actions",
-    "design MCP and SDK adapters on the repository context contract"
+    "prepare the Phase 2 local workspace and integration plan",
+    "define adapter capabilities on source bindings and shared safety gates",
+    "implement synthetic read-only project onboarding before live user-data migration"
   ],
-  "baseline_commit": "a931f6c",
+  "baseline_commit": "6469d93",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

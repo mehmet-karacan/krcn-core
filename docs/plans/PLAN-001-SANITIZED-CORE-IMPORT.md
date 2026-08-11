@@ -2,9 +2,7 @@
 
 ## Durum
 
-Paket 1 kullanıcı onayıyla tamamlandı. Sözleşmeler doğrudan kopyalanmadı; taşınabilir, İngilizce ve makinece doğrulanabilir JSON tanımlarına dönüştürüldü. Launcher dosyaları çalışan CLI giriş noktasından ayrılmadığı için Paket 2'ye bırakıldı.
-
-Sıradaki çalışma Paket 2 - Araçtan bağımsız bağlam ve CLI baseline aşamasıdır.
+Tamamlandı. Üç paket de kullanıcı onayıyla uygulandı. Sözleşmeler doğrudan kopyalanmadı; taşınabilir, İngilizce ve makinece doğrulanabilir tanımlara dönüştürüldü. Eski monolitik CLI kaynak olarak alınmadı; davranış envanterinden modüler ve güvenli bir baseline üretildi. Testler sentetik ve hermetik hale getirildi.
 
 ## Amaç
 

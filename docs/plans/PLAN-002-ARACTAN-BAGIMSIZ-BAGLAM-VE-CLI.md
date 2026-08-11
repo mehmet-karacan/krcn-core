@@ -2,7 +2,7 @@
 
 ## Durum
 
-Bölüm 1 ve Bölüm 2 tamamlandı. Ortak context girişi, istemci adaptörleri, current-work işaretçisi ve context resolver hazırlandı. Eski CLI kaynak kodu aktarılmadan komut ve etki envanteri çıkarıldı. Çalışma Bölüm 3 - arındırılmış CLI staging ile devam edecek.
+Tamamlandı. Ortak context girişi, istemci adaptörleri, current-work işaretçisi ve context resolver hazırlandı. Eski CLI kaynak kodu aktarılmadan komut ve etki envanteri çıkarıldı. Arındırılmış ve modüler CLI baseline, güvenlik kapıları, hermetik testler, doctor ve ağsız kurulum doğrulaması tamamlandı.
 
 ## Amaç
 
@@ -59,4 +59,4 @@ Depoda tek bir kaynak doğrusu korunacak:
 
 ## Onay kapısı
 
-Context altyapısı yeni ve taşınabilir core kodu olarak doğrudan geliştirilebilir. Eski CLI kaynaklarının takip edilen depo ağacına aktarılması, ayrı staging incelemesi ve kullanıcı onayı gerektirir.
+Kullanıcının Faz 1'i tamamlama onayıyla arındırılmış yeni CLI kodu takip edilen core ağacına alındı. Eski monolitik kaynak aktarılmadı. Canlı user-data mutasyonu, uzak provider kullanımı ve sonraki kaynak aktarımları için onay kapıları açık kalır.
