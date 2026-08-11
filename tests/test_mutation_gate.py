@@ -36,6 +36,7 @@ class MutationGateTests(unittest.TestCase):
             operation="update",
             target_ref="src/krcn_core/example.py",
             expected_ownership="core",
+            change_digest="1" * 64,
             reversible=True,
         )
         authorization = authorize_mutation(
@@ -51,6 +52,7 @@ class MutationGateTests(unittest.TestCase):
             operation="update",
             target_ref=".krcn/policies/database.json",
             expected_ownership="user-data",
+            change_digest="2" * 64,
             reversible=True,
         )
         dry_run = DryRunEvidence(plan.plan_id, verified=True)
@@ -65,6 +67,7 @@ class MutationGateTests(unittest.TestCase):
             self.resolver,
             operation="delete",
             target_ref="docs/sample.md",
+            change_digest="3" * 64,
             reversible=True,
         )
         with self.assertRaisesRegex(MutationGateError, "approval"):
@@ -79,6 +82,7 @@ class MutationGateTests(unittest.TestCase):
             self.resolver,
             operation="update",
             target_ref=".krcn/secrets/provider.json",
+            change_digest="4" * 64,
             reversible=True,
         )
         with self.assertRaisesRegex(MutationGateError, "secret"):
@@ -90,7 +94,8 @@ class MutationGateTests(unittest.TestCase):
         irreversible = plan_mutation(
             self.resolver,
             operation="update",
-            target_ref="src/krcn_core/example.py",
+            target_ref=".krcn/policies/example.json",
+            change_digest="5" * 64,
             reversible=False,
         )
         with self.assertRaisesRegex(MutationGateError, "irreversible"):
@@ -104,6 +109,29 @@ class MutationGateTests(unittest.TestCase):
             with self.subTest(target=target):
                 with self.assertRaises(MutationGateError):
                     self.resolver.resolve(target)
+
+    def test_change_digest_is_part_of_the_approved_plan_identity(self) -> None:
+        first = plan_mutation(
+            self.resolver,
+            operation="update",
+            target_ref=".krcn/policies/example.json",
+            change_digest="a" * 64,
+            reversible=True,
+        )
+        second = plan_mutation(
+            self.resolver,
+            operation="update",
+            target_ref=".krcn/policies/example.json",
+            change_digest="b" * 64,
+            reversible=True,
+        )
+        self.assertNotEqual(first.plan_id, second.plan_id)
+        with self.assertRaisesRegex(MutationGateError, "approval"):
+            authorize_mutation(
+                second,
+                dry_run=DryRunEvidence(second.plan_id, verified=True),
+                approval=ApprovalEvidence(first.plan_id, "approval-4", True),
+            )
 
 
 if __name__ == "__main__":

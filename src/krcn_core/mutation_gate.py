@@ -5,6 +5,7 @@ from __future__ import annotations
 import fnmatch
 import hashlib
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Literal
@@ -28,6 +29,7 @@ class MutationPlan:
     operation: MutationOperation
     target_ref: str
     ownership: OwnershipClass
+    change_digest: str
     dry_run_required: bool
     approval_required: bool
     reversible: bool
@@ -39,6 +41,7 @@ class MutationPlan:
             "operation": self.operation,
             "target_ref": self.target_ref,
             "ownership": self.ownership,
+            "change_digest": self.change_digest,
             "dry_run_required": self.dry_run_required,
             "approval_required": self.approval_required,
             "reversible": self.reversible,
@@ -110,6 +113,7 @@ def plan_mutation(
     operation: MutationOperation,
     target_ref: str,
     expected_ownership: OwnershipClass | None = None,
+    change_digest: str,
     reversible: bool,
 ) -> MutationPlan:
     """Create a deterministic plan before any filesystem mutation."""
@@ -117,6 +121,8 @@ def plan_mutation(
     if operation not in {"create", "update", "delete", "move"}:
         raise MutationGateError("mutation operation is invalid")
     portable_ref = _portable_target_ref(target_ref)
+    if not re.fullmatch(r"[a-f0-9]{64}", change_digest):
+        raise MutationGateError("change digest must be a SHA-256 value")
     ownership = resolver.resolve(portable_ref)
     if expected_ownership is not None and ownership != expected_ownership:
         raise MutationGateError("resolved ownership does not match the expected class")
@@ -128,6 +134,7 @@ def plan_mutation(
         "operation": operation,
         "target_ref": portable_ref,
         "ownership": ownership,
+        "change_digest": change_digest,
         "reversible": reversible,
     }
     plan_id = hashlib.sha256(
@@ -138,6 +145,7 @@ def plan_mutation(
         operation=operation,
         target_ref=portable_ref,
         ownership=ownership,
+        change_digest=change_digest,
         dry_run_required=True,
         approval_required=approval_required,
         reversible=reversible,

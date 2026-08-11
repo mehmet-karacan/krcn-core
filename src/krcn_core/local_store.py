@@ -206,6 +206,7 @@ class LocalWorkspaceStore:
             operation="create" if current is None else "update",
             target_ref=self._target_ref(record_type, record_id),
             expected_ownership="user-data",
+            change_digest=payload_sha256,
             reversible=True,
         )
         return RecordWritePlan(

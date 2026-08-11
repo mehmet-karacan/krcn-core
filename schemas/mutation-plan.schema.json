@@ -10,6 +10,7 @@
     "operation",
     "target_ref",
     "ownership",
+    "change_digest",
     "dry_run_required",
     "approval_required",
     "reversible"
@@ -22,6 +23,7 @@
     "ownership": {
       "enum": ["core", "runtime", "user-data", "derived", "secrets", "unmanaged"]
     },
+    "change_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
     "dry_run_required": { "const": true },
     "approval_required": { "type": "boolean" },
     "reversible": { "type": "boolean" }
