@@ -271,6 +271,7 @@ def _safe_installation_root(root: Path) -> Path:
 def safe_installation_target(root: Path, relative_path: str) -> Path:
     """Resolve a portable path without accepting symlink traversal."""
 
+    resolved_root = root.resolve(strict=False)
     portable = _portable_path(relative_path)
     candidate = root.joinpath(*PurePosixPath(portable).parts)
     current = root
@@ -279,7 +280,7 @@ def safe_installation_target(root: Path, relative_path: str) -> Path:
         if current.is_symlink():
             raise InstallationError("installation path may not use symbolic links")
     try:
-        candidate.resolve(strict=False).relative_to(root)
+        candidate.resolve(strict=False).relative_to(resolved_root)
     except ValueError as exc:
         raise InstallationError("installation path escapes the root") from exc
     return candidate

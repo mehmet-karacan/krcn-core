@@ -279,6 +279,7 @@ def _safe_release_root(root: Path) -> Path:
 
 
 def safe_payload_target(root: Path, relative_path: str) -> Path:
+    resolved_root = root.resolve(strict=False)
     portable = _portable_path(relative_path)
     candidate = root / "payload"
     if candidate.is_symlink():
@@ -288,7 +289,7 @@ def safe_payload_target(root: Path, relative_path: str) -> Path:
         if candidate.is_symlink():
             raise ReleaseError("release payload path may not use symbolic links")
     try:
-        candidate.resolve(strict=False).relative_to(root)
+        candidate.resolve(strict=False).relative_to(resolved_root)
     except ValueError as exc:
         raise ReleaseError("release payload path escapes the release root") from exc
     return candidate
