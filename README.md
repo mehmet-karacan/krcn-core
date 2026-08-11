@@ -39,6 +39,19 @@ python tools/krcn.py context --format json
 python tools/krcn.py catalog
 ```
 
+Repository paketini ağ kullanmadan mevcut Python ortamına kurmak ve sağlık kontrolünü çalıştırmak için:
+
+```bash
+python -m pip install --no-index --no-deps --no-build-isolation .
+krcn doctor
+```
+
+Kurulum yapmadan aynı sağlık kontrolünü çalıştırmak için:
+
+```bash
+python tools/krcn.py doctor
+```
+
 ## Foundation doğrulaması
 
 Repository sahiplik, provider ve import politikalarını ek bağımlılık olmadan doğrulamak için:

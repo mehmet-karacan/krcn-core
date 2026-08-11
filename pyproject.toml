@@ -1,6 +1,7 @@
 [build-system]
-requires = ["setuptools>=75"]
-build-backend = "setuptools.build_meta"
+requires = []
+build-backend = "krcn_build_backend"
+backend-path = ["build_backend"]
 
 [project]
 name = "krcn-core"
@@ -16,9 +17,3 @@ dependencies = []
 krcn = "krcn_core.cli.app:main"
 krcn-context = "krcn_core.repository_context:main"
 krcn-verify = "krcn_core.foundation:main"
-
-[tool.setuptools]
-package-dir = { "" = "src" }
-
-[tool.setuptools.packages.find]
-where = ["src"]

@@ -43,7 +43,8 @@
     "verification_commands": [
       "python tools/show_context.py --validate-only",
       "python tools/verify_repository.py",
-      "python -m unittest discover -s tests -p test_*.py"
+      "python tools/run_tests.py",
+      "python tools/krcn.py doctor"
     ]
   },
   "client_adapters": {

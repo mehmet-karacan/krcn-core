@@ -8,6 +8,7 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+from krcn_core.doctor import run_doctor
 from krcn_core.repository_context import main as context_main
 
 from .registry import compatibility_registry
@@ -39,6 +40,13 @@ def build_parser() -> argparse.ArgumentParser:
     context.add_argument("--repo", type=Path)
     context.add_argument("--format", choices=("text", "json"), default="text")
     context.add_argument("--validate-only", action="store_true")
+    for command_name in ("doctor", "validate"):
+        doctor = subparsers.add_parser(
+            command_name,
+            help="Run offline repository health checks",
+        )
+        doctor.add_argument("--repo", type=Path)
+        doctor.add_argument("--format", choices=("text", "json"), default="text")
     return parser
 
 
@@ -55,6 +63,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.validate_only:
             context_args.append("--validate-only")
         return context_main(context_args)
+
+    if args.command in {"doctor", "validate"}:
+        try:
+            repo_root = args.repo.resolve() if args.repo else discover_repo_root()
+        except ValueError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
+        checks = run_doctor(repo_root)
+        if args.format == "json":
+            print(json.dumps([item.as_dict() for item in checks], indent=2))
+        else:
+            for item in checks:
+                status = "PASS" if item.passed else "FAIL"
+                print(f"{status}\t{item.check_id}\t{item.detail}")
+        return 0 if all(item.passed for item in checks) else 1
 
     if args.command != "catalog":
         parser.print_help()
