@@ -30,7 +30,13 @@ Geliştirme sırası `docs/plans/ROADMAP.md`, güncelleme güvenlik sözleşmesi
 Aktif bağlamı makinece çözümlemek için:
 
 ```bash
-python tools/show_context.py --format json
+python tools/krcn.py context --format json
+```
+
+İncelenen eski komut sözleşmelerini herhangi bir işlem çalıştırmadan görmek için:
+
+```bash
+python tools/krcn.py catalog
 ```
 
 ## Foundation doğrulaması
