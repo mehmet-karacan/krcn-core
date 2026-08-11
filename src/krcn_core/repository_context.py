@@ -39,6 +39,7 @@ REQUIRED_CANONICAL_KEYS = {
     "phase_five_boundary",
     "orchestration_boundary",
     "orchestration_boundary_schema",
+    "task_intent_schema",
     "release_manifest_schema",
     "installation_state_schema",
     "installation_inspection_schema",

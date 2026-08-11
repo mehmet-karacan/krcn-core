@@ -45,11 +45,12 @@
     "docs/progress/PHASE-4-CLIENT-SERVICES.md",
     "docs/progress/PHASE-4-INTEGRATION-TESTS.md",
     "docs/progress/PHASE-4-COMPLETION.md",
-    "docs/progress/PHASE-5-KICKOFF.md"
+    "docs/progress/PHASE-5-KICKOFF.md",
+    "docs/progress/PHASE-5-TASK-INTENT.md"
   ],
   "next_actions": [
-    "define a typed intent model that separates explicit input, safe assumptions, and unresolved ambiguity",
-    "block planning when ambiguity would change scope, authority, user data, external systems, or irreversible effects"
+    "define revision-aware agent, skill, tool, and model capability records",
+    "select capabilities explicitly without inferring authority from the client or host environment"
   ],
   "baseline_commit": "c16c333",
   "approval_gates": {

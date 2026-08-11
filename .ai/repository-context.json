@@ -36,6 +36,7 @@
     "phase_five_boundary": "docs/specifications/PHASE-5-ORCHESTRATION-BOUNDARY.md",
     "orchestration_boundary": "config/orchestration-boundary.json",
     "orchestration_boundary_schema": "schemas/orchestration-boundary.schema.json",
+    "task_intent_schema": "schemas/task-intent.schema.json",
     "information_classes": "config/information-classes.json",
     "information_classes_schema": "schemas/information-classes.schema.json",
     "information_record_schema": "schemas/information-record.schema.json",
