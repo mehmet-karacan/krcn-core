@@ -13,6 +13,8 @@
       "paths": [
         ".ai/**",
         "AGENTS.md",
+        "AI-CONTEXT.md",
+        "CLAUDE.md",
         "README.md",
         "pyproject.toml",
         "src/**",

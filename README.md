@@ -19,13 +19,19 @@ Git'ten gelen yeni core sürümünde aşağıdaki işlemler uygulanır:
 5. Güncelleme, yedekleme ve uyumluluk kontrollerinden sonra uygulanır.
 6. Doğrulama başarısız olursa güvenli rollback sunulur.
 
-## İlk aşama
+## Güncel geliştirme durumu
 
-Repository şu anda foundation ve baseline hazırlığındadır. Yerel referans kaynakları henüz içeri alınmamıştır. Aktarım öncesinde core, runtime, user-data, derived ve secrets ayrımı çıkarılacaktır.
+Repository foundation, sahiplik sınırları ve ilk core sözleşmeleriyle çalışır durumdadır. Yerel referans kaynaklarındaki kullanıcı verileri içeri alınmamıştır. Generic sözleşmeler arındırılarak JSON tabanlı core tanımlarına dönüştürülmüştür.
 
-Kök çalışma kuralları için `AGENTS.md` dosyasını okuyun.
+Kök çalışma kuralları için `AGENTS.md`, araçtan bağımsız başlangıç bağlamı için `AI-CONTEXT.md` dosyasını okuyun. Codex doğrudan `AGENTS.md` kullanır. Claude Code için `CLAUDE.md` aynı ortak kaynakları içe aktarır. Diğer istemciler ve plugin'ler `.ai/repository-context.json` manifestini okuyabilir.
 
 Geliştirme sırası `docs/plans/ROADMAP.md`, güncelleme güvenlik sözleşmesi `docs/specifications/UPDATE-MERGE-CONTRACT.md` içindedir. Mevcut baseline bulguları `docs/progress/PHASE-0-BASELINE.md`, aktarım sınırı ise `docs/specifications/IMPORT-BOUNDARY.md` içinde tutulur.
+
+Aktif bağlamı makinece çözümlemek için:
+
+```bash
+python tools/show_context.py --format json
+```
 
 ## Foundation doğrulaması
 

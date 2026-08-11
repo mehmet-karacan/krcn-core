@@ -1,5 +1,5 @@
 {
-  "schema_ref": "../../schemas/engine.schema.json",
+  "schema_ref": "schemas/engine.schema.json",
   "engine_id": "context",
   "version": "1.0.0",
   "purpose": "Build bounded context packages from authorized sources",

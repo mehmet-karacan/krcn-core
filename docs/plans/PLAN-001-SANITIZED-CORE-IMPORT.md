@@ -4,7 +4,7 @@
 
 Paket 1 kullanıcı onayıyla tamamlandı. Sözleşmeler doğrudan kopyalanmadı; taşınabilir, İngilizce ve makinece doğrulanabilir JSON tanımlarına dönüştürüldü. Launcher dosyaları çalışan CLI giriş noktasından ayrılmadığı için Paket 2'ye bırakıldı.
 
-Sıradaki çalışma Paket 2 - CLI baseline aşamasıdır.
+Sıradaki çalışma Paket 2 - Araçtan bağımsız bağlam ve CLI baseline aşamasıdır.
 
 ## Amaç
 
@@ -19,8 +19,12 @@ Mevcut çalışan davranışı koruyarak yalnızca taşınabilir core parçalar�
 - Generic agent registry tanımları.
 - Platformdan bağımsız launcher dosyaları.
 
-### Paket 2 - CLI baseline
+### Paket 2 - Araçtan bağımsız bağlam ve CLI baseline
 
+- Codex, Claude Code, diğer AI istemcileri ve plugin'ler için ortak context giriş noktası.
+- Tek kaynak doğrusuna bağlı ince istemci adaptörleri.
+- Aktif planı ve ilerleme durumunu gösteren makinece okunabilir manifest.
+- İstemciden bağımsız context resolver.
 - Mevcut komut davranışlarının envanteri.
 - Monolitik CLI'ın geçici staging kopyası.
 - Mutlak yol ve kurulum adı temizliği.

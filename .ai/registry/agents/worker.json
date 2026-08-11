@@ -1,5 +1,5 @@
 {
-  "schema_ref": "../../../schemas/agent.schema.json",
+  "schema_ref": "schemas/agent.schema.json",
   "agent_id": "worker",
   "role": "worker",
   "name": "Worker",

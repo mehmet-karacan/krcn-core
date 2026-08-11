@@ -1,0 +1,70 @@
+{
+  "schema_ref": "schemas/repository-context.schema.json",
+  "schema_version": 1,
+  "project": {
+    "id": "krcn-core",
+    "name": "KRCN Core",
+    "purpose": "Local-first context, knowledge, memory, and orchestration core",
+    "architecture_owner": "Mehmet KARACAN"
+  },
+  "canonical": {
+    "instructions": "AGENTS.md",
+    "orientation": "AI-CONTEXT.md",
+    "current_work": ".ai/current-work.json",
+    "roadmap": "docs/plans/ROADMAP.md",
+    "ownership": "config/ownership-manifest.json",
+    "provider_policy": "config/provider-policy.json",
+    "import_policy": "config/import-policy.json"
+  },
+  "bootstrap": {
+    "read_order": [
+      "AGENTS.md",
+      "AI-CONTEXT.md",
+      ".ai/current-work.json",
+      "docs/plans/ROADMAP.md",
+      "config/ownership-manifest.json"
+    ],
+    "task_contract": [
+      "goal",
+      "scope",
+      "sources",
+      "constraints",
+      "acceptance_criteria",
+      "ownership_impact",
+      "verification_evidence"
+    ],
+    "verification_commands": [
+      "python tools/show_context.py --validate-only",
+      "python tools/verify_repository.py",
+      "python -m unittest discover -s tests -p test_*.py"
+    ]
+  },
+  "client_adapters": {
+    "codex": {
+      "entrypoint": "AGENTS.md",
+      "mode": "native",
+      "automatic": true
+    },
+    "claude-code": {
+      "entrypoint": "CLAUDE.md",
+      "mode": "import",
+      "automatic": true
+    },
+    "generic-ai": {
+      "entrypoint": "AI-CONTEXT.md",
+      "mode": "document",
+      "automatic": false
+    },
+    "plugin": {
+      "entrypoint": ".ai/repository-context.json",
+      "mode": "manifest",
+      "automatic": false
+    }
+  },
+  "data_policy": {
+    "offline_by_default": true,
+    "local_data_in_git": false,
+    "implicit_provider_discovery": false,
+    "user_data_mutation_requires_approval": true
+  }
+}

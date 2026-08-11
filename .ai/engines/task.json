@@ -1,5 +1,5 @@
 {
-  "schema_ref": "../../schemas/engine.schema.json",
+  "schema_ref": "schemas/engine.schema.json",
   "engine_id": "task",
   "version": "1.0.0",
   "purpose": "Manage task lifecycle, checkpoints, and verification gates",

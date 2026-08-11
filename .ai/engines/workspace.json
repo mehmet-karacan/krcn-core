@@ -1,5 +1,5 @@
 {
-  "schema_ref": "../../schemas/engine.schema.json",
+  "schema_ref": "schemas/engine.schema.json",
   "engine_id": "workspace",
   "version": "1.0.0",
   "purpose": "Coordinate workspace records without owning external source content",

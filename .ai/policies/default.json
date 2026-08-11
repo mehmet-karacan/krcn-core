@@ -1,5 +1,5 @@
 {
-  "schema_ref": "../../schemas/default-policy.schema.json",
+  "schema_ref": "schemas/default-policy.schema.json",
   "policy_id": "default",
   "version": "1.0.0",
   "network": {

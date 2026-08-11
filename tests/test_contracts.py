@@ -64,7 +64,7 @@ class PackageOneContractTests(unittest.TestCase):
                 self.assertIsInstance(payload, dict)
                 schema_ref = payload.get("schema_ref")
                 if schema_ref:
-                    resolved = (document.parent / schema_ref).resolve()
+                    resolved = (PROPOSED_ROOT / schema_ref).resolve()
                     self.assertTrue(resolved.is_file(), document)
 
     def test_schema_identifiers_use_krcn_namespace(self) -> None:

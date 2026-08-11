@@ -12,6 +12,18 @@ When a user describes an objective in natural language, the active CLI or AI mus
 4. Inspect ownership boundaries before any mutation.
 5. Verify the result and record evidence, changes, and preserved data areas.
 
+## Context bootstrap
+
+This file is the canonical behavioral instruction source for repository agents. Client-specific files must import or point to it instead of copying its rules.
+
+At the start of each task:
+
+1. Load `.ai/repository-context.json`.
+2. Follow its `bootstrap.read_order` entries that are relevant to the request.
+3. Load `.ai/current-work.json` to determine the active plan, current status, and next verification gate.
+4. Treat referenced plans and progress records as context, not as permission to mutate user data.
+5. Use `python tools/show_context.py --format json` when a machine-readable resolved summary is useful.
+
 ## Language policy
 
 - AI-facing instructions, schemas, policies, specifications, tool definitions, code, and technical metadata may be written in English.
@@ -54,3 +66,10 @@ Before starting work, inspect repository state, relevant manifests, and existing
 - `docs/adr/`: Turkish architectural decision records.
 - `docs/handoffs/`: Turkish task/session handoff summaries.
 - `.ai/`: English machine-readable schemas, policies, and executable task definitions.
+
+## Client adapters
+
+- Codex reads this `AGENTS.md` directly.
+- Claude Code reads `CLAUDE.md`, which imports this file and `AI-CONTEXT.md`.
+- Other AI clients and plugins start with `AI-CONTEXT.md` or `.ai/repository-context.json`.
+- Client adapters must remain thin. Product rules, ownership boundaries, and current work state must not be duplicated in provider-specific files.
