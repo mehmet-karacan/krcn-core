@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:semantic-query:1",
+  "title": "KRCN Core provider-gated semantic query",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_ref", "schema_version", "query_id", "text", "provider", "remote", "session_id", "limit", "minimum_score", "include_unavailable"],
+  "properties": {
+    "schema_ref": { "const": "schemas/semantic-query.schema.json" },
+    "schema_version": { "const": 1 },
+    "query_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "text": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "provider": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "remote": { "type": "boolean" },
+    "session_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
+    "limit": { "type": "integer", "minimum": 1, "maximum": 100 },
+    "minimum_score": { "type": "number", "minimum": 0, "maximum": 1 },
+    "include_unavailable": { "type": "boolean" }
+  }
+}

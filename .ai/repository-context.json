@@ -41,6 +41,8 @@
     "information_relation_schema": "schemas/information-relation.schema.json",
     "dependency_query_schema": "schemas/dependency-query.schema.json",
     "dependency_result_schema": "schemas/dependency-result.schema.json",
+    "semantic_query_schema": "schemas/semantic-query.schema.json",
+    "semantic_result_schema": "schemas/semantic-result.schema.json",
     "release_manifest_schema": "schemas/release-manifest.schema.json",
     "installation_state_schema": "schemas/installation-state.schema.json",
     "installation_inspection_schema": "schemas/installation-inspection.schema.json",

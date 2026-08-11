@@ -38,11 +38,12 @@
     "docs/progress/PHASE-4-INFORMATION-RECORDS.md",
     "docs/progress/PHASE-4-KNOWLEDGE-CATALOG.md",
     "docs/progress/PHASE-4-EXACT-RETRIEVAL.md",
-    "docs/progress/PHASE-4-DEPENDENCY-RETRIEVAL.md"
+    "docs/progress/PHASE-4-DEPENDENCY-RETRIEVAL.md",
+    "docs/progress/PHASE-4-SEMANTIC-RETRIEVAL.md"
   ],
   "next_actions": [
-    "place semantic retrieval behind the existing provider gate",
-    "preserve an offline deterministic fallback without implicit remote access"
+    "build deterministic evidence-bounded context packages",
+    "enforce byte, item, authority, mandatory-context, and truncation budgets"
   ],
   "baseline_commit": "6005611",
   "approval_gates": {
