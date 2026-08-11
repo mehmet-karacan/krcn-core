@@ -21,7 +21,7 @@ Git'ten gelen yeni core sürümünde aşağıdaki işlemler uygulanır:
 
 ## Güncel geliştirme durumu
 
-Faz 1 tamamlandı. Repository foundation, sahiplik sınırları, ortak AI context, modüler CLI baseline ve güvenlik kapıları çalışır durumdadır. Faz 2 kapsamında yerel çalışma alanı ve entegrasyon modeli geliştirilmektedir. Yerel referans kaynaklarındaki kullanıcı verileri içeri alınmamıştır.
+Faz 1 ve Faz 2 tamamlandı. Repository foundation, sahiplik sınırları, ortak AI context, modüler CLI baseline, yerel çalışma alanı, salt okunur onboarding ve discovery, revision-aware rescan, entegrasyon metadata sınırı ve ortak istemci servisleri çalışır durumdadır. Yerel referans kaynaklarındaki kullanıcı verileri içeri alınmamıştır.
 
 Kök çalışma kuralları için `AGENTS.md`, araçtan bağımsız başlangıç bağlamı için `AI-CONTEXT.md` dosyasını okuyun. Codex doğrudan `AGENTS.md` kullanır. Claude Code için `CLAUDE.md` aynı ortak kaynakları içe aktarır. Diğer istemciler ve plugin'ler `.ai/repository-context.json` manifestini okuyabilir.
 

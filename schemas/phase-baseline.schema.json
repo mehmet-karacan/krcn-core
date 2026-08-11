@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:phase-baseline:1",
+  "title": "KRCN Core completed phase baseline",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "baseline_id",
+    "phase_id",
+    "status",
+    "completed_steps",
+    "capabilities",
+    "safe_operations",
+    "guarantees",
+    "verification",
+    "next_phase"
+  ],
+  "properties": {
+    "schema_ref": { "const": "schemas/phase-baseline.schema.json" },
+    "schema_version": { "const": 1 },
+    "baseline_id": { "const": "phase-2-local-workspace" },
+    "phase_id": { "const": "phase-2" },
+    "status": { "const": "ready" },
+    "completed_steps": { "const": 10 },
+    "capabilities": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "local-record-store",
+          "read-only-onboarding",
+          "read-only-discovery",
+          "capability-policy-gate",
+          "secret-safe-integration-metadata",
+          "revision-aware-rescan",
+          "transport-neutral-client-services"
+        ]
+      }
+    },
+    "safe_operations": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "project.list",
+          "project.inspect",
+          "project.onboard",
+          "project.rescan"
+        ]
+      }
+    },
+    "guarantees": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_content_copied",
+        "source_content_mutated",
+        "local_data_tracked",
+        "implicit_network_access",
+        "literal_secrets_stored",
+        "user_policy_preserved"
+      ],
+      "properties": {
+        "source_content_copied": { "const": false },
+        "source_content_mutated": { "const": false },
+        "local_data_tracked": { "const": false },
+        "implicit_network_access": { "const": false },
+        "literal_secrets_stored": { "const": false },
+        "user_policy_preserved": { "const": true }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hermetic_tests",
+        "doctor",
+        "offline_install",
+        "clean_workspace",
+        "existing_workspace"
+      ],
+      "properties": {
+        "hermetic_tests": { "const": "passed" },
+        "doctor": { "const": "passed" },
+        "offline_install": { "const": "passed" },
+        "clean_workspace": { "const": "passed" },
+        "existing_workspace": { "const": "passed" }
+      }
+    },
+    "next_phase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phase_id", "contract_ref", "implementation_started"],
+      "properties": {
+        "phase_id": { "const": "phase-3" },
+        "contract_ref": { "const": "docs/specifications/PHASE-3-MERGE-BOUNDARY.md" },
+        "implementation_started": { "const": false }
+      }
+    }
+  }
+}

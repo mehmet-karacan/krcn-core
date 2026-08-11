@@ -1,0 +1,43 @@
+{
+  "schema_ref": "schemas/phase-baseline.schema.json",
+  "schema_version": 1,
+  "baseline_id": "phase-2-local-workspace",
+  "phase_id": "phase-2",
+  "status": "ready",
+  "completed_steps": 10,
+  "capabilities": [
+    "local-record-store",
+    "read-only-onboarding",
+    "read-only-discovery",
+    "capability-policy-gate",
+    "secret-safe-integration-metadata",
+    "revision-aware-rescan",
+    "transport-neutral-client-services"
+  ],
+  "safe_operations": [
+    "project.list",
+    "project.inspect",
+    "project.onboard",
+    "project.rescan"
+  ],
+  "guarantees": {
+    "source_content_copied": false,
+    "source_content_mutated": false,
+    "local_data_tracked": false,
+    "implicit_network_access": false,
+    "literal_secrets_stored": false,
+    "user_policy_preserved": true
+  },
+  "verification": {
+    "hermetic_tests": "passed",
+    "doctor": "passed",
+    "offline_install": "passed",
+    "clean_workspace": "passed",
+    "existing_workspace": "passed"
+  },
+  "next_phase": {
+    "phase_id": "phase-3",
+    "contract_ref": "docs/specifications/PHASE-3-MERGE-BOUNDARY.md",
+    "implementation_started": false
+  }
+}

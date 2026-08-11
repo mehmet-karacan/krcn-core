@@ -2,7 +2,7 @@
 
 ## Durum
 
-Aktif. Faz 1 güvenlik ve CLI baseline'ı üzerinde Faz 2 uygulaması başlatıldı.
+Tamamlandı. Faz 2 baseline'ı `.ai/phase-2-baseline.json`, kapanış kanıtı `docs/progress/PHASE-2-COMPLETION.md` içinde tutulur.
 
 ## Amaç
 

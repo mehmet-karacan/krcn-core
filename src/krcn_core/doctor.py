@@ -1,4 +1,4 @@
-"""Repository health checks for the Phase 1 KRCN Core baseline."""
+"""Offline repository health checks for completed KRCN Core baselines."""
 
 from __future__ import annotations
 
@@ -107,6 +107,21 @@ def run_doctor(repo_root: Path) -> tuple[DoctorCheck, ...]:
             "phase-one-baseline",
             phase_errors,
             "Phase 1 baseline is complete and ready",
+        )
+    )
+    phase_two = load_json(repo_root / ".ai" / "phase-2-baseline.json")
+    phase_two_errors = []
+    if phase_two.get("status") != "ready":
+        phase_two_errors.append("Phase 2 baseline state")
+    if phase_two.get("completed_steps") != 10:
+        phase_two_errors.append("Phase 2 completed steps")
+    if not (repo_root / "docs" / "progress" / "PHASE-2-COMPLETION.md").is_file():
+        phase_two_errors.append("Phase 2 completion evidence")
+    checks.append(
+        _check(
+            "phase-two-baseline",
+            phase_two_errors,
+            "Phase 2 local workspace baseline is complete and ready",
         )
     )
     return tuple(checks)

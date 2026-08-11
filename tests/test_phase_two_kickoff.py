@@ -9,12 +9,12 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class PhaseTwoKickoffTests(unittest.TestCase):
-    def test_current_work_points_to_active_phase_two_plan(self) -> None:
+    def test_current_work_preserves_the_completed_phase_two_plan(self) -> None:
         current = json.loads(
             (REPO_ROOT / ".ai" / "current-work.json").read_text(encoding="utf-8")
         )
         self.assertEqual("phase-2", current["phase_id"])
-        self.assertEqual("active", current["status"])
+        self.assertEqual("completed", current["status"])
         self.assertEqual(
             "docs/plans/PLAN-003-YEREL-CALISMA-ALANI-VE-ENTEGRASYON.md",
             current["plan_ref"],

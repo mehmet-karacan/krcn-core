@@ -3,7 +3,7 @@
   "schema_version": 1,
   "phase_id": "phase-2",
   "workstream_id": "local-workspace-and-integrations",
-  "status": "active",
+  "status": "completed",
   "goal": "Implement local workspaces and capability-gated integrations without copying or mutating source content",
   "plan_ref": "docs/plans/PLAN-003-YEREL-CALISMA-ALANI-VE-ENTEGRASYON.md",
   "progress_refs": [
@@ -21,13 +21,13 @@
     "docs/progress/PHASE-2-INTEGRATION-METADATA.md",
     "docs/progress/PHASE-2-RESCAN.md",
     "docs/progress/PHASE-2-CLIENT-SERVICES.md",
-    "docs/progress/PHASE-2-INTEGRATION-TESTS.md"
+    "docs/progress/PHASE-2-INTEGRATION-TESTS.md",
+    "docs/progress/PHASE-2-COMPLETION.md"
   ],
   "next_actions": [
-    "verify clean-install and existing-workspace compatibility",
-    "create the Phase 2 baseline and record the Phase 3 merge-into boundary"
+    "start Phase 3 with read-only installation inspection and release manifest contracts"
   ],
-  "baseline_commit": "7c4e77d",
+  "baseline_commit": "f662204",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

@@ -30,6 +30,9 @@ REQUIRED_CANONICAL_KEYS = {
     "rescan_plan_schema",
     "application_request_schema",
     "application_response_schema",
+    "phase_baseline_schema",
+    "phase_two_baseline",
+    "phase_three_merge_boundary",
     "policy_layers",
     "cli_inventory",
     "cli_baseline",
@@ -37,7 +40,14 @@ REQUIRED_CANONICAL_KEYS = {
     "import_policy",
 }
 
-REQUIRED_CLIENTS = {"codex", "claude-code", "generic-ai", "plugin"}
+REQUIRED_CLIENTS = {
+    "codex",
+    "claude-code",
+    "generic-ai",
+    "plugin",
+    "sdk",
+    "mcp",
+}
 
 ALLOWED_ADAPTER_MODES = {"native", "import", "document", "manifest"}
 

@@ -16,7 +16,7 @@ from krcn_core.doctor import run_doctor  # noqa: E402
 
 
 class DoctorTests(unittest.TestCase):
-    def test_all_phase_one_health_checks_pass(self) -> None:
+    def test_all_completed_phase_health_checks_pass(self) -> None:
         checks = run_doctor(REPO_ROOT)
         self.assertEqual(
             {
@@ -27,6 +27,7 @@ class DoctorTests(unittest.TestCase):
                 "offline-provider",
                 "tracked-local-data",
                 "phase-one-baseline",
+                "phase-two-baseline",
             },
             {item.check_id for item in checks},
         )
