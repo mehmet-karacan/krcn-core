@@ -17,13 +17,13 @@
     "docs/progress/PHASE-2-LOCAL-STORE.md",
     "docs/progress/PHASE-2-READ-ONLY-ONBOARDING.md",
     "docs/progress/PHASE-2-READ-ONLY-DISCOVERY.md",
-    "docs/progress/PHASE-2-ADAPTER-GATE.md"
+    "docs/progress/PHASE-2-ADAPTER-GATE.md",
+    "docs/progress/PHASE-2-INTEGRATION-METADATA.md"
   ],
   "next_actions": [
-    "define integration metadata with secret references and no literal credentials",
     "implement revision-aware rescan and change detection"
   ],
-  "baseline_commit": "f254d39",
+  "baseline_commit": "8da6816",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

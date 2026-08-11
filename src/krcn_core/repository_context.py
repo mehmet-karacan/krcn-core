@@ -25,6 +25,7 @@ REQUIRED_CANONICAL_KEYS = {
     "discovery_result_schema",
     "adapter_schema",
     "adapter_operation_schema",
+    "integration_schema",
     "policy_layers",
     "cli_inventory",
     "cli_baseline",

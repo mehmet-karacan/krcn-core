@@ -17,6 +17,7 @@ from .mutation_gate import (
     OwnershipResolver,
     plan_mutation,
 )
+from .integrations import parse_integration_metadata
 from .source_bindings import parse_source_binding
 
 
@@ -25,6 +26,7 @@ COLLECTION_IDENTITIES = {
     "workspaces": "workspace_id",
     "projects": "project_id",
     "source-bindings": "binding_id",
+    "integrations": "integration_id",
 }
 
 
@@ -101,6 +103,8 @@ def _validate_record_identity(
         raise LocalStoreError("record id does not match payload identity")
     if record_type == "source-bindings":
         parse_source_binding(payload)
+    if record_type == "integrations":
+        parse_integration_metadata(payload)
 
 
 class LocalWorkspaceStore:
