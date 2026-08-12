@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "benchmark": "hybrid-retrieval-synthetic",
+  "measurement_scope": "local reference environment",
+  "command": "python tools/benchmark_hybrid_retrieval.py --sizes 100 1000 --queries 20",
+  "vector_dimensions": 192,
+  "quality_thresholds": {
+    "minimum_recall_at_five": 1.0,
+    "minimum_mean_reciprocal_rank": 1.0
+  },
+  "performance_thresholds_ms": {
+    "maximum_1000_record_build": 5000,
+    "maximum_1000_record_query_p95": 1000
+  },
+  "observed": [
+    {
+      "catalog_entries": 101,
+      "index_build_ms": 64.186,
+      "query_median_ms": 10.674,
+      "query_p95_ms": 42.05,
+      "query_count": 20
+    },
+    {
+      "catalog_entries": 1001,
+      "index_build_ms": 506.874,
+      "query_median_ms": 106.25,
+      "query_p95_ms": 161.665,
+      "query_count": 20
+    }
+  ],
+  "decision": "SQLite FTS5 and deterministic hashed vectors are accepted for the Phase 8 local reference index",
+  "next_scale_trigger": "Add vector candidate narrowing before catalogs regularly exceed the measured 1000-record reference size"
+}

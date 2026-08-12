@@ -30,6 +30,12 @@ from .exact_retrieval import parse_exact_retrieval_query, retrieve_exact
 from .foundation import load_json
 from .information_records import parse_information_record, record_is_stale
 from .integrations import parse_integration_metadata
+from .hybrid_retrieval import (
+    apply_hybrid_index,
+    parse_hybrid_query,
+    prepare_hybrid_index,
+    retrieve_hybrid,
+)
 from .intent_routing import project_learning_route
 from .installation import (
     inspect_installation,
@@ -145,6 +151,8 @@ OPERATIONS = {
     "knowledge.search-exact",
     "knowledge.search-dependencies",
     "knowledge.search-semantic",
+    "knowledge.index-hybrid",
+    "knowledge.search-hybrid",
     "context.build",
     "memory.propose",
     "memory.review",
@@ -371,6 +379,8 @@ class KrcnApplicationService:
             "knowledge.search-exact": self._search_exact,
             "knowledge.search-dependencies": self._search_dependencies,
             "knowledge.search-semantic": self._search_semantic,
+            "knowledge.index-hybrid": self._index_hybrid,
+            "knowledge.search-hybrid": self._search_hybrid,
             "context.build": self._build_context,
             "memory.propose": self._propose_memory,
             "memory.review": self._review_memory,
@@ -1352,6 +1362,55 @@ class KrcnApplicationService:
             provider_request,
             approval=approval,
             remote_scorer=self._semantic_remote_scorers.get(query.provider),
+        )
+        return "ok", {"result": result.as_dict()}
+
+    def _index_hybrid(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required=set())
+        catalog = self._information_catalog()
+        plan = prepare_hybrid_index(
+            self._store.data_root,
+            catalog,
+            self._ownership,
+        )
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        if request.expected_plan_id != plan.plan_id:
+            raise ApplicationServiceError(
+                "apply requires the exact plan id returned by a prior dry-run"
+            )
+        authorization = authorize_mutation(
+            plan.mutation,
+            dry_run=DryRunEvidence(plan.mutation.plan_id, verified=True),
+        )
+        result = apply_hybrid_index(
+            self._store.data_root,
+            catalog,
+            plan,
+            authorization,
+        )
+        return "applied", {
+            "plan": plan.public_summary(),
+            "result": result,
+            "applied": True,
+        }
+
+    def _search_hybrid(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"query"})
+        if request.apply:
+            raise ApplicationServiceError("read operation cannot be applied")
+        query = parse_hybrid_query(_object_argument(request.arguments, "query"))
+        result = retrieve_hybrid(
+            self._store.data_root,
+            self._information_catalog(),
+            self._information_relations(),
+            query,
         )
         return "ok", {"result": result.as_dict()}
 

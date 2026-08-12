@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "evaluation_id": "phase-eight-hybrid",
+  "minimum_recall_at_five": 1.0,
+  "minimum_mrr": 1.0,
+  "cases": [
+    {
+      "case_id": "database-policy-exact",
+      "query_text": "database read operations",
+      "relevant_record_ids": ["database-read-rule"],
+      "seed_record_ids": []
+    },
+    {
+      "case_id": "database-policy-typo",
+      "query_text": "databse read operatons",
+      "relevant_record_ids": ["database-read-rule"],
+      "seed_record_ids": []
+    },
+    {
+      "case_id": "deployment-rollback",
+      "query_text": "verified rollback checkpoint",
+      "relevant_record_ids": ["deployment-guide"],
+      "seed_record_ids": []
+    },
+    {
+      "case_id": "dependency-recall",
+      "query_text": "database",
+      "relevant_record_ids": ["database-read-rule", "deployment-guide"],
+      "seed_record_ids": ["database-read-rule"]
+    }
+  ]
+}

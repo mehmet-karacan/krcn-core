@@ -195,6 +195,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run provider-gated semantic retrieval from a JSON request",
     )
     _add_phase_four_options(semantic, approval=True)
+    hybrid_index = knowledge_commands.add_parser(
+        "index",
+        help="Plan or build the local SQLite hybrid retrieval index",
+    )
+    _add_service_options(hybrid_index, mutation=True)
+    hybrid = knowledge_commands.add_parser(
+        "hybrid",
+        help="Run explainable local hybrid retrieval from a JSON request",
+    )
+    _add_phase_four_options(hybrid)
     context_package = subparsers.add_parser(
         "context-package",
         help="Build an evidence-bounded context package",
@@ -656,6 +666,12 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
             arguments: dict[str, object] = {}
         elif args.knowledge_command in {"exact", "dependencies", "semantic"}:
             operation = f"knowledge.search-{args.knowledge_command}"
+            arguments = _load_phase_four_arguments(args.request_file)
+        elif args.knowledge_command == "index":
+            operation = "knowledge.index-hybrid"
+            arguments = {}
+        elif args.knowledge_command == "hybrid":
+            operation = "knowledge.search-hybrid"
             arguments = _load_phase_four_arguments(args.request_file)
         else:
             raise ApplicationServiceError("knowledge command is required")

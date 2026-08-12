@@ -28,6 +28,8 @@
         "knowledge.search-exact",
         "knowledge.search-dependencies",
         "knowledge.search-semantic",
+        "knowledge.index-hybrid",
+        "knowledge.search-hybrid",
         "context.build",
         "memory.propose",
         "memory.review",

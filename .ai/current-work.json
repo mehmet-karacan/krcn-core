@@ -83,11 +83,12 @@
     "docs/progress/PHASE-8-PROJECT-HOME-CLIENT-INTEGRATION.md",
     "docs/progress/PHASE-8-PROJECT-HOME-PORTABILITY.md",
     "docs/progress/PHASE-8-DATA-INTEGRITY.md",
-    "docs/progress/PHASE-8-RUNTIME-INTEGRATION.md"
+    "docs/progress/PHASE-8-RUNTIME-INTEGRATION.md",
+    "docs/progress/PHASE-8-HYBRID-RETRIEVAL.md"
   ],
   "next_actions": [
-    "build a local SQLite FTS and deterministic vector index",
-    "evaluate exact dependency semantic and hybrid retrieval on one shared dataset"
+    "add Linux CI and a versioned coverage baseline",
+    "add runtime doctor checks readable orchestration timeline and end-to-end quickstart"
   ],
   "baseline_commit": "2ab1cb1",
   "approval_gates": {

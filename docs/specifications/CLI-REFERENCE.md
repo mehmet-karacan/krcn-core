@@ -143,3 +143,9 @@ The verification tool fails on secrets, machine-specific paths, sensitive connec
 `krcn integration select` komutu kayıtlı bir integration ve source binding üzerinden yalnız policy tarafından izin verilen `SELECT` sorgularını çalıştırır. `--integration-id`, `--binding-id` ve `--statement` zorunludur; `--maximum-rows` public yanıta alınmayacak sonuç satırları için üst sınırdır.
 
 Bağlantı değeri komut satırına yazılmaz. Örneğin `secret://database/reporting` kaydı aktif proje evindeki `secrets/database/reporting.secret` dosyasına karşılık gelir. Dosya bir SQLite `file:` URI'si ve `mode=ro` parametresi taşımalıdır. Secret değeri, fiziksel veritabanı yolu ve sorgu satırları çıktıya yazılmaz.
+
+## Yerel hibrit bilgi arama
+
+`krcn knowledge index` önce yeniden üretilebilir SQLite indeks planını gösterir. `--apply --expected-plan <plan-id>` aynı planı `derived` alana uygular. Bu işlem kullanıcı verisini değiştirmez ve harici proje dosyalarını kopyalamaz.
+
+`krcn knowledge hybrid --request-file <json>` exact, FTS, yerel vektör, dependency, authority ve availability sinyallerini ortak sıralamada çalıştırır. JSON dosyasındaki `query`, `schemas/hybrid-retrieval-query.schema.json` sözleşmesine uyar. Arama yapılmadan önce indeksin güncel katalog için oluşturulmuş olması gerekir.
