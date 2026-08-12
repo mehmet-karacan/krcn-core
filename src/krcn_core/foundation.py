@@ -312,6 +312,12 @@ def validate_foundation(repo_root: Path) -> list[str]:
             errors.append(str(exc))
             continue
         errors.extend(validator(data))
+    try:
+        from .embedding_models import load_embedding_model_catalog
+
+        load_embedding_model_catalog(repo_root)
+    except (ImportError, ValueError) as exc:
+        errors.append(f"embedding model catalog is invalid: {exc}")
     return errors
 
 

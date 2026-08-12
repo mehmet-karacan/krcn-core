@@ -1,7 +1,7 @@
 {
   "schema_ref": "schemas/capability-registry.schema.json",
   "schema_version": 1,
-  "revision": 2,
+  "revision": 3,
   "records": [
     {
       "record_id": "planner-agent",
@@ -249,6 +249,101 @@
       "approval_triggers": [],
       "status": "active",
       "record_digest": "67ecec3b0944fb0e7a3d174cf5585b7692912347a99eb21fdea5f790058553a7"
+    },
+    {
+      "record_id": "openai-compatible-embedding-adapter",
+      "kind": "adapter",
+      "role": null,
+      "revision": 1,
+      "capabilities": [
+        "embedding.generate"
+      ],
+      "side_effects": [
+        "network",
+        "read"
+      ],
+      "read_ownership": [
+        "secrets",
+        "user-data"
+      ],
+      "write_ownership": [],
+      "provider_mode": "remote",
+      "approval_triggers": [
+        "remote-provider-use"
+      ],
+      "status": "active",
+      "record_digest": "54933e22a13f4d6196213f59ca38219983e3fcf292db42752bc9fe0f29e4b162"
+    },
+    {
+      "record_id": "qwen3-embedding-model",
+      "kind": "model",
+      "role": null,
+      "revision": 1,
+      "capabilities": [
+        "embedding.generate",
+        "embedding.multilingual",
+        "embedding.code-retrieval"
+      ],
+      "side_effects": [
+        "network",
+        "read"
+      ],
+      "read_ownership": [
+        "user-data"
+      ],
+      "write_ownership": [],
+      "provider_mode": "remote",
+      "approval_triggers": [
+        "remote-provider-use"
+      ],
+      "status": "active",
+      "record_digest": "0cfeaea879cad80b6351e71e1d3007d7de1c9ba0d683739babfc8e8f5d83cd10"
+    },
+    {
+      "record_id": "bge-m3-embedding-model",
+      "kind": "model",
+      "role": null,
+      "revision": 1,
+      "capabilities": [
+        "embedding.generate",
+        "embedding.multilingual",
+        "embedding.hybrid-retrieval"
+      ],
+      "side_effects": [
+        "network",
+        "read"
+      ],
+      "read_ownership": [
+        "user-data"
+      ],
+      "write_ownership": [],
+      "provider_mode": "remote",
+      "approval_triggers": [
+        "remote-provider-use"
+      ],
+      "status": "active",
+      "record_digest": "5f67227b38fdf12939cac655eebb8667ab55ea0c48ba8e42900b178e2f8e3b8a"
+    },
+    {
+      "record_id": "opencode-secret-provider",
+      "kind": "secret-provider",
+      "role": null,
+      "revision": 1,
+      "capabilities": [
+        "secret.resolve"
+      ],
+      "side_effects": [
+        "read"
+      ],
+      "read_ownership": [
+        "secrets",
+        "unmanaged"
+      ],
+      "write_ownership": [],
+      "provider_mode": "local",
+      "approval_triggers": [],
+      "status": "active",
+      "record_digest": "69f5f17143eb6374bf9c869808bfee59a298fb915eaee84f3d9440ece48cee39"
     }
   ]
 }

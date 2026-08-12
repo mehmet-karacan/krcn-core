@@ -118,6 +118,9 @@
     "cli_inventory": ".ai/legacy-cli-inventory.json",
     "cli_baseline": ".ai/cli-baseline.json",
     "provider_policy": "config/provider-policy.json",
+    "embedding_model_catalog": "config/embedding-models.json",
+    "embedding_model_catalog_schema": "schemas/embedding-model-catalog.schema.json",
+    "remote_embedding_providers": "docs/specifications/REMOTE-EMBEDDING-PROVIDERS.md",
     "import_policy": "config/import-policy.json"
   },
   "bootstrap": {

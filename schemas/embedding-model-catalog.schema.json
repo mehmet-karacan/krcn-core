@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:embedding-model-catalog:1",
+  "title": "KRCN embedding model catalog",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "selection_id",
+    "default_profile_id",
+    "fallback_profile_ids",
+    "offline_fallback_id",
+    "profiles"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/embedding-model-catalog.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "selection_id": {
+      "$ref": "#/$defs/id"
+    },
+    "default_profile_id": {
+      "$ref": "#/$defs/id"
+    },
+    "fallback_profile_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "offline_fallback_id": {
+      "const": "deterministic-hashing"
+    },
+    "profiles": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "profile_id",
+          "provider_id",
+          "model_id",
+          "name",
+          "role",
+          "priority",
+          "vector_dimensions",
+          "minimum_vector_dimensions",
+          "max_input_tokens",
+          "multilingual",
+          "instruction_aware",
+          "adjustable_dimensions",
+          "retrieval_modes",
+          "status"
+        ],
+        "properties": {
+          "profile_id": {
+            "$ref": "#/$defs/id"
+          },
+          "provider_id": {
+            "$ref": "#/$defs/id"
+          },
+          "model_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "role": {
+            "enum": [
+              "primary",
+              "fallback"
+            ]
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "vector_dimensions": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 16384
+          },
+          "minimum_vector_dimensions": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 16384
+          },
+          "max_input_tokens": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "multilingual": {
+            "type": "boolean"
+          },
+          "instruction_aware": {
+            "type": "boolean"
+          },
+          "adjustable_dimensions": {
+            "type": "boolean"
+          },
+          "retrieval_modes": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "dense",
+                "sparse",
+                "multi-vector"
+              ]
+            }
+          },
+          "status": {
+            "enum": [
+              "active",
+              "disabled"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    }
+  }
+}

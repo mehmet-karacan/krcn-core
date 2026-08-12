@@ -30,7 +30,7 @@ class CapabilityRegistryTests(unittest.TestCase):
         self.registry = load_capability_registry(REPO_ROOT)
 
     def test_registry_is_revision_aware_and_covers_every_kind(self) -> None:
-        self.assertEqual(2, self.registry.revision)
+        self.assertEqual(3, self.registry.revision)
         self.assertEqual(
             {"adapter", "agent", "model", "secret-provider", "skill", "tool"},
             {item.kind for item in self.registry.records},

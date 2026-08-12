@@ -48,7 +48,7 @@
       },
       "additionalProperties": {
         "type": "string",
-        "pattern": "^(?:secret|keyring|env)://[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        "pattern": "^(?:secret|keyring|env|opencode)://[A-Za-z0-9][A-Za-z0-9._/-]*$"
       }
     },
     "policy_refs": {

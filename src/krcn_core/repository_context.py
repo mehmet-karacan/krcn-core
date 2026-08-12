@@ -64,6 +64,9 @@ REQUIRED_CANONICAL_KEYS = {
     "cli_inventory",
     "cli_baseline",
     "provider_policy",
+    "embedding_model_catalog",
+    "embedding_model_catalog_schema",
+    "remote_embedding_providers",
     "import_policy",
 }
 

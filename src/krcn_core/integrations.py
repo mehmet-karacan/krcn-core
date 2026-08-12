@@ -9,7 +9,7 @@ from typing import Mapping
 
 IDENTIFIER = re.compile(r"^[a-z][a-z0-9-]*$")
 SECRET_REFERENCE = re.compile(
-    r"^(?:secret|keyring|env)://[A-Za-z0-9][A-Za-z0-9._/-]*$"
+    r"^(?:secret|keyring|env|opencode)://[A-Za-z0-9][A-Za-z0-9._/-]*$"
 )
 SENSITIVE_KEY = re.compile(
     r"(?:password|passwd|token|api[-_]?key|secret|credential|private[-_]?key)",

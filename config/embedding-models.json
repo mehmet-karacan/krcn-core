@@ -1,0 +1,50 @@
+{
+  "schema_ref": "schemas/embedding-model-catalog.schema.json",
+  "schema_version": 1,
+  "selection_id": "multilingual-code-retrieval-v1",
+  "default_profile_id": "qwen3-embedding-0-6b",
+  "fallback_profile_ids": [
+    "bge-m3"
+  ],
+  "offline_fallback_id": "deterministic-hashing",
+  "profiles": [
+    {
+      "profile_id": "qwen3-embedding-0-6b",
+      "provider_id": "qwen3-embedding",
+      "model_id": "openai/Qwen/Qwen3-Embedding-0.6B",
+      "name": "Qwen3 Embedding 0.6B",
+      "role": "primary",
+      "priority": 1,
+      "vector_dimensions": 1024,
+      "minimum_vector_dimensions": 32,
+      "max_input_tokens": 32768,
+      "multilingual": true,
+      "instruction_aware": true,
+      "adjustable_dimensions": true,
+      "retrieval_modes": [
+        "dense"
+      ],
+      "status": "active"
+    },
+    {
+      "profile_id": "bge-m3",
+      "provider_id": "bge-m3-embedding",
+      "model_id": "openai/BAAI/bge-m3",
+      "name": "BGE-M3",
+      "role": "fallback",
+      "priority": 2,
+      "vector_dimensions": 1024,
+      "minimum_vector_dimensions": 1024,
+      "max_input_tokens": 8192,
+      "multilingual": true,
+      "instruction_aware": false,
+      "adjustable_dimensions": false,
+      "retrieval_modes": [
+        "dense",
+        "sparse",
+        "multi-vector"
+      ],
+      "status": "active"
+    }
+  ]
+}

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
@@ -69,6 +70,52 @@ class LocalFileSecretProvider:
             raise SecretProviderError("referenced secret is empty")
         return SecretLease(
             "secret",
+            value_bytes,
+            hashlib.sha256(value_bytes).hexdigest(),
+        )
+
+
+class OpenCodeSecretProvider:
+    """Resolve one explicit OpenCode provider credential without copying it."""
+
+    def __init__(self, config_path: Path) -> None:
+        if not config_path.is_absolute():
+            raise SecretProviderError("OpenCode config path must be absolute")
+        if config_path.is_symlink() or not config_path.is_file():
+            raise SecretProviderError("OpenCode config must be a regular file")
+        if config_path.stat().st_size > MAX_SECRET_BYTES:
+            raise SecretProviderError("OpenCode config exceeds size limit")
+        self._config_path = config_path.resolve()
+
+    def resolve(self, reference: str) -> SecretLease:
+        try:
+            validated = validate_secret_reference(reference)
+        except ValueError as exc:
+            raise SecretProviderError(str(exc)) from exc
+        scheme, value = validated.split("://", 1)
+        if scheme != "opencode":
+            raise SecretProviderError("OpenCode provider requires opencode scheme")
+        parts = PurePosixPath(value).parts
+        if len(parts) != 2 or parts[1] != "api-key":
+            raise SecretProviderError("OpenCode secret reference is invalid")
+        provider_id = parts[0]
+        try:
+            payload = json.loads(
+                self._config_path.read_text(encoding="utf-8-sig")
+            )
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            raise SecretProviderError("OpenCode config is invalid") from exc
+        try:
+            api_key = payload["provider"][provider_id]["options"]["apiKey"]
+        except (KeyError, TypeError) as exc:
+            raise SecretProviderError("OpenCode provider credential is unavailable") from exc
+        if not isinstance(api_key, str) or not api_key:
+            raise SecretProviderError("OpenCode provider credential is unavailable")
+        value_bytes = api_key.encode("utf-8")
+        if len(value_bytes) > MAX_SECRET_BYTES:
+            raise SecretProviderError("OpenCode provider credential exceeds size limit")
+        return SecretLease(
+            "opencode",
             value_bytes,
             hashlib.sha256(value_bytes).hexdigest(),
         )
