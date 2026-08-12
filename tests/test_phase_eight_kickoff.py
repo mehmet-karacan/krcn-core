@@ -16,7 +16,7 @@ class PhaseEightKickoffTests(unittest.TestCase):
     def test_phase_eight_started_with_explicit_user_approval(self) -> None:
         current = load_json(REPO_ROOT / ".ai" / "current-work.json")
         self.assertEqual("phase-8", current["phase_id"])
-        self.assertEqual("active", current["status"])
+        self.assertIn(current["status"], {"active", "completed"})
         self.assertEqual("2ab1cb1", current["baseline_commit"])
         self.assertEqual(
             "docs/plans/PLAN-009-PROJE-BAZLI-KRCN-HOME-VE-MIMARI-OLGUNLASTIRMA.md",

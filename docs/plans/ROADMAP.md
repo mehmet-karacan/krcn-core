@@ -16,7 +16,7 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
 - Faz 5 tamamlandı.
 - Faz 6 tamamlandı.
 - Faz 7 tamamlandı.
-- Faz 8 başlatıldı. Proje bazlı KRCN_HOME ve mimari olgunlaştırma uygulanıyor.
+- Faz 8 tamamlandı. Proje bazlı KRCN_HOME ve üretim olgunlaştırma baseline'ı hazır.
 
 ## Temel kullanım modeli
 

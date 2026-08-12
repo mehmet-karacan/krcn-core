@@ -3,7 +3,7 @@
   "schema_version": 1,
   "phase_id": "phase-8",
   "workstream_id": "project-local-home-production-hardening",
-  "status": "active",
+  "status": "completed",
   "goal": "Make project-root .krcn the safe default for project-scoped KRCN data and harden the completed architecture for production use",
   "plan_ref": "docs/plans/PLAN-009-PROJE-BAZLI-KRCN-HOME-VE-MIMARI-OLGUNLASTIRMA.md",
   "progress_refs": [
@@ -85,11 +85,12 @@
     "docs/progress/PHASE-8-DATA-INTEGRITY.md",
     "docs/progress/PHASE-8-RUNTIME-INTEGRATION.md",
     "docs/progress/PHASE-8-HYBRID-RETRIEVAL.md",
-    "docs/progress/PHASE-8-QUALITY-OBSERVABILITY-UX.md"
+    "docs/progress/PHASE-8-QUALITY-OBSERVABILITY-UX.md",
+    "docs/progress/PHASE-8-COMPLETION.md"
   ],
   "next_actions": [
-    "run the complete Phase 8 clean-clone portability policy and client-parity matrix",
-    "publish the Phase 8 baseline and completion record after every gate passes"
+    "keep the Phase 8 baseline in maintenance mode",
+    "require explicit user approval before starting a new phase or expanding authority"
   ],
   "baseline_commit": "2ab1cb1",
   "approval_gates": {

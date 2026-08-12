@@ -4,11 +4,11 @@
   "scope": "src/krcn_core",
   "python_minimum": "3.12",
   "measurement_parent_commit": "50f6e35",
-  "test_count": 462,
+  "test_count": 466,
   "skipped_test_count": 2,
-  "executable_lines": 17635,
-  "covered_lines": 11285,
-  "line_coverage_percent": 63.99,
+  "executable_lines": 17650,
+  "covered_lines": 11297,
+  "line_coverage_percent": 64.01,
   "minimum_line_coverage_percent": 60.0,
   "command": "python tools/measure_coverage.py --minimum 60 --summary-only"
 }

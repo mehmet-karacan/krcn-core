@@ -1,0 +1,67 @@
+{
+  "schema_ref": "schemas/phase-8-baseline.schema.json",
+  "schema_version": 1,
+  "baseline_id": "phase-8-project-home-production-hardening",
+  "phase_id": "phase-8",
+  "status": "ready",
+  "completed_steps": 10,
+  "capabilities": [
+    "research-backed-production-boundary",
+    "project-local-home-resolution",
+    "exact-plan-project-home-initialization",
+    "client-neutral-project-home-integration",
+    "backup-backed-clean-clone-portability",
+    "concurrent-data-integrity-hardening",
+    "capability-bound-runtime-components",
+    "read-only-secret-gated-sqlite-integration",
+    "sqlite-fts-deterministic-vector-rag",
+    "cross-platform-quality-observability-ux"
+  ],
+  "safe_operations": [
+    "project.home.resolve",
+    "project.home.initialize",
+    "project.learn",
+    "portability.migrate-project-home",
+    "portability.restore-project-home",
+    "integration.select-read-only",
+    "knowledge.index-hybrid",
+    "knowledge.search-hybrid",
+    "orchestrator.timeline"
+  ],
+  "guarantees": {
+    "project_local_home_default": true,
+    "custom_local_home_supported": true,
+    "local_data_tracked": false,
+    "external_source_copied": false,
+    "external_source_mutated": false,
+    "database_mutation_effect": false,
+    "secret_value_disclosed": false,
+    "user_policy_preserved": true,
+    "clean_clone_recovery": true,
+    "client_parity": true,
+    "exact_plan_required": true,
+    "offline_by_default": true,
+    "coverage_threshold_enforced": true,
+    "linux_ci": true
+  },
+  "verification": {
+    "hermetic_tests": "passed",
+    "foundation": "passed",
+    "doctor": "passed",
+    "coverage": "passed",
+    "offline_install": "passed",
+    "project_home_matrix": "passed",
+    "portability": "passed",
+    "policy_preservation": "passed",
+    "external_source_no_copy": "passed",
+    "read_only_integration": "passed",
+    "hybrid_retrieval": "passed",
+    "runtime_integrity": "passed",
+    "client_parity": "passed",
+    "clean_clone": "passed"
+  },
+  "maintenance": {
+    "status": "ready",
+    "new_phase_requires_user_approval": true
+  }
+}
