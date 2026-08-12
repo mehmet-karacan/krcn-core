@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:project-home-resolution:1",
+  "title": "KRCN Core project-home resolution",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "source",
+    "status",
+    "target_kind",
+    "requires_user_choice",
+    "requires_initialization",
+    "git_check_required",
+    "choices",
+    "warnings",
+    "path_disclosed"
+  ],
+  "properties": {
+    "schema_ref": { "const": "schemas/project-home-resolution.schema.json" },
+    "schema_version": { "const": 1 },
+    "source": {
+      "enum": ["explicit", "environment", "remembered", "project-default", "user-selected"]
+    },
+    "status": {
+      "enum": ["choice-required", "selected-existing", "selected-new"]
+    },
+    "target_kind": { "enum": ["project-local", "custom"] },
+    "requires_user_choice": { "type": "boolean" },
+    "requires_initialization": { "type": "boolean" },
+    "git_check_required": { "type": "boolean" },
+    "choices": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "enum": ["use-default", "choose-parent", "cancel"] }
+    },
+    "warnings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "local-data-not-in-git",
+          "git-clone-does-not-restore-local-data",
+          "backup-required-for-recovery",
+          "custom-home-outside-project"
+        ]
+      }
+    },
+    "path_disclosed": { "type": "boolean" },
+    "target_path": { "type": "string", "minLength": 1 }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "path_disclosed": { "const": true } } },
+      "then": { "required": ["target_path"] },
+      "else": { "not": { "required": ["target_path"] } }
+    }
+  ]
+}

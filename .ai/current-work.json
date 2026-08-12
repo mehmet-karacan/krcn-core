@@ -77,11 +77,12 @@
     "docs/progress/PHASE-7-COMPLETION.md",
     "docs/progress/PHASE-7-LARGE-PROJECT-DISCOVERY-FIX.md",
     "docs/progress/PHASE-8-KICKOFF.md",
-    "docs/progress/PHASE-8-RESEARCH-EVALUATION.md"
+    "docs/progress/PHASE-8-RESEARCH-EVALUATION.md",
+    "docs/progress/PHASE-8-PROJECT-HOME-RESOLUTION.md"
   ],
   "next_actions": [
-    "implement non-mutating project-local home resolution",
-    "prepare exact-plan initialization and Git exclusion checks"
+    "prepare exact-plan project-home initialization",
+    "implement fail-closed Git tracking and local exclusion checks"
   ],
   "baseline_commit": "2ab1cb1",
   "approval_gates": {
