@@ -2,16 +2,33 @@
 
 Bu akış, bir projeyi dosyalarını kopyalamadan KRCN Core'a tam olarak entegre eder ve yerel bilgi aramasını hazırlar.
 
-## 0. KRCN CLI'ı bir kez kur
+## 0. İlk entegrasyon veya doğrudan kurulum
 
-KRCN Core repository'sinde önce kurulum planını görüntüle, sonra kurulumu uygula:
+KRCN Core repository'sini açan uyumlu bir yapay zekâya bir proje dizini verip `Bu projeyi entegre et` diyebilirsin. Global `krcn` komutu eksikse istemci:
+
+1. İlk entegrasyon isteğini ve proje dizinini bekleyen işlem olarak korur.
+2. Platforma uygun kurulum planını gösterir.
+3. Kurulum için açık onay alır.
+4. CLI'ı kurup doğrular.
+5. Aynı proje entegrasyonu isteğine kaldığı yerden devam eder.
+
+Kurulumu doğrudan yapmak istersen Windows, macOS veya Linux üzerinde şu komutları kullan:
+
+Windows:
 
 ```powershell
 py tools\install_cli.py --plan-only
 py tools\install_cli.py
 ```
 
-Yeni bir terminal açıp `krcn doctor` çalıştır. Kurulum `KRCN_CORE_HOME` ile bu core clone'unu tanır, ancak kullanıcı verisinin yerini belirleyen `KRCN_HOME` değerini değiştirmez. Core güncellendikten sonra aynı kurulum aracını yeniden çalıştır.
+macOS ve Linux:
+
+```bash
+python3 tools/install_cli.py --plan-only
+python3 tools/install_cli.py
+```
+
+Yeni bir terminal açıp `krcn doctor` çalıştır. Windows kurulumu kullanıcı ortamını ve PATH değerini yönetir. macOS ve Linux kurulumu ayrı bir yerel Python ortamı oluşturur ve yalnız KRCN tarafından yönetilen shell profile bloğunu ekler. Her iki durumda da kurulum `KRCN_CORE_HOME` ile bu core clone'unu tanır, ancak kullanıcı verisinin yerini belirleyen `KRCN_HOME` değerini değiştirmez. Core güncellendikten sonra aynı kurulum aracını yeniden çalıştır.
 
 ## 1. Proje dizininde başla
 

@@ -6,15 +6,19 @@ This document lists the KRCN Core command surface in one place so the README can
 
 ## Setup and health check
 
-On Windows, inspect the one-time user installation plan, apply it, open a new terminal, and run the health check:
+On Windows, macOS, or Linux, inspect the one-time user installation plan, apply it, open a new terminal, and run the health check:
 
-```powershell
-py tools\install_cli.py --plan-only
-py tools\install_cli.py
+```text
+Windows:       py tools\install_cli.py --plan-only
+Windows:       py tools\install_cli.py
+macOS/Linux:   python3 tools/install_cli.py --plan-only
+macOS/Linux:   python3 tools/install_cli.py
 krcn doctor
 ```
 
-The installer verifies and installs the wheel without network access, records the approved clone in user-level `KRCN_CORE_HOME`, and leaves `KRCN_HOME` unchanged. Rerun it after an approved Git update. See `docs/specifications/CLI-INSTALLATION.md` for the lifecycle and recovery contract.
+The installer verifies and installs the wheel without network access, records the approved clone in user-level `KRCN_CORE_HOME`, and leaves `KRCN_HOME` unchanged. POSIX platforms use an isolated local Python environment and a managed shell-profile block. Rerun the installer after an approved Git update. See `docs/specifications/CLI-INSTALLATION.md` for the lifecycle and recovery contract.
+
+For a natural-language integration request, a compatible client follows the first-use policy in `config/intent-routing.json`. If the CLI is missing, it preserves the project path and requested operation, presents the installer plan, obtains approval, installs and verifies the command, and resumes the original integration request. Installation, client bootstrap, project-home initialization, and project integration keep their separate approval boundaries.
 
 Run the same health check without installing:
 

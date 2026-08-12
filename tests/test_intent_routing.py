@@ -12,6 +12,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 from krcn_core.application import OPERATIONS  # noqa: E402
 from krcn_core.intent_routing import (  # noqa: E402
     CLIENTS,
+    load_first_use_policy,
     load_intent_routes,
     project_integration_route,
     project_learning_route,
@@ -23,6 +24,15 @@ from krcn_core.project_learning_intent import (  # noqa: E402
 
 
 class IntentRoutingContractTests(unittest.TestCase):
+    def test_first_use_installs_and_resumes_without_losing_the_request(self) -> None:
+        policy = load_first_use_policy(REPO_ROOT)
+        self.assertEqual("tools/install_cli.py", policy.installer_path)
+        self.assertEqual("--plan-only", policy.installer_plan_argument)
+        self.assertTrue(policy.install_approval_required)
+        self.assertTrue(policy.preserve_pending_request)
+        self.assertTrue(policy.bootstrap_clients_after_home)
+        self.assertTrue(policy.resume_original_operation)
+
     def test_project_learning_route_is_client_neutral_and_safe(self) -> None:
         route = project_learning_route(REPO_ROOT)
         self.assertEqual("project.learn", route.application_operation)

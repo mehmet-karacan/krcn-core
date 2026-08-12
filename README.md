@@ -96,14 +96,23 @@ Faz 0 - Faz 15 tamamlandı. Proje kapsülü, KRCN home yerleşim v2, kesin Work 
 
 ## Başlarken
 
-Windows'ta `krcn` komutunu PowerShell, CMD, Git Bash ve yapay zekâ istemcilerinden kullanabilmek için repository içinde bir kez şu kurulumu çalıştır:
+Windows, macOS veya Linux üzerinde doğrudan kurulum yapmak istersen repository içinde önce planı görüntüle, sonra onayladığın kurulumu uygula:
+
+Windows:
 
 ```powershell
 py tools\install_cli.py --plan-only
 py tools\install_cli.py
 ```
 
-Kurulum, onaylı core clone'unu `KRCN_CORE_HOME` ile tanımlar ve `KRCN_HOME` kullanıcı veri konumunu değiştirmez. Core güncellemesinden sonra kurulum aracını yeniden çalıştır. Ayrıntılı sözleşme için `docs/specifications/CLI-INSTALLATION.md` belgesine bak.
+macOS ve Linux:
+
+```bash
+python3 tools/install_cli.py --plan-only
+python3 tools/install_cli.py
+```
+
+Uyumlu bir yapay zekâ istemcisinde ilk kez `Bu projeyi entegre et` dediğinde, CLI eksikse aynı plan ve onay akışını istemci yönetir. Kurulumdan sonra ilk isteği kaybetmeden proje entegrasyonuna devam eder. Kurulum, onaylı core clone'unu `KRCN_CORE_HOME` ile tanımlar ve `KRCN_HOME` kullanıcı veri konumunu değiştirmez. Core güncellemesinden sonra kurulum aracını yeniden çalıştır. Ayrıntılı sözleşme için `docs/specifications/CLI-INSTALLATION.md` belgesine bak.
 
 ```bash
 python tools/krcn.py doctor

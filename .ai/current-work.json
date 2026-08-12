@@ -99,7 +99,8 @@
     "docs/progress/PHASE-16-READ-ONLY-AUDIT.md",
     "docs/progress/PHASE-16-PROJECT-CAPABILITY-PROFILE.md",
     "docs/progress/PHASE-17-MODEL-INVENTORY-HEALTH.md",
-    "docs/progress/PHASE-18-PROJECT-MICRO-BENCHMARK.md"
+    "docs/progress/PHASE-18-PROJECT-MICRO-BENCHMARK.md",
+    "docs/progress/ILK-ENTEGRASYON-CLI-BASLANGICI.md"
   ],
   "next_actions": [
     "run project benchmark suites and persist workload scorecards",

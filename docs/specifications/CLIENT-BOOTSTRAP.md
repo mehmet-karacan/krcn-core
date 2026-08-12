@@ -28,6 +28,8 @@ The guidance tells a client to:
 
 Product rules remain in KRCN Core. Client files do not duplicate matching, policy, ownership, or orchestration logic.
 
+If the global command later becomes unavailable, the managed guidance preserves the pending user request and routes recovery through the validated core clone's installer plan. After explicit installation approval and verification, the client resumes the original request instead of asking the user to repeat it.
+
 ## Exact plan and backup
 
 `client.bootstrap` is a shared application service operation. A dry-run plan binds each target's original and rendered SHA-256 identity. Apply requires that exact plan and explicit user approval.

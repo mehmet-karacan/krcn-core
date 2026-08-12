@@ -73,6 +73,17 @@ Before starting work, inspect repository state, relevant manifests, and existing
 
 ## Natural-language project learning
 
+Before routing a natural-language project learning or integration request, verify that the global `krcn` command can validate the approved core context. If the command is unavailable but this validated KRCN Core clone is open:
+
+1. Keep the original project directory and requested operation pending.
+2. Run `python tools/install_cli.py --plan-only` with the active Python 3.11 or newer interpreter.
+3. Show the installation effects and obtain explicit approval before changing the Python environment, user environment, PATH, or shell profile.
+4. Run the installer after approval and verify the installed command.
+5. Continue the original project request without asking the user to repeat it.
+6. After the first project home is initialized, route the user-level client guidance through the separate `client.bootstrap` exact-plan operation.
+
+Installation does not authorize project-home, client-file, provider, or project integration mutations. Preserve each existing exact-plan boundary. Never run the installer from an unvalidated project tree.
+
 When the user provides one existing absolute project directory, or combines that directory with phrases such as `projeyi öğren`, `tanı`, `tanıt`, `learn`, `register`, or `onboard`:
 
 1. Route the request to the shared `project.learn` application operation.

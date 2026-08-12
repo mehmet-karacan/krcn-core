@@ -34,9 +34,18 @@ class IntentRoute:
     supported_clients: tuple[str, ...]
 
 
-def load_intent_routes(repo_root: Path) -> tuple[IntentRoute, ...]:
-    """Load the shared route table used by every action-capable client."""
+@dataclass(frozen=True)
+class FirstUsePolicy:
+    cli_probe: str
+    installer_path: str
+    installer_plan_argument: str
+    install_approval_required: bool
+    preserve_pending_request: bool
+    bootstrap_clients_after_home: bool
+    resume_original_operation: bool
 
+
+def _load_intent_payload(repo_root: Path) -> dict:
     path = repo_root / "config" / "intent-routing.json"
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -45,6 +54,7 @@ def load_intent_routes(repo_root: Path) -> tuple[IntentRoute, ...]:
     if not isinstance(payload, dict) or set(payload) != {
         "schema_ref",
         "schema_version",
+        "first_use",
         "routes",
     }:
         raise IntentRoutingError("intent routing configuration fields are invalid")
@@ -53,6 +63,49 @@ def load_intent_routes(repo_root: Path) -> tuple[IntentRoute, ...]:
         or payload.get("schema_version") != 1
     ):
         raise IntentRoutingError("intent routing schema identity is invalid")
+    return payload
+
+
+def load_first_use_policy(repo_root: Path) -> FirstUsePolicy:
+    """Load the shared install-and-resume behavior for natural-language clients."""
+
+    record = _load_intent_payload(repo_root).get("first_use")
+    expected = {
+        "cli_probe",
+        "installer_path",
+        "installer_plan_argument",
+        "install_approval_required",
+        "preserve_pending_request",
+        "bootstrap_clients_after_home",
+        "resume_original_operation",
+    }
+    if not isinstance(record, dict) or set(record) != expected:
+        raise IntentRoutingError("first-use routing fields are invalid")
+    if (
+        record.get("cli_probe") != "context-validate"
+        or record.get("installer_path") != "tools/install_cli.py"
+        or record.get("installer_plan_argument") != "--plan-only"
+        or record.get("install_approval_required") is not True
+        or record.get("preserve_pending_request") is not True
+        or record.get("bootstrap_clients_after_home") is not True
+        or record.get("resume_original_operation") is not True
+    ):
+        raise IntentRoutingError("first-use routing safety boundary is invalid")
+    return FirstUsePolicy(
+        cli_probe="context-validate",
+        installer_path="tools/install_cli.py",
+        installer_plan_argument="--plan-only",
+        install_approval_required=True,
+        preserve_pending_request=True,
+        bootstrap_clients_after_home=True,
+        resume_original_operation=True,
+    )
+
+
+def load_intent_routes(repo_root: Path) -> tuple[IntentRoute, ...]:
+    """Load the shared route table used by every action-capable client."""
+
+    payload = _load_intent_payload(repo_root)
     records = payload.get("routes")
     if not isinstance(records, list) or not records:
         raise IntentRoutingError("intent routing must contain routes")

@@ -25,6 +25,7 @@ BOOTSTRAP_BODY = """<!-- KRCN-CORE:BEGIN -->
 ## KRCN Core project context
 
 - KRCN Core is available through the global `krcn` command.
+- If `krcn` becomes unavailable, preserve the user's pending request. Use only the validated KRCN Core clone to show `python tools/install_cli.py --plan-only`, obtain approval, reinstall, verify, and then resume the original request without asking the user to repeat it.
 - Before project work, run `krcn project current --format json` from the current working directory.
 - If a project is matched, run `krcn project integrate --project "<project-id>" --scan-mode automatic --format json`. A fresh complete integration is a no-op; a stale or incomplete integration returns an exact plan that still requires its normal approval before apply.
 - When the user asks where work stopped, run `krcn project resume --format json` before answering.

@@ -7,6 +7,7 @@
   "required": [
     "schema_ref",
     "schema_version",
+    "first_use",
     "routes"
   ],
   "properties": {
@@ -15,6 +16,42 @@
     },
     "schema_version": {
       "const": 1
+    },
+    "first_use": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cli_probe",
+        "installer_path",
+        "installer_plan_argument",
+        "install_approval_required",
+        "preserve_pending_request",
+        "bootstrap_clients_after_home",
+        "resume_original_operation"
+      ],
+      "properties": {
+        "cli_probe": {
+          "const": "context-validate"
+        },
+        "installer_path": {
+          "const": "tools/install_cli.py"
+        },
+        "installer_plan_argument": {
+          "const": "--plan-only"
+        },
+        "install_approval_required": {
+          "const": true
+        },
+        "preserve_pending_request": {
+          "const": true
+        },
+        "bootstrap_clients_after_home": {
+          "const": true
+        },
+        "resume_original_operation": {
+          "const": true
+        }
+      }
     },
     "routes": {
       "type": "array",

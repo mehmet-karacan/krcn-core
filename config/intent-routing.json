@@ -1,6 +1,15 @@
 {
   "schema_ref": "schemas/intent-routing.schema.json",
   "schema_version": 1,
+  "first_use": {
+    "cli_probe": "context-validate",
+    "installer_path": "tools/install_cli.py",
+    "installer_plan_argument": "--plan-only",
+    "install_approval_required": true,
+    "preserve_pending_request": true,
+    "bootstrap_clients_after_home": true,
+    "resume_original_operation": true
+  },
   "routes": [
     {
       "route_id": "project-learning",

@@ -30,6 +30,8 @@ Minor gaps may be filled with safe assumptions. Ask the user when an ambiguity w
 
 ### Project learning route
 
+The shared first-use policy is in `config/intent-routing.json`. For a project learning or integration request, first validate the global `krcn` command. If it is missing and the client is running from a validated KRCN Core clone, retain the original request, show the cross-platform installer plan, obtain approval, install and verify the CLI, then resume the same operation. Do not make the user repeat the project path or integration request. Client bootstrap remains a separate exact-plan operation after a project home is available.
+
 If the user supplies one existing absolute project directory by itself, or asks to learn, recognize, introduce, register, or onboard the project at that directory, use the shared `project.learn` application operation. Turkish forms such as `projeyi öğren`, `tanı`, and `tanıt` are included.
 
 If the user says `entegre et` or `integrate`, use `project.integrate`. This complete lifecycle keeps the source read-only, completes missing registration, discovery, knowledge, capability-profile, knowledge-vector-index, source-code-index, and verification stages, and records whether the scan was manual or automatic. Explicit integration requests use manual mode. Background freshness checks use automatic mode and scan after the configured 24-hour interval or when a required integration stage is missing. Exact-plan and approval gates remain mandatory.

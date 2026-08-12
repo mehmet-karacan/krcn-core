@@ -29,6 +29,17 @@ jobs:
         run: python tools/krcn.py doctor
       - name: Verify offline wheel
         run: python tools/verify_wheel.py
+      - name: Verify CLI installer plan
+        run: python tools/install_cli.py --plan-only
+      - name: Verify POSIX CLI installation
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          HOME: ${{ runner.temp }}/krcn-installer-home
+          SHELL: /bin/sh
+        run: |
+          python tools/install_cli.py
+          "$HOME/.local/share/krcn/cli/bin/krcn" context --validate-only
 
   coverage-baseline:
     runs-on: ubuntu-latest
