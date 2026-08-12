@@ -258,6 +258,40 @@ def hybrid_index_path(data_root: Path) -> Path:
     return data_root.resolve() / "derived" / "retrieval" / "hybrid-v1.sqlite"
 
 
+def hybrid_index_is_current(
+    data_root: Path,
+    catalog: InformationCatalog,
+) -> bool:
+    """Check index identity and integrity without changing derived state."""
+
+    target = hybrid_index_path(data_root)
+    if not target.is_file() or target.is_symlink():
+        return False
+    expected_documents = hashlib.sha256(
+        canonical_json(_document_identity(catalog))
+    ).hexdigest()
+    try:
+        connection = sqlite3.connect(target.resolve().as_uri() + "?mode=ro", uri=True)
+        try:
+            connection.execute("PRAGMA query_only = ON")
+            metadata = _metadata(connection)
+            count = connection.execute("SELECT count(*) FROM documents").fetchone()[0]
+            integrity = connection.execute("PRAGMA integrity_check").fetchone()[0]
+        finally:
+            connection.close()
+    except (OSError, sqlite3.Error, HybridRetrievalError):
+        return False
+    return bool(
+        metadata.get("index_revision") == str(INDEX_REVISION)
+        and metadata.get("catalog_digest") == catalog.catalog_digest
+        and metadata.get("document_digest") == expected_documents
+        and metadata.get("entry_count") == str(len(catalog.entries))
+        and metadata.get("vector_dimensions") == str(VECTOR_DIMENSIONS)
+        and count == len(catalog.entries)
+        and integrity == "ok"
+    )
+
+
 def prepare_hybrid_index(
     data_root: Path,
     catalog: InformationCatalog,

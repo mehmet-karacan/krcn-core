@@ -324,4 +324,21 @@ def run_doctor(
             "Phase 8 project-home and production-hardening baseline is complete",
         )
     )
+    phase_nine = load_json(repo_root / ".ai" / "phase-9-baseline.json")
+    phase_nine_errors = []
+    if phase_nine.get("status") != "ready":
+        phase_nine_errors.append("Phase 9 baseline state")
+    if phase_nine.get("completed_steps") != 8:
+        phase_nine_errors.append("Phase 9 completed steps")
+    if not (
+        repo_root / "docs" / "progress" / "PHASE-9-COMPLETION.md"
+    ).is_file():
+        phase_nine_errors.append("Phase 9 completion evidence")
+    checks.append(
+        _check(
+            "phase-nine-baseline",
+            phase_nine_errors,
+            "Phase 9 continuous project integration baseline is complete",
+        )
+    )
     return tuple(checks)

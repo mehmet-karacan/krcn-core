@@ -56,8 +56,10 @@ class PhaseEightCompletionTests(unittest.TestCase):
             "docs/progress/PHASE-8-COMPLETION.md",
         }
         self.assertTrue(expected.issubset(set(current["progress_refs"])))
-        self.assertEqual("completed", current["status"])
-        self.assertIn("user approval", " ".join(current["next_actions"]))
+        self.assertIn(current["status"], {"active", "completed"})
+        baseline = load_json(REPO_ROOT / ".ai" / "phase-8-baseline.json")
+        self.assertEqual("ready", baseline["maintenance"]["status"])
+        self.assertTrue(baseline["maintenance"]["new_phase_requires_user_approval"])
 
     def test_doctor_recognizes_completed_phase_eight(self) -> None:
         checks = {item.check_id: item for item in run_doctor(REPO_ROOT)}

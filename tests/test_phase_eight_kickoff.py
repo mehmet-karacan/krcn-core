@@ -15,14 +15,16 @@ def load_json(path: Path) -> dict:
 class PhaseEightKickoffTests(unittest.TestCase):
     def test_phase_eight_started_with_explicit_user_approval(self) -> None:
         current = load_json(REPO_ROOT / ".ai" / "current-work.json")
-        self.assertEqual("phase-8", current["phase_id"])
         self.assertIn(current["status"], {"active", "completed"})
-        self.assertEqual("2ab1cb1", current["baseline_commit"])
-        self.assertEqual(
-            "docs/plans/PLAN-009-PROJE-BAZLI-KRCN-HOME-VE-MIMARI-OLGUNLASTIRMA.md",
-            current["plan_ref"],
-        )
         self.assertIn("docs/progress/PHASE-8-KICKOFF.md", current["progress_refs"])
+        kickoff = (
+            REPO_ROOT / "docs" / "progress" / "PHASE-8-KICKOFF.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("Mehmet KARACAN'ın açık isteğiyle", kickoff)
+        self.assertIn("2ab1cb1", kickoff)
+        baseline = load_json(REPO_ROOT / ".ai" / "phase-8-baseline.json")
+        self.assertEqual("phase-8", baseline["phase_id"])
+        self.assertEqual("ready", baseline["status"])
 
     def test_project_local_home_boundary_requires_choice_and_git_safety(self) -> None:
         boundary = (

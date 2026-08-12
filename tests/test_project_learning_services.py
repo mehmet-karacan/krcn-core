@@ -144,6 +144,42 @@ class ProjectLearningServiceTests(unittest.TestCase):
         self.assertEqual(2, result)
         self.assertIn("not recognized", error)
 
+    def test_integrate_phrase_and_direct_command_share_complete_lifecycle(self) -> None:
+        common = [
+            "--repo",
+            str(REPO_ROOT),
+            "--data-root",
+            str(self.data_root),
+        ]
+        result, output, error = self._run_cli(
+            [
+                "ask",
+                f'"{self.source}" projesini öğren ve entegre et',
+                *common,
+            ]
+        )
+        self.assertEqual(0, result, error)
+        asked = json.loads(output)
+        self.assertEqual("project.integrate", asked["operation"])
+        self.assertEqual("manual", asked["data"]["plan"]["scan"]["mode"])
+
+        result, output, error = self._run_cli(
+            [
+                "project",
+                "integrate",
+                "--source",
+                str(self.source),
+                *common,
+            ]
+        )
+        self.assertEqual(0, result, error)
+        direct = json.loads(output)
+        self.assertEqual("project.integrate", direct["operation"])
+        self.assertEqual(
+            asked["data"]["plan"]["plan_id"],
+            direct["data"]["plan"]["plan_id"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -32,6 +32,7 @@ from .dependency_retrieval import (
 )
 from .source_bindings import parse_source_binding
 from .source_state import parse_source_state
+from .project_integration_state import parse_project_integration_state
 
 
 IDENTIFIER = re.compile(r"^[a-z][a-z0-9-]*$")
@@ -41,6 +42,11 @@ COLLECTIONS = {
     "source-bindings": ("binding_id", "source-bindings", "user-data"),
     "integrations": ("integration_id", "integrations", "user-data"),
     "source-states": ("binding_id", "derived/source-states", "derived"),
+    "project-integrations": (
+        "project_id",
+        "projects/integration-states",
+        "user-data",
+    ),
     "authoritative-sources": (
         "record_id",
         "knowledge/authoritative-sources",
@@ -156,6 +162,9 @@ def _validate_record_identity(
         parse_integration_metadata(payload)
     if record_type == "source-states":
         parse_source_state(payload)
+    if record_type == "project-integrations":
+        parse_project_integration_state(payload)
+        return None
     if record_type == "information-relations":
         try:
             relation = parse_information_relation(payload)
@@ -343,6 +352,17 @@ class LocalWorkspaceStore:
             if record is not None:
                 records.append(record)
         return tuple(records)
+
+    def record_mtime_ns(self, record_type: str, record_id: str) -> int | None:
+        """Return the verified record file modification time for freshness checks."""
+
+        target = self._target(record_type, record_id)
+        if not target.exists():
+            return None
+        if target.is_symlink() or not target.is_file():
+            raise LocalStoreError("record target must be a regular file")
+        self.read(record_type, record_id)
+        return target.stat().st_mtime_ns
 
     def prepare_put(
         self,

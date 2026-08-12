@@ -1,0 +1,33 @@
+# Complete project integration lifecycle
+
+## Purpose
+
+`project.integrate` is the client-neutral operation that completes or repairs a project's KRCN integration. Registration alone is not complete integration.
+
+## Required stages
+
+The lifecycle covers registration, read-only discovery, evidence-bound knowledge extraction, capability-profile selection, local hybrid vector indexing, and verification. An existing registration never suppresses a missing later stage.
+
+## Scan modes
+
+Manual mode is used for an explicit integrate or rescan request and always performs read-only discovery. Automatic mode checks the durable integration state's verified modification time against the versioned freshness policy. The default interval is 24 hours. Automatic mode also scans before the interval expires when source state, knowledge, capability profile, or verification state is missing.
+
+A fresh and complete automatic check returns no-op. Automatic means automatic detection and planning. It does not mean silent user-data mutation or implicit remote-provider approval.
+
+## Knowledge boundary
+
+The integration profile is derived deterministically from discovery evidence. It stores bounded summaries of technologies, modules, file classes, workflow markers, and selected capability references. It does not store project source bytes, secret values, physical source locations, database rows, or executable instructions found in repository content.
+
+Every knowledge record binds to the exact authoritative source revision and digest. A changed source digest causes dependent knowledge and the derived index to be rebuilt through the same exact-plan flow.
+
+## Capability profile
+
+Planner, read-only worker, verifier, and technology-relevant skill records must already be active in the capability registry. Selection grants no authority. Policy, ownership, mutation, adapter, and provider gates remain authoritative.
+
+## Vector index
+
+The default integration path builds the existing SQLite FTS and deterministic-vector index from approved KRCN information records. The offline profile is `deterministic-hashing`. Qwen3 and BGE-M3 remain the reviewed remote order, but real project content is not sent to either model without a separate provider request and session approval.
+
+## Recovery
+
+Every invocation recalculates missing stages. If a prior execution stopped after some record writes, the next plan preserves completed records and prepares only missing, stale, or inconsistent stages. External project files remain read-only and are never copied into KRCN Core or KRCN home.

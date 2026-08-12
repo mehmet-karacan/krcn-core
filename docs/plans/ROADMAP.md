@@ -17,6 +17,7 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
 - Faz 6 tamamlandı.
 - Faz 7 tamamlandı.
 - Faz 8 tamamlandı. Proje bazlı KRCN_HOME ve üretim olgunlaştırma baseline'ı hazır.
+- Faz 9 tamamlandı. Sürekli ve eksik aşama onaran proje entegrasyonu hazır.
 
 ## Temel kullanım modeli
 
@@ -127,6 +128,18 @@ Tamamlanma ölçütü: Kullanıcı yalnız mevcut proje dizinini verdiğinde sis
 - Retrieval kalitesi, ölçek, CI, gözlemlenebilirlik ve kullanıcı deneyimini ölçülebilir hale getir.
 
 Tamamlanma ölçütü: Proje bazlı veya özel konumda çalışan KRCN verisi Git'e ve proje kaynaklarına karışmadan kurulabilmeli, taşınabilmeli, eş zamanlı kullanıma dayanmalı ve farklı istemcilerden aynı güvenlik sözleşmesiyle işletilebilmelidir.
+
+## Faz 9 - Sürekli proje entegrasyonu
+
+- `entegre et` niyetini `project.integrate` yaşam döngüsüne yönlendir.
+- Yeni veya kayıtlı projelerde eksik kayıt, keşif, bilgi, capability, vektör indeks ve doğrulama aşamalarını tamamla.
+- Manuel ve otomatik tarama kiplerini sonuçlarda açıkça göster.
+- Otomatik taramayı varsayılan 24 saatlik güncellik policy'sine bağla.
+- Güncel ve tam entegrasyonu no-op olarak sonuçlandır.
+- Teknolojiye uygun rol ve skill profilini merkezi capability registry'den seç.
+- Kaynak değiştiğinde bilgi kayıtlarını ve yeniden üretilebilir hibrit indeksi güncelle.
+
+Tamamlanma ölçütü: Kullanıcı yalnız proje dizinini verip `entegre et` dediğinde sistem bütün entegrasyon aşamalarını tek exact planda hazırlamalı; kayıtlı projelerde eksikleri onarmalı ve normal proje çalışması öncesinde güncelliği otomatik denetleyebilmelidir.
 
 ## Değişmez kabul ölçütleri
 

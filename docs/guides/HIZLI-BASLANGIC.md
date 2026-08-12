@@ -1,6 +1,6 @@
 # KRCN Core hızlı başlangıç
 
-Bu akış, bir projeyi dosyalarını kopyalamadan KRCN Core'a tanıtır ve yerel bilgi aramasını hazırlar.
+Bu akış, bir projeyi dosyalarını kopyalamadan KRCN Core'a tam olarak entegre eder ve yerel bilgi aramasını hazırlar.
 
 ## 0. KRCN CLI'ı bir kez kur
 
@@ -21,11 +21,19 @@ Terminali entegre etmek istediğin projenin kök dizininde aç. Codex, Claude Co
 Bu projeyi öğren ve KRCN Core ile entegre et.
 ```
 
-İstemci `AGENTS.md`, `AI-CONTEXT.md` ve `.ai/repository-context.json` bağlamını kullanır. Yalnız bir dizin gerekiyorsa CLI ile de başlayabilirsin:
+İstemci `entegre et` niyetini tam `project.integrate` yaşam döngüsüne yönlendirir. Proje kaydı, salt okunur tarama, bilgi çıkarma, rol ve skill seçimi, hibrit vektör indeksi ile doğrulama aynı planda tamamlanır. Yalnız bir dizin gerekiyorsa CLI ile de başlayabilirsin:
 
 ```bash
-krcn project learn <proje-dizini>
+krcn project integrate --source <proje-dizini> --scan-mode manual
 ```
+
+Kayıtlı proje normal çalışmadan önce otomatik güncellik denetiminden geçer:
+
+```bash
+krcn project integrate --project <proje-id> --scan-mode automatic
+```
+
+Manuel kip her zaman tarar. Otomatik kip, varsayılan 24 saat dolduğunda veya zorunlu bir entegrasyon aşaması eksik olduğunda tarar. Tam ve güncel proje no-op olur. Sonuç hangi kipin ve nedenin kullanıldığını açıkça gösterir.
 
 ## 2. Yerel çalışma alanını seç
 
@@ -48,9 +56,9 @@ krcn doctor --repo <krcn-core-dizini> --data-root <proje-kökü>/.krcn
 
 Doctor; ortak bağlamı, sahiplik kurallarını, secret taramasını, SQLite FTS5 desteğini, coverage baseline'ını ve varsa yerel hibrit indeks bütünlüğünü kontrol eder.
 
-## 4. Bilgi indeksini oluştur
+## 4. Bilgi indeksini doğrula veya ayrı olarak oluştur
 
-KRCN kataloğuna eklenmiş onaylı bilgi kayıtları varsa önce hibrit indeks planını al:
+Tam proje entegrasyonu bilgi kayıtlarını ve hibrit indeksi zaten planlar. Ayrı bakım gerektiğinde önce indeks planını al:
 
 ```bash
 krcn knowledge index --repo <krcn-core-dizini> --data-root <proje-kökü>/.krcn

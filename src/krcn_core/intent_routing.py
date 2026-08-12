@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -139,3 +140,40 @@ def project_learning_route(repo_root: Path) -> IntentRoute:
         if route.route_id == "project-learning":
             return route
     raise IntentRoutingError("project-learning route is missing")
+
+
+def project_integration_route(repo_root: Path) -> IntentRoute:
+    for route in load_intent_routes(repo_root):
+        if route.route_id == "project-integration":
+            return route
+    raise IntentRoutingError("project-integration route is missing")
+
+
+def route_project_request(repo_root: Path, request_text: str) -> IntentRoute:
+    """Prefer complete integration when one request contains both route vocabularies."""
+
+    if not isinstance(request_text, str):
+        raise IntentRoutingError("project request must be text")
+    def words_for(value: str) -> set[str]:
+        folded = unicodedata.normalize("NFKD", value.casefold())
+        normalized = "".join(
+            character for character in folded if not unicodedata.combining(character)
+        ).translate(str.maketrans({"ı": "i", "ş": "s"}))
+        return set(re.findall(r"[a-z]+", normalized))
+
+    words = words_for(request_text)
+    routes = load_intent_routes(repo_root)
+    matches = [
+        route
+        for route in routes
+        if words.intersection(word for term in route.terms for word in words_for(term))
+    ]
+    integration = next(
+        (route for route in matches if route.route_id == "project-integration"),
+        None,
+    )
+    if integration is not None:
+        return integration
+    if matches:
+        return matches[0]
+    raise IntentRoutingError("project request route was not recognized")

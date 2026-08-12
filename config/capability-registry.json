@@ -1,7 +1,7 @@
 {
   "schema_ref": "schemas/capability-registry.schema.json",
   "schema_version": 1,
-  "revision": 3,
+  "revision": 4,
   "records": [
     {
       "record_id": "planner-agent",
@@ -344,6 +344,197 @@
       "approval_triggers": [],
       "status": "active",
       "record_digest": "69f5f17143eb6374bf9c869808bfee59a298fb915eaee84f3d9440ece48cee39"
+    },
+    {
+      "record_id": "project-discovery-skill",
+      "kind": "skill",
+      "role": null,
+      "revision": 1,
+      "capabilities": [
+        "project.discover"
+      ],
+      "side_effects": [
+        "read"
+      ],
+      "read_ownership": [
+        "unmanaged"
+      ],
+      "write_ownership": [],
+      "provider_mode": "none",
+      "approval_triggers": [],
+      "status": "active",
+      "record_digest": "21b02f806d95b9eca288fab7851905f493d704ef06a2c9fa70bec7b9b28e1aea"
+    },
+    {
+      "record_id": "project-knowledge-extraction-skill",
+      "kind": "skill",
+      "role": null,
+      "revision": 1,
+      "capabilities": [
+        "knowledge.extract"
+      ],
+      "side_effects": [
+        "read",
+        "write"
+      ],
+      "read_ownership": [
+        "derived",
+        "unmanaged",
+        "user-data"
+      ],
+      "write_ownership": [
+        "user-data"
+      ],
+      "provider_mode": "none",
+      "approval_triggers": [
+        "user-data-mutation"
+      ],
+      "status": "active",
+      "record_digest": "1a948e7b05f827819281ea1d153e9f124520ae630eac6aa4a8355a1b5246484c"
+    },
+    {
+      "record_id": "hybrid-retrieval-skill",
+      "kind": "skill",
+      "role": null,
+      "revision": 1,
+      "capabilities": [
+        "retrieval.index"
+      ],
+      "side_effects": [
+        "read",
+        "write"
+      ],
+      "read_ownership": [
+        "derived",
+        "user-data"
+      ],
+      "write_ownership": [
+        "derived"
+      ],
+      "provider_mode": "local",
+      "approval_triggers": [],
+      "status": "active",
+      "record_digest": "4009bacf4185ba03ce91ed13544f31fad68ae0e8b5eb490da6aae947293225e7"
+    },
+    {
+      "record_id": "java-project-skill",
+      "kind": "skill",
+      "role": null,
+      "revision": 1,
+      "capabilities": [
+        "java.analyze"
+      ],
+      "side_effects": [
+        "read"
+      ],
+      "read_ownership": [
+        "unmanaged"
+      ],
+      "write_ownership": [],
+      "provider_mode": "none",
+      "approval_triggers": [],
+      "status": "active",
+      "record_digest": "950d6cb05bf982615a926071c9fb1348ab93cbeba8382d5763eefa917c32ffa5"
+    },
+    {
+      "record_id": "nodejs-project-skill",
+      "kind": "skill",
+      "role": null,
+      "revision": 1,
+      "capabilities": [
+        "nodejs.analyze"
+      ],
+      "side_effects": [
+        "read"
+      ],
+      "read_ownership": [
+        "unmanaged"
+      ],
+      "write_ownership": [],
+      "provider_mode": "none",
+      "approval_triggers": [],
+      "status": "active",
+      "record_digest": "66698708b4f3686c34ee97e7b64e6b95280f1eb42c0160a43c7c405d5cbfe854"
+    },
+    {
+      "record_id": "python-project-skill",
+      "kind": "skill",
+      "role": null,
+      "revision": 1,
+      "capabilities": [
+        "python.analyze"
+      ],
+      "side_effects": [
+        "read"
+      ],
+      "read_ownership": [
+        "unmanaged"
+      ],
+      "write_ownership": [],
+      "provider_mode": "none",
+      "approval_triggers": [],
+      "status": "active",
+      "record_digest": "9af05cd1cccc4ebd1cfee7e5b2e2e4a70e1690652b1f42518249696f90e10b96"
+    },
+    {
+      "record_id": "dotnet-project-skill",
+      "kind": "skill",
+      "role": null,
+      "revision": 1,
+      "capabilities": [
+        "dotnet.analyze"
+      ],
+      "side_effects": [
+        "read"
+      ],
+      "read_ownership": [
+        "unmanaged"
+      ],
+      "write_ownership": [],
+      "provider_mode": "none",
+      "approval_triggers": [],
+      "status": "active",
+      "record_digest": "427b737e3a38c26d831b72a3325cc7b2289194f62bc88c6603f52f59a04afeac"
+    },
+    {
+      "record_id": "go-project-skill",
+      "kind": "skill",
+      "role": null,
+      "revision": 1,
+      "capabilities": [
+        "go.analyze"
+      ],
+      "side_effects": [
+        "read"
+      ],
+      "read_ownership": [
+        "unmanaged"
+      ],
+      "write_ownership": [],
+      "provider_mode": "none",
+      "approval_triggers": [],
+      "status": "active",
+      "record_digest": "4bbf0e73a45507c3350e8269df62e2cc4824bf048d2104bf10df86e6bc6873ed"
+    },
+    {
+      "record_id": "rust-project-skill",
+      "kind": "skill",
+      "role": null,
+      "revision": 1,
+      "capabilities": [
+        "rust.analyze"
+      ],
+      "side_effects": [
+        "read"
+      ],
+      "read_ownership": [
+        "unmanaged"
+      ],
+      "write_ownership": [],
+      "provider_mode": "none",
+      "approval_triggers": [],
+      "status": "active",
+      "record_digest": "344e9fe61c86370394943a54fe64e01842de9bbd9e5911e4402513572e7709b4"
     }
   ]
 }

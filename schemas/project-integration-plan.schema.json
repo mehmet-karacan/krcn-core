@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:project-integration-plan:1",
+  "title": "KRCN Core complete project integration plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "project_id",
+    "already_registered",
+    "scan",
+    "missing_stages",
+    "stages",
+    "capability_profile",
+    "knowledge",
+    "vector_index",
+    "record_plans",
+    "source_access",
+    "source_copy",
+    "remote_provider_used",
+    "no_op"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/project-integration-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "already_registered": {
+      "type": "boolean"
+    },
+    "scan": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "missing_stages": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "stages": {
+      "type": "object",
+      "additionalProperties": {
+        "enum": [
+          "complete",
+          "planned",
+          "current"
+        ]
+      }
+    },
+    "capability_profile": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "knowledge": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "vector_index": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "record_plans": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "source_access": {
+      "const": "read-only"
+    },
+    "source_copy": {
+      "const": false
+    },
+    "remote_provider_used": {
+      "const": false
+    },
+    "no_op": {
+      "type": "boolean"
+    }
+  }
+}

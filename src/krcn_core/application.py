@@ -82,6 +82,10 @@ from .orchestration_verifier import VerifierHandlerRegistry
 from .orchestration_worker import WorkerHandlerRegistry
 from .policies import load_user_policies
 from .project_learning import apply_project_learning, prepare_project_learning
+from .project_integration import (
+    apply_project_integration,
+    prepare_project_integration,
+)
 from .project_learning_intent import parse_project_learning_intent
 from .project_context import (
     build_project_resume_summary,
@@ -149,6 +153,7 @@ OPERATIONS = {
     "project.resume",
     "client.bootstrap",
     "project.learn",
+    "project.integrate",
     "project.home.resolve",
     "project.home.initialize",
     "project.onboard",
@@ -381,6 +386,7 @@ class KrcnApplicationService:
             "project.resume": self._resume_project,
             "client.bootstrap": self._bootstrap_clients,
             "project.learn": self._learn_project,
+            "project.integrate": self._integrate_project,
             "project.home.resolve": self._resolve_project_home,
             "project.home.initialize": self._initialize_project_home,
             "project.onboard": self._onboard_project,
@@ -865,6 +871,84 @@ class KrcnApplicationService:
             "plan": plan.public_summary(),
             **result.public_summary(),
             "applied": True,
+        }
+
+    def _integrate_project(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required=set(),
+            optional={"source_root", "project_id", "scan_mode"},
+        )
+        has_source = "source_root" in request.arguments
+        has_project = "project_id" in request.arguments
+        if has_source == has_project:
+            raise ApplicationServiceError(
+                "provide exactly one source_root or project_id"
+            )
+        source_root = (
+            self._absolute_path_argument(request.arguments, "source_root")
+            if has_source
+            else None
+        )
+        project_id = (
+            _identifier_argument(request.arguments, "project_id")
+            if has_project
+            else None
+        )
+        scan_mode = request.arguments.get("scan_mode", "manual")
+        if not isinstance(scan_mode, str):
+            raise ApplicationServiceError("scan_mode must be manual or automatic")
+        try:
+            plan = prepare_project_integration(
+                self._repo_root,
+                self._store,
+                source_root=source_root,
+                project_id=project_id,
+                scan_mode=scan_mode,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        summary = plan.public_summary()
+        if plan.no_op:
+            if request.apply or request.expected_plan_id is not None:
+                raise ApplicationServiceError(
+                    "current project integration has no changes to apply"
+                )
+            return "ok", {"plan": summary, "applied": False, "no_op": True}
+        if not request.apply:
+            return "planned", {"plan": summary, "applied": False, "no_op": False}
+        record_authorizations = self._authorize_record_plans(
+            request,
+            plan.plan_id,
+            plan.record_plans,
+        )
+        index_authorization = None
+        if plan.index_plan is not None:
+            index_authorization = authorize_mutation(
+                plan.index_plan.mutation,
+                dry_run=DryRunEvidence(
+                    plan.index_plan.mutation.plan_id,
+                    verified=True,
+                ),
+            )
+        try:
+            result = apply_project_integration(
+                self._repo_root,
+                self._store,
+                plan,
+                record_authorizations,
+                index_authorization,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "applied", {
+            "plan": summary,
+            **result.public_summary(),
+            "applied": True,
+            "no_op": False,
         }
 
     def _project_home_resolution(

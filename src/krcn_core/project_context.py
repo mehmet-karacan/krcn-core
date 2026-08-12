@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Mapping
 
 from .information_records import parse_information_record, record_is_stale
 from .local_store import LocalWorkspaceStore, StoredRecord
 from .orchestration_state import parse_orchestration_handoff
+from .project_integration_state import parse_project_integration_state
 from .source_bindings import SourceBinding, parse_source_binding
 
 
@@ -301,6 +303,42 @@ def _work_summary(
     }
 
 
+def _integration_summary(
+    store: LocalWorkspaceStore,
+    project_id: str,
+) -> dict[str, object]:
+    stored = store.read("project-integrations", project_id)
+    modified = store.record_mtime_ns("project-integrations", project_id)
+    if stored is None or modified is None:
+        return {
+            "status": "incomplete",
+            "last_scan_mode": None,
+            "last_successful_scan_at": None,
+            "next_automatic_scan_at": None,
+            "automatic_scan_due": True,
+            "stages": {},
+            "role_refs": [],
+            "skill_refs": [],
+        }
+    state = parse_project_integration_state(stored.payload)
+    last_scan = datetime.fromtimestamp(modified / 1_000_000_000, timezone.utc)
+    next_scan = last_scan + timedelta(hours=state.freshness_hours)
+    return {
+        "status": "complete",
+        "last_scan_mode": state.scan_mode,
+        "last_scan_reason": state.scan_reason,
+        "scan_sequence": state.scan_sequence,
+        "last_successful_scan_at": last_scan.isoformat(),
+        "next_automatic_scan_at": next_scan.isoformat(),
+        "automatic_scan_due": datetime.now(timezone.utc) >= next_scan,
+        "freshness_hours": state.freshness_hours,
+        "embedding_profile_id": state.embedding_profile_id,
+        "stages": dict(state.stages),
+        "role_refs": list(state.role_refs),
+        "skill_refs": list(state.skill_refs),
+    }
+
+
 def build_project_resume_summary(
     store: LocalWorkspaceStore,
     match: ProjectContextMatch,
@@ -311,6 +349,7 @@ def build_project_resume_summary(
     binding_ids = {binding.binding_id for binding in match.bindings}
     information = _information_summary(store, match.project.record_id, binding_ids)
     work = _work_summary(store, match.project.record_id, binding_ids)
+    integration = _integration_summary(store, match.project.record_id)
     states = context["source_states"]
     assert isinstance(states, list)
     indexed_files = sum(int(state["file_count"]) for state in states)
@@ -319,6 +358,10 @@ def build_project_resume_summary(
         next_actions.append("rescan-project-source")
     if information["record_count"] == 0:
         next_actions.append("extract-project-information")
+    if integration["status"] != "complete":
+        next_actions.append("complete-project-integration")
+    elif integration["automatic_scan_due"]:
+        next_actions.append("refresh-project-integration")
     if work["active_task_count"] == 0:
         next_actions.append("no-active-task-start-from-user-request")
     return {
@@ -328,6 +371,7 @@ def build_project_resume_summary(
             "source_state_count": len(states),
             "indexed_source_file_count": indexed_files,
             "information": information,
+            "integration": integration,
             "work": work,
             "next_actions": next_actions,
         },

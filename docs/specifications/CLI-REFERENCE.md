@@ -41,6 +41,8 @@ Introducing a new project only requires its directory. The service infers the pr
 ```bash
 python tools/krcn.py project learn "<source-directory>"
 python tools/krcn.py ask "<source-directory> projesini öğren"
+python tools/krcn.py project integrate --source "<source-directory>" --scan-mode manual
+python tools/krcn.py project integrate --project <project-id> --scan-mode automatic
 python tools/krcn.py project list
 python tools/krcn.py project inspect <project-id>
 python tools/krcn.py project current
@@ -86,6 +88,8 @@ The source and target backups are written and verified before any target record 
 `onboard` and `rescan` also produce a plan only by default. Applying the plan requires the plan identity from the prior dry-run, and an explicit approval identity when the plan includes a user-data change.
 
 `project current` resolves a registered project from the current directory. `project resume` adds the persisted source, information, and active-work summary. Use `--project <project-id-or-name>` for an explicit selection or `--request "<user-request>"` when the request names a project while the client is running elsewhere. Both commands are read-only and never disclose a physical source locator.
+
+`project integrate` completes registration, discovery, evidence-bound knowledge, capability-profile, local hybrid vector index, and verification stages. Manual mode always scans for an explicit integration request. Automatic mode scans after the versioned 24-hour freshness interval or when a required stage is missing. A fresh complete integration is a no-op. Any user-data mutation still requires the exact returned plan and an explicit approval id.
 
 ## AI client bootstrap
 

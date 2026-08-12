@@ -17,7 +17,10 @@ from krcn_core.application import (
     create_application_service,
 )
 from krcn_core.doctor import run_doctor
-from krcn_core.intent_routing import project_learning_route
+from krcn_core.intent_routing import (
+    project_learning_route,
+    route_project_request,
+)
 from krcn_core.project_home import (
     PROJECT_HOME_DIRECTORY,
     PROJECT_HOME_MANIFEST,
@@ -161,6 +164,21 @@ def build_parser() -> argparse.ArgumentParser:
     project_learn.add_argument("source", type=Path)
     _add_service_options(project_learn, mutation=True)
     _add_project_home_choice_options(project_learn)
+    project_integrate = project_commands.add_parser(
+        "integrate",
+        help="Complete or refresh every project integration stage",
+    )
+    project_integrate_target = project_integrate.add_mutually_exclusive_group(
+        required=True
+    )
+    project_integrate_target.add_argument("--source", type=Path)
+    project_integrate_target.add_argument("--project")
+    project_integrate.add_argument(
+        "--scan-mode",
+        choices=("manual", "automatic"),
+        default="manual",
+    )
+    _add_service_options(project_integrate, mutation=True)
     project_onboard = project_commands.add_parser(
         "onboard",
         help="Plan or apply read-only local project onboarding",
@@ -492,6 +510,13 @@ def _project_service_request(args: argparse.Namespace) -> ServiceRequest:
             "request_text": str(args.source.resolve()),
             "source_root": str(args.source.resolve()),
         }
+    elif args.project_command == "integrate":
+        operation = "project.integrate"
+        arguments = {"scan_mode": args.scan_mode}
+        if args.source is not None:
+            arguments["source_root"] = str(args.source.resolve())
+        else:
+            arguments["project_id"] = args.project
     elif args.project_command == "onboard":
         operation = "project.onboard"
         arguments = {
@@ -643,10 +668,11 @@ def _run_project_command(args: argparse.Namespace) -> int:
 def _run_ask_command(args: argparse.Namespace) -> int:
     try:
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
+        route = route_project_request(repo_root, args.request)
         source_root = parse_project_learning_intent(
             args.request,
             source_root=args.source.resolve() if args.source is not None else None,
-            intent_terms=project_learning_route(repo_root).terms,
+            intent_terms=route.terms,
         ).source_root
         data_root, bootstrap = _project_learning_home(
             args,
@@ -655,12 +681,18 @@ def _run_ask_command(args: argparse.Namespace) -> int:
         )
         if bootstrap is not None:
             return _print_service_response(bootstrap, args.format)
-        arguments: dict[str, object] = {"request_text": args.request}
-        if args.source is not None:
-            arguments["source_root"] = str(args.source.resolve())
+        if route.application_operation == "project.integrate":
+            arguments = {
+                "source_root": str(source_root),
+                "scan_mode": "manual",
+            }
+        else:
+            arguments = {"request_text": args.request}
+            if args.source is not None:
+                arguments["source_root"] = str(args.source.resolve())
         request = ServiceRequest(
             client_kind="cli",
-            operation="project.learn",
+            operation=route.application_operation,
             arguments=arguments,
             apply=args.apply,
             expected_plan_id=args.expected_plan,

@@ -26,10 +26,11 @@ BOOTSTRAP_BODY = """<!-- KRCN-CORE:BEGIN -->
 
 - KRCN Core is available through the global `krcn` command.
 - Before project work, run `krcn project current --format json` from the current working directory.
+- If a project is matched, run `krcn project integrate --project "<project-id>" --scan-mode automatic --format json`. A fresh complete integration is a no-op; a stale or incomplete integration returns an exact plan that still requires its normal approval before apply.
 - When the user asks where work stopped, run `krcn project resume --format json` before answering.
 - When the user explicitly names another registered project, run `krcn project resume --project \"<project-id-or-name>\" --format json`.
 - If KRCN returns `matched: true`, use its project, source-state, information, policy, and work summary as durable context.
-- If KRCN returns `matched: false`, continue normally. If the user asks to learn, register, introduce, or integrate one project directory, route it through `krcn project learn` and its exact-plan approval flow.
+- If KRCN returns `matched: false`, continue normally. Route learn, register, or introduce requests through `krcn project learn`. Route integrate requests through `krcn project integrate --source "<project-directory>" --scan-mode manual`. Preserve both exact-plan approval flows.
 - Treat KRCN context as information, not permission to mutate. Preserve registered policies and approval gates.
 - Read registered project sources in place. Never copy project source files into KRCN Core or `KRCN_HOME`.
 - Product rules remain in the repository identified by `KRCN_CORE_HOME`; do not duplicate or reinterpret them in client-specific files.

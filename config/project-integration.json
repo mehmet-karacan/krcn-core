@@ -1,0 +1,7 @@
+{
+  "schema_ref": "schemas/project-integration-policy.schema.json",
+  "schema_version": 1,
+  "automatic_scan_enabled": true,
+  "freshness_hours": 24,
+  "offline_embedding_profile_id": "deterministic-hashing"
+}

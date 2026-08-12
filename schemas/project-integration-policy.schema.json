@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:project-integration-policy:1",
+  "title": "KRCN Core project integration freshness policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "automatic_scan_enabled",
+    "freshness_hours",
+    "offline_embedding_profile_id"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/project-integration-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "automatic_scan_enabled": {
+      "const": true
+    },
+    "freshness_hours": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8760
+    },
+    "offline_embedding_profile_id": {
+      "const": "deterministic-hashing"
+    }
+  }
+}

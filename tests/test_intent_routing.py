@@ -13,7 +13,9 @@ from krcn_core.application import OPERATIONS  # noqa: E402
 from krcn_core.intent_routing import (  # noqa: E402
     CLIENTS,
     load_intent_routes,
+    project_integration_route,
     project_learning_route,
+    route_project_request,
 )
 from krcn_core.project_learning_intent import (  # noqa: E402
     parse_project_learning_intent,
@@ -37,17 +39,27 @@ class IntentRoutingContractTests(unittest.TestCase):
         self.assertTrue(route.user_data_approval_required)
 
     def test_every_configured_term_resolves_through_the_shared_parser(self) -> None:
-        route = project_learning_route(REPO_ROOT)
         with tempfile.TemporaryDirectory() as temporary:
             source = Path(temporary).resolve()
-            for term in route.terms:
-                with self.subTest(term=term):
-                    intent = parse_project_learning_intent(
-                        f"projeyi {term}",
-                        source_root=source,
-                        intent_terms=route.terms,
-                    )
-                    self.assertEqual(route.action, intent.action)
+            for route in load_intent_routes(REPO_ROOT):
+                for term in route.terms:
+                    with self.subTest(route=route.route_id, term=term):
+                        intent = parse_project_learning_intent(
+                            f"projeyi {term}",
+                            source_root=source,
+                            intent_terms=route.terms,
+                        )
+                        self.assertEqual("learn-project", intent.action)
+
+    def test_integration_route_wins_when_request_also_says_learn(self) -> None:
+        route = project_integration_route(REPO_ROOT)
+        self.assertEqual("project.integrate", route.application_operation)
+        self.assertIn(route.application_operation, OPERATIONS)
+        selected = route_project_request(
+            REPO_ROOT,
+            "projeyi öğren ve entegre et",
+        )
+        self.assertEqual(route.route_id, selected.route_id)
 
     def test_agents_and_generic_clients_reference_the_canonical_route(self) -> None:
         for filename in ("AGENTS.md", "AI-CONTEXT.md"):
@@ -56,7 +68,7 @@ class IntentRoutingContractTests(unittest.TestCase):
                 self.assertIn("config/intent-routing.json", content)
                 self.assertIn("project.learn", content)
                 self.assertIn("Never copy", content)
-        self.assertEqual(1, len(load_intent_routes(REPO_ROOT)))
+        self.assertEqual(2, len(load_intent_routes(REPO_ROOT)))
 
 
 if __name__ == "__main__":

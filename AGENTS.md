@@ -71,7 +71,7 @@ Before starting work, inspect repository state, relevant manifests, and existing
 
 ## Natural-language project learning
 
-When the user provides one existing absolute project directory, or combines that directory with phrases such as `projeyi öğren`, `tanı`, `tanıt`, `entegre et`, `learn`, `register`, or `onboard`:
+When the user provides one existing absolute project directory, or combines that directory with phrases such as `projeyi öğren`, `tanı`, `tanıt`, `learn`, `register`, or `onboard`:
 
 1. Route the request to the shared `project.learn` application operation.
 2. Do not ask the user for workspace, project, binding, or display-name values. Infer them through the shared service.
@@ -81,6 +81,8 @@ When the user provides one existing absolute project directory, or combines that
 6. Read the external project in place. Never copy its project files into KRCN Core or the KRCN user home.
 
 The machine-readable route is `config/intent-routing.json`. Client adapters must not maintain their own phrase list or identity inference rules.
+
+`entegre et` and `integrate` use the complete `project.integrate` lifecycle instead of stopping after registration and discovery. The lifecycle detects missing stages for an existing project, records whether a scan is manual or automatic, performs a manual scan for an explicit integration request, performs an automatic scan when the configured freshness interval has expired, extracts evidence-bound project knowledge, selects registered roles and skills, rebuilds the local hybrid vector index when required, and verifies the result. Automatic checks may prepare a plan, but they never bypass user-data or provider approval gates.
 
 ## Development record structure
 

@@ -19,10 +19,11 @@ KRCN owns only the content between `KRCN-CORE:BEGIN` and `KRCN-CORE:END` markers
 The guidance tells a client to:
 
 1. Use `krcn project current` before project work.
-2. Use `krcn project resume` before answering a where-we-stopped question.
-3. Use an explicit registered project selection when the user names another project.
-4. Treat returned context as information rather than mutation authority.
-5. Keep project source in place and preserve KRCN policy and approval gates.
+2. After a match, use automatic `krcn project integrate` mode to check the 24-hour freshness window and missing stages. A current integration is a no-op; any mutation remains exact-plan and approval gated.
+3. Use `krcn project resume` before answering a where-we-stopped question.
+4. Use an explicit registered project selection when the user names another project.
+5. Treat returned context as information rather than mutation authority.
+6. Keep project source in place and preserve KRCN policy and approval gates.
 
 Product rules remain in KRCN Core. Client files do not duplicate matching, policy, ownership, or orchestration logic.
 

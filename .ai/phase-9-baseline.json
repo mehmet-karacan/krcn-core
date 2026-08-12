@@ -1,0 +1,53 @@
+{
+  "schema_ref": "schemas/phase-9-baseline.schema.json",
+  "schema_version": 1,
+  "baseline_id": "phase-9-continuous-project-integration",
+  "phase_id": "phase-9",
+  "status": "ready",
+  "completed_steps": 8,
+  "capabilities": [
+    "complete-project-integration-operation",
+    "manual-scan-mode",
+    "automatic-freshness-scan-mode",
+    "missing-stage-repair",
+    "evidence-bound-project-knowledge",
+    "technology-aware-capability-profile",
+    "sqlite-hybrid-vector-refresh",
+    "cross-client-project-resume-summary"
+  ],
+  "safe_operations": [
+    "project.integrate",
+    "project.resolve-current",
+    "project.resume",
+    "knowledge.index-hybrid",
+    "knowledge.search-hybrid",
+    "client.bootstrap"
+  ],
+  "guarantees": {
+    "manual_scan_visible": true,
+    "automatic_scan_visible": true,
+    "fresh_complete_no_op": true,
+    "missing_stage_repair": true,
+    "external_source_copied": false,
+    "external_source_mutated": false,
+    "remote_provider_implicit": false,
+    "exact_plan_required": true,
+    "user_policy_preserved": true,
+    "client_parity": true
+  },
+  "verification": {
+    "foundation": "passed",
+    "hermetic_tests": "passed",
+    "manual_scan": "passed",
+    "automatic_scan": "passed",
+    "missing_stage_repair": "passed",
+    "source_preservation": "passed",
+    "real_gpu_fusion_plan": "passed",
+    "real_gpu_fusion_apply": "passed",
+    "hybrid_retrieval": "passed"
+  },
+  "maintenance": {
+    "status": "ready",
+    "freshness_hours": 24
+  }
+}
