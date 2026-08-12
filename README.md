@@ -96,6 +96,15 @@ Faz 0 - Faz 8 tamamlandı: revision-aware bilgi kataloğu, bütçeli context pak
 
 ## Başlarken
 
+Windows'ta `krcn` komutunu PowerShell, CMD, Git Bash ve yapay zekâ istemcilerinden kullanabilmek için repository içinde bir kez şu kurulumu çalıştır:
+
+```powershell
+py tools\install_cli.py --plan-only
+py tools\install_cli.py
+```
+
+Kurulum, onaylı core clone'unu `KRCN_CORE_HOME` ile tanımlar ve `KRCN_HOME` kullanıcı veri konumunu değiştirmez. Core güncellemesinden sonra kurulum aracını yeniden çalıştır. Ayrıntılı sözleşme için `docs/specifications/CLI-INSTALLATION.md` belgesine bak.
+
 ```bash
 python tools/krcn.py doctor
 ```

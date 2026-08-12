@@ -2,6 +2,17 @@
 
 Bu akış, bir projeyi dosyalarını kopyalamadan KRCN Core'a tanıtır ve yerel bilgi aramasını hazırlar.
 
+## 0. KRCN CLI'ı bir kez kur
+
+KRCN Core repository'sinde önce kurulum planını görüntüle, sonra kurulumu uygula:
+
+```powershell
+py tools\install_cli.py --plan-only
+py tools\install_cli.py
+```
+
+Yeni bir terminal açıp `krcn doctor` çalıştır. Kurulum `KRCN_CORE_HOME` ile bu core clone'unu tanır, ancak kullanıcı verisinin yerini belirleyen `KRCN_HOME` değerini değiştirmez. Core güncellendikten sonra aynı kurulum aracını yeniden çalıştır.
+
 ## 1. Proje dizininde başla
 
 Terminali entegre etmek istediğin projenin kök dizininde aç. Codex, Claude Code veya repository bağlamını okuyabilen başka bir istemciye doğal dille şunu söyleyebilirsin:

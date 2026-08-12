@@ -29,6 +29,12 @@ The default update policy is:
 
 This boundary will become a machine-validated ownership manifest.
 
+## CLI installation boundary
+
+The installed `krcn` command is a thin local client, not a second copy of product rules. Its executable, the approved KRCN Core repository, and `KRCN_HOME` have independent locations and lifecycles.
+
+`KRCN_CORE_HOME` resolves the versioned core clone when the command runs outside that repository. `KRCN_HOME` resolves user-owned and derived records. Installing or updating the CLI may change the former after explicit invocation, but it must never select, migrate, or overwrite the latter. The normative contract is `docs/specifications/CLI-INSTALLATION.md`.
+
 ## Update contract
 
 The target flow is:

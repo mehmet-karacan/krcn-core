@@ -117,6 +117,7 @@
     "json_document_format": "docs/specifications/JSON-DOCUMENT-FORMAT.md",
     "cli_inventory": ".ai/legacy-cli-inventory.json",
     "cli_baseline": ".ai/cli-baseline.json",
+    "cli_installation": "docs/specifications/CLI-INSTALLATION.md",
     "provider_policy": "config/provider-policy.json",
     "embedding_model_catalog": "config/embedding-models.json",
     "embedding_model_catalog_schema": "schemas/embedding-model-catalog.schema.json",

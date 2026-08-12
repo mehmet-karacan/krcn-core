@@ -101,3 +101,11 @@ The machine-readable route is `config/intent-routing.json`. Client adapters must
 - Client requests and responses follow `schemas/application-request.schema.json` and `schemas/application-response.schema.json`.
 - Client adapters must remain thin. Product rules, ownership boundaries, and current work state must not be duplicated in provider-specific files.
 - No client adapter may bypass or reinterpret the shared capability, policy, dry-run, exact-plan, approval, or ownership gates.
+
+## CLI installation lifecycle
+
+- `krcn` is the common local command for shells, AI clients, plugins, and future adapters.
+- Use `python tools/install_cli.py` for the supported Windows bootstrap and rerun it after an approved core update.
+- `KRCN_CORE_HOME` identifies the approved versioned core clone. `KRCN_HOME` identifies user-owned and derived data. Never treat them as the same setting.
+- CLI installation may register the core clone and Python scripts directory, but it must not create, select, migrate, or overwrite `KRCN_HOME`.
+- Follow `docs/specifications/CLI-INSTALLATION.md` for installation, update, verification, and recovery behavior.

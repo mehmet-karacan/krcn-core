@@ -3,6 +3,7 @@ from __future__ import annotations
 import io
 import json
 import sys
+import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
@@ -75,6 +76,24 @@ class CliRegistryTests(unittest.TestCase):
     def test_repository_root_is_discovered_from_nested_directory(self) -> None:
         nested = REPO_ROOT / "src" / "krcn_core" / "cli"
         self.assertEqual(REPO_ROOT, discover_repo_root(nested))
+
+    def test_repository_root_uses_configured_core_home_outside_repository(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertEqual(
+                REPO_ROOT,
+                discover_repo_root(
+                    Path(directory),
+                    environ={"KRCN_CORE_HOME": str(REPO_ROOT)},
+                ),
+            )
+
+    def test_repository_root_rejects_relative_configured_core_home(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaisesRegex(ValueError, "must be an absolute path"):
+                discover_repo_root(
+                    Path(directory),
+                    environ={"KRCN_CORE_HOME": "relative-core"},
+                )
 
 
 if __name__ == "__main__":

@@ -126,6 +126,7 @@
         "json_document_format",
         "cli_inventory",
         "cli_baseline",
+        "cli_installation",
         "provider_policy",
         "embedding_model_catalog",
         "embedding_model_catalog_schema",
@@ -353,6 +354,9 @@
           "$ref": "#/$defs/repoPath"
         },
         "cli_baseline": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "cli_installation": {
           "$ref": "#/$defs/repoPath"
         },
         "provider_policy": {

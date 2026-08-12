@@ -63,6 +63,7 @@ REQUIRED_CANONICAL_KEYS = {
     "policy_layers",
     "cli_inventory",
     "cli_baseline",
+    "cli_installation",
     "provider_policy",
     "embedding_model_catalog",
     "embedding_model_catalog_schema",

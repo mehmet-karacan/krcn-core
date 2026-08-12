@@ -8,6 +8,7 @@ import os
 import sys
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Mapping
 
 from krcn_core.application import (
     ApplicationServiceError,
@@ -29,14 +30,48 @@ from krcn_core.user_home import resolve_user_home
 from .registry import compatibility_registry
 
 
-def discover_repo_root(start: Path | None = None) -> Path:
-    """Find a repository context manifest without using machine-specific paths."""
+KRCN_CORE_HOME_ENV = "KRCN_CORE_HOME"
+
+
+def _is_krcn_core_root(candidate: Path) -> bool:
+    manifest = candidate / ".ai" / "repository-context.json"
+    if not manifest.is_file():
+        return False
+    try:
+        payload = json.loads(manifest.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    project = payload.get("project")
+    return isinstance(project, dict) and project.get("id") == "krcn-core"
+
+
+def discover_repo_root(
+    start: Path | None = None,
+    *,
+    environ: Mapping[str, str] | None = None,
+) -> Path:
+    """Find the KRCN Core repository from the working tree or user setup."""
 
     candidate = (start or Path.cwd()).resolve()
     for directory in (candidate, *candidate.parents):
-        if (directory / ".ai" / "repository-context.json").is_file():
+        if _is_krcn_core_root(directory):
             return directory
-    raise ValueError("repository context manifest was not found")
+
+    environment = os.environ if environ is None else environ
+    configured = environment.get(KRCN_CORE_HOME_ENV)
+    if configured:
+        configured_path = Path(configured).expanduser()
+        if not configured_path.is_absolute():
+            raise ValueError(f"{KRCN_CORE_HOME_ENV} must be an absolute path")
+        configured_root = configured_path.resolve(strict=False)
+        if _is_krcn_core_root(configured_root):
+            return configured_root
+        raise ValueError(
+            f"{KRCN_CORE_HOME_ENV} does not point to a KRCN Core repository"
+        )
+    raise ValueError(
+        "KRCN Core repository was not found; run the CLI installer or pass --repo"
+    )
 
 
 def _print_error(exc: Exception) -> None:

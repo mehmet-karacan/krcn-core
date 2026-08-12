@@ -6,12 +6,15 @@ This document lists the KRCN Core command surface in one place so the README can
 
 ## Setup and health check
 
-Install the package into the current Python environment without network access, then run the health check:
+On Windows, inspect the one-time user installation plan, apply it, open a new terminal, and run the health check:
 
-```bash
-python -m pip install --no-index --no-deps --no-build-isolation .
+```powershell
+py tools\install_cli.py --plan-only
+py tools\install_cli.py
 krcn doctor
 ```
+
+The installer verifies and installs the wheel without network access, records the approved clone in user-level `KRCN_CORE_HOME`, and leaves `KRCN_HOME` unchanged. Rerun it after an approved Git update. See `docs/specifications/CLI-INSTALLATION.md` for the lifecycle and recovery contract.
 
 Run the same health check without installing:
 
