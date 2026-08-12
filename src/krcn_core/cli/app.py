@@ -121,6 +121,20 @@ def build_parser() -> argparse.ArgumentParser:
     project_rebind.add_argument("--binding-id")
     project_rebind.add_argument("--source", type=Path, required=True)
     _add_service_options(project_rebind, mutation=True)
+    integration = subparsers.add_parser(
+        "integration",
+        help="Use registered local integrations through shared policy gates",
+    )
+    integration_commands = integration.add_subparsers(dest="integration_command")
+    integration_select = integration_commands.add_parser(
+        "select",
+        help="Run one policy-approved read-only database statement",
+    )
+    integration_select.add_argument("--integration-id", required=True)
+    integration_select.add_argument("--binding-id", required=True)
+    integration_select.add_argument("--statement", required=True)
+    integration_select.add_argument("--maximum-rows", type=int, default=1_000)
+    _add_service_options(integration_select)
     installation = subparsers.add_parser(
         "installation",
         help="Inspect or verify a local KRCN Core installation",
@@ -547,6 +561,30 @@ def _run_ask_command(args: argparse.Namespace) -> int:
     return _print_service_response(response, args.format)
 
 
+def _run_integration_command(args: argparse.Namespace) -> int:
+    try:
+        if args.integration_command != "select":
+            raise ApplicationServiceError("integration command is required")
+        repo_root = args.repo.resolve() if args.repo else discover_repo_root()
+        data_root = _active_project_data_root(args.data_root)
+        response = create_application_service(repo_root, data_root).execute(
+            ServiceRequest(
+                client_kind="cli",
+                operation="integration.select-read-only",
+                arguments={
+                    "integration_id": args.integration_id,
+                    "binding_id": args.binding_id,
+                    "statement": args.statement,
+                    "maximum_rows": args.maximum_rows,
+                },
+            )
+        )
+    except (ApplicationServiceError, OSError, ValueError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+    return _print_service_response(response, args.format)
+
+
 def _core_service_request(args: argparse.Namespace) -> ServiceRequest:
     installation_root = str(args.installation.resolve())
     if args.command == "installation":
@@ -783,6 +821,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "ask":
         return _run_ask_command(args)
+
+    if args.command == "integration":
+        return _run_integration_command(args)
 
     if args.command in {"installation", "release", "deployment"}:
         return _run_core_service_command(args)

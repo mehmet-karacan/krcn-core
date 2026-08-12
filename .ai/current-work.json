@@ -82,11 +82,12 @@
     "docs/progress/PHASE-8-PROJECT-HOME-INITIALIZATION.md",
     "docs/progress/PHASE-8-PROJECT-HOME-CLIENT-INTEGRATION.md",
     "docs/progress/PHASE-8-PROJECT-HOME-PORTABILITY.md",
-    "docs/progress/PHASE-8-DATA-INTEGRITY.md"
+    "docs/progress/PHASE-8-DATA-INTEGRITY.md",
+    "docs/progress/PHASE-8-RUNTIME-INTEGRATION.md"
   ],
   "next_actions": [
-    "unify skill adapter worker verifier and secret-provider registration",
-    "run one real read-only integration through policy capability and secret-reference gates"
+    "build a local SQLite FTS and deterministic vector index",
+    "evaluate exact dependency semantic and hybrid retrieval on one shared dataset"
   ],
   "baseline_commit": "2ab1cb1",
   "approval_gates": {

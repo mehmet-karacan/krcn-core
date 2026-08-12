@@ -137,3 +137,9 @@ python tools/verify_repository.py --source <source-directory>
 ```
 
 The verification tool fails on secrets, machine-specific paths, sensitive connection details, blocked file types, and long-dash findings. It uses no network access.
+
+## Salt okunur yerel veritabanı entegrasyonu
+
+`krcn integration select` komutu kayıtlı bir integration ve source binding üzerinden yalnız policy tarafından izin verilen `SELECT` sorgularını çalıştırır. `--integration-id`, `--binding-id` ve `--statement` zorunludur; `--maximum-rows` public yanıta alınmayacak sonuç satırları için üst sınırdır.
+
+Bağlantı değeri komut satırına yazılmaz. Örneğin `secret://database/reporting` kaydı aktif proje evindeki `secrets/database/reporting.secret` dosyasına karşılık gelir. Dosya bir SQLite `file:` URI'si ve `mode=ro` parametresi taşımalıdır. Secret değeri, fiziksel veritabanı yolu ve sorgu satırları çıktıya yazılmaz.

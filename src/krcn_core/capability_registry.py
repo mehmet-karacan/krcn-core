@@ -15,7 +15,7 @@ from .information_records import canonical_json
 IDENTIFIER = re.compile(r"^[a-z][a-z0-9-]*$")
 CAPABILITY = re.compile(r"^[a-z][a-z0-9-]*(?:\.[a-z][a-z0-9-]*)+$")
 SHA256 = re.compile(r"^[a-f0-9]{64}$")
-KINDS = {"agent", "skill", "tool", "model"}
+KINDS = {"adapter", "agent", "model", "secret-provider", "skill", "tool"}
 ROLES = {"planner", "worker", "verifier"}
 SIDE_EFFECTS = {"read", "write", "execute", "network"}
 OWNERSHIP_CLASSES = {"core", "runtime", "user-data", "derived", "secrets", "unmanaged"}

@@ -85,7 +85,7 @@ def _scan_configuration(value: object, path: tuple[str, ...] = ()) -> None:
         raise IntegrationMetadataError("configuration values must be JSON-compatible")
 
 
-def _validate_secret_reference(value: object) -> str:
+def validate_secret_reference(value: object) -> str:
     if not isinstance(value, str) or not SECRET_REFERENCE.fullmatch(value):
         raise IntegrationMetadataError("secret reference is invalid")
     reference_path = value.split("://", 1)[1]
@@ -132,7 +132,7 @@ def parse_integration_metadata(payload: object) -> IntegrationMetadata:
     secret_refs: dict[str, str] = {}
     for name, value in secret_refs_payload.items():
         secret_name = _portable_identifier(name, "secret reference name")
-        secret_refs[secret_name] = _validate_secret_reference(value)
+        secret_refs[secret_name] = validate_secret_reference(value)
     policy_refs_payload = payload.get("policy_refs")
     if not isinstance(policy_refs_payload, list):
         raise IntegrationMetadataError("policy_refs must be a list")

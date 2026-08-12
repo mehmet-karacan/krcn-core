@@ -23,6 +23,7 @@
         "project.onboard",
         "project.rescan",
         "project.rebind",
+        "integration.select-read-only",
         "knowledge.catalog",
         "knowledge.search-exact",
         "knowledge.search-dependencies",

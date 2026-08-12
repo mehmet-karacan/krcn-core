@@ -23,6 +23,7 @@
         "project.onboard",
         "project.rescan",
         "project.rebind",
+        "integration.select-read-only",
         "portability.backup",
         "portability.restore",
         "portability.migrate-repo-local",

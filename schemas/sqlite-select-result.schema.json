@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:sqlite-select-result:1",
+  "title": "KRCN SQLite read-only result summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "mode", "column_names", "row_count", "result_digest", "adapter_request_id", "selection_digest", "matched_policy_ids", "matched_rule_ids", "secret_reference_used", "secret_value_disclosed", "rows_disclosed", "mutation_effect", "network_effect"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "mode": {"const": "sqlite-read-only"},
+    "column_names": {"type": "array", "items": {"type": "string"}},
+    "row_count": {"type": "integer", "minimum": 0},
+    "result_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "adapter_request_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "selection_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "matched_policy_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "matched_rule_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "secret_reference_used": {"const": true},
+    "secret_value_disclosed": {"const": false},
+    "rows_disclosed": {"const": false},
+    "mutation_effect": {"const": false},
+    "network_effect": {"const": false}
+  }
+}

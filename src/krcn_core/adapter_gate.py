@@ -191,7 +191,7 @@ def prepare_adapter_operation(
     scope_refs = {"source": binding.source_id}
     if binding.source_kind == "project":
         scope_refs["project"] = binding.source_id
-    if binding.source_kind == "integration":
+    if binding.source_kind in {"database", "integration"}:
         scope_refs["integration"] = binding.source_id
     decision = evaluate_policies(
         policies,

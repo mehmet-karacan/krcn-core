@@ -18,7 +18,7 @@
         "required": ["record_id", "kind", "role", "revision", "capabilities", "side_effects", "read_ownership", "write_ownership", "provider_mode", "approval_triggers", "status", "record_digest"],
         "properties": {
           "record_id": { "$ref": "#/$defs/id" },
-          "kind": { "enum": ["agent", "skill", "tool", "model"] },
+          "kind": { "enum": ["adapter", "agent", "model", "secret-provider", "skill", "tool"] },
           "role": { "type": ["string", "null"], "enum": ["planner", "worker", "verifier", null] },
           "revision": { "type": "integer", "minimum": 1 },
           "capabilities": { "$ref": "#/$defs/capabilities" },

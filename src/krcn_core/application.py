@@ -29,6 +29,7 @@ from .derived_actions import DerivedActionHandlerRegistry
 from .exact_retrieval import parse_exact_retrieval_query, retrieve_exact
 from .foundation import load_json
 from .information_records import parse_information_record, record_is_stale
+from .integrations import parse_integration_metadata
 from .intent_routing import project_learning_route
 from .installation import (
     inspect_installation,
@@ -113,6 +114,7 @@ from .semantic_retrieval import (
     parse_semantic_query,
     retrieve_semantic,
 )
+from .sqlite_reference_runtime import SqliteReferenceRuntime
 from .update_effects import DerivedActionRegistry, MigrationRegistry
 from .user_home import resolve_user_home
 from .verification import verify_installation
@@ -133,6 +135,7 @@ OPERATIONS = {
     "project.onboard",
     "project.rescan",
     "project.rebind",
+    "integration.select-read-only",
     "portability.backup",
     "portability.restore",
     "portability.migrate-repo-local",
@@ -300,6 +303,7 @@ class KrcnApplicationService:
         semantic_remote_scorers: Mapping[str, RemoteSemanticScorer] | None = None,
         orchestration_worker_handlers: WorkerHandlerRegistry | None = None,
         orchestration_verifier_handlers: VerifierHandlerRegistry | None = None,
+        sqlite_runtime: SqliteReferenceRuntime | None = None,
     ) -> None:
         self._repo_root = repo_root.resolve()
         self._store = store
@@ -321,6 +325,7 @@ class KrcnApplicationService:
         ):
             raise ApplicationServiceError("semantic remote scorers are invalid")
         self._semantic_remote_scorers = scorers
+        self._sqlite_runtime = sqlite_runtime
         self._orchestration = OrchestrationApplicationService(
             self._repo_root,
             self._store,
@@ -356,6 +361,7 @@ class KrcnApplicationService:
             "project.onboard": self._onboard_project,
             "project.rescan": self._rescan_project,
             "project.rebind": self._rebind_project,
+            "integration.select-read-only": self._select_read_only_integration,
             "portability.backup": self._portable_backup,
             "portability.restore": self._portable_restore,
             "portability.migrate-repo-local": self._migrate_repo_local,
@@ -1020,6 +1026,48 @@ class KrcnApplicationService:
         )
         return "applied", {"plan": plan.public_summary(), **result.public_summary()}
 
+    def _select_read_only_integration(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"integration_id", "binding_id", "statement"},
+            optional={"maximum_rows"},
+        )
+        if request.apply:
+            raise ApplicationServiceError("read-only integration cannot be applied")
+        if self._sqlite_runtime is None:
+            raise ApplicationServiceError(
+                "SQLite reference runtime is not explicitly registered"
+            )
+        integration_id = _identifier_argument(request.arguments, "integration_id")
+        binding_id = _identifier_argument(request.arguments, "binding_id")
+        integration_record = self._store.read("integrations", integration_id)
+        binding_record = self._store.read("source-bindings", binding_id)
+        if integration_record is None or binding_record is None:
+            raise ApplicationServiceError("integration or source binding was not found")
+        integration = parse_integration_metadata(dict(integration_record.payload))
+        binding = parse_source_binding(dict(binding_record.payload))
+        maximum_rows = request.arguments.get("maximum_rows", 1_000)
+        if (
+            not isinstance(maximum_rows, int)
+            or isinstance(maximum_rows, bool)
+            or maximum_rows < 1
+        ):
+            raise ApplicationServiceError("maximum_rows must be positive")
+        result = self._sqlite_runtime.execute_select(
+            integration,
+            binding,
+            _string_argument(request.arguments, "statement"),
+            load_user_policies(self._store.data_root / "policies"),
+            maximum_rows=maximum_rows,
+        )
+        return "ok", {
+            "result": result.public_summary(),
+            "component_catalog": self._sqlite_runtime.component_catalog(),
+        }
+
     def _portable_backup(
         self,
         request: ServiceRequest,
@@ -1548,8 +1596,14 @@ def create_application_service(
     """Create the shared service with the same portable user home for every client."""
 
     repository = repo_root.resolve()
+    home = resolve_user_home(data_root).path
     store = LocalWorkspaceStore(
-        resolve_user_home(data_root).path,
+        home,
         OwnershipResolver.from_repository(repository),
     )
+    if "sqlite_runtime" not in options:
+        options["sqlite_runtime"] = SqliteReferenceRuntime(
+            repository,
+            home / "secrets",
+        )
     return KrcnApplicationService(repository, store, **options)
