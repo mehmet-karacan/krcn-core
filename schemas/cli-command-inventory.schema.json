@@ -15,11 +15,23 @@
     "commands"
   ],
   "properties": {
-    "schema_ref": { "type": "string", "minLength": 1 },
-    "schema_version": { "const": 1 },
-    "baseline_id": { "type": "string", "minLength": 1 },
-    "status": { "const": "reference-only" },
-    "source_code_imported": { "const": false },
+    "schema_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "baseline_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "const": "reference-only"
+    },
+    "source_code_imported": {
+      "const": false
+    },
     "source_fingerprint": {
       "type": "object",
       "additionalProperties": false,
@@ -31,21 +43,38 @@
         "content_findings"
       ],
       "properties": {
-        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-        "line_count": { "type": "integer", "minimum": 1 },
-        "byte_count": { "type": "integer", "minimum": 1 },
-        "staging_location": { "const": "external-local" },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "line_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "byte_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "staging_location": {
+          "const": "external-local"
+        },
         "content_findings": {
           "type": "array",
           "uniqueItems": true,
-          "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          }
         }
       }
     },
     "global_findings": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
     },
     "commands": {
       "type": "array",
@@ -65,38 +94,80 @@
           "disposition"
         ],
         "properties": {
-          "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-          "command": { "type": "string", "minLength": 1 },
-          "visibility": { "enum": ["public", "internal"] },
-          "behavior": { "enum": ["read", "write", "mixed"] },
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "command": {
+            "type": "string",
+            "minLength": 1
+          },
+          "visibility": {
+            "enum": [
+              "public",
+              "internal"
+            ]
+          },
+          "behavior": {
+            "enum": [
+              "read",
+              "write",
+              "mixed"
+            ]
+          },
           "reads": {
             "type": "array",
             "uniqueItems": true,
-            "items": { "$ref": "#/$defs/ownershipClass" }
+            "items": {
+              "$ref": "#/$defs/ownershipClass"
+            }
           },
           "writes": {
             "type": "array",
             "uniqueItems": true,
-            "items": { "$ref": "#/$defs/ownershipClass" }
+            "items": {
+              "$ref": "#/$defs/ownershipClass"
+            }
           },
           "network_effects": {
             "type": "array",
             "uniqueItems": true,
-            "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            }
           },
           "risk_codes": {
             "type": "array",
             "uniqueItems": true,
-            "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            }
           },
-          "disposition": { "enum": ["preserve", "redesign", "defer", "internal-only"] }
+          "disposition": {
+            "enum": [
+              "preserve",
+              "redesign",
+              "defer",
+              "internal-only"
+            ]
+          }
         }
       }
     }
   },
   "$defs": {
     "ownershipClass": {
-      "enum": ["core", "runtime", "user-data", "derived", "secrets", "unmanaged", "external"]
+      "enum": [
+        "core",
+        "runtime",
+        "user-data",
+        "derived",
+        "secrets",
+        "unmanaged",
+        "external"
+      ]
     }
   }
 }

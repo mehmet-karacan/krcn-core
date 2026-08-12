@@ -1,7 +1,11 @@
 {
   "schema_ref": "schemas/release-quality.schema.json",
   "schema_version": 1,
-  "supported_platforms": ["linux", "windows", "macos"],
+  "supported_platforms": [
+    "linux",
+    "windows",
+    "macos"
+  ],
   "user_home_layout_version": 1,
   "required_operations": [
     "project.rebind",

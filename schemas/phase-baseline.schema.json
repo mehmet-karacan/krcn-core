@@ -18,12 +18,24 @@
     "next_phase"
   ],
   "properties": {
-    "schema_ref": { "const": "schemas/phase-baseline.schema.json" },
-    "schema_version": { "const": 1 },
-    "baseline_id": { "const": "phase-2-local-workspace" },
-    "phase_id": { "const": "phase-2" },
-    "status": { "const": "ready" },
-    "completed_steps": { "const": 10 },
+    "schema_ref": {
+      "const": "schemas/phase-baseline.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "baseline_id": {
+      "const": "phase-2-local-workspace"
+    },
+    "phase_id": {
+      "const": "phase-2"
+    },
+    "status": {
+      "const": "ready"
+    },
+    "completed_steps": {
+      "const": 10
+    },
     "capabilities": {
       "type": "array",
       "minItems": 7,
@@ -67,12 +79,24 @@
         "user_policy_preserved"
       ],
       "properties": {
-        "source_content_copied": { "const": false },
-        "source_content_mutated": { "const": false },
-        "local_data_tracked": { "const": false },
-        "implicit_network_access": { "const": false },
-        "literal_secrets_stored": { "const": false },
-        "user_policy_preserved": { "const": true }
+        "source_content_copied": {
+          "const": false
+        },
+        "source_content_mutated": {
+          "const": false
+        },
+        "local_data_tracked": {
+          "const": false
+        },
+        "implicit_network_access": {
+          "const": false
+        },
+        "literal_secrets_stored": {
+          "const": false
+        },
+        "user_policy_preserved": {
+          "const": true
+        }
       }
     },
     "verification": {
@@ -86,21 +110,41 @@
         "existing_workspace"
       ],
       "properties": {
-        "hermetic_tests": { "const": "passed" },
-        "doctor": { "const": "passed" },
-        "offline_install": { "const": "passed" },
-        "clean_workspace": { "const": "passed" },
-        "existing_workspace": { "const": "passed" }
+        "hermetic_tests": {
+          "const": "passed"
+        },
+        "doctor": {
+          "const": "passed"
+        },
+        "offline_install": {
+          "const": "passed"
+        },
+        "clean_workspace": {
+          "const": "passed"
+        },
+        "existing_workspace": {
+          "const": "passed"
+        }
       }
     },
     "next_phase": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["phase_id", "contract_ref", "implementation_started"],
+      "required": [
+        "phase_id",
+        "contract_ref",
+        "implementation_started"
+      ],
       "properties": {
-        "phase_id": { "const": "phase-3" },
-        "contract_ref": { "const": "docs/specifications/PHASE-3-MERGE-BOUNDARY.md" },
-        "implementation_started": { "const": false }
+        "phase_id": {
+          "const": "phase-3"
+        },
+        "contract_ref": {
+          "const": "docs/specifications/PHASE-3-MERGE-BOUNDARY.md"
+        },
+        "implementation_started": {
+          "const": false
+        }
       }
     }
   }

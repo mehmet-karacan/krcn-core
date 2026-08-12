@@ -12,7 +12,7 @@ from .deployment import (
     DeploymentAuthorization,
     DeploymentPlan,
     _atomic_write,
-    _canonical_document,
+    _stored_document,
     write_deployment_status,
 )
 from .installation import (
@@ -277,7 +277,7 @@ def verify_and_commit(
     state_target = safe_installation_target(root, state_mutation.target_ref)
     _atomic_write(
         state_target,
-        _canonical_document(plan.merge_plan.desired_state.as_payload()),
+        _stored_document(plan.merge_plan.desired_state.as_payload()),
     )
     committed_state, committed_sha256 = load_installation_state(root)
     if (

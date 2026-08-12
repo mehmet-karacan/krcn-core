@@ -4,29 +4,111 @@
   "title": "KRCN Core orchestration state",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "state_id", "task_id", "session_id", "plan_id", "authorization_id", "verification_id", "status", "current_step_id", "completed_step_ids", "failed_step_ids", "event_head_digest", "revision", "state_digest"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "state_id",
+    "task_id",
+    "session_id",
+    "plan_id",
+    "authorization_id",
+    "verification_id",
+    "status",
+    "current_step_id",
+    "completed_step_ids",
+    "failed_step_ids",
+    "event_head_digest",
+    "revision",
+    "state_digest"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/orchestration-state.schema.json" },
-    "schema_version": { "const": 1 },
-    "state_id": { "$ref": "#/$defs/id" },
-    "task_id": { "$ref": "#/$defs/id" },
-    "session_id": { "type": "string", "minLength": 1 },
-    "plan_id": { "$ref": "#/$defs/digest" },
-    "authorization_id": { "$ref": "#/$defs/nullableDigest" },
-    "verification_id": { "$ref": "#/$defs/nullableDigest" },
-    "status": { "$ref": "#/$defs/status" },
-    "current_step_id": { "type": ["string", "null"], "pattern": "^[a-z][a-z0-9-]*$" },
-    "completed_step_ids": { "$ref": "#/$defs/ids" },
-    "failed_step_ids": { "$ref": "#/$defs/ids" },
-    "event_head_digest": { "$ref": "#/$defs/digest" },
-    "revision": { "type": "integer", "minimum": 1 },
-    "state_digest": { "$ref": "#/$defs/digest" }
+    "schema_ref": {
+      "const": "schemas/orchestration-state.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "state_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_id": {
+      "$ref": "#/$defs/id"
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "authorization_id": {
+      "$ref": "#/$defs/nullableDigest"
+    },
+    "verification_id": {
+      "$ref": "#/$defs/nullableDigest"
+    },
+    "status": {
+      "$ref": "#/$defs/status"
+    },
+    "current_step_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "completed_step_ids": {
+      "$ref": "#/$defs/ids"
+    },
+    "failed_step_ids": {
+      "$ref": "#/$defs/ids"
+    },
+    "event_head_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "state_digest": {
+      "$ref": "#/$defs/digest"
+    }
   },
   "$defs": {
-    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "nullableDigest": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
-    "ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
-    "status": { "enum": ["planned", "awaiting-approval", "authorized", "running", "verifying", "completed", "failed", "interrupted", "blocked"] }
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "nullableDigest": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "status": {
+      "enum": [
+        "planned",
+        "awaiting-approval",
+        "authorized",
+        "running",
+        "verifying",
+        "completed",
+        "failed",
+        "interrupted",
+        "blocked"
+      ]
+    }
   }
 }

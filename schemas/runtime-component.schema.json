@@ -4,16 +4,74 @@
   "title": "KRCN runtime component summary",
   "type": "object",
   "additionalProperties": false,
-  "required": ["component_id", "kind", "capability_record_refs", "capabilities", "side_effects", "selection_digest", "component_digest", "callback_registered", "grants_authority"],
+  "required": [
+    "component_id",
+    "kind",
+    "capability_record_refs",
+    "capabilities",
+    "side_effects",
+    "selection_digest",
+    "component_digest",
+    "callback_registered",
+    "grants_authority"
+  ],
   "properties": {
-    "component_id": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
-    "kind": {"enum": ["adapter", "secret-provider", "skill", "verifier", "worker"]},
-    "capability_record_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"}},
-    "capabilities": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)+$"}},
-    "side_effects": {"type": "array", "uniqueItems": true, "items": {"enum": ["read", "write", "execute", "network"]}},
-    "selection_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "component_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "callback_registered": {"const": true},
-    "grants_authority": {"const": false}
+    "component_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "kind": {
+      "enum": [
+        "adapter",
+        "secret-provider",
+        "skill",
+        "verifier",
+        "worker"
+      ]
+    },
+    "capability_record_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)+$"
+      }
+    },
+    "side_effects": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "read",
+          "write",
+          "execute",
+          "network"
+        ]
+      }
+    },
+    "selection_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "component_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "callback_registered": {
+      "const": true
+    },
+    "grants_authority": {
+      "const": false
+    }
   }
 }

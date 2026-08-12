@@ -17,32 +17,72 @@
     "approval_gates"
   ],
   "properties": {
-    "schema_ref": { "$ref": "#/$defs/repoPath" },
-    "schema_version": { "const": 1 },
-    "phase_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
-    "workstream_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
-    "status": { "enum": ["planned", "active", "blocked", "completed"] },
-    "goal": { "type": "string", "minLength": 1 },
-    "plan_ref": { "$ref": "#/$defs/repoPath" },
+    "schema_ref": {
+      "$ref": "#/$defs/repoPath"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "phase_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "workstream_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "status": {
+      "enum": [
+        "planned",
+        "active",
+        "blocked",
+        "completed"
+      ]
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 1
+    },
+    "plan_ref": {
+      "$ref": "#/$defs/repoPath"
+    },
     "progress_refs": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "$ref": "#/$defs/repoPath" }
+      "items": {
+        "$ref": "#/$defs/repoPath"
+      }
     },
     "next_actions": {
       "type": "array",
       "minItems": 1,
-      "items": { "type": "string", "minLength": 1 }
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
-    "baseline_commit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
+    "baseline_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
     "approval_gates": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["tracked_source_import", "user_data_mutation", "remote_provider_use"],
+      "required": [
+        "tracked_source_import",
+        "user_data_mutation",
+        "remote_provider_use"
+      ],
       "properties": {
-        "tracked_source_import": { "type": "boolean" },
-        "user_data_mutation": { "type": "boolean" },
-        "remote_provider_use": { "type": "boolean" }
+        "tracked_source_import": {
+          "type": "boolean"
+        },
+        "user_data_mutation": {
+          "type": "boolean"
+        },
+        "remote_provider_use": {
+          "type": "boolean"
+        }
       }
     }
   },

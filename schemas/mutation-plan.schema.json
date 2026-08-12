@@ -16,16 +16,47 @@
     "reversible"
   ],
   "properties": {
-    "schema_version": { "const": 1 },
-    "plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "operation": { "enum": ["create", "update", "delete", "move"] },
-    "target_ref": { "type": "string", "minLength": 1 },
-    "ownership": {
-      "enum": ["core", "runtime", "user-data", "derived", "secrets", "unmanaged"]
+    "schema_version": {
+      "const": 1
     },
-    "change_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "dry_run_required": { "const": true },
-    "approval_required": { "type": "boolean" },
-    "reversible": { "type": "boolean" }
+    "plan_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "operation": {
+      "enum": [
+        "create",
+        "update",
+        "delete",
+        "move"
+      ]
+    },
+    "target_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ownership": {
+      "enum": [
+        "core",
+        "runtime",
+        "user-data",
+        "derived",
+        "secrets",
+        "unmanaged"
+      ]
+    },
+    "change_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "dry_run_required": {
+      "const": true
+    },
+    "approval_required": {
+      "type": "boolean"
+    },
+    "reversible": {
+      "type": "boolean"
+    }
   }
 }

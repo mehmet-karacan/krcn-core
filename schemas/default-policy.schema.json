@@ -4,39 +4,83 @@
   "title": "KRCN Core default execution policy",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "policy_id", "version", "network", "mutation", "audit"],
+  "required": [
+    "schema_ref",
+    "policy_id",
+    "version",
+    "network",
+    "mutation",
+    "audit"
+  ],
   "properties": {
-    "schema_ref": { "type": "string" },
-    "policy_id": { "const": "default" },
-    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "schema_ref": {
+      "type": "string"
+    },
+    "policy_id": {
+      "const": "default"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
     "network": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["default", "explicit_opt_in_required", "implicit_provider_discovery"],
+      "required": [
+        "default",
+        "explicit_opt_in_required",
+        "implicit_provider_discovery"
+      ],
       "properties": {
-        "default": { "const": "deny" },
-        "explicit_opt_in_required": { "const": true },
-        "implicit_provider_discovery": { "const": false }
+        "default": {
+          "const": "deny"
+        },
+        "explicit_opt_in_required": {
+          "const": true
+        },
+        "implicit_provider_discovery": {
+          "const": false
+        }
       }
     },
     "mutation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["dry_run_required", "overwrite_existing", "approval_required_for_user_data", "rollback_required"],
+      "required": [
+        "dry_run_required",
+        "overwrite_existing",
+        "approval_required_for_user_data",
+        "rollback_required"
+      ],
       "properties": {
-        "dry_run_required": { "const": true },
-        "overwrite_existing": { "const": false },
-        "approval_required_for_user_data": { "const": true },
-        "rollback_required": { "const": true }
+        "dry_run_required": {
+          "const": true
+        },
+        "overwrite_existing": {
+          "const": false
+        },
+        "approval_required_for_user_data": {
+          "const": true
+        },
+        "rollback_required": {
+          "const": true
+        }
       }
     },
     "audit": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["mask_sensitive_values", "record_evidence"],
+      "required": [
+        "mask_sensitive_values",
+        "record_evidence"
+      ],
       "properties": {
-        "mask_sensitive_values": { "const": true },
-        "record_evidence": { "const": true }
+        "mask_sensitive_values": {
+          "const": true
+        },
+        "record_evidence": {
+          "const": true
+        }
       }
     }
   }

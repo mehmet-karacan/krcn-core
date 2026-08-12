@@ -4,58 +4,163 @@
   "title": "KRCN Core completed Phase 7 baseline",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "baseline_id", "phase_id", "status", "completed_steps", "capabilities", "safe_operations", "guarantees", "verification", "maintenance"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "baseline_id",
+    "phase_id",
+    "status",
+    "completed_steps",
+    "capabilities",
+    "safe_operations",
+    "guarantees",
+    "verification",
+    "maintenance"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/phase-7-baseline.schema.json" },
-    "schema_version": { "const": 1 },
-    "baseline_id": { "const": "phase-7-natural-language-project-learning" },
-    "phase_id": { "const": "phase-7" },
-    "status": { "const": "ready" },
-    "completed_steps": { "const": 7 },
-    "capabilities": { "type": "array", "minItems": 7, "maxItems": 7, "uniqueItems": true },
-    "safe_operations": { "const": ["project.learn"] },
+    "schema_ref": {
+      "const": "schemas/phase-7-baseline.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "baseline_id": {
+      "const": "phase-7-natural-language-project-learning"
+    },
+    "phase_id": {
+      "const": "phase-7"
+    },
+    "status": {
+      "const": "ready"
+    },
+    "completed_steps": {
+      "const": 7
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true
+    },
+    "safe_operations": {
+      "const": [
+        "project.learn"
+      ]
+    },
     "guarantees": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["technical_identifiers_required_from_user", "external_source_copied", "external_source_mutated", "physical_source_locator_disclosed", "duplicate_source_registration", "user_policy_preserved", "exact_plan_required", "single_user_approval", "client_parity", "offline_by_default"],
+      "required": [
+        "technical_identifiers_required_from_user",
+        "external_source_copied",
+        "external_source_mutated",
+        "physical_source_locator_disclosed",
+        "duplicate_source_registration",
+        "user_policy_preserved",
+        "exact_plan_required",
+        "single_user_approval",
+        "client_parity",
+        "offline_by_default"
+      ],
       "properties": {
-        "technical_identifiers_required_from_user": { "const": false },
-        "external_source_copied": { "const": false },
-        "external_source_mutated": { "const": false },
-        "physical_source_locator_disclosed": { "const": false },
-        "duplicate_source_registration": { "const": false },
-        "user_policy_preserved": { "const": true },
-        "exact_plan_required": { "const": true },
-        "single_user_approval": { "const": true },
-        "client_parity": { "const": true },
-        "offline_by_default": { "const": true }
+        "technical_identifiers_required_from_user": {
+          "const": false
+        },
+        "external_source_copied": {
+          "const": false
+        },
+        "external_source_mutated": {
+          "const": false
+        },
+        "physical_source_locator_disclosed": {
+          "const": false
+        },
+        "duplicate_source_registration": {
+          "const": false
+        },
+        "user_policy_preserved": {
+          "const": true
+        },
+        "exact_plan_required": {
+          "const": true
+        },
+        "single_user_approval": {
+          "const": true
+        },
+        "client_parity": {
+          "const": true
+        },
+        "offline_by_default": {
+          "const": true
+        }
       }
     },
     "verification": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["hermetic_tests", "foundation", "doctor", "offline_install", "directory_only", "natural_language", "metadata_inference", "source_no_copy", "policy_preservation", "duplicate_prevention", "client_parity"],
+      "required": [
+        "hermetic_tests",
+        "foundation",
+        "doctor",
+        "offline_install",
+        "directory_only",
+        "natural_language",
+        "metadata_inference",
+        "source_no_copy",
+        "policy_preservation",
+        "duplicate_prevention",
+        "client_parity"
+      ],
       "properties": {
-        "hermetic_tests": { "const": "passed" },
-        "foundation": { "const": "passed" },
-        "doctor": { "const": "passed" },
-        "offline_install": { "const": "passed" },
-        "directory_only": { "const": "passed" },
-        "natural_language": { "const": "passed" },
-        "metadata_inference": { "const": "passed" },
-        "source_no_copy": { "const": "passed" },
-        "policy_preservation": { "const": "passed" },
-        "duplicate_prevention": { "const": "passed" },
-        "client_parity": { "const": "passed" }
+        "hermetic_tests": {
+          "const": "passed"
+        },
+        "foundation": {
+          "const": "passed"
+        },
+        "doctor": {
+          "const": "passed"
+        },
+        "offline_install": {
+          "const": "passed"
+        },
+        "directory_only": {
+          "const": "passed"
+        },
+        "natural_language": {
+          "const": "passed"
+        },
+        "metadata_inference": {
+          "const": "passed"
+        },
+        "source_no_copy": {
+          "const": "passed"
+        },
+        "policy_preservation": {
+          "const": "passed"
+        },
+        "duplicate_prevention": {
+          "const": "passed"
+        },
+        "client_parity": {
+          "const": "passed"
+        }
       }
     },
     "maintenance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "new_phase_requires_user_approval"],
+      "required": [
+        "status",
+        "new_phase_requires_user_approval"
+      ],
       "properties": {
-        "status": { "const": "ready" },
-        "new_phase_requires_user_approval": { "const": true }
+        "status": {
+          "const": "ready"
+        },
+        "new_phase_requires_user_approval": {
+          "const": true
+        }
       }
     }
   }

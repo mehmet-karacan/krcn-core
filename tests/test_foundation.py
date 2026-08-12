@@ -15,6 +15,7 @@ sys.path.insert(0, str(SRC_ROOT))
 from krcn_core.foundation import (  # noqa: E402
     load_json,
     scan_tree,
+    validate_json_documents,
     validate_foundation,
     validate_ownership_manifest,
     validate_provider_policy,
@@ -28,6 +29,10 @@ class FoundationConfigurationTests(unittest.TestCase):
 
     def test_repository_scan_is_clean(self) -> None:
         self.assertEqual([], verify_repository(REPO_ROOT))
+
+    def test_repository_json_documents_are_readable_and_valid(self) -> None:
+        paths = [REPO_ROOT / item for item in ("config/ownership-manifest.json",)]
+        self.assertEqual([], validate_json_documents(REPO_ROOT, paths))
 
     def test_ownership_defaults_preserve_unknown_paths(self) -> None:
         manifest = load_json(REPO_ROOT / "config" / "ownership-manifest.json")

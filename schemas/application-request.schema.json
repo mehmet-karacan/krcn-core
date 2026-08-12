@@ -4,10 +4,21 @@
   "title": "KRCN Core transport-neutral application request",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "client_kind", "operation", "arguments", "apply"],
+  "required": [
+    "schema_version",
+    "client_kind",
+    "operation",
+    "arguments",
+    "apply"
+  ],
   "properties": {
-    "schema_version": { "const": 1 },
-    "client_kind": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "schema_version": {
+      "const": 1
+    },
+    "client_kind": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
     "operation": {
       "enum": [
         "installation.inspect",
@@ -51,12 +62,26 @@
         "orchestrator.resume"
       ]
     },
-    "arguments": { "type": "object", "additionalProperties": true },
-    "apply": { "type": "boolean" },
+    "arguments": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "apply": {
+      "type": "boolean"
+    },
     "expected_plan_id": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "pattern": "^[a-f0-9]{64}$"
     },
-    "approval_id": { "type": ["string", "null"], "minLength": 1 }
+    "approval_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    }
   }
 }

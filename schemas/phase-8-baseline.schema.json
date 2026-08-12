@@ -4,65 +4,194 @@
   "title": "KRCN Core completed Phase 8 baseline",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "baseline_id", "phase_id", "status", "completed_steps", "capabilities", "safe_operations", "guarantees", "verification", "maintenance"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "baseline_id",
+    "phase_id",
+    "status",
+    "completed_steps",
+    "capabilities",
+    "safe_operations",
+    "guarantees",
+    "verification",
+    "maintenance"
+  ],
   "properties": {
-    "schema_ref": {"const": "schemas/phase-8-baseline.schema.json"},
-    "schema_version": {"const": 1},
-    "baseline_id": {"const": "phase-8-project-home-production-hardening"},
-    "phase_id": {"const": "phase-8"},
-    "status": {"const": "ready"},
-    "completed_steps": {"const": 10},
-    "capabilities": {"type": "array", "minItems": 10, "maxItems": 10, "uniqueItems": true},
-    "safe_operations": {"type": "array", "minItems": 8, "uniqueItems": true, "items": {"type": "string"}},
+    "schema_ref": {
+      "const": "schemas/phase-8-baseline.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "baseline_id": {
+      "const": "phase-8-project-home-production-hardening"
+    },
+    "phase_id": {
+      "const": "phase-8"
+    },
+    "status": {
+      "const": "ready"
+    },
+    "completed_steps": {
+      "const": 10
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "uniqueItems": true
+    },
+    "safe_operations": {
+      "type": "array",
+      "minItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
     "guarantees": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["project_local_home_default", "custom_local_home_supported", "local_data_tracked", "external_source_copied", "external_source_mutated", "database_mutation_effect", "secret_value_disclosed", "user_policy_preserved", "clean_clone_recovery", "client_parity", "exact_plan_required", "offline_by_default", "coverage_threshold_enforced", "linux_ci"],
+      "required": [
+        "project_local_home_default",
+        "custom_local_home_supported",
+        "local_data_tracked",
+        "external_source_copied",
+        "external_source_mutated",
+        "database_mutation_effect",
+        "secret_value_disclosed",
+        "user_policy_preserved",
+        "clean_clone_recovery",
+        "client_parity",
+        "exact_plan_required",
+        "offline_by_default",
+        "coverage_threshold_enforced",
+        "linux_ci"
+      ],
       "properties": {
-        "project_local_home_default": {"const": true},
-        "custom_local_home_supported": {"const": true},
-        "local_data_tracked": {"const": false},
-        "external_source_copied": {"const": false},
-        "external_source_mutated": {"const": false},
-        "database_mutation_effect": {"const": false},
-        "secret_value_disclosed": {"const": false},
-        "user_policy_preserved": {"const": true},
-        "clean_clone_recovery": {"const": true},
-        "client_parity": {"const": true},
-        "exact_plan_required": {"const": true},
-        "offline_by_default": {"const": true},
-        "coverage_threshold_enforced": {"const": true},
-        "linux_ci": {"const": true}
+        "project_local_home_default": {
+          "const": true
+        },
+        "custom_local_home_supported": {
+          "const": true
+        },
+        "local_data_tracked": {
+          "const": false
+        },
+        "external_source_copied": {
+          "const": false
+        },
+        "external_source_mutated": {
+          "const": false
+        },
+        "database_mutation_effect": {
+          "const": false
+        },
+        "secret_value_disclosed": {
+          "const": false
+        },
+        "user_policy_preserved": {
+          "const": true
+        },
+        "clean_clone_recovery": {
+          "const": true
+        },
+        "client_parity": {
+          "const": true
+        },
+        "exact_plan_required": {
+          "const": true
+        },
+        "offline_by_default": {
+          "const": true
+        },
+        "coverage_threshold_enforced": {
+          "const": true
+        },
+        "linux_ci": {
+          "const": true
+        }
       }
     },
     "verification": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["hermetic_tests", "foundation", "doctor", "coverage", "offline_install", "project_home_matrix", "portability", "policy_preservation", "external_source_no_copy", "read_only_integration", "hybrid_retrieval", "runtime_integrity", "client_parity", "clean_clone"],
+      "required": [
+        "hermetic_tests",
+        "foundation",
+        "doctor",
+        "coverage",
+        "offline_install",
+        "project_home_matrix",
+        "portability",
+        "policy_preservation",
+        "external_source_no_copy",
+        "read_only_integration",
+        "hybrid_retrieval",
+        "runtime_integrity",
+        "client_parity",
+        "clean_clone"
+      ],
       "properties": {
-        "hermetic_tests": {"const": "passed"},
-        "foundation": {"const": "passed"},
-        "doctor": {"const": "passed"},
-        "coverage": {"const": "passed"},
-        "offline_install": {"const": "passed"},
-        "project_home_matrix": {"const": "passed"},
-        "portability": {"const": "passed"},
-        "policy_preservation": {"const": "passed"},
-        "external_source_no_copy": {"const": "passed"},
-        "read_only_integration": {"const": "passed"},
-        "hybrid_retrieval": {"const": "passed"},
-        "runtime_integrity": {"const": "passed"},
-        "client_parity": {"const": "passed"},
-        "clean_clone": {"const": "passed"}
+        "hermetic_tests": {
+          "const": "passed"
+        },
+        "foundation": {
+          "const": "passed"
+        },
+        "doctor": {
+          "const": "passed"
+        },
+        "coverage": {
+          "const": "passed"
+        },
+        "offline_install": {
+          "const": "passed"
+        },
+        "project_home_matrix": {
+          "const": "passed"
+        },
+        "portability": {
+          "const": "passed"
+        },
+        "policy_preservation": {
+          "const": "passed"
+        },
+        "external_source_no_copy": {
+          "const": "passed"
+        },
+        "read_only_integration": {
+          "const": "passed"
+        },
+        "hybrid_retrieval": {
+          "const": "passed"
+        },
+        "runtime_integrity": {
+          "const": "passed"
+        },
+        "client_parity": {
+          "const": "passed"
+        },
+        "clean_clone": {
+          "const": "passed"
+        }
       }
     },
     "maintenance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "new_phase_requires_user_approval"],
+      "required": [
+        "status",
+        "new_phase_requires_user_approval"
+      ],
       "properties": {
-        "status": {"const": "ready"},
-        "new_phase_requires_user_approval": {"const": true}
+        "status": {
+          "const": "ready"
+        },
+        "new_phase_requires_user_approval": {
+          "const": true
+        }
       }
     }
   }

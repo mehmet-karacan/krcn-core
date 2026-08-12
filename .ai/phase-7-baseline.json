@@ -14,7 +14,9 @@
     "client-neutral-intent-routing",
     "no-copy-end-to-end-verification"
   ],
-  "safe_operations": ["project.learn"],
+  "safe_operations": [
+    "project.learn"
+  ],
   "guarantees": {
     "technical_identifiers_required_from_user": false,
     "external_source_copied": false,

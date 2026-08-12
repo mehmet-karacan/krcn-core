@@ -132,6 +132,11 @@ class ProjectHomeInitializationTests(unittest.TestCase):
             payload = json.loads(
                 (selected.path / MANIFEST_NAME).read_text(encoding="utf-8")
             )
+            manifest_document = (selected.path / MANIFEST_NAME).read_text(
+                encoding="utf-8"
+            )
+            self.assertIn('\n  "home_id": ', manifest_document)
+            self.assertTrue(manifest_document.endswith("\n"))
             self.assertFalse(payload["source_copy"])
             self.assertFalse(payload["local_data_in_git"])
             self.assertNotIn(str(project), str(payload))

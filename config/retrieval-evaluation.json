@@ -7,26 +7,37 @@
     {
       "case_id": "database-policy-exact",
       "query_text": "database read operations",
-      "relevant_record_ids": ["database-read-rule"],
+      "relevant_record_ids": [
+        "database-read-rule"
+      ],
       "seed_record_ids": []
     },
     {
       "case_id": "database-policy-typo",
       "query_text": "databse read operatons",
-      "relevant_record_ids": ["database-read-rule"],
+      "relevant_record_ids": [
+        "database-read-rule"
+      ],
       "seed_record_ids": []
     },
     {
       "case_id": "deployment-rollback",
       "query_text": "verified rollback checkpoint",
-      "relevant_record_ids": ["deployment-guide"],
+      "relevant_record_ids": [
+        "deployment-guide"
+      ],
       "seed_record_ids": []
     },
     {
       "case_id": "dependency-recall",
       "query_text": "database",
-      "relevant_record_ids": ["database-read-rule", "deployment-guide"],
-      "seed_record_ids": ["database-read-rule"]
+      "relevant_record_ids": [
+        "database-read-rule",
+        "deployment-guide"
+      ],
+      "seed_record_ids": [
+        "database-read-rule"
+      ]
     }
   ]
 }

@@ -4,20 +4,58 @@
   "title": "KRCN Core exact retrieval query",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "query_id", "text", "fields", "case_sensitive", "include_unavailable", "limit"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "query_id",
+    "text",
+    "fields",
+    "case_sensitive",
+    "include_unavailable",
+    "limit"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/exact-retrieval-query.schema.json" },
-    "schema_version": { "const": 1 },
-    "query_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "text": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "schema_ref": {
+      "const": "schemas/exact-retrieval-query.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "query_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
     "fields": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "enum": ["record-id", "subject-ref", "path", "title", "alias", "keyword", "text"] }
+      "items": {
+        "enum": [
+          "record-id",
+          "subject-ref",
+          "path",
+          "title",
+          "alias",
+          "keyword",
+          "text"
+        ]
+      }
     },
-    "case_sensitive": { "type": "boolean" },
-    "include_unavailable": { "type": "boolean" },
-    "limit": { "type": "integer", "minimum": 1, "maximum": 100 }
+    "case_sensitive": {
+      "type": "boolean"
+    },
+    "include_unavailable": {
+      "type": "boolean"
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100
+    }
   }
 }

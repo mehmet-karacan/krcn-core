@@ -18,6 +18,7 @@ from .deployment import (
     _atomic_write,
     _canonical_document,
     _document_sha256,
+    _stored_document,
 )
 from .installation import safe_installation_target
 from .mutation_gate import (
@@ -576,7 +577,7 @@ def _write_journal_status(
         authorization.journal_authorizations.get(mutation.plan_id),
     )
     payload = plan.journal_payloads[status]
-    document = _canonical_document(payload)
+    document = _stored_document(payload)
     if hashlib.sha256(document).hexdigest() != mutation.change_digest:
         raise RollbackError("rollback journal evidence changed")
     target = safe_installation_target(root, mutation.target_ref)

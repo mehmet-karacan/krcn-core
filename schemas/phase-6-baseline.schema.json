@@ -4,65 +4,176 @@
   "title": "KRCN Core completed Phase 6 baseline",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "baseline_id", "phase_id", "status", "completed_steps", "capabilities", "safe_operations", "guarantees", "verification", "maintenance"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "baseline_id",
+    "phase_id",
+    "status",
+    "completed_steps",
+    "capabilities",
+    "safe_operations",
+    "guarantees",
+    "verification",
+    "maintenance"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/phase-6-baseline.schema.json" },
-    "schema_version": { "const": 1 },
-    "baseline_id": { "const": "phase-6-release-quality-portability" },
-    "phase_id": { "const": "phase-6" },
-    "status": { "const": "ready" },
-    "completed_steps": { "const": 10 },
-    "capabilities": { "type": "array", "minItems": 10, "maxItems": 10, "uniqueItems": true },
+    "schema_ref": {
+      "const": "schemas/phase-6-baseline.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "baseline_id": {
+      "const": "phase-6-release-quality-portability"
+    },
+    "phase_id": {
+      "const": "phase-6"
+    },
+    "status": {
+      "const": "ready"
+    },
+    "completed_steps": {
+      "const": 10
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "uniqueItems": true
+    },
     "safe_operations": {
       "type": "array",
       "minItems": 4,
       "maxItems": 4,
       "uniqueItems": true,
-      "items": { "enum": ["project.rebind", "portability.backup", "portability.restore", "portability.migrate-repo-local"] }
+      "items": {
+        "enum": [
+          "project.rebind",
+          "portability.backup",
+          "portability.restore",
+          "portability.migrate-repo-local"
+        ]
+      }
     },
     "guarantees": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["external_source_copied", "external_source_mutated", "physical_source_locator_archived", "secret_values_archived", "local_data_tracked", "user_data_preserved", "user_policy_preserved", "exact_plan_required", "repo_local_source_preserved", "clean_clone_recovery", "update_merge_verify_preserved", "client_parity"],
+      "required": [
+        "external_source_copied",
+        "external_source_mutated",
+        "physical_source_locator_archived",
+        "secret_values_archived",
+        "local_data_tracked",
+        "user_data_preserved",
+        "user_policy_preserved",
+        "exact_plan_required",
+        "repo_local_source_preserved",
+        "clean_clone_recovery",
+        "update_merge_verify_preserved",
+        "client_parity"
+      ],
       "properties": {
-        "external_source_copied": { "const": false },
-        "external_source_mutated": { "const": false },
-        "physical_source_locator_archived": { "const": false },
-        "secret_values_archived": { "const": false },
-        "local_data_tracked": { "const": false },
-        "user_data_preserved": { "const": true },
-        "user_policy_preserved": { "const": true },
-        "exact_plan_required": { "const": true },
-        "repo_local_source_preserved": { "const": true },
-        "clean_clone_recovery": { "const": true },
-        "update_merge_verify_preserved": { "const": true },
-        "client_parity": { "const": true }
+        "external_source_copied": {
+          "const": false
+        },
+        "external_source_mutated": {
+          "const": false
+        },
+        "physical_source_locator_archived": {
+          "const": false
+        },
+        "secret_values_archived": {
+          "const": false
+        },
+        "local_data_tracked": {
+          "const": false
+        },
+        "user_data_preserved": {
+          "const": true
+        },
+        "user_policy_preserved": {
+          "const": true
+        },
+        "exact_plan_required": {
+          "const": true
+        },
+        "repo_local_source_preserved": {
+          "const": true
+        },
+        "clean_clone_recovery": {
+          "const": true
+        },
+        "update_merge_verify_preserved": {
+          "const": true
+        },
+        "client_parity": {
+          "const": true
+        }
       }
     },
     "verification": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["hermetic_tests", "foundation", "doctor", "offline_install", "portable_backup_restore", "source_rebind", "policy_preservation", "external_source_no_copy", "clean_clone", "merge_verify_rollback"],
+      "required": [
+        "hermetic_tests",
+        "foundation",
+        "doctor",
+        "offline_install",
+        "portable_backup_restore",
+        "source_rebind",
+        "policy_preservation",
+        "external_source_no_copy",
+        "clean_clone",
+        "merge_verify_rollback"
+      ],
       "properties": {
-        "hermetic_tests": { "const": "passed" },
-        "foundation": { "const": "passed" },
-        "doctor": { "const": "passed" },
-        "offline_install": { "const": "passed" },
-        "portable_backup_restore": { "const": "passed" },
-        "source_rebind": { "const": "passed" },
-        "policy_preservation": { "const": "passed" },
-        "external_source_no_copy": { "const": "passed" },
-        "clean_clone": { "const": "passed" },
-        "merge_verify_rollback": { "const": "passed" }
+        "hermetic_tests": {
+          "const": "passed"
+        },
+        "foundation": {
+          "const": "passed"
+        },
+        "doctor": {
+          "const": "passed"
+        },
+        "offline_install": {
+          "const": "passed"
+        },
+        "portable_backup_restore": {
+          "const": "passed"
+        },
+        "source_rebind": {
+          "const": "passed"
+        },
+        "policy_preservation": {
+          "const": "passed"
+        },
+        "external_source_no_copy": {
+          "const": "passed"
+        },
+        "clean_clone": {
+          "const": "passed"
+        },
+        "merge_verify_rollback": {
+          "const": "passed"
+        }
       }
     },
     "maintenance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "new_phase_requires_user_approval"],
+      "required": [
+        "status",
+        "new_phase_requires_user_approval"
+      ],
       "properties": {
-        "status": { "const": "ready" },
-        "new_phase_requires_user_approval": { "const": true }
+        "status": {
+          "const": "ready"
+        },
+        "new_phase_requires_user_approval": {
+          "const": true
+        }
       }
     }
   }

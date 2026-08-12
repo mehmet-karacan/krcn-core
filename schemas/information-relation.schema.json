@@ -4,22 +4,75 @@
   "title": "KRCN Core revision-aware information relation",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "relation_id", "from_record_id", "to_record_id", "relation_type", "revision", "relation_digest", "provenance", "lifecycle"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "relation_id",
+    "from_record_id",
+    "to_record_id",
+    "relation_type",
+    "revision",
+    "relation_digest",
+    "provenance",
+    "lifecycle"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/information-relation.schema.json" },
-    "schema_version": { "const": 1 },
-    "relation_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "from_record_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "to_record_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "relation_type": { "enum": ["contains", "depends-on", "references", "implements", "documents", "decides", "tracks", "derived-from", "related-to"] },
-    "revision": { "type": "integer", "minimum": 1 },
-    "relation_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "schema_ref": {
+      "const": "schemas/information-relation.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "relation_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "from_record_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "to_record_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "relation_type": {
+      "enum": [
+        "contains",
+        "depends-on",
+        "references",
+        "implements",
+        "documents",
+        "decides",
+        "tracks",
+        "derived-from",
+        "related-to"
+      ]
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "relation_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
     "provenance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "evidence"],
+      "required": [
+        "kind",
+        "evidence"
+      ],
       "properties": {
-        "kind": { "enum": ["explicit-user", "approved-import", "source-derived", "system-observation", "approved-memory"] },
+        "kind": {
+          "enum": [
+            "explicit-user",
+            "approved-import",
+            "source-derived",
+            "system-observation",
+            "approved-memory"
+          ]
+        },
         "evidence": {
           "type": "array",
           "minItems": 1,
@@ -27,17 +80,44 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["source_ref", "revision_id", "digest", "relation"],
+            "required": [
+              "source_ref",
+              "revision_id",
+              "digest",
+              "relation"
+            ],
             "properties": {
-              "source_ref": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$" },
-              "revision_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
-              "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-              "relation": { "enum": ["supports", "derived-from", "observed-at"] }
+              "source_ref": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$"
+              },
+              "revision_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+              },
+              "digest": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "relation": {
+                "enum": [
+                  "supports",
+                  "derived-from",
+                  "observed-at"
+                ]
+              }
             }
           }
         }
       }
     },
-    "lifecycle": { "enum": ["current", "superseded", "stale", "archived"] }
+    "lifecycle": {
+      "enum": [
+        "current",
+        "superseded",
+        "stale",
+        "archived"
+      ]
+    }
   }
 }

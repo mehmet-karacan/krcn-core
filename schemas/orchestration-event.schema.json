@@ -4,27 +4,103 @@
   "title": "KRCN Core orchestration event",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "event_id", "task_id", "plan_id", "sequence", "event_type", "from_status", "to_status", "subject_digest", "prior_event_digest", "state_revision", "revision", "event_digest"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "event_id",
+    "task_id",
+    "plan_id",
+    "sequence",
+    "event_type",
+    "from_status",
+    "to_status",
+    "subject_digest",
+    "prior_event_digest",
+    "state_revision",
+    "revision",
+    "event_digest"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/orchestration-event.schema.json" },
-    "schema_version": { "const": 1 },
-    "event_id": { "$ref": "#/$defs/id" },
-    "task_id": { "$ref": "#/$defs/id" },
-    "plan_id": { "$ref": "#/$defs/digest" },
-    "sequence": { "type": "integer", "minimum": 1 },
-    "event_type": { "$ref": "#/$defs/id" },
-    "from_status": { "anyOf": [{ "$ref": "#/$defs/status" }, { "type": "null" }] },
-    "to_status": { "$ref": "#/$defs/status" },
-    "subject_digest": { "$ref": "#/$defs/digest" },
-    "prior_event_digest": { "$ref": "#/$defs/nullableDigest" },
-    "state_revision": { "type": "integer", "minimum": 1 },
-    "revision": { "const": 1 },
-    "event_digest": { "$ref": "#/$defs/digest" }
+    "schema_ref": {
+      "const": "schemas/orchestration-event.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "event_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_id": {
+      "$ref": "#/$defs/id"
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "event_type": {
+      "$ref": "#/$defs/id"
+    },
+    "from_status": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/status"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "to_status": {
+      "$ref": "#/$defs/status"
+    },
+    "subject_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "prior_event_digest": {
+      "$ref": "#/$defs/nullableDigest"
+    },
+    "state_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "revision": {
+      "const": 1
+    },
+    "event_digest": {
+      "$ref": "#/$defs/digest"
+    }
   },
   "$defs": {
-    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "nullableDigest": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
-    "status": { "enum": ["planned", "awaiting-approval", "authorized", "running", "verifying", "completed", "failed", "interrupted", "blocked"] }
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "nullableDigest": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "status": {
+      "enum": [
+        "planned",
+        "awaiting-approval",
+        "authorized",
+        "running",
+        "verifying",
+        "completed",
+        "failed",
+        "interrupted",
+        "blocked"
+      ]
+    }
   }
 }

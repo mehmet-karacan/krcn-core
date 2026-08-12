@@ -4,57 +4,202 @@
   "title": "KRCN Core provider-gated semantic result",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "query_id", "query_digest", "catalog_digest", "candidate_digest", "provider_request_id", "provider", "remote", "mode", "approval_verified", "result_digest", "hit_count", "truncated", "hits"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "query_id",
+    "query_digest",
+    "catalog_digest",
+    "candidate_digest",
+    "provider_request_id",
+    "provider",
+    "remote",
+    "mode",
+    "approval_verified",
+    "result_digest",
+    "hit_count",
+    "truncated",
+    "hits"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/semantic-result.schema.json" },
-    "schema_version": { "const": 1 },
-    "query_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "query_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "catalog_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "candidate_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "provider_request_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "provider": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "remote": { "type": "boolean" },
-    "mode": { "enum": ["offline-deterministic-fallback", "remote-provider"] },
-    "approval_verified": { "type": "boolean" },
-    "result_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "hit_count": { "type": "integer", "minimum": 0 },
-    "truncated": { "type": "boolean" },
+    "schema_ref": {
+      "const": "schemas/semantic-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "query_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "query_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "catalog_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "candidate_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "provider_request_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "provider": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "remote": {
+      "type": "boolean"
+    },
+    "mode": {
+      "enum": [
+        "offline-deterministic-fallback",
+        "remote-provider"
+      ]
+    },
+    "approval_verified": {
+      "type": "boolean"
+    },
+    "result_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "hit_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "truncated": {
+      "type": "boolean"
+    },
     "hits": {
       "type": "array",
       "uniqueItems": true,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["record_id", "information_class", "ownership", "subject_ref", "revision", "content_digest", "lifecycle", "availability", "authority_rank", "binding_ref", "evidence", "score", "evidence_count"],
+        "required": [
+          "record_id",
+          "information_class",
+          "ownership",
+          "subject_ref",
+          "revision",
+          "content_digest",
+          "lifecycle",
+          "availability",
+          "authority_rank",
+          "binding_ref",
+          "evidence",
+          "score",
+          "evidence_count"
+        ],
         "properties": {
-          "record_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-          "information_class": { "enum": ["authoritative-source", "knowledge"] },
-          "ownership": { "const": "user-data" },
-          "subject_ref": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$" },
-          "revision": { "type": "integer", "minimum": 1 },
-          "content_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-          "lifecycle": { "enum": ["current", "superseded", "stale", "archived"] },
-          "availability": { "enum": ["current", "binding-missing", "binding-stale", "binding-conflict", "stale", "superseded", "archived"] },
-          "authority_rank": { "enum": [0, 1] },
-          "binding_ref": { "type": ["string", "null"], "pattern": "^binding:[a-z][a-z0-9-]*$" },
+          "record_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "information_class": {
+            "enum": [
+              "authoritative-source",
+              "knowledge"
+            ]
+          },
+          "ownership": {
+            "const": "user-data"
+          },
+          "subject_ref": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "content_digest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "lifecycle": {
+            "enum": [
+              "current",
+              "superseded",
+              "stale",
+              "archived"
+            ]
+          },
+          "availability": {
+            "enum": [
+              "current",
+              "binding-missing",
+              "binding-stale",
+              "binding-conflict",
+              "stale",
+              "superseded",
+              "archived"
+            ]
+          },
+          "authority_rank": {
+            "enum": [
+              0,
+              1
+            ]
+          },
+          "binding_ref": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^binding:[a-z][a-z0-9-]*$"
+          },
           "evidence": {
             "type": "array",
             "uniqueItems": true,
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["source_ref", "revision_id", "digest", "relation"],
+              "required": [
+                "source_ref",
+                "revision_id",
+                "digest",
+                "relation"
+              ],
               "properties": {
-                "source_ref": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$" },
-                "revision_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
-                "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-                "relation": { "enum": ["supports", "derived-from", "observed-at", "supersedes", "contradicts"] }
+                "source_ref": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$"
+                },
+                "revision_id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+                },
+                "digest": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "relation": {
+                  "enum": [
+                    "supports",
+                    "derived-from",
+                    "observed-at",
+                    "supersedes",
+                    "contradicts"
+                  ]
+                }
               }
             }
           },
-          "score": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
-          "evidence_count": { "type": "integer", "minimum": 0 }
+          "score": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1
+          },
+          "evidence_count": {
+            "type": "integer",
+            "minimum": 0
+          }
         }
       }
     }

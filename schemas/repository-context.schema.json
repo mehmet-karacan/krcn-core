@@ -14,17 +14,38 @@
     "data_policy"
   ],
   "properties": {
-    "schema_ref": { "$ref": "#/$defs/repoPath" },
-    "schema_version": { "const": 1 },
+    "schema_ref": {
+      "$ref": "#/$defs/repoPath"
+    },
+    "schema_version": {
+      "const": 1
+    },
     "project": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "name", "purpose", "architecture_owner"],
+      "required": [
+        "id",
+        "name",
+        "purpose",
+        "architecture_owner"
+      ],
       "properties": {
-        "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-        "name": { "type": "string", "minLength": 1 },
-        "purpose": { "type": "string", "minLength": 1 },
-        "architecture_owner": { "type": "string", "minLength": 1 }
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "architecture_owner": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "canonical": {
@@ -102,99 +123,259 @@
         "deployment_journal_schema",
         "migration_execution",
         "policy_layers",
+        "json_document_format",
         "cli_inventory",
         "cli_baseline",
         "provider_policy",
         "import_policy"
       ],
       "properties": {
-        "instructions": { "$ref": "#/$defs/repoPath" },
-        "orientation": { "$ref": "#/$defs/repoPath" },
-        "current_work": { "$ref": "#/$defs/repoPath" },
-        "roadmap": { "$ref": "#/$defs/repoPath" },
-        "ownership": { "$ref": "#/$defs/repoPath" },
-        "source_binding_schema": { "$ref": "#/$defs/repoPath" },
-        "user_policy_schema": { "$ref": "#/$defs/repoPath" },
-        "mutation_plan_schema": { "$ref": "#/$defs/repoPath" },
-        "provider_request_schema": { "$ref": "#/$defs/repoPath" },
-        "local_record_schema": { "$ref": "#/$defs/repoPath" },
-        "onboarding_plan_schema": { "$ref": "#/$defs/repoPath" },
-        "discovery_result_schema": { "$ref": "#/$defs/repoPath" },
-        "adapter_schema": { "$ref": "#/$defs/repoPath" },
-        "adapter_operation_schema": { "$ref": "#/$defs/repoPath" },
-        "integration_schema": { "$ref": "#/$defs/repoPath" },
-        "source_state_schema": { "$ref": "#/$defs/repoPath" },
-        "rescan_plan_schema": { "$ref": "#/$defs/repoPath" },
-        "application_request_schema": { "$ref": "#/$defs/repoPath" },
-        "application_response_schema": { "$ref": "#/$defs/repoPath" },
-        "phase_baseline_schema": { "$ref": "#/$defs/repoPath" },
-        "phase_two_baseline": { "$ref": "#/$defs/repoPath" },
-        "phase_three_baseline": { "$ref": "#/$defs/repoPath" },
-        "phase_three_merge_boundary": { "$ref": "#/$defs/repoPath" },
-        "phase_four_boundary": { "$ref": "#/$defs/repoPath" },
-        "phase_four_baseline": { "$ref": "#/$defs/repoPath" },
-        "phase_five_boundary": { "$ref": "#/$defs/repoPath" },
-        "phase_five_baseline": { "$ref": "#/$defs/repoPath" },
-        "project_local_home_boundary": { "$ref": "#/$defs/repoPath" },
-        "project_home_resolution_schema": { "$ref": "#/$defs/repoPath" },
-        "project_home_manifest_schema": { "$ref": "#/$defs/repoPath" },
-        "project_home_initialization_plan_schema": { "$ref": "#/$defs/repoPath" },
-        "orchestration_boundary": { "$ref": "#/$defs/repoPath" },
-        "orchestration_boundary_schema": { "$ref": "#/$defs/repoPath" },
-        "task_intent_schema": { "$ref": "#/$defs/repoPath" },
-        "capability_registry": { "$ref": "#/$defs/repoPath" },
-        "capability_registry_schema": { "$ref": "#/$defs/repoPath" },
-        "task_plan_schema": { "$ref": "#/$defs/repoPath" },
-        "task_authorization_schema": { "$ref": "#/$defs/repoPath" },
-        "worker_execution_schema": { "$ref": "#/$defs/repoPath" },
-        "task_verification_schema": { "$ref": "#/$defs/repoPath" },
-        "orchestration_state_schema": { "$ref": "#/$defs/repoPath" },
-        "orchestration_event_schema": { "$ref": "#/$defs/repoPath" },
-        "orchestration_checkpoint_schema": { "$ref": "#/$defs/repoPath" },
-        "orchestration_handoff_schema": { "$ref": "#/$defs/repoPath" },
-        "information_classes": { "$ref": "#/$defs/repoPath" },
-        "information_classes_schema": { "$ref": "#/$defs/repoPath" },
-        "information_record_schema": { "$ref": "#/$defs/repoPath" },
-        "information_catalog_schema": { "$ref": "#/$defs/repoPath" },
-        "exact_retrieval_query_schema": { "$ref": "#/$defs/repoPath" },
-        "exact_retrieval_result_schema": { "$ref": "#/$defs/repoPath" },
-        "information_relation_schema": { "$ref": "#/$defs/repoPath" },
-        "dependency_query_schema": { "$ref": "#/$defs/repoPath" },
-        "dependency_result_schema": { "$ref": "#/$defs/repoPath" },
-        "semantic_query_schema": { "$ref": "#/$defs/repoPath" },
-        "semantic_result_schema": { "$ref": "#/$defs/repoPath" },
-        "context_build_request_schema": { "$ref": "#/$defs/repoPath" },
-        "context_package_v2_schema": { "$ref": "#/$defs/repoPath" },
-        "memory_candidate_schema": { "$ref": "#/$defs/repoPath" },
-        "memory_review_schema": { "$ref": "#/$defs/repoPath" },
-        "memory_action_schema": { "$ref": "#/$defs/repoPath" },
-        "policy_promotion_plan_schema": { "$ref": "#/$defs/repoPath" },
-        "release_manifest_schema": { "$ref": "#/$defs/repoPath" },
-        "installation_state_schema": { "$ref": "#/$defs/repoPath" },
-        "installation_inspection_schema": { "$ref": "#/$defs/repoPath" },
-        "release_trust": { "$ref": "#/$defs/repoPath" },
-        "release_diff_schema": { "$ref": "#/$defs/repoPath" },
-        "merge_plan_schema": { "$ref": "#/$defs/repoPath" },
-        "backup_manifest_schema": { "$ref": "#/$defs/repoPath" },
-        "deployment_journal_schema": { "$ref": "#/$defs/repoPath" },
-        "migration_execution": { "$ref": "#/$defs/repoPath" },
-        "policy_layers": { "$ref": "#/$defs/repoPath" },
-        "cli_inventory": { "$ref": "#/$defs/repoPath" },
-        "cli_baseline": { "$ref": "#/$defs/repoPath" },
-        "provider_policy": { "$ref": "#/$defs/repoPath" },
-        "import_policy": { "$ref": "#/$defs/repoPath" }
+        "instructions": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "orientation": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "current_work": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "roadmap": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "ownership": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "source_binding_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "user_policy_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "mutation_plan_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "provider_request_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "local_record_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "onboarding_plan_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "discovery_result_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "adapter_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "adapter_operation_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "integration_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "source_state_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "rescan_plan_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "application_request_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "application_response_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "phase_baseline_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "phase_two_baseline": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "phase_three_baseline": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "phase_three_merge_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "phase_four_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "phase_four_baseline": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "phase_five_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "phase_five_baseline": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "project_local_home_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "project_home_resolution_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "project_home_manifest_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "project_home_initialization_plan_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "orchestration_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "orchestration_boundary_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "task_intent_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "capability_registry": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "capability_registry_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "task_plan_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "task_authorization_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "worker_execution_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "task_verification_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "orchestration_state_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "orchestration_event_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "orchestration_checkpoint_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "orchestration_handoff_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "information_classes": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "information_classes_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "information_record_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "information_catalog_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "exact_retrieval_query_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "exact_retrieval_result_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "information_relation_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "dependency_query_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "dependency_result_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "semantic_query_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "semantic_result_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "context_build_request_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "context_package_v2_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "memory_candidate_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "memory_review_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "memory_action_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "policy_promotion_plan_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "release_manifest_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "installation_state_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "installation_inspection_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "release_trust": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "release_diff_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "merge_plan_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "backup_manifest_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "deployment_journal_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "migration_execution": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "policy_layers": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "json_document_format": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "cli_inventory": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "cli_baseline": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "provider_policy": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "import_policy": {
+          "$ref": "#/$defs/repoPath"
+        }
       }
     },
     "bootstrap": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["read_order", "task_contract", "verification_commands"],
+      "required": [
+        "read_order",
+        "task_contract",
+        "verification_commands"
+      ],
       "properties": {
         "read_order": {
           "type": "array",
           "minItems": 1,
           "uniqueItems": true,
-          "items": { "$ref": "#/$defs/repoPath" }
+          "items": {
+            "$ref": "#/$defs/repoPath"
+          }
         },
         "task_contract": {
           "type": "array",
@@ -216,14 +397,26 @@
           "type": "array",
           "minItems": 1,
           "uniqueItems": true,
-          "items": { "type": "string", "minLength": 1 }
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       }
     },
     "client_adapters": {
       "type": "object",
-      "additionalProperties": { "$ref": "#/$defs/clientAdapter" },
-      "required": ["codex", "claude-code", "generic-ai", "plugin", "sdk", "mcp"]
+      "additionalProperties": {
+        "$ref": "#/$defs/clientAdapter"
+      },
+      "required": [
+        "codex",
+        "claude-code",
+        "generic-ai",
+        "plugin",
+        "sdk",
+        "mcp"
+      ]
     },
     "data_policy": {
       "type": "object",
@@ -235,10 +428,18 @@
         "user_data_mutation_requires_approval"
       ],
       "properties": {
-        "offline_by_default": { "const": true },
-        "local_data_in_git": { "const": false },
-        "implicit_provider_discovery": { "const": false },
-        "user_data_mutation_requires_approval": { "const": true }
+        "offline_by_default": {
+          "const": true
+        },
+        "local_data_in_git": {
+          "const": false
+        },
+        "implicit_provider_discovery": {
+          "const": false
+        },
+        "user_data_mutation_requires_approval": {
+          "const": true
+        }
       }
     }
   },
@@ -251,11 +452,25 @@
     "clientAdapter": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["entrypoint", "mode"],
+      "required": [
+        "entrypoint",
+        "mode"
+      ],
       "properties": {
-        "entrypoint": { "$ref": "#/$defs/repoPath" },
-        "mode": { "enum": ["native", "import", "document", "manifest"] },
-        "automatic": { "type": "boolean" }
+        "entrypoint": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "mode": {
+          "enum": [
+            "native",
+            "import",
+            "document",
+            "manifest"
+          ]
+        },
+        "automatic": {
+          "type": "boolean"
+        }
       }
     }
   }

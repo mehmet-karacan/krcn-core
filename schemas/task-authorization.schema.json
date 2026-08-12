@@ -4,63 +4,162 @@
   "title": "KRCN Core exact task authorization",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "task_id", "plan_id", "intent_digest", "selection_digest", "session_id", "approval_id", "steps", "authorized", "authorization_id"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "task_id",
+    "plan_id",
+    "intent_digest",
+    "selection_digest",
+    "session_id",
+    "approval_id",
+    "steps",
+    "authorized",
+    "authorization_id"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/task-authorization.schema.json" },
-    "schema_version": { "const": 1 },
-    "task_id": { "$ref": "#/$defs/id" },
-    "plan_id": { "$ref": "#/$defs/digest" },
-    "intent_digest": { "$ref": "#/$defs/digest" },
-    "selection_digest": { "$ref": "#/$defs/digest" },
-    "session_id": { "type": "string", "minLength": 1 },
-    "approval_id": { "type": ["string", "null"], "minLength": 1 },
+    "schema_ref": {
+      "const": "schemas/task-authorization.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "task_id": {
+      "$ref": "#/$defs/id"
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "intent_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "selection_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "approval_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
     "steps": {
       "type": "array",
       "minItems": 2,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["step_id", "step_digest", "operations", "mutation_plan_ids", "provider_request_ids"],
+        "required": [
+          "step_id",
+          "step_digest",
+          "operations",
+          "mutation_plan_ids",
+          "provider_request_ids"
+        ],
         "properties": {
-          "step_id": { "$ref": "#/$defs/id" },
-          "step_digest": { "$ref": "#/$defs/digest" },
+          "step_id": {
+            "$ref": "#/$defs/id"
+          },
+          "step_digest": {
+            "$ref": "#/$defs/digest"
+          },
           "operations": {
             "type": "array",
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["step_id", "resource_type", "operation", "scope_refs", "policy_effect", "matched_policy_ids", "matched_rule_ids"],
+              "required": [
+                "step_id",
+                "resource_type",
+                "operation",
+                "scope_refs",
+                "policy_effect",
+                "matched_policy_ids",
+                "matched_rule_ids"
+              ],
               "properties": {
-                "step_id": { "$ref": "#/$defs/id" },
-                "resource_type": { "$ref": "#/$defs/id" },
-                "operation": { "$ref": "#/$defs/id" },
+                "step_id": {
+                  "$ref": "#/$defs/id"
+                },
+                "resource_type": {
+                  "$ref": "#/$defs/id"
+                },
+                "operation": {
+                  "$ref": "#/$defs/id"
+                },
                 "scope_refs": {
                   "type": "object",
                   "additionalProperties": false,
                   "properties": {
-                    "project": { "$ref": "#/$defs/id" },
-                    "source": { "$ref": "#/$defs/id" },
-                    "integration": { "$ref": "#/$defs/id" }
+                    "project": {
+                      "$ref": "#/$defs/id"
+                    },
+                    "source": {
+                      "$ref": "#/$defs/id"
+                    },
+                    "integration": {
+                      "$ref": "#/$defs/id"
+                    }
                   }
                 },
-                "policy_effect": { "enum": ["allow", "require-approval", "not-applicable"] },
-                "matched_policy_ids": { "$ref": "#/$defs/ids" },
-                "matched_rule_ids": { "$ref": "#/$defs/ids" }
+                "policy_effect": {
+                  "enum": [
+                    "allow",
+                    "require-approval",
+                    "not-applicable"
+                  ]
+                },
+                "matched_policy_ids": {
+                  "$ref": "#/$defs/ids"
+                },
+                "matched_rule_ids": {
+                  "$ref": "#/$defs/ids"
+                }
               }
             }
           },
-          "mutation_plan_ids": { "$ref": "#/$defs/digests" },
-          "provider_request_ids": { "$ref": "#/$defs/digests" }
+          "mutation_plan_ids": {
+            "$ref": "#/$defs/digests"
+          },
+          "provider_request_ids": {
+            "$ref": "#/$defs/digests"
+          }
         }
       }
     },
-    "authorized": { "const": true },
-    "authorization_id": { "$ref": "#/$defs/digest" }
+    "authorized": {
+      "const": true
+    },
+    "authorization_id": {
+      "$ref": "#/$defs/digest"
+    }
   },
   "$defs": {
-    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
-    "digests": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/digest" } }
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "digests": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/digest"
+      }
+    }
   }
 }

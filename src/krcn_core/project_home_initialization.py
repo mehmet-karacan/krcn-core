@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping
 
+from .json_documents import canonical_json_bytes, pretty_json_bytes
 from .mutation_gate import (
     MutationAuthorization,
     MutationPlan,
@@ -111,10 +112,7 @@ class ProjectHomeInitializationResult:
 
 
 def _canonical_json(payload: object) -> bytes:
-    return (
-        json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-        + "\n"
-    ).encode("utf-8")
+    return canonical_json_bytes(payload, trailing_newline=True)
 
 
 def _sha256(content: bytes) -> str:
@@ -130,7 +128,7 @@ def _manifest_content(project_root: Path, home: Path) -> tuple[str, bytes]:
             + str(home.resolve(strict=False))
         ).encode("utf-8")
     ).hexdigest()
-    content = _canonical_json(
+    content = pretty_json_bytes(
         {
             "schema_ref": MANIFEST_SCHEMA,
             "schema_version": 1,

@@ -28,10 +28,14 @@
       "command": "root",
       "visibility": "public",
       "behavior": "read",
-      "reads": ["runtime"],
+      "reads": [
+        "runtime"
+      ],
       "writes": [],
       "network_effects": [],
-      "risk_codes": ["absolute-path-output"],
+      "risk_codes": [
+        "absolute-path-output"
+      ],
       "disposition": "redesign"
     },
     {
@@ -39,10 +43,16 @@
       "command": "validate",
       "visibility": "public",
       "behavior": "read",
-      "reads": ["core", "runtime", "user-data"],
+      "reads": [
+        "core",
+        "runtime",
+        "user-data"
+      ],
       "writes": [],
       "network_effects": [],
-      "risk_codes": ["layout-couples-ownership-classes"],
+      "risk_codes": [
+        "layout-couples-ownership-classes"
+      ],
       "disposition": "redesign"
     },
     {
@@ -50,10 +60,14 @@
       "command": "project list",
       "visibility": "public",
       "behavior": "read",
-      "reads": ["user-data"],
+      "reads": [
+        "user-data"
+      ],
       "writes": [],
       "network_effects": [],
-      "risk_codes": ["absolute-path-output"],
+      "risk_codes": [
+        "absolute-path-output"
+      ],
       "disposition": "redesign"
     },
     {
@@ -61,10 +75,20 @@
       "command": "project onboard",
       "visibility": "public",
       "behavior": "write",
-      "reads": ["external"],
-      "writes": ["user-data", "runtime", "external"],
+      "reads": [
+        "external"
+      ],
+      "writes": [
+        "user-data",
+        "runtime",
+        "external"
+      ],
       "network_effects": [],
-      "risk_codes": ["external-source-write", "absolute-path-storage", "unguarded-user-data-write"],
+      "risk_codes": [
+        "external-source-write",
+        "absolute-path-storage",
+        "unguarded-user-data-write"
+      ],
       "disposition": "redesign"
     },
     {
@@ -72,10 +96,21 @@
       "command": "project rescan",
       "visibility": "public",
       "behavior": "write",
-      "reads": ["user-data", "external"],
-      "writes": ["user-data", "runtime", "external"],
+      "reads": [
+        "user-data",
+        "external"
+      ],
+      "writes": [
+        "user-data",
+        "runtime",
+        "external"
+      ],
       "network_effects": [],
-      "risk_codes": ["external-source-write", "absolute-path-storage", "unguarded-user-data-write"],
+      "risk_codes": [
+        "external-source-write",
+        "absolute-path-storage",
+        "unguarded-user-data-write"
+      ],
       "disposition": "redesign"
     },
     {
@@ -83,7 +118,9 @@
       "command": "task list",
       "visibility": "public",
       "behavior": "read",
-      "reads": ["user-data"],
+      "reads": [
+        "user-data"
+      ],
       "writes": [],
       "network_effects": [],
       "risk_codes": [],
@@ -94,10 +131,17 @@
       "command": "task checkpoint",
       "visibility": "public",
       "behavior": "write",
-      "reads": ["user-data"],
-      "writes": ["user-data", "runtime"],
+      "reads": [
+        "user-data"
+      ],
+      "writes": [
+        "user-data",
+        "runtime"
+      ],
       "network_effects": [],
-      "risk_codes": ["unguarded-user-data-write"],
+      "risk_codes": [
+        "unguarded-user-data-write"
+      ],
       "disposition": "redesign"
     },
     {
@@ -105,7 +149,9 @@
       "command": "task nerede-kaldik",
       "visibility": "public",
       "behavior": "read",
-      "reads": ["user-data"],
+      "reads": [
+        "user-data"
+      ],
       "writes": [],
       "network_effects": [],
       "risk_codes": [],
@@ -116,10 +162,23 @@
       "command": "index build",
       "visibility": "public",
       "behavior": "write",
-      "reads": ["user-data", "external"],
-      "writes": ["runtime", "derived"],
-      "network_effects": ["embedding-provider-possible"],
-      "risk_codes": ["implicit-provider-discovery", "remote-content-upload", "background-process", "destructive-derived-swap"],
+      "reads": [
+        "user-data",
+        "external"
+      ],
+      "writes": [
+        "runtime",
+        "derived"
+      ],
+      "network_effects": [
+        "embedding-provider-possible"
+      ],
+      "risk_codes": [
+        "implicit-provider-discovery",
+        "remote-content-upload",
+        "background-process",
+        "destructive-derived-swap"
+      ],
       "disposition": "redesign"
     },
     {
@@ -127,10 +186,23 @@
       "command": "index update",
       "visibility": "public",
       "behavior": "write",
-      "reads": ["user-data", "external"],
-      "writes": ["runtime", "derived"],
-      "network_effects": ["embedding-provider-possible"],
-      "risk_codes": ["not-incremental", "implicit-provider-discovery", "remote-content-upload", "destructive-derived-swap"],
+      "reads": [
+        "user-data",
+        "external"
+      ],
+      "writes": [
+        "runtime",
+        "derived"
+      ],
+      "network_effects": [
+        "embedding-provider-possible"
+      ],
+      "risk_codes": [
+        "not-incremental",
+        "implicit-provider-discovery",
+        "remote-content-upload",
+        "destructive-derived-swap"
+      ],
       "disposition": "redesign"
     },
     {
@@ -138,10 +210,22 @@
       "command": "index _worker",
       "visibility": "internal",
       "behavior": "write",
-      "reads": ["user-data", "external"],
-      "writes": ["runtime", "derived"],
-      "network_effects": ["embedding-provider-possible"],
-      "risk_codes": ["implicit-provider-discovery", "remote-content-upload", "destructive-derived-swap"],
+      "reads": [
+        "user-data",
+        "external"
+      ],
+      "writes": [
+        "runtime",
+        "derived"
+      ],
+      "network_effects": [
+        "embedding-provider-possible"
+      ],
+      "risk_codes": [
+        "implicit-provider-discovery",
+        "remote-content-upload",
+        "destructive-derived-swap"
+      ],
       "disposition": "internal-only"
     },
     {
@@ -149,7 +233,10 @@
       "command": "index status",
       "visibility": "public",
       "behavior": "read",
-      "reads": ["runtime", "derived"],
+      "reads": [
+        "runtime",
+        "derived"
+      ],
       "writes": [],
       "network_effects": [],
       "risk_codes": [],
@@ -160,7 +247,9 @@
       "command": "index query",
       "visibility": "public",
       "behavior": "read",
-      "reads": ["derived"],
+      "reads": [
+        "derived"
+      ],
       "writes": [],
       "network_effects": [],
       "risk_codes": [],
@@ -171,10 +260,17 @@
       "command": "index semantik-ara",
       "visibility": "public",
       "behavior": "read",
-      "reads": ["derived"],
+      "reads": [
+        "derived"
+      ],
       "writes": [],
-      "network_effects": ["embedding-provider-possible"],
-      "risk_codes": ["implicit-provider-discovery", "remote-query-upload"],
+      "network_effects": [
+        "embedding-provider-possible"
+      ],
+      "risk_codes": [
+        "implicit-provider-discovery",
+        "remote-query-upload"
+      ],
       "disposition": "redesign"
     },
     {
@@ -182,10 +278,20 @@
       "command": "memory index",
       "visibility": "public",
       "behavior": "write",
-      "reads": ["user-data"],
-      "writes": ["derived"],
-      "network_effects": ["embedding-provider-possible"],
-      "risk_codes": ["implicit-provider-discovery", "remote-content-upload", "generated-data-misclassified"],
+      "reads": [
+        "user-data"
+      ],
+      "writes": [
+        "derived"
+      ],
+      "network_effects": [
+        "embedding-provider-possible"
+      ],
+      "risk_codes": [
+        "implicit-provider-discovery",
+        "remote-content-upload",
+        "generated-data-misclassified"
+      ],
       "disposition": "redesign"
     },
     {
@@ -193,10 +299,17 @@
       "command": "memory semantik-ara",
       "visibility": "public",
       "behavior": "read",
-      "reads": ["derived"],
+      "reads": [
+        "derived"
+      ],
       "writes": [],
-      "network_effects": ["embedding-provider-possible"],
-      "risk_codes": ["implicit-provider-discovery", "remote-query-upload"],
+      "network_effects": [
+        "embedding-provider-possible"
+      ],
+      "risk_codes": [
+        "implicit-provider-discovery",
+        "remote-query-upload"
+      ],
       "disposition": "redesign"
     },
     {
@@ -205,9 +318,15 @@
       "visibility": "public",
       "behavior": "write",
       "reads": [],
-      "writes": ["user-data"],
+      "writes": [
+        "user-data"
+      ],
       "network_effects": [],
-      "risk_codes": ["sensitive-metadata-storage", "secret-reference-storage", "unguarded-user-data-write"],
+      "risk_codes": [
+        "sensitive-metadata-storage",
+        "secret-reference-storage",
+        "unguarded-user-data-write"
+      ],
       "disposition": "redesign"
     },
     {
@@ -215,10 +334,24 @@
       "command": "db-index build",
       "visibility": "public",
       "behavior": "write",
-      "reads": ["user-data", "secrets", "external"],
-      "writes": ["derived"],
-      "network_effects": ["database-connection", "embedding-provider-possible"],
-      "risk_codes": ["external-database-access", "non-select-session-command", "implicit-provider-discovery", "remote-content-upload"],
+      "reads": [
+        "user-data",
+        "secrets",
+        "external"
+      ],
+      "writes": [
+        "derived"
+      ],
+      "network_effects": [
+        "database-connection",
+        "embedding-provider-possible"
+      ],
+      "risk_codes": [
+        "external-database-access",
+        "non-select-session-command",
+        "implicit-provider-discovery",
+        "remote-content-upload"
+      ],
       "disposition": "defer"
     },
     {
@@ -226,10 +359,15 @@
       "command": "db-index status",
       "visibility": "public",
       "behavior": "read",
-      "reads": ["user-data", "derived"],
+      "reads": [
+        "user-data",
+        "derived"
+      ],
       "writes": [],
       "network_effects": [],
-      "risk_codes": ["sensitive-metadata-output"],
+      "risk_codes": [
+        "sensitive-metadata-output"
+      ],
       "disposition": "redesign"
     },
     {
@@ -237,10 +375,17 @@
       "command": "db-index semantik-ara",
       "visibility": "public",
       "behavior": "read",
-      "reads": ["derived"],
+      "reads": [
+        "derived"
+      ],
       "writes": [],
-      "network_effects": ["embedding-provider-possible"],
-      "risk_codes": ["implicit-provider-discovery", "remote-query-upload"],
+      "network_effects": [
+        "embedding-provider-possible"
+      ],
+      "risk_codes": [
+        "implicit-provider-discovery",
+        "remote-query-upload"
+      ],
       "disposition": "redesign"
     },
     {
@@ -248,10 +393,19 @@
       "command": "ara",
       "visibility": "public",
       "behavior": "read",
-      "reads": ["user-data", "derived"],
+      "reads": [
+        "user-data",
+        "derived"
+      ],
       "writes": [],
-      "network_effects": ["embedding-provider-possible"],
-      "risk_codes": ["implicit-provider-discovery", "remote-query-upload", "sensitive-metadata-output"],
+      "network_effects": [
+        "embedding-provider-possible"
+      ],
+      "risk_codes": [
+        "implicit-provider-discovery",
+        "remote-query-upload",
+        "sensitive-metadata-output"
+      ],
       "disposition": "redesign"
     },
     {
@@ -259,10 +413,16 @@
       "command": "lock acquire",
       "visibility": "public",
       "behavior": "write",
-      "reads": ["runtime"],
-      "writes": ["runtime"],
+      "reads": [
+        "runtime"
+      ],
+      "writes": [
+        "runtime"
+      ],
       "network_effects": [],
-      "risk_codes": ["ownership-not-enforced"],
+      "risk_codes": [
+        "ownership-not-enforced"
+      ],
       "disposition": "redesign"
     },
     {
@@ -270,10 +430,16 @@
       "command": "lock release",
       "visibility": "public",
       "behavior": "write",
-      "reads": ["runtime"],
-      "writes": ["runtime"],
+      "reads": [
+        "runtime"
+      ],
+      "writes": [
+        "runtime"
+      ],
       "network_effects": [],
-      "risk_codes": ["lock-owner-not-verified"],
+      "risk_codes": [
+        "lock-owner-not-verified"
+      ],
       "disposition": "redesign"
     },
     {
@@ -281,7 +447,9 @@
       "command": "lock check",
       "visibility": "public",
       "behavior": "read",
-      "reads": ["runtime"],
+      "reads": [
+        "runtime"
+      ],
       "writes": [],
       "network_effects": [],
       "risk_codes": [],
@@ -292,7 +460,9 @@
       "command": "lock list",
       "visibility": "public",
       "behavior": "read",
-      "reads": ["runtime"],
+      "reads": [
+        "runtime"
+      ],
       "writes": [],
       "network_effects": [],
       "risk_codes": [],
@@ -303,10 +473,17 @@
       "command": "lock force-release",
       "visibility": "public",
       "behavior": "write",
-      "reads": ["runtime"],
-      "writes": ["runtime"],
+      "reads": [
+        "runtime"
+      ],
+      "writes": [
+        "runtime"
+      ],
       "network_effects": [],
-      "risk_codes": ["approval-is-conventional-only", "lock-owner-not-verified"],
+      "risk_codes": [
+        "approval-is-conventional-only",
+        "lock-owner-not-verified"
+      ],
       "disposition": "redesign"
     },
     {
@@ -314,10 +491,17 @@
       "command": "handoff",
       "visibility": "public",
       "behavior": "mixed",
-      "reads": ["user-data"],
-      "writes": ["user-data"],
+      "reads": [
+        "user-data"
+      ],
+      "writes": [
+        "user-data"
+      ],
       "network_effects": [],
-      "risk_codes": ["generated-data-misclassified", "absolute-path-output"],
+      "risk_codes": [
+        "generated-data-misclassified",
+        "absolute-path-output"
+      ],
       "disposition": "redesign"
     },
     {
@@ -325,7 +509,9 @@
       "command": "skill list",
       "visibility": "public",
       "behavior": "read",
-      "reads": ["user-data"],
+      "reads": [
+        "user-data"
+      ],
       "writes": [],
       "network_effects": [],
       "risk_codes": [],
@@ -336,10 +522,14 @@
       "command": "skill show",
       "visibility": "public",
       "behavior": "read",
-      "reads": ["user-data"],
+      "reads": [
+        "user-data"
+      ],
       "writes": [],
       "network_effects": [],
-      "risk_codes": ["untrusted-content-output"],
+      "risk_codes": [
+        "untrusted-content-output"
+      ],
       "disposition": "preserve"
     }
   ]

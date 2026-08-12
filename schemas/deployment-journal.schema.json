@@ -4,17 +4,56 @@
   "title": "KRCN Core deployment status journal",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "deployment_id", "merge_plan_id", "installation_id", "release_id", "backup_manifest_sha256", "status"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "deployment_id",
+    "merge_plan_id",
+    "installation_id",
+    "release_id",
+    "backup_manifest_sha256",
+    "status"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/deployment-journal.schema.json" },
-    "schema_version": { "const": 1 },
-    "deployment_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "merge_plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "installation_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "release_id": { "type": "string", "pattern": "^[a-z][a-z0-9.-]*$" },
-    "backup_manifest_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "schema_ref": {
+      "const": "schemas/deployment-journal.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "deployment_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "merge_plan_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "installation_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "release_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9.-]*$"
+    },
+    "backup_manifest_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
     "status": {
-      "enum": ["preparing", "backed-up", "applying", "migrating", "rebuilding", "verifying", "completed", "rolling-back", "rolled-back", "failed"]
+      "enum": [
+        "preparing",
+        "backed-up",
+        "applying",
+        "migrating",
+        "rebuilding",
+        "verifying",
+        "completed",
+        "rolling-back",
+        "rolled-back",
+        "failed"
+      ]
     }
   }
 }

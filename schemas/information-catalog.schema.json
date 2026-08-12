@@ -4,31 +4,103 @@
   "title": "KRCN Core authoritative source and knowledge catalog",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "catalog_digest", "entry_count", "entries"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "catalog_digest",
+    "entry_count",
+    "entries"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/information-catalog.schema.json" },
-    "schema_version": { "const": 1 },
-    "catalog_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "entry_count": { "type": "integer", "minimum": 0 },
+    "schema_ref": {
+      "const": "schemas/information-catalog.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "catalog_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "entry_count": {
+      "type": "integer",
+      "minimum": 0
+    },
     "entries": {
       "type": "array",
       "uniqueItems": true,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["record_id", "information_class", "ownership", "subject_ref", "revision", "content_digest", "lifecycle", "availability", "authority_rank", "binding_ref", "evidence"],
+        "required": [
+          "record_id",
+          "information_class",
+          "ownership",
+          "subject_ref",
+          "revision",
+          "content_digest",
+          "lifecycle",
+          "availability",
+          "authority_rank",
+          "binding_ref",
+          "evidence"
+        ],
         "properties": {
-          "record_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-          "information_class": { "enum": ["authoritative-source", "knowledge"] },
-          "ownership": { "const": "user-data" },
-          "subject_ref": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$" },
-          "revision": { "type": "integer", "minimum": 1 },
-          "content_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-          "lifecycle": { "enum": ["current", "superseded", "stale", "archived"] },
-          "availability": { "enum": ["current", "binding-missing", "binding-stale", "binding-conflict", "stale", "superseded", "archived"] },
-          "authority_rank": { "enum": [0, 1] },
+          "record_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "information_class": {
+            "enum": [
+              "authoritative-source",
+              "knowledge"
+            ]
+          },
+          "ownership": {
+            "const": "user-data"
+          },
+          "subject_ref": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "content_digest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "lifecycle": {
+            "enum": [
+              "current",
+              "superseded",
+              "stale",
+              "archived"
+            ]
+          },
+          "availability": {
+            "enum": [
+              "current",
+              "binding-missing",
+              "binding-stale",
+              "binding-conflict",
+              "stale",
+              "superseded",
+              "archived"
+            ]
+          },
+          "authority_rank": {
+            "enum": [
+              0,
+              1
+            ]
+          },
           "binding_ref": {
-            "type": ["string", "null"],
+            "type": [
+              "string",
+              "null"
+            ],
             "pattern": "^binding:[a-z][a-z0-9-]*$"
           },
           "evidence": {
@@ -37,12 +109,34 @@
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["source_ref", "revision_id", "digest", "relation"],
+              "required": [
+                "source_ref",
+                "revision_id",
+                "digest",
+                "relation"
+              ],
               "properties": {
-                "source_ref": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$" },
-                "revision_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
-                "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-                "relation": { "enum": ["supports", "derived-from", "observed-at", "supersedes", "contradicts"] }
+                "source_ref": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$"
+                },
+                "revision_id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+                },
+                "digest": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "relation": {
+                  "enum": [
+                    "supports",
+                    "derived-from",
+                    "observed-at",
+                    "supersedes",
+                    "contradicts"
+                  ]
+                }
               }
             }
           }

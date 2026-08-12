@@ -15,15 +15,32 @@
     "record_plans"
   ],
   "properties": {
-    "schema_version": { "const": 1 },
-    "plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "binding_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "source_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "previous_root_digest": {
-      "type": ["string", "null"],
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "type": "string",
       "pattern": "^[a-f0-9]{64}$"
     },
-    "current_root_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "binding_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "source_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "previous_root_digest": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "current_root_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
     "changes": {
       "type": "object",
       "additionalProperties": false,
@@ -36,12 +53,39 @@
         "binding_revision_changed"
       ],
       "properties": {
-        "added": { "type": "array", "items": { "type": "string" } },
-        "modified": { "type": "array", "items": { "type": "string" } },
-        "removed": { "type": "array", "items": { "type": "string" } },
-        "technologies_added": { "type": "array", "items": { "type": "string" } },
-        "technologies_removed": { "type": "array", "items": { "type": "string" } },
-        "binding_revision_changed": { "type": "boolean" }
+        "added": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "modified": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "removed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "technologies_added": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "technologies_removed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "binding_revision_changed": {
+          "type": "boolean"
+        }
       }
     },
     "record_plans": {
@@ -49,12 +93,33 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["record_type", "record_id", "mutation_plan_id", "ownership"],
+        "required": [
+          "record_type",
+          "record_id",
+          "mutation_plan_id",
+          "ownership"
+        ],
         "properties": {
-          "record_type": { "enum": ["projects", "source-states"] },
-          "record_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-          "mutation_plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-          "ownership": { "enum": ["user-data", "derived"] }
+          "record_type": {
+            "enum": [
+              "projects",
+              "source-states"
+            ]
+          },
+          "record_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "mutation_plan_id": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "ownership": {
+            "enum": [
+              "user-data",
+              "derived"
+            ]
+          }
         }
       }
     }

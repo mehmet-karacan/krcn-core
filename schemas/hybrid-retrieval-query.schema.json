@@ -4,14 +4,46 @@
   "title": "KRCN hybrid retrieval query",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "query_id", "text", "seed_record_ids", "include_unavailable", "limit"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "query_id",
+    "text",
+    "seed_record_ids",
+    "include_unavailable",
+    "limit"
+  ],
   "properties": {
-    "schema_ref": {"const": "schemas/hybrid-retrieval-query.schema.json"},
-    "schema_version": {"const": 1},
-    "query_id": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
-    "text": {"type": "string", "minLength": 1, "maxLength": 4096},
-    "seed_record_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"}},
-    "include_unavailable": {"type": "boolean"},
-    "limit": {"type": "integer", "minimum": 1, "maximum": 100}
+    "schema_ref": {
+      "const": "schemas/hybrid-retrieval-query.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "query_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "seed_record_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "include_unavailable": {
+      "type": "boolean"
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100
+    }
   }
 }

@@ -17,15 +17,42 @@
     "record_plans"
   ],
   "properties": {
-    "schema_version": { "const": 1 },
-    "plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "binding_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "source_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "previous_binding_revision": { "type": "integer", "minimum": 1 },
-    "next_binding_revision": { "type": "integer", "minimum": 2 },
-    "identity_verified": { "const": true },
-    "candidate_path_disclosed": { "const": false },
-    "source_effect": { "const": "read-only" },
-    "record_plans": { "type": "array", "minItems": 2, "maxItems": 2 }
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "binding_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "source_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "previous_binding_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "next_binding_revision": {
+      "type": "integer",
+      "minimum": 2
+    },
+    "identity_verified": {
+      "const": true
+    },
+    "candidate_path_disclosed": {
+      "const": false
+    },
+    "source_effect": {
+      "const": "read-only"
+    },
+    "record_plans": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2
+    }
   }
 }

@@ -20,51 +20,131 @@
     "interrupted_deployments"
   ],
   "properties": {
-    "schema_version": { "const": 1 },
-    "inspection_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "state_present": { "type": "boolean" },
-    "installation_id": { "type": ["string", "null"] },
-    "core_version": { "type": ["string", "null"] },
-    "release_id": { "type": ["string", "null"] },
-    "state_revision": { "type": ["integer", "null"], "minimum": 1 },
-    "state_sha256": {
-      "type": ["string", "null"],
+    "schema_version": {
+      "const": 1
+    },
+    "inspection_id": {
+      "type": "string",
       "pattern": "^[a-f0-9]{64}$"
     },
-    "managed_clean": { "type": "boolean" },
+    "state_present": {
+      "type": "boolean"
+    },
+    "installation_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "core_version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "release_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "state_revision": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "state_sha256": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "managed_clean": {
+      "type": "boolean"
+    },
     "managed_files": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["verified", "missing", "modified"],
+      "required": [
+        "verified",
+        "missing",
+        "modified"
+      ],
       "properties": {
-        "verified": { "$ref": "#/$defs/pathList" },
-        "missing": { "$ref": "#/$defs/pathList" },
-        "modified": { "$ref": "#/$defs/pathList" }
+        "verified": {
+          "$ref": "#/$defs/pathList"
+        },
+        "missing": {
+          "$ref": "#/$defs/pathList"
+        },
+        "modified": {
+          "$ref": "#/$defs/pathList"
+        }
       }
     },
     "ownership_counts": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["core", "runtime", "user-data", "derived", "secrets", "unmanaged"],
+      "required": [
+        "core",
+        "runtime",
+        "user-data",
+        "derived",
+        "secrets",
+        "unmanaged"
+      ],
       "properties": {
-        "core": { "type": "integer", "minimum": 0 },
-        "runtime": { "type": "integer", "minimum": 0 },
-        "user-data": { "type": "integer", "minimum": 0 },
-        "derived": { "type": "integer", "minimum": 0 },
-        "secrets": { "type": "integer", "minimum": 0 },
-        "unmanaged": { "type": "integer", "minimum": 0 }
+        "core": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "runtime": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "user-data": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "derived": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "secrets": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unmanaged": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
-    "symlink_count": { "type": "integer", "minimum": 0 },
+    "symlink_count": {
+      "type": "integer",
+      "minimum": 0
+    },
     "interrupted_deployments": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["deployment_id", "status"],
+        "required": [
+          "deployment_id",
+          "status"
+        ],
         "properties": {
-          "deployment_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-          "status": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+          "deployment_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "status": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          }
         }
       }
     }
@@ -73,7 +153,10 @@
     "pathList": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "type": "string", "minLength": 1 }
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     }
   }
 }

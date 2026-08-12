@@ -4,35 +4,107 @@
   "title": "KRCN Core client-neutral intent routes",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "routes"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "routes"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/intent-routing.schema.json" },
-    "schema_version": { "const": 1 },
+    "schema_ref": {
+      "const": "schemas/intent-routing.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
     "routes": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["route_id", "action", "application_operation", "terms", "directory_only", "required_inputs", "inferred_fields", "source_access", "copy_source", "exact_plan_required", "user_data_approval_required", "client_specific", "supported_clients"],
+        "required": [
+          "route_id",
+          "action",
+          "application_operation",
+          "terms",
+          "directory_only",
+          "required_inputs",
+          "inferred_fields",
+          "source_access",
+          "copy_source",
+          "exact_plan_required",
+          "user_data_approval_required",
+          "client_specific",
+          "supported_clients"
+        ],
         "properties": {
-          "route_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-          "action": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-          "application_operation": { "type": "string", "pattern": "^[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*$" },
-          "terms": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
-          "directory_only": { "const": true },
-          "required_inputs": { "const": ["local-directory"] },
-          "inferred_fields": { "const": ["project-name", "project-id", "workspace-id", "binding-id"] },
-          "source_access": { "const": "read-only" },
-          "copy_source": { "const": false },
-          "exact_plan_required": { "const": true },
-          "user_data_approval_required": { "const": true },
-          "client_specific": { "const": false },
+          "route_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "action": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "application_operation": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*$"
+          },
+          "terms": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "directory_only": {
+            "const": true
+          },
+          "required_inputs": {
+            "const": [
+              "local-directory"
+            ]
+          },
+          "inferred_fields": {
+            "const": [
+              "project-name",
+              "project-id",
+              "workspace-id",
+              "binding-id"
+            ]
+          },
+          "source_access": {
+            "const": "read-only"
+          },
+          "copy_source": {
+            "const": false
+          },
+          "exact_plan_required": {
+            "const": true
+          },
+          "user_data_approval_required": {
+            "const": true
+          },
+          "client_specific": {
+            "const": false
+          },
           "supported_clients": {
             "type": "array",
             "minItems": 7,
             "uniqueItems": true,
-            "items": { "enum": ["cli", "sdk", "mcp", "plugin", "codex", "claude", "generic-ai"] }
+            "items": {
+              "enum": [
+                "cli",
+                "sdk",
+                "mcp",
+                "plugin",
+                "codex",
+                "claude",
+                "generic-ai"
+              ]
+            }
           }
         }
       }

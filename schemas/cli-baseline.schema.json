@@ -17,19 +17,37 @@
     "verification"
   ],
   "properties": {
-    "schema_ref": { "const": "schemas/cli-baseline.schema.json" },
-    "schema_version": { "const": 1 },
-    "baseline_id": { "type": "string", "pattern": "^[a-z][a-z0-9.-]*$" },
-    "status": { "const": "ready" },
-    "legacy_source_imported": { "const": false },
-    "entrypoint": { "const": "krcn_core.cli.app:main" },
+    "schema_ref": {
+      "const": "schemas/cli-baseline.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "baseline_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9.-]*$"
+    },
+    "status": {
+      "const": "ready"
+    },
+    "legacy_source_imported": {
+      "const": false
+    },
+    "entrypoint": {
+      "const": "krcn_core.cli.app:main"
+    },
     "safe_commands": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
     },
-    "compatibility_catalog_count": { "const": 29 },
+    "compatibility_catalog_count": {
+      "const": 29
+    },
     "safety_gates": {
       "type": "array",
       "minItems": 1,
@@ -47,11 +65,21 @@
     "verification": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["hermetic_tests", "doctor", "offline_install"],
+      "required": [
+        "hermetic_tests",
+        "doctor",
+        "offline_install"
+      ],
       "properties": {
-        "hermetic_tests": { "const": "passed" },
-        "doctor": { "const": "passed" },
-        "offline_install": { "const": "passed" }
+        "hermetic_tests": {
+          "const": "passed"
+        },
+        "doctor": {
+          "const": "passed"
+        },
+        "offline_install": {
+          "const": "passed"
+        }
       }
     }
   }

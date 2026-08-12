@@ -2,12 +2,17 @@
   "schema_ref": "schemas/adapter.schema.json",
   "adapter_id": "sqlite-read-only",
   "version": "1.0.0",
-  "source_kinds": ["database"],
+  "source_kinds": [
+    "database"
+  ],
   "resource_type": "database",
   "operations": [
     {
       "operation_id": "select",
-      "required_capabilities": ["read", "execute"],
+      "required_capabilities": [
+        "read",
+        "execute"
+      ],
       "default_effect": "deny",
       "mutation_effect": false,
       "network_effect": false

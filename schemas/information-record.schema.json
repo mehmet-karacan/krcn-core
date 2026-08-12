@@ -4,40 +4,125 @@
   "title": "KRCN Core revision-aware information record",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "record_id", "information_class", "ownership", "subject_ref", "revision", "content_digest", "provenance", "lifecycle", "payload"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "record_id",
+    "information_class",
+    "ownership",
+    "subject_ref",
+    "revision",
+    "content_digest",
+    "provenance",
+    "lifecycle",
+    "payload"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/information-record.schema.json" },
-    "schema_version": { "const": 1 },
-    "record_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "information_class": { "enum": ["authoritative-source", "knowledge", "memory", "state", "history", "derived"] },
-    "ownership": { "enum": ["runtime", "user-data", "derived"] },
-    "subject_ref": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$" },
-    "revision": { "type": "integer", "minimum": 1 },
-    "content_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "schema_ref": {
+      "const": "schemas/information-record.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "record_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "information_class": {
+      "enum": [
+        "authoritative-source",
+        "knowledge",
+        "memory",
+        "state",
+        "history",
+        "derived"
+      ]
+    },
+    "ownership": {
+      "enum": [
+        "runtime",
+        "user-data",
+        "derived"
+      ]
+    },
+    "subject_ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "content_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
     "provenance": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "evidence"],
+      "required": [
+        "kind",
+        "evidence"
+      ],
       "properties": {
-        "kind": { "enum": ["explicit-user", "approved-import", "source-derived", "system-observation", "approved-memory"] },
+        "kind": {
+          "enum": [
+            "explicit-user",
+            "approved-import",
+            "source-derived",
+            "system-observation",
+            "approved-memory"
+          ]
+        },
         "evidence": {
           "type": "array",
           "uniqueItems": true,
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["source_ref", "revision_id", "digest", "relation"],
+            "required": [
+              "source_ref",
+              "revision_id",
+              "digest",
+              "relation"
+            ],
             "properties": {
-              "source_ref": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$" },
-              "revision_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
-              "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-              "relation": { "enum": ["supports", "derived-from", "observed-at", "supersedes", "contradicts"] }
+              "source_ref": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$"
+              },
+              "revision_id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+              },
+              "digest": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "relation": {
+                "enum": [
+                  "supports",
+                  "derived-from",
+                  "observed-at",
+                  "supersedes",
+                  "contradicts"
+                ]
+              }
             }
           }
         }
       }
     },
-    "lifecycle": { "enum": ["current", "superseded", "stale", "archived"] },
-    "payload": { "type": "object" }
+    "lifecycle": {
+      "enum": [
+        "current",
+        "superseded",
+        "stale",
+        "archived"
+      ]
+    },
+    "payload": {
+      "type": "object"
+    }
   }
 }

@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Mapping
 
+from .json_documents import canonical_json_bytes, pretty_json_bytes
 from .mutation_gate import MutationAuthorization, MutationPlan, OwnershipResolver, plan_mutation
 
 
@@ -117,10 +118,7 @@ class PortableBackupResult:
 
 
 def _canonical_json(payload: object) -> bytes:
-    return (
-        json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-        + "\n"
-    ).encode("utf-8")
+    return canonical_json_bytes(payload, trailing_newline=True)
 
 
 def _ownership(relative: str) -> str:
@@ -173,7 +171,7 @@ def _sanitize_source_binding(content: bytes) -> tuple[bytes, dict[str, object] |
     sanitized["payload_sha256"] = hashlib.sha256(
         _canonical_json(sanitized_payload)
     ).hexdigest()
-    return _canonical_json(sanitized), dependency
+    return pretty_json_bytes(sanitized), dependency
 
 
 def _assert_portable_content(relative: str, content: bytes) -> None:
@@ -319,7 +317,7 @@ def portable_archive_bytes(plan: PortableBackupPlan) -> bytes:
 
     stream = io.BytesIO()
     with zipfile.ZipFile(stream, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-        items = [("manifest.json", _canonical_json(plan.manifest()))]
+        items = [("manifest.json", pretty_json_bytes(plan.manifest()))]
         items.extend((f"payload/{item.path}", item.content) for item in plan.entries)
         for name, content in items:
             info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))

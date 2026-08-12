@@ -4,25 +4,66 @@
   "title": "KRCN Core agent result",
   "type": "object",
   "additionalProperties": false,
-  "required": ["status", "summary", "evidence", "changes", "preserved_areas"],
+  "required": [
+    "status",
+    "summary",
+    "evidence",
+    "changes",
+    "preserved_areas"
+  ],
   "properties": {
-    "status": { "enum": ["completed", "failed", "blocked"] },
-    "summary": { "type": "string", "minLength": 1 },
+    "status": {
+      "enum": [
+        "completed",
+        "failed",
+        "blocked"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
     "evidence": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["kind", "reference"],
+        "required": [
+          "kind",
+          "reference"
+        ],
         "properties": {
-          "kind": { "type": "string", "minLength": 1 },
-          "reference": { "type": "string", "minLength": 1 },
-          "digest": { "type": "string" }
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reference": {
+            "type": "string",
+            "minLength": 1
+          },
+          "digest": {
+            "type": "string"
+          }
         }
       }
     },
-    "changes": { "type": "array", "items": { "type": "string" } },
-    "preserved_areas": { "type": "array", "items": { "type": "string" } },
-    "issues": { "type": "array", "items": { "type": "string" } }
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "preserved_areas": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
   }
 }

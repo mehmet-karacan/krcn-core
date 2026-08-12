@@ -4,17 +4,33 @@
   "title": "KRCN Core ownership manifest",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "default_unmatched", "classes"],
+  "required": [
+    "schema_version",
+    "default_unmatched",
+    "classes"
+  ],
   "properties": {
-    "schema_version": { "const": 1 },
+    "schema_version": {
+      "const": 1
+    },
     "default_unmatched": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["ownership", "merge_strategy", "approval_required"],
+      "required": [
+        "ownership",
+        "merge_strategy",
+        "approval_required"
+      ],
       "properties": {
-        "ownership": { "const": "unmanaged" },
-        "merge_strategy": { "const": "preserve" },
-        "approval_required": { "const": true }
+        "ownership": {
+          "const": "unmanaged"
+        },
+        "merge_strategy": {
+          "const": "preserve"
+        },
+        "approval_required": {
+          "const": true
+        }
       }
     },
     "classes": {
@@ -23,18 +39,40 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "description", "merge_strategy", "paths"],
+        "required": [
+          "id",
+          "description",
+          "merge_strategy",
+          "paths"
+        ],
         "properties": {
           "id": {
-            "enum": ["core", "runtime", "user-data", "derived", "secrets", "unmanaged"]
+            "enum": [
+              "core",
+              "runtime",
+              "user-data",
+              "derived",
+              "secrets",
+              "unmanaged"
+            ]
           },
-          "description": { "type": "string", "minLength": 1 },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
           "merge_strategy": {
-            "enum": ["replace-managed", "preserve", "migrate-or-rebuild"]
+            "enum": [
+              "replace-managed",
+              "preserve",
+              "migrate-or-rebuild"
+            ]
           },
           "paths": {
             "type": "array",
-            "items": { "type": "string", "minLength": 1 },
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
             "uniqueItems": true
           }
         }

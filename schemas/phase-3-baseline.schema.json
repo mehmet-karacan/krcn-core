@@ -4,14 +4,38 @@
   "title": "KRCN Core completed Phase 3 baseline",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "baseline_id", "phase_id", "status", "completed_steps", "capabilities", "safe_operations", "guarantees", "verification", "next_phase"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "baseline_id",
+    "phase_id",
+    "status",
+    "completed_steps",
+    "capabilities",
+    "safe_operations",
+    "guarantees",
+    "verification",
+    "next_phase"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/phase-3-baseline.schema.json" },
-    "schema_version": { "const": 1 },
-    "baseline_id": { "const": "phase-3-safe-merge" },
-    "phase_id": { "const": "phase-3" },
-    "status": { "const": "ready" },
-    "completed_steps": { "const": 10 },
+    "schema_ref": {
+      "const": "schemas/phase-3-baseline.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "baseline_id": {
+      "const": "phase-3-safe-merge"
+    },
+    "phase_id": {
+      "const": "phase-3"
+    },
+    "status": {
+      "const": "ready"
+    },
+    "completed_steps": {
+      "const": 10
+    },
     "capabilities": {
       "type": "array",
       "minItems": 10,
@@ -50,43 +74,109 @@
     "guarantees": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["live_reference_imported", "local_data_tracked", "implicit_network_access", "literal_secrets_stored", "user_data_preserved", "user_policy_preserved", "unmanaged_files_preserved", "automatic_rollback", "exact_plan_required"],
+      "required": [
+        "live_reference_imported",
+        "local_data_tracked",
+        "implicit_network_access",
+        "literal_secrets_stored",
+        "user_data_preserved",
+        "user_policy_preserved",
+        "unmanaged_files_preserved",
+        "automatic_rollback",
+        "exact_plan_required"
+      ],
       "properties": {
-        "live_reference_imported": { "const": false },
-        "local_data_tracked": { "const": false },
-        "implicit_network_access": { "const": false },
-        "literal_secrets_stored": { "const": false },
-        "user_data_preserved": { "const": true },
-        "user_policy_preserved": { "const": true },
-        "unmanaged_files_preserved": { "const": true },
-        "automatic_rollback": { "const": true },
-        "exact_plan_required": { "const": true }
+        "live_reference_imported": {
+          "const": false
+        },
+        "local_data_tracked": {
+          "const": false
+        },
+        "implicit_network_access": {
+          "const": false
+        },
+        "literal_secrets_stored": {
+          "const": false
+        },
+        "user_data_preserved": {
+          "const": true
+        },
+        "user_policy_preserved": {
+          "const": true
+        },
+        "unmanaged_files_preserved": {
+          "const": true
+        },
+        "automatic_rollback": {
+          "const": true
+        },
+        "exact_plan_required": {
+          "const": true
+        }
       }
     },
     "verification": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["hermetic_tests", "foundation", "doctor", "offline_install", "clean_installation", "existing_installation", "conflict_scenarios", "rollback", "client_parity"],
+      "required": [
+        "hermetic_tests",
+        "foundation",
+        "doctor",
+        "offline_install",
+        "clean_installation",
+        "existing_installation",
+        "conflict_scenarios",
+        "rollback",
+        "client_parity"
+      ],
       "properties": {
-        "hermetic_tests": { "const": "passed" },
-        "foundation": { "const": "passed" },
-        "doctor": { "const": "passed" },
-        "offline_install": { "const": "passed" },
-        "clean_installation": { "const": "passed" },
-        "existing_installation": { "const": "passed" },
-        "conflict_scenarios": { "const": "passed" },
-        "rollback": { "const": "passed" },
-        "client_parity": { "const": "passed" }
+        "hermetic_tests": {
+          "const": "passed"
+        },
+        "foundation": {
+          "const": "passed"
+        },
+        "doctor": {
+          "const": "passed"
+        },
+        "offline_install": {
+          "const": "passed"
+        },
+        "clean_installation": {
+          "const": "passed"
+        },
+        "existing_installation": {
+          "const": "passed"
+        },
+        "conflict_scenarios": {
+          "const": "passed"
+        },
+        "rollback": {
+          "const": "passed"
+        },
+        "client_parity": {
+          "const": "passed"
+        }
       }
     },
     "next_phase": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["phase_id", "plan_ref", "implementation_started"],
+      "required": [
+        "phase_id",
+        "plan_ref",
+        "implementation_started"
+      ],
       "properties": {
-        "phase_id": { "const": "phase-4" },
-        "plan_ref": { "const": "docs/plans/ROADMAP.md" },
-        "implementation_started": { "const": false }
+        "phase_id": {
+          "const": "phase-4"
+        },
+        "plan_ref": {
+          "const": "docs/plans/ROADMAP.md"
+        },
+        "implementation_started": {
+          "const": false
+        }
       }
     }
   }

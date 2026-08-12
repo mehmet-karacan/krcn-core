@@ -23,29 +23,77 @@
     "derived_actions"
   ],
   "properties": {
-    "schema_version": { "const": 1 },
-    "plan_id": { "$ref": "#/$defs/sha256" },
-    "diff_id": { "$ref": "#/$defs/sha256" },
-    "installation_id": { "$ref": "#/$defs/identifier" },
-    "release_id": { "type": "string", "pattern": "^[a-z][a-z0-9.-]*$" },
-    "from_core_version": { "$ref": "#/$defs/semver" },
-    "to_core_version": { "$ref": "#/$defs/semver" },
-    "manifest_sha256": { "$ref": "#/$defs/sha256" },
-    "source_state_sha256": { "$ref": "#/$defs/sha256" },
-    "approval_required": { "type": "boolean" },
-    "has_effects": { "type": "boolean" },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "$ref": "#/$defs/sha256"
+    },
+    "diff_id": {
+      "$ref": "#/$defs/sha256"
+    },
+    "installation_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "release_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9.-]*$"
+    },
+    "from_core_version": {
+      "$ref": "#/$defs/semver"
+    },
+    "to_core_version": {
+      "$ref": "#/$defs/semver"
+    },
+    "manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "source_state_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "approval_required": {
+      "type": "boolean"
+    },
+    "has_effects": {
+      "type": "boolean"
+    },
     "file_mutations": {
       "type": "array",
-      "items": { "type": "object" }
+      "items": {
+        "type": "object"
+      }
     },
-    "state_mutation": { "type": ["object", "null"] },
-    "desired_state_sha256": { "$ref": "#/$defs/sha256" },
-    "migrations": { "type": "array", "items": { "type": "object" } },
-    "derived_actions": { "type": "array", "items": { "type": "object" } }
+    "state_mutation": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "desired_state_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "migrations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "derived_actions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    }
   },
   "$defs": {
-    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "identifier": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
     "semver": {
       "type": "string",
       "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"

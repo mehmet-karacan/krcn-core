@@ -16,43 +16,73 @@
     "derived_actions"
   ],
   "properties": {
-    "schema_ref": { "const": "schemas/release-manifest.schema.json" },
-    "schema_version": { "const": 1 },
-    "release_id": { "type": "string", "pattern": "^[a-z][a-z0-9.-]*$" },
-    "core_version": { "$ref": "#/$defs/semver" },
+    "schema_ref": {
+      "const": "schemas/release-manifest.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "release_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9.-]*$"
+    },
+    "core_version": {
+      "$ref": "#/$defs/semver"
+    },
     "compatibility": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["minimum_core_version", "maximum_core_version"],
+      "required": [
+        "minimum_core_version",
+        "maximum_core_version"
+      ],
       "properties": {
-        "minimum_core_version": { "$ref": "#/$defs/semver" },
-        "maximum_core_version": { "$ref": "#/$defs/semver" }
+        "minimum_core_version": {
+          "$ref": "#/$defs/semver"
+        },
+        "maximum_core_version": {
+          "$ref": "#/$defs/semver"
+        }
       }
     },
-    "source_commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
     "files": {
       "type": "array",
       "uniqueItems": true,
       "items": {
         "oneOf": [
-          { "$ref": "#/$defs/upsertFile" },
-          { "$ref": "#/$defs/deleteFile" }
+          {
+            "$ref": "#/$defs/upsertFile"
+          },
+          {
+            "$ref": "#/$defs/deleteFile"
+          }
         ]
       }
     },
     "migrations": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "$ref": "#/$defs/identifier" }
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
     },
     "derived_actions": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "$ref": "#/$defs/identifier" }
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
     }
   },
   "$defs": {
-    "identifier": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
     "semver": {
       "type": "string",
       "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
@@ -65,22 +95,48 @@
     "upsertFile": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "operation", "sha256", "size"],
+      "required": [
+        "path",
+        "operation",
+        "sha256",
+        "size"
+      ],
       "properties": {
-        "path": { "$ref": "#/$defs/portablePath" },
-        "operation": { "const": "upsert" },
-        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-        "size": { "type": "integer", "minimum": 0 }
+        "path": {
+          "$ref": "#/$defs/portablePath"
+        },
+        "operation": {
+          "const": "upsert"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        }
       }
     },
     "deleteFile": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "operation", "previous_sha256"],
+      "required": [
+        "path",
+        "operation",
+        "previous_sha256"
+      ],
       "properties": {
-        "path": { "$ref": "#/$defs/portablePath" },
-        "operation": { "const": "delete" },
-        "previous_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        "path": {
+          "$ref": "#/$defs/portablePath"
+        },
+        "operation": {
+          "const": "delete"
+        },
+        "previous_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
       }
     }
   }

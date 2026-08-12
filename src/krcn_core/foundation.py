@@ -13,6 +13,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
 
+from .json_documents import (
+    JsonDocumentError,
+    parse_json_bytes,
+    pretty_json_bytes,
+)
+
 
 REQUIRED_OWNERSHIP_CLASSES = {
     "core": "replace-managed",
@@ -399,13 +405,42 @@ def git_candidate_paths(repo_root: Path) -> list[Path]:
     ]
 
 
+def validate_json_documents(
+    repo_root: Path,
+    paths: Iterable[Path],
+) -> list[Finding]:
+    """Require readable, deterministic formatting for repository JSON files."""
+
+    findings: list[Finding] = []
+    for path in sorted(path for path in paths if path.suffix.casefold() == ".json"):
+        relative = path.relative_to(repo_root).as_posix()
+        try:
+            document = path.read_bytes()
+            payload = parse_json_bytes(document, label=relative)
+            expected = pretty_json_bytes(payload, sort_keys=False)
+        except (JsonDocumentError, OSError):
+            findings.append(Finding("json-syntax", relative, "JSON document is invalid"))
+            continue
+        if document != expected:
+            findings.append(
+                Finding(
+                    "json-format",
+                    relative,
+                    "JSON document must use the repository readable format",
+                )
+            )
+    return findings
+
+
 def verify_repository(repo_root: Path) -> list[Finding]:
     policy = load_json(repo_root / "config" / "import-policy.json")
+    candidates = git_candidate_paths(repo_root)
     findings = [
         Finding("foundation-config", "config", error)
         for error in validate_foundation(repo_root)
     ]
-    findings.extend(scan_paths(repo_root, git_candidate_paths(repo_root), policy))
+    findings.extend(scan_paths(repo_root, candidates, policy))
+    findings.extend(validate_json_documents(repo_root, candidates))
     return findings
 
 

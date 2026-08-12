@@ -19,29 +19,71 @@
     "network_effect"
   ],
   "properties": {
-    "schema_version": { "const": 1 },
-    "request_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "adapter_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "operation": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "binding_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "binding_revision": { "type": "integer", "minimum": 1 },
+    "schema_version": {
+      "const": 1
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "adapter_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "operation": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "binding_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "binding_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
     "required_capabilities": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "enum": ["read", "write", "metadata", "search", "index", "execute"] }
+      "items": {
+        "enum": [
+          "read",
+          "write",
+          "metadata",
+          "search",
+          "index",
+          "execute"
+        ]
+      }
     },
-    "policy_effect": { "enum": ["allow", "deny", "require-approval"] },
+    "policy_effect": {
+      "enum": [
+        "allow",
+        "deny",
+        "require-approval"
+      ]
+    },
     "matched_policy_ids": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
     },
     "matched_rule_ids": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
     },
-    "mutation_effect": { "type": "boolean" },
-    "network_effect": { "type": "boolean" }
+    "mutation_effect": {
+      "type": "boolean"
+    },
+    "network_effect": {
+      "type": "boolean"
+    }
   }
 }

@@ -15,13 +15,30 @@
     "local_data_in_git"
   ],
   "properties": {
-    "schema_ref": { "const": "schemas/project-home-manifest.schema.json" },
-    "schema_version": { "const": 1 },
-    "layout_version": { "const": 2 },
-    "home_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "home_kind": { "const": "project" },
-    "project_scoped": { "const": true },
-    "source_copy": { "const": false },
-    "local_data_in_git": { "const": false }
+    "schema_ref": {
+      "const": "schemas/project-home-manifest.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "layout_version": {
+      "const": 2
+    },
+    "home_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "home_kind": {
+      "const": "project"
+    },
+    "project_scoped": {
+      "const": true
+    },
+    "source_copy": {
+      "const": false
+    },
+    "local_data_in_git": {
+      "const": false
+    }
   }
 }

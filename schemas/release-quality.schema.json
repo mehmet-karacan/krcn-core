@@ -4,23 +4,76 @@
   "title": "KRCN Core release quality profile",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "supported_platforms", "user_home_layout_version", "required_operations", "required_package_modules", "required_gates", "rollback_guarantees"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "supported_platforms",
+    "user_home_layout_version",
+    "required_operations",
+    "required_package_modules",
+    "required_gates",
+    "rollback_guarantees"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/release-quality.schema.json" },
-    "schema_version": { "const": 1 },
-    "supported_platforms": { "type": "array", "uniqueItems": true, "items": { "enum": ["linux", "windows", "macos"] } },
-    "user_home_layout_version": { "const": 1 },
-    "required_operations": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
-    "required_package_modules": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
-    "required_gates": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+    "schema_ref": {
+      "const": "schemas/release-quality.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "supported_platforms": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "linux",
+          "windows",
+          "macos"
+        ]
+      }
+    },
+    "user_home_layout_version": {
+      "const": 1
+    },
+    "required_operations": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "required_package_modules": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "required_gates": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
     "rollback_guarantees": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["core_deployment", "portable_restore", "repo_local_migration"],
+      "required": [
+        "core_deployment",
+        "portable_restore",
+        "repo_local_migration"
+      ],
       "properties": {
-        "core_deployment": { "const": "automatic-on-verification-failure" },
-        "portable_restore": { "const": "target-not-published-before-verification" },
-        "repo_local_migration": { "const": "source-preserved" }
+        "core_deployment": {
+          "const": "automatic-on-verification-failure"
+        },
+        "portable_restore": {
+          "const": "target-not-published-before-verification"
+        },
+        "repo_local_migration": {
+          "const": "source-preserved"
+        }
       }
     }
   }

@@ -86,7 +86,8 @@
     "docs/progress/PHASE-8-RUNTIME-INTEGRATION.md",
     "docs/progress/PHASE-8-HYBRID-RETRIEVAL.md",
     "docs/progress/PHASE-8-QUALITY-OBSERVABILITY-UX.md",
-    "docs/progress/PHASE-8-COMPLETION.md"
+    "docs/progress/PHASE-8-COMPLETION.md",
+    "docs/progress/JSON-BELGE-BICIMI.md"
   ],
   "next_actions": [
     "keep the Phase 8 baseline in maintenance mode",

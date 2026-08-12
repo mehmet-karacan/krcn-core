@@ -16,15 +16,36 @@
     "revision"
   ],
   "properties": {
-    "schema_version": { "const": 1 },
-    "integration_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "adapter_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "source_binding_ref": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "status": { "enum": ["active", "disabled"] },
-    "configuration": { "type": "object", "additionalProperties": true },
+    "schema_version": {
+      "const": 1
+    },
+    "integration_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "adapter_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "source_binding_ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "status": {
+      "enum": [
+        "active",
+        "disabled"
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": true
+    },
     "secret_refs": {
       "type": "object",
-      "propertyNames": { "pattern": "^[a-z][a-z0-9-]*$" },
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9-]*$"
+      },
       "additionalProperties": {
         "type": "string",
         "pattern": "^(?:secret|keyring|env)://[A-Za-z0-9][A-Za-z0-9._/-]*$"
@@ -33,8 +54,14 @@
     "policy_refs": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
     },
-    "revision": { "type": "integer", "minimum": 1 }
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    }
   }
 }

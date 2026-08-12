@@ -18,22 +18,53 @@
     "path_disclosed"
   ],
   "properties": {
-    "schema_ref": { "const": "schemas/project-home-resolution.schema.json" },
-    "schema_version": { "const": 1 },
+    "schema_ref": {
+      "const": "schemas/project-home-resolution.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
     "source": {
-      "enum": ["explicit", "environment", "remembered", "project-default", "user-selected"]
+      "enum": [
+        "explicit",
+        "environment",
+        "remembered",
+        "project-default",
+        "user-selected"
+      ]
     },
     "status": {
-      "enum": ["choice-required", "selected-existing", "selected-new"]
+      "enum": [
+        "choice-required",
+        "selected-existing",
+        "selected-new"
+      ]
     },
-    "target_kind": { "enum": ["project-local", "custom"] },
-    "requires_user_choice": { "type": "boolean" },
-    "requires_initialization": { "type": "boolean" },
-    "git_check_required": { "type": "boolean" },
+    "target_kind": {
+      "enum": [
+        "project-local",
+        "custom"
+      ]
+    },
+    "requires_user_choice": {
+      "type": "boolean"
+    },
+    "requires_initialization": {
+      "type": "boolean"
+    },
+    "git_check_required": {
+      "type": "boolean"
+    },
     "choices": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "enum": ["use-default", "choose-parent", "cancel"] }
+      "items": {
+        "enum": [
+          "use-default",
+          "choose-parent",
+          "cancel"
+        ]
+      }
     },
     "warnings": {
       "type": "array",
@@ -47,14 +78,35 @@
         ]
       }
     },
-    "path_disclosed": { "type": "boolean" },
-    "target_path": { "type": "string", "minLength": 1 }
+    "path_disclosed": {
+      "type": "boolean"
+    },
+    "target_path": {
+      "type": "string",
+      "minLength": 1
+    }
   },
   "allOf": [
     {
-      "if": { "properties": { "path_disclosed": { "const": true } } },
-      "then": { "required": ["target_path"] },
-      "else": { "not": { "required": ["target_path"] } }
+      "if": {
+        "properties": {
+          "path_disclosed": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "target_path"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "target_path"
+          ]
+        }
+      }
     }
   ]
 }

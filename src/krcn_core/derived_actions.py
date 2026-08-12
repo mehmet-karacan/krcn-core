@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from .installation import safe_installation_target
+from .json_documents import JsonDocumentError, pretty_json_bytes
 from .mutation_gate import MutationPlan, OwnershipResolver, plan_mutation
 from .update_effects import DerivedActionSpec
 
@@ -48,18 +49,10 @@ class DerivedWrite:
         }
 
 
-def _canonical_document(payload: object) -> bytes:
+def _stored_document(payload: object) -> bytes:
     try:
-        return (
-            json.dumps(
-                payload,
-                ensure_ascii=False,
-                sort_keys=True,
-                separators=(",", ":"),
-            )
-            + "\n"
-        ).encode("utf-8")
-    except (TypeError, ValueError) as exc:
+        return pretty_json_bytes(payload)
+    except JsonDocumentError as exc:
         raise DerivedActionError("derived output must be JSON-compatible") from exc
 
 
@@ -133,7 +126,7 @@ def _normalized_output(payload: Mapping[str, object]) -> dict[str, object]:
         portable = _portable_json_path(path)
         if portable in result:
             raise DerivedActionError("derived output paths must be unique")
-        _canonical_document(document)
+        _stored_document(document)
         result[portable] = document
     return result
 
@@ -160,8 +153,8 @@ def plan_derived_writes(
         except Exception as exc:
             raise DerivedActionError("trusted derived action handler failed") from exc
         if {
-            path: _canonical_document(value) for path, value in repeated.items()
-        } != {path: _canonical_document(value) for path, value in output.items()}:
+            path: _stored_document(value) for path, value in repeated.items()
+        } != {path: _stored_document(value) for path, value in output.items()}:
             raise DerivedActionError("derived transform must be idempotent")
         for relative_path in sorted(set(current) | set(output)):
             target_ref = f"{spec.target_ref}/{relative_path}"
@@ -170,12 +163,12 @@ def plan_derived_writes(
             if ownership.resolve(target_ref) != "derived":
                 raise DerivedActionError("derived output ownership is invalid")
             previous_document = (
-                _canonical_document(current[relative_path])
+                _stored_document(current[relative_path])
                 if relative_path in current
                 else None
             )
             target_document = (
-                _canonical_document(output[relative_path])
+                _stored_document(output[relative_path])
                 if relative_path in output
                 else None
             )

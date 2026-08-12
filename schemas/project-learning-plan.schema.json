@@ -4,38 +4,108 @@
   "title": "KRCN Core unified project-learning plan",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "plan_id", "action", "intent_origin", "metadata", "discovery", "source_access", "source_copy", "record_plans"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "action",
+    "intent_origin",
+    "metadata",
+    "discovery",
+    "source_access",
+    "source_copy",
+    "record_plans"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/project-learning-plan.schema.json" },
-    "schema_version": { "const": 1 },
-    "plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "action": { "const": "learn-project" },
-    "intent_origin": { "enum": ["explicit-user", "safe-assumption"] },
-    "metadata": { "$ref": "project-metadata-inference.schema.json" },
+    "schema_ref": {
+      "const": "schemas/project-learning-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "action": {
+      "const": "learn-project"
+    },
+    "intent_origin": {
+      "enum": [
+        "explicit-user",
+        "safe-assumption"
+      ]
+    },
+    "metadata": {
+      "$ref": "project-metadata-inference.schema.json"
+    },
     "discovery": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["root_digest", "file_count", "technologies", "skipped"],
+      "required": [
+        "root_digest",
+        "file_count",
+        "technologies",
+        "skipped"
+      ],
       "properties": {
-        "root_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-        "file_count": { "type": "integer", "minimum": 0 },
-        "technologies": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "root_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "file_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "technologies": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
         "skipped": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["blocked", "symlink", "too_large", "unstable", "unreadable"],
+          "required": [
+            "blocked",
+            "symlink",
+            "too_large",
+            "unstable",
+            "unreadable"
+          ],
           "properties": {
-            "blocked": { "type": "integer", "minimum": 0 },
-            "symlink": { "type": "integer", "minimum": 0 },
-            "too_large": { "type": "integer", "minimum": 0 },
-            "unstable": { "type": "integer", "minimum": 0 },
-            "unreadable": { "type": "integer", "minimum": 0 }
+            "blocked": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "symlink": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "too_large": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unstable": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "unreadable": {
+              "type": "integer",
+              "minimum": 0
+            }
           }
         }
       }
     },
-    "source_access": { "const": "read-only" },
-    "source_copy": { "const": false },
+    "source_access": {
+      "const": "read-only"
+    },
+    "source_copy": {
+      "const": false
+    },
     "record_plans": {
       "type": "array",
       "minItems": 4,
@@ -43,15 +113,49 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["record_type", "record_id", "previous_revision", "next_revision", "ownership", "approval_required", "mutation_plan_id"],
+        "required": [
+          "record_type",
+          "record_id",
+          "previous_revision",
+          "next_revision",
+          "ownership",
+          "approval_required",
+          "mutation_plan_id"
+        ],
         "properties": {
-          "record_type": { "enum": ["source-bindings", "projects", "workspaces", "source-states"] },
-          "record_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-          "previous_revision": { "type": "integer", "minimum": 0 },
-          "next_revision": { "type": "integer", "minimum": 1 },
-          "ownership": { "enum": ["user-data", "derived"] },
-          "approval_required": { "type": "boolean" },
-          "mutation_plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          "record_type": {
+            "enum": [
+              "source-bindings",
+              "projects",
+              "workspaces",
+              "source-states"
+            ]
+          },
+          "record_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "previous_revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "next_revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "ownership": {
+            "enum": [
+              "user-data",
+              "derived"
+            ]
+          },
+          "approval_required": {
+            "type": "boolean"
+          },
+          "mutation_plan_id": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
         }
       }
     }

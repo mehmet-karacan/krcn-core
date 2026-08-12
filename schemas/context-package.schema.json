@@ -4,24 +4,64 @@
   "title": "KRCN Core context package",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "context_id", "task_ref", "items", "evidence"],
+  "required": [
+    "schema_version",
+    "context_id",
+    "task_ref",
+    "items",
+    "evidence"
+  ],
   "properties": {
-    "schema_version": { "const": 1 },
-    "context_id": { "type": "string", "minLength": 1 },
-    "task_ref": { "type": "string", "minLength": 1 },
-    "project_ref": { "type": "string", "minLength": 1 },
+    "schema_version": {
+      "const": 1
+    },
+    "context_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "project_ref": {
+      "type": "string",
+      "minLength": 1
+    },
     "items": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["source_ref", "ownership", "content"],
+        "required": [
+          "source_ref",
+          "ownership",
+          "content"
+        ],
         "properties": {
-          "source_ref": { "type": "string", "minLength": 1 },
-          "revision": { "type": "string" },
-          "ownership": { "enum": ["core", "runtime", "user-data", "derived", "secrets", "unmanaged"] },
-          "content": { "type": "string" },
-          "truncated": { "type": "boolean", "default": false }
+          "source_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "string"
+          },
+          "ownership": {
+            "enum": [
+              "core",
+              "runtime",
+              "user-data",
+              "derived",
+              "secrets",
+              "unmanaged"
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "truncated": {
+            "type": "boolean",
+            "default": false
+          }
         }
       }
     },
@@ -30,11 +70,20 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["source_ref"],
+        "required": [
+          "source_ref"
+        ],
         "properties": {
-          "source_ref": { "type": "string", "minLength": 1 },
-          "revision": { "type": "string" },
-          "digest": { "type": "string" }
+          "source_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "revision": {
+            "type": "string"
+          },
+          "digest": {
+            "type": "string"
+          }
         }
       }
     },
@@ -42,9 +91,21 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "limit": { "type": "integer", "minimum": 1 },
-        "used": { "type": "integer", "minimum": 0 },
-        "unit": { "enum": ["tokens", "characters", "bytes"] }
+        "limit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "used": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unit": {
+          "enum": [
+            "tokens",
+            "characters",
+            "bytes"
+          ]
+        }
       }
     }
   }

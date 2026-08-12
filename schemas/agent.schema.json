@@ -16,29 +16,66 @@
     "status"
   ],
   "properties": {
-    "schema_ref": { "type": "string" },
-    "agent_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "role": { "enum": ["explorer", "worker", "verifier"] },
-    "name": { "type": "string", "minLength": 1 },
-    "description": { "type": "string", "minLength": 1 },
+    "schema_ref": {
+      "type": "string"
+    },
+    "agent_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "role": {
+      "enum": [
+        "explorer",
+        "worker",
+        "verifier"
+      ]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
     "capabilities": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)+$" }
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)+$"
+      }
     },
     "tool_refs": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "type": "string", "minLength": 1 }
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
     "context_refs": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "type": "string", "minLength": 1 }
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
-    "output_contract": { "type": "string", "minLength": 1 },
-    "may_mutate": { "type": "boolean" },
-    "status": { "enum": ["draft", "active", "retired"] }
+    "output_contract": {
+      "type": "string",
+      "minLength": 1
+    },
+    "may_mutate": {
+      "type": "boolean"
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "active",
+        "retired"
+      ]
+    }
   }
 }

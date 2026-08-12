@@ -4,22 +4,72 @@
   "title": "KRCN Core durable memory review",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "review_id", "candidate_id", "candidate_digest", "outcome", "reviewed_by", "session_id", "approval_id", "acknowledged_conflict_refs", "review_digest"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "review_id",
+    "candidate_id",
+    "candidate_digest",
+    "outcome",
+    "reviewed_by",
+    "session_id",
+    "approval_id",
+    "acknowledged_conflict_refs",
+    "review_digest"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/memory-review.schema.json" },
-    "schema_version": { "const": 1 },
-    "review_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "candidate_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "candidate_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "outcome": { "enum": ["approved", "rejected", "needs-changes"] },
-    "reviewed_by": { "enum": ["user", "delegate"] },
-    "session_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
-    "approval_id": { "type": ["string", "null"] },
+    "schema_ref": {
+      "const": "schemas/memory-review.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "review_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "candidate_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "candidate_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "outcome": {
+      "enum": [
+        "approved",
+        "rejected",
+        "needs-changes"
+      ]
+    },
+    "reviewed_by": {
+      "enum": [
+        "user",
+        "delegate"
+      ]
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "approval_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "acknowledged_conflict_refs": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$" }
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$"
+      }
     },
-    "review_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+    "review_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
   }
 }

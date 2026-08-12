@@ -18,44 +18,85 @@
     "revision"
   ],
   "properties": {
-    "schema_ref": { "const": "schemas/installation-state.schema.json" },
-    "schema_version": { "const": 1 },
-    "installation_id": { "$ref": "#/$defs/identifier" },
-    "core_version": { "$ref": "#/$defs/semver" },
-    "release_id": { "type": "string", "pattern": "^[a-z][a-z0-9.-]*$" },
-    "source_commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+    "schema_ref": {
+      "const": "schemas/installation-state.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "installation_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "core_version": {
+      "$ref": "#/$defs/semver"
+    },
+    "release_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9.-]*$"
+    },
+    "source_commit": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
     "managed_files": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["path", "sha256", "size"],
+        "required": [
+          "path",
+          "sha256",
+          "size"
+        ],
         "properties": {
-          "path": { "$ref": "#/$defs/portablePath" },
-          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-          "size": { "type": "integer", "minimum": 0 }
+          "path": {
+            "$ref": "#/$defs/portablePath"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          }
         }
       }
     },
     "schema_versions": {
       "type": "object",
-      "propertyNames": { "pattern": "^[a-z][a-z0-9-]*$" },
-      "additionalProperties": { "type": "integer", "minimum": 1 }
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9-]*$"
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1
+      }
     },
     "completed_migrations": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "$ref": "#/$defs/identifier" }
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
     },
     "pending_derived_actions": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "$ref": "#/$defs/identifier" }
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
     },
-    "revision": { "type": "integer", "minimum": 1 }
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    }
   },
   "$defs": {
-    "identifier": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
     "semver": {
       "type": "string",
       "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"

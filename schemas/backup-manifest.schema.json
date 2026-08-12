@@ -4,28 +4,87 @@
   "title": "KRCN Core recoverable deployment backup manifest",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "deployment_id", "merge_plan_id", "installation_id", "source_state_sha256", "entries", "scopes"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "deployment_id",
+    "merge_plan_id",
+    "installation_id",
+    "source_state_sha256",
+    "entries",
+    "scopes"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/backup-manifest.schema.json" },
-    "schema_version": { "const": 1 },
-    "deployment_id": { "$ref": "#/$defs/identifier" },
-    "merge_plan_id": { "$ref": "#/$defs/sha256" },
-    "installation_id": { "$ref": "#/$defs/identifier" },
-    "source_state_sha256": { "$ref": "#/$defs/sha256" },
+    "schema_ref": {
+      "const": "schemas/backup-manifest.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "deployment_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "merge_plan_id": {
+      "$ref": "#/$defs/sha256"
+    },
+    "installation_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "source_state_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
     "entries": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["target_ref", "existed", "sha256", "size", "content_ref", "expected_post_existed", "expected_post_sha256"],
+        "required": [
+          "target_ref",
+          "existed",
+          "sha256",
+          "size",
+          "content_ref",
+          "expected_post_existed",
+          "expected_post_sha256"
+        ],
         "properties": {
-          "target_ref": { "type": "string", "minLength": 1 },
-          "existed": { "type": "boolean" },
-          "sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
-          "size": { "type": ["integer", "null"], "minimum": 0 },
-          "content_ref": { "type": ["string", "null"] },
-          "expected_post_existed": { "type": "boolean" },
-          "expected_post_sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" }
+          "target_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "existed": {
+            "type": "boolean"
+          },
+          "sha256": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "size": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "content_ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expected_post_existed": {
+            "type": "boolean"
+          },
+          "expected_post_sha256": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[a-f0-9]{64}$"
+          }
         }
       }
     },
@@ -34,17 +93,38 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["target_ref", "ownership", "remove_created_on_rollback"],
+        "required": [
+          "target_ref",
+          "ownership",
+          "remove_created_on_rollback"
+        ],
         "properties": {
-          "target_ref": { "type": "string", "minLength": 1 },
-          "ownership": { "enum": ["runtime", "user-data", "derived"] },
-          "remove_created_on_rollback": { "type": "boolean" }
+          "target_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "ownership": {
+            "enum": [
+              "runtime",
+              "user-data",
+              "derived"
+            ]
+          },
+          "remove_created_on_rollback": {
+            "type": "boolean"
+          }
         }
       }
     }
   },
   "$defs": {
-    "identifier": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
   }
 }

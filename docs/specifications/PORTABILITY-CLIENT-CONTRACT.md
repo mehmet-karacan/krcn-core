@@ -17,7 +17,7 @@ Project-home migration always creates and verifies a secret-safe backup before r
 
 ## Platform rule
 
-Windows and macOS use platform-appropriate physical defaults. Portable archives use only forward-slash relative paths, the same layout version, the same canonical JSON representation, and the same SHA-256 identity rules. Physical user-home and source paths do not contribute to the portable backup identity after source locators are transformed to `unbound` dependencies.
+Windows and macOS use platform-appropriate physical defaults. Portable archives use only forward-slash relative paths, the same layout version, readable JSON documents, and the same canonical SHA-256 identity rules. Physical user-home and source paths do not contribute to the portable backup identity after source locators are transformed to `unbound` dependencies.
 
 ## Security parity
 

@@ -10,7 +10,9 @@
       "rebuildable": false,
       "requires_evidence": true,
       "requires_approval_to_persist": true,
-      "allowed_record_ownerships": ["user-data"]
+      "allowed_record_ownerships": [
+        "user-data"
+      ]
     },
     {
       "id": "knowledge",
@@ -20,7 +22,9 @@
       "rebuildable": false,
       "requires_evidence": true,
       "requires_approval_to_persist": true,
-      "allowed_record_ownerships": ["user-data"]
+      "allowed_record_ownerships": [
+        "user-data"
+      ]
     },
     {
       "id": "memory",
@@ -30,7 +34,9 @@
       "rebuildable": false,
       "requires_evidence": true,
       "requires_approval_to_persist": true,
-      "allowed_record_ownerships": ["user-data"]
+      "allowed_record_ownerships": [
+        "user-data"
+      ]
     },
     {
       "id": "state",
@@ -40,7 +46,9 @@
       "rebuildable": false,
       "requires_evidence": false,
       "requires_approval_to_persist": false,
-      "allowed_record_ownerships": ["runtime"]
+      "allowed_record_ownerships": [
+        "runtime"
+      ]
     },
     {
       "id": "history",
@@ -50,7 +58,10 @@
       "rebuildable": false,
       "requires_evidence": true,
       "requires_approval_to_persist": false,
-      "allowed_record_ownerships": ["runtime", "user-data"]
+      "allowed_record_ownerships": [
+        "runtime",
+        "user-data"
+      ]
     },
     {
       "id": "derived",
@@ -60,7 +71,9 @@
       "rebuildable": true,
       "requires_evidence": true,
       "requires_approval_to_persist": false,
-      "allowed_record_ownerships": ["derived"]
+      "allowed_record_ownerships": [
+        "derived"
+      ]
     }
   ]
 }

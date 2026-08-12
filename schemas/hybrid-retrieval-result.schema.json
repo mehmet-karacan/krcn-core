@@ -4,22 +4,82 @@
   "title": "KRCN explainable hybrid retrieval result",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "query_id", "query_digest", "catalog_digest", "index_digest", "result_digest", "mode", "weights", "candidate_count", "hit_count", "truncated", "hits", "remote", "external_source_content_copied"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "query_id",
+    "query_digest",
+    "catalog_digest",
+    "index_digest",
+    "result_digest",
+    "mode",
+    "weights",
+    "candidate_count",
+    "hit_count",
+    "truncated",
+    "hits",
+    "remote",
+    "external_source_content_copied"
+  ],
   "properties": {
-    "schema_ref": {"const": "schemas/hybrid-retrieval-result.schema.json"},
-    "schema_version": {"const": 1},
-    "query_id": {"type": "string"},
-    "query_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "catalog_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "index_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "result_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "mode": {"const": "sqlite-fts-deterministic-vector"},
-    "weights": {"type": "object", "additionalProperties": {"type": "number", "minimum": 0, "maximum": 1}},
-    "candidate_count": {"type": "integer", "minimum": 0},
-    "hit_count": {"type": "integer", "minimum": 0},
-    "truncated": {"type": "boolean"},
-    "hits": {"type": "array", "items": {"type": "object"}},
-    "remote": {"const": false},
-    "external_source_content_copied": {"const": false}
+    "schema_ref": {
+      "const": "schemas/hybrid-retrieval-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "query_id": {
+      "type": "string"
+    },
+    "query_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "catalog_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "index_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "result_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "mode": {
+      "const": "sqlite-fts-deterministic-vector"
+    },
+    "weights": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      }
+    },
+    "candidate_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "hit_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "truncated": {
+      "type": "boolean"
+    },
+    "hits": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "remote": {
+      "const": false
+    },
+    "external_source_content_copied": {
+      "const": false
+    }
   }
 }

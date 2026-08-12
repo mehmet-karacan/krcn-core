@@ -13,28 +13,62 @@
     "technologies"
   ],
   "properties": {
-    "schema_version": { "const": 1 },
-    "binding_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "binding_revision": { "type": "integer", "minimum": 1 },
-    "root_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "schema_version": {
+      "const": 1
+    },
+    "binding_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "binding_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "root_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
     "files": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["relative_path", "kind", "size", "sha256"],
+        "required": [
+          "relative_path",
+          "kind",
+          "size",
+          "sha256"
+        ],
         "properties": {
-          "relative_path": { "type": "string", "minLength": 1 },
-          "kind": { "enum": ["source", "document", "configuration"] },
-          "size": { "type": "integer", "minimum": 0 },
-          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          "relative_path": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "source",
+              "document",
+              "configuration"
+            ]
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
         }
       }
     },
     "technologies": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "type": "string", "minLength": 1 }
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     }
   }
 }

@@ -4,14 +4,38 @@
   "title": "KRCN Core deterministic task graph plan",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "task_id", "intent_digest", "registry_digest", "selection_digest", "steps", "approval_triggers", "requires_approval", "grants_execution", "plan_id"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "task_id",
+    "intent_digest",
+    "registry_digest",
+    "selection_digest",
+    "steps",
+    "approval_triggers",
+    "requires_approval",
+    "grants_execution",
+    "plan_id"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/task-plan.schema.json" },
-    "schema_version": { "const": 1 },
-    "task_id": { "$ref": "#/$defs/id" },
-    "intent_digest": { "$ref": "#/$defs/sha256" },
-    "registry_digest": { "$ref": "#/$defs/sha256" },
-    "selection_digest": { "$ref": "#/$defs/sha256" },
+    "schema_ref": {
+      "const": "schemas/task-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "task_id": {
+      "$ref": "#/$defs/id"
+    },
+    "intent_digest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "registry_digest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "selection_digest": {
+      "$ref": "#/$defs/sha256"
+    },
     "steps": {
       "type": "array",
       "minItems": 2,
@@ -19,34 +43,166 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["step_id", "title", "role", "depends_on", "required_capabilities", "capability_record_refs", "side_effects", "ownership_impacts", "provider_mode", "approval_triggers", "acceptance_criteria", "verification_requirements", "reversible", "rollback_strategy", "step_digest"],
+        "required": [
+          "step_id",
+          "title",
+          "role",
+          "depends_on",
+          "required_capabilities",
+          "capability_record_refs",
+          "side_effects",
+          "ownership_impacts",
+          "provider_mode",
+          "approval_triggers",
+          "acceptance_criteria",
+          "verification_requirements",
+          "reversible",
+          "rollback_strategy",
+          "step_digest"
+        ],
         "properties": {
-          "step_id": { "$ref": "#/$defs/id" },
-          "title": { "type": "string", "minLength": 1, "maxLength": 1000 },
-          "role": { "enum": ["planner", "worker", "verifier"] },
-          "depends_on": { "$ref": "#/$defs/ids" },
-          "required_capabilities": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)+$" } },
-          "capability_record_refs": { "$ref": "#/$defs/ids" },
-          "side_effects": { "type": "array", "uniqueItems": true, "items": { "enum": ["read", "write", "execute", "network"] } },
-          "ownership_impacts": { "type": "array", "uniqueItems": true, "items": { "enum": ["core", "runtime", "user-data", "derived", "secrets", "unmanaged"] } },
-          "provider_mode": { "enum": ["none", "local", "remote"] },
-          "approval_triggers": { "type": "array", "uniqueItems": true, "items": { "enum": ["scope-change", "user-data-mutation", "remote-provider-use", "irreversible-effect", "policy-change", "capability-escalation"] } },
-          "acceptance_criteria": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
-          "verification_requirements": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
-          "reversible": { "type": "boolean" },
-          "rollback_strategy": { "enum": ["not-required", "restore-checkpoint", "rebuild-derived", "manual"] },
-          "step_digest": { "$ref": "#/$defs/sha256" }
+          "step_id": {
+            "$ref": "#/$defs/id"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          },
+          "role": {
+            "enum": [
+              "planner",
+              "worker",
+              "verifier"
+            ]
+          },
+          "depends_on": {
+            "$ref": "#/$defs/ids"
+          },
+          "required_capabilities": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*(?:\\.[a-z][a-z0-9-]*)+$"
+            }
+          },
+          "capability_record_refs": {
+            "$ref": "#/$defs/ids"
+          },
+          "side_effects": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "read",
+                "write",
+                "execute",
+                "network"
+              ]
+            }
+          },
+          "ownership_impacts": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "core",
+                "runtime",
+                "user-data",
+                "derived",
+                "secrets",
+                "unmanaged"
+              ]
+            }
+          },
+          "provider_mode": {
+            "enum": [
+              "none",
+              "local",
+              "remote"
+            ]
+          },
+          "approval_triggers": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "scope-change",
+                "user-data-mutation",
+                "remote-provider-use",
+                "irreversible-effect",
+                "policy-change",
+                "capability-escalation"
+              ]
+            }
+          },
+          "acceptance_criteria": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "verification_requirements": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "reversible": {
+            "type": "boolean"
+          },
+          "rollback_strategy": {
+            "enum": [
+              "not-required",
+              "restore-checkpoint",
+              "rebuild-derived",
+              "manual"
+            ]
+          },
+          "step_digest": {
+            "$ref": "#/$defs/sha256"
+          }
         }
       }
     },
-    "approval_triggers": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
-    "requires_approval": { "type": "boolean" },
-    "grants_execution": { "const": false },
-    "plan_id": { "$ref": "#/$defs/sha256" }
+    "approval_triggers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "requires_approval": {
+      "type": "boolean"
+    },
+    "grants_execution": {
+      "const": false
+    },
+    "plan_id": {
+      "$ref": "#/$defs/sha256"
+    }
   },
   "$defs": {
-    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "ids": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
-    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
   }
 }

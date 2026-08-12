@@ -6,16 +6,42 @@
       "route_id": "project-learning",
       "action": "learn-project",
       "application_operation": "project.learn",
-      "terms": ["öğren", "tanı", "tanıt", "entegre", "kaydet", "learn", "recognize", "register", "onboard", "integrate"],
+      "terms": [
+        "öğren",
+        "tanı",
+        "tanıt",
+        "entegre",
+        "kaydet",
+        "learn",
+        "recognize",
+        "register",
+        "onboard",
+        "integrate"
+      ],
       "directory_only": true,
-      "required_inputs": ["local-directory"],
-      "inferred_fields": ["project-name", "project-id", "workspace-id", "binding-id"],
+      "required_inputs": [
+        "local-directory"
+      ],
+      "inferred_fields": [
+        "project-name",
+        "project-id",
+        "workspace-id",
+        "binding-id"
+      ],
       "source_access": "read-only",
       "copy_source": false,
       "exact_plan_required": true,
       "user_data_approval_required": true,
       "client_specific": false,
-      "supported_clients": ["cli", "sdk", "mcp", "plugin", "codex", "claude", "generic-ai"]
+      "supported_clients": [
+        "cli",
+        "sdk",
+        "mcp",
+        "plugin",
+        "codex",
+        "claude",
+        "generic-ai"
+      ]
     }
   ]
 }

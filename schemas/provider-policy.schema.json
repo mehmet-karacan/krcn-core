@@ -13,9 +13,15 @@
     "remote_providers"
   ],
   "properties": {
-    "schema_version": { "const": 1 },
-    "default_mode": { "const": "offline" },
-    "implicit_provider_discovery": { "const": false },
+    "schema_version": {
+      "const": 1
+    },
+    "default_mode": {
+      "const": "offline"
+    },
+    "implicit_provider_discovery": {
+      "const": false
+    },
     "network": {
       "type": "object",
       "required": [
@@ -25,13 +31,23 @@
         "imports_may_connect"
       ],
       "properties": {
-        "default_action": { "const": "deny" },
-        "diagnostics_may_upload": { "const": false },
-        "tests_may_connect": { "const": false },
-        "imports_may_connect": { "const": false }
+        "default_action": {
+          "const": "deny"
+        },
+        "diagnostics_may_upload": {
+          "const": false
+        },
+        "tests_may_connect": {
+          "const": false
+        },
+        "imports_may_connect": {
+          "const": false
+        }
       }
     },
-    "local_providers": { "type": "object" },
+    "local_providers": {
+      "type": "object"
+    },
     "remote_providers": {
       "type": "object",
       "required": [
@@ -41,13 +57,24 @@
         "required_disclosures"
       ],
       "properties": {
-        "enabled": { "const": false },
-        "explicit_opt_in_required": { "const": true },
-        "consent_scope": { "enum": ["operation", "session"] },
+        "enabled": {
+          "const": false
+        },
+        "explicit_opt_in_required": {
+          "const": true
+        },
+        "consent_scope": {
+          "enum": [
+            "operation",
+            "session"
+          ]
+        },
         "required_disclosures": {
           "type": "array",
           "minItems": 5,
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "uniqueItems": true
         }
       }

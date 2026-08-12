@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping
 
+from .json_documents import canonical_json_bytes, pretty_json_bytes
 from .installation import (
     InstallationState,
     installation_state_sha256,
@@ -205,19 +206,15 @@ class DeploymentStartResult:
 
 
 def _canonical_document(payload: object) -> bytes:
-    return (
-        json.dumps(
-            payload,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        )
-        + "\n"
-    ).encode("utf-8")
+    return canonical_json_bytes(payload, trailing_newline=True)
+
+
+def _stored_document(payload: object) -> bytes:
+    return pretty_json_bytes(payload)
 
 
 def _document_sha256(payload: object) -> str:
-    return hashlib.sha256(_canonical_document(payload)).hexdigest()
+    return hashlib.sha256(_stored_document(payload)).hexdigest()
 
 
 def _stable_file_hash(path: Path) -> tuple[int, str]:
@@ -675,7 +672,7 @@ def _write_planned_document(
     payload: object,
 ) -> None:
     _assert_authorized(mutation, authorization)
-    document = _canonical_document(payload)
+    document = _stored_document(payload)
     if hashlib.sha256(document).hexdigest() != mutation.change_digest:
         raise DeploymentError("planned document digest changed before write")
     target = safe_installation_target(root, mutation.target_ref)

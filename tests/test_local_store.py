@@ -106,6 +106,10 @@ class LocalWorkspaceStoreTests(unittest.TestCase):
         second = self.store.apply_put(second_plan, self.authorize(second_plan))
         self.assertEqual(2, second.revision)
         self.assertEqual(["sample-project"], second.payload["project_refs"])
+        target = Path(self.temporary.name) / "workspaces" / "sample-workspace.json"
+        document = target.read_text(encoding="utf-8")
+        self.assertIn('\n  "payload": {\n', document)
+        self.assertTrue(document.endswith("\n"))
 
     def test_stale_revision_is_rejected(self) -> None:
         first_plan = self.store.prepare_put(
@@ -122,6 +126,32 @@ class LocalWorkspaceStoreTests(unittest.TestCase):
                 workspace_payload(),
                 expected_revision=0,
             )
+
+    def test_compact_historical_record_remains_readable(self) -> None:
+        plan = self.store.prepare_put(
+            "workspaces",
+            "sample-workspace",
+            workspace_payload(),
+            expected_revision=0,
+        )
+        self.store.apply_put(plan, self.authorize(plan))
+        target = Path(self.temporary.name) / "workspaces" / "sample-workspace.json"
+        envelope = json.loads(target.read_text(encoding="utf-8"))
+        target.write_text(
+            json.dumps(
+                envelope,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        stored = self.store.read("workspaces", "sample-workspace")
+
+        self.assertIsNotNone(stored)
+        self.assertEqual(workspace_payload(), stored.payload)
 
     def test_cross_process_writers_cannot_silently_overwrite_same_revision(self) -> None:
         first_payload = workspace_payload()

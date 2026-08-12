@@ -4,85 +4,305 @@
   "title": "KRCN Core dependency graph result",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "query_id", "query_digest", "catalog_digest", "graph_digest", "result_digest", "node_count", "edge_count", "cycle_relation_ids", "truncated", "depth_limited", "nodes", "edges"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "query_id",
+    "query_digest",
+    "catalog_digest",
+    "graph_digest",
+    "result_digest",
+    "node_count",
+    "edge_count",
+    "cycle_relation_ids",
+    "truncated",
+    "depth_limited",
+    "nodes",
+    "edges"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/dependency-result.schema.json" },
-    "schema_version": { "const": 1 },
-    "query_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "query_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "catalog_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "graph_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "result_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "node_count": { "type": "integer", "minimum": 1 },
-    "edge_count": { "type": "integer", "minimum": 0 },
+    "schema_ref": {
+      "const": "schemas/dependency-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "query_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "query_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "catalog_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "graph_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "result_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "node_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "edge_count": {
+      "type": "integer",
+      "minimum": 0
+    },
     "cycle_relation_ids": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
     },
-    "truncated": { "type": "boolean" },
-    "depth_limited": { "type": "boolean" },
+    "truncated": {
+      "type": "boolean"
+    },
+    "depth_limited": {
+      "type": "boolean"
+    },
     "nodes": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "items": { "$ref": "#/$defs/node" }
+      "items": {
+        "$ref": "#/$defs/node"
+      }
     },
     "edges": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "$ref": "#/$defs/edge" }
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
     }
   },
   "$defs": {
     "evidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["source_ref", "revision_id", "digest", "relation"],
+      "required": [
+        "source_ref",
+        "revision_id",
+        "digest",
+        "relation"
+      ],
       "properties": {
-        "source_ref": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$" },
-        "revision_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
-        "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-        "relation": { "enum": ["supports", "derived-from", "observed-at", "supersedes", "contradicts"] }
+        "source_ref": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        },
+        "revision_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "relation": {
+          "enum": [
+            "supports",
+            "derived-from",
+            "observed-at",
+            "supersedes",
+            "contradicts"
+          ]
+        }
       }
     },
     "node": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["record_id", "information_class", "ownership", "subject_ref", "revision", "content_digest", "lifecycle", "availability", "authority_rank", "binding_ref", "evidence", "depth", "seed", "via_relation_id"],
+      "required": [
+        "record_id",
+        "information_class",
+        "ownership",
+        "subject_ref",
+        "revision",
+        "content_digest",
+        "lifecycle",
+        "availability",
+        "authority_rank",
+        "binding_ref",
+        "evidence",
+        "depth",
+        "seed",
+        "via_relation_id"
+      ],
       "properties": {
-        "record_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-        "information_class": { "enum": ["authoritative-source", "knowledge"] },
-        "ownership": { "const": "user-data" },
-        "subject_ref": { "type": "string", "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$" },
-        "revision": { "type": "integer", "minimum": 1 },
-        "content_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-        "lifecycle": { "enum": ["current", "superseded", "stale", "archived"] },
-        "availability": { "enum": ["current", "binding-missing", "binding-stale", "binding-conflict", "stale", "superseded", "archived"] },
-        "authority_rank": { "enum": [0, 1] },
-        "binding_ref": { "type": ["string", "null"], "pattern": "^binding:[a-z][a-z0-9-]*$" },
-        "evidence": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/evidence" } },
-        "depth": { "type": "integer", "minimum": 0 },
-        "seed": { "type": "boolean" },
-        "via_relation_id": { "type": ["string", "null"], "pattern": "^[a-z][a-z0-9-]*$" }
+        "record_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "information_class": {
+          "enum": [
+            "authoritative-source",
+            "knowledge"
+          ]
+        },
+        "ownership": {
+          "const": "user-data"
+        },
+        "subject_ref": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "content_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "lifecycle": {
+          "enum": [
+            "current",
+            "superseded",
+            "stale",
+            "archived"
+          ]
+        },
+        "availability": {
+          "enum": [
+            "current",
+            "binding-missing",
+            "binding-stale",
+            "binding-conflict",
+            "stale",
+            "superseded",
+            "archived"
+          ]
+        },
+        "authority_rank": {
+          "enum": [
+            0,
+            1
+          ]
+        },
+        "binding_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^binding:[a-z][a-z0-9-]*$"
+        },
+        "evidence": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "seed": {
+          "type": "boolean"
+        },
+        "via_relation_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-z][a-z0-9-]*$"
+        }
       }
     },
     "edge": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["relation_id", "from_record_id", "to_record_id", "relation_type", "revision", "relation_digest", "lifecycle", "evidence", "availability", "traversal_direction", "depth"],
+      "required": [
+        "relation_id",
+        "from_record_id",
+        "to_record_id",
+        "relation_type",
+        "revision",
+        "relation_digest",
+        "lifecycle",
+        "evidence",
+        "availability",
+        "traversal_direction",
+        "depth"
+      ],
       "properties": {
-        "relation_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-        "from_record_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-        "to_record_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-        "relation_type": { "enum": ["contains", "depends-on", "references", "implements", "documents", "decides", "tracks", "derived-from", "related-to"] },
-        "revision": { "type": "integer", "minimum": 1 },
-        "relation_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-        "lifecycle": { "enum": ["current", "superseded", "stale", "archived"] },
-        "evidence": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/evidence" } },
-        "availability": { "enum": ["current", "stale", "superseded", "archived"] },
-        "traversal_direction": { "enum": ["outbound", "inbound"] },
-        "depth": { "type": "integer", "minimum": 1 }
+        "relation_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "from_record_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "to_record_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "relation_type": {
+          "enum": [
+            "contains",
+            "depends-on",
+            "references",
+            "implements",
+            "documents",
+            "decides",
+            "tracks",
+            "derived-from",
+            "related-to"
+          ]
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "relation_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "lifecycle": {
+          "enum": [
+            "current",
+            "superseded",
+            "stale",
+            "archived"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/evidence"
+          }
+        },
+        "availability": {
+          "enum": [
+            "current",
+            "stale",
+            "superseded",
+            "archived"
+          ]
+        },
+        "traversal_direction": {
+          "enum": [
+            "outbound",
+            "inbound"
+          ]
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 1
+        }
       }
     }
   }

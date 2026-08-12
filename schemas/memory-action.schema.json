@@ -4,19 +4,70 @@
   "title": "KRCN Core approved memory lifecycle action",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "action_id", "action", "memory_id", "expected_revision", "expected_content_digest", "replacement_ref", "session_id", "approval_id", "approved", "action_digest"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "action_id",
+    "action",
+    "memory_id",
+    "expected_revision",
+    "expected_content_digest",
+    "replacement_ref",
+    "session_id",
+    "approval_id",
+    "approved",
+    "action_digest"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/memory-action.schema.json" },
-    "schema_version": { "const": 1 },
-    "action_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "action": { "enum": ["supersede", "revoke"] },
-    "memory_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "expected_revision": { "type": "integer", "minimum": 1 },
-    "expected_content_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "replacement_ref": { "type": ["string", "null"], "pattern": "^memory:[a-z][a-z0-9-]*$" },
-    "session_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$" },
-    "approval_id": { "type": "string", "minLength": 1 },
-    "approved": { "const": true },
-    "action_digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+    "schema_ref": {
+      "const": "schemas/memory-action.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "action_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "action": {
+      "enum": [
+        "supersede",
+        "revoke"
+      ]
+    },
+    "memory_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "expected_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "expected_content_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "replacement_ref": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^memory:[a-z][a-z0-9-]*$"
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "approval_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "approved": {
+      "const": true
+    },
+    "action_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
   }
 }

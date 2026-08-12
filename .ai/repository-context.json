@@ -114,6 +114,7 @@
     "deployment_journal_schema": "schemas/deployment-journal.schema.json",
     "migration_execution": "docs/specifications/MIGRATION-EXECUTION.md",
     "policy_layers": "docs/specifications/POLICY-LAYERS.md",
+    "json_document_format": "docs/specifications/JSON-DOCUMENT-FORMAT.md",
     "cli_inventory": ".ai/legacy-cli-inventory.json",
     "cli_baseline": ".ai/cli-baseline.json",
     "provider_policy": "config/provider-policy.json",
@@ -141,6 +142,7 @@
     "verification_commands": [
       "python tools/show_context.py --validate-only",
       "python tools/verify_repository.py",
+      "python tools/format_json.py --check",
       "python tools/run_tests.py",
       "python tools/krcn.py doctor"
     ]

@@ -13,11 +13,27 @@
     "file_count"
   ],
   "properties": {
-    "schema_version": { "const": 1 },
-    "source_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "binding_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "algorithm": { "const": "krcn-discovery-tree-sha256-v1" },
-    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "file_count": { "type": "integer", "minimum": 0 }
+    "schema_version": {
+      "const": 1
+    },
+    "source_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "binding_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "algorithm": {
+      "const": "krcn-discovery-tree-sha256-v1"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "file_count": {
+      "type": "integer",
+      "minimum": 0
+    }
   }
 }

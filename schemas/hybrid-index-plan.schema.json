@@ -4,18 +4,57 @@
   "title": "KRCN hybrid index plan",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "plan_id", "index_revision", "catalog_digest", "entry_count", "document_digest", "vector_dimensions", "mutation", "external_source_content_copied", "derived_index_rebuildable"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "index_revision",
+    "catalog_digest",
+    "entry_count",
+    "document_digest",
+    "vector_dimensions",
+    "mutation",
+    "external_source_content_copied",
+    "derived_index_rebuildable"
+  ],
   "properties": {
-    "schema_ref": {"const": "schemas/hybrid-index-plan.schema.json"},
-    "schema_version": {"const": 1},
-    "plan_id": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "index_revision": {"const": 1},
-    "catalog_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "entry_count": {"type": "integer", "minimum": 0},
-    "document_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
-    "vector_dimensions": {"type": "integer", "minimum": 1},
-    "mutation": {"$ref": "mutation-plan.schema.json"},
-    "external_source_content_copied": {"const": false},
-    "derived_index_rebuildable": {"const": true}
+    "schema_ref": {
+      "const": "schemas/hybrid-index-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "index_revision": {
+      "const": 1
+    },
+    "catalog_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "entry_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "document_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "vector_dimensions": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "mutation": {
+      "$ref": "mutation-plan.schema.json"
+    },
+    "external_source_content_copied": {
+      "const": false
+    },
+    "derived_index_rebuildable": {
+      "const": true
+    }
   }
 }

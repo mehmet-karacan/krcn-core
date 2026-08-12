@@ -4,10 +4,21 @@
   "title": "KRCN Core transport-neutral application response",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "request_id", "operation", "status", "data"],
+  "required": [
+    "schema_version",
+    "request_id",
+    "operation",
+    "status",
+    "data"
+  ],
   "properties": {
-    "schema_version": { "const": 1 },
-    "request_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "schema_version": {
+      "const": 1
+    },
+    "request_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
     "operation": {
       "enum": [
         "installation.inspect",
@@ -51,7 +62,18 @@
         "portability.restore-project-home"
       ]
     },
-    "status": { "enum": ["ok", "planned", "applied", "choice-required", "cancelled"] },
-    "data": { "type": "object", "additionalProperties": true }
+    "status": {
+      "enum": [
+        "ok",
+        "planned",
+        "applied",
+        "choice-required",
+        "cancelled"
+      ]
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": true
+    }
   }
 }

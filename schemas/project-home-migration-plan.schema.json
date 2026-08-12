@@ -4,22 +4,74 @@
   "title": "KRCN Core project-home migration plan summary",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "plan_id", "backup_id", "entry_count", "external_dependency_count", "source_preserved", "source_deleted", "target_must_be_empty", "project_manifest_included", "source_content_included", "secret_values_included", "paths_disclosed", "effect_plans", "rollback"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "backup_id",
+    "entry_count",
+    "external_dependency_count",
+    "source_preserved",
+    "source_deleted",
+    "target_must_be_empty",
+    "project_manifest_included",
+    "source_content_included",
+    "secret_values_included",
+    "paths_disclosed",
+    "effect_plans",
+    "rollback"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/project-home-migration-plan.schema.json" },
-    "schema_version": { "const": 1 },
-    "plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "backup_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "entry_count": { "type": "integer", "minimum": 1 },
-    "external_dependency_count": { "type": "integer", "minimum": 0 },
-    "source_preserved": { "const": true },
-    "source_deleted": { "const": false },
-    "target_must_be_empty": { "const": true },
-    "project_manifest_included": { "const": true },
-    "source_content_included": { "const": false },
-    "secret_values_included": { "const": false },
-    "paths_disclosed": { "const": false },
-    "effect_plans": { "type": "array", "minItems": 2, "maxItems": 3 },
-    "rollback": { "type": "object" }
+    "schema_ref": {
+      "const": "schemas/project-home-migration-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "backup_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "entry_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "external_dependency_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_preserved": {
+      "const": true
+    },
+    "source_deleted": {
+      "const": false
+    },
+    "target_must_be_empty": {
+      "const": true
+    },
+    "project_manifest_included": {
+      "const": true
+    },
+    "source_content_included": {
+      "const": false
+    },
+    "secret_values_included": {
+      "const": false
+    },
+    "paths_disclosed": {
+      "const": false
+    },
+    "effect_plans": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 3
+    },
+    "rollback": {
+      "type": "object"
+    }
   }
 }

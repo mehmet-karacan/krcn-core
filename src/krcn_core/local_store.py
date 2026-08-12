@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping
 
+from .json_documents import canonical_json_bytes, pretty_json_bytes
 from .mutation_gate import (
     MutationAuthorization,
     MutationPlan,
@@ -127,10 +128,7 @@ class RecordWritePlan:
 
 
 def _canonical_json(payload: object) -> bytes:
-    return (
-        json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-        + "\n"
-    ).encode("utf-8")
+    return canonical_json_bytes(payload, trailing_newline=True)
 
 
 def _payload_hash(payload: Mapping[str, object]) -> str:
@@ -394,7 +392,7 @@ class LocalWorkspaceStore:
             previous_revision=current_revision,
             next_revision=next_revision,
             payload_sha256=payload_sha256,
-            document=_canonical_json(envelope),
+            document=pretty_json_bytes(envelope),
             mutation=mutation,
         )
 

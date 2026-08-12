@@ -21,21 +21,44 @@
     "schema_ref": {
       "const": "schemas/project-home-initialization-plan.schema.json"
     },
-    "schema_version": { "const": 1 },
-    "plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "resolution": { "$ref": "project-home-resolution.schema.json" },
-    "home_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
-    "already_initialized": { "type": "boolean" },
-    "source_copy": { "const": false },
-    "local_data_in_git": { "const": false },
-    "tracked_gitignore_changed": { "const": false },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "resolution": {
+      "$ref": "project-home-resolution.schema.json"
+    },
+    "home_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "already_initialized": {
+      "type": "boolean"
+    },
+    "source_copy": {
+      "const": false
+    },
+    "local_data_in_git": {
+      "const": false
+    },
+    "tracked_gitignore_changed": {
+      "const": false
+    },
     "git_exclusion": {
-      "type": ["object", "null"]
+      "type": [
+        "object",
+        "null"
+      ]
     },
     "effect_plans": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "$ref": "mutation-plan.schema.json" }
+      "items": {
+        "$ref": "mutation-plan.schema.json"
+      }
     }
   }
 }

@@ -16,34 +16,79 @@
     "revision"
   ],
   "properties": {
-    "schema_version": { "const": 1 },
-    "binding_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "source_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "schema_version": {
+      "const": 1
+    },
+    "binding_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "source_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
     "source_kind": {
-      "enum": ["project", "document", "directory", "database", "integration"]
+      "enum": [
+        "project",
+        "document",
+        "directory",
+        "database",
+        "integration"
+      ]
     },
     "locator": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "value"],
+      "required": [
+        "kind",
+        "value"
+      ],
       "properties": {
-        "kind": { "enum": ["local-path", "connection-ref", "uri", "unbound"] },
-        "value": { "type": "string", "minLength": 1 }
+        "kind": {
+          "enum": [
+            "local-path",
+            "connection-ref",
+            "uri",
+            "unbound"
+          ]
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
-    "default_access": { "enum": ["read-only", "read-write"] },
+    "default_access": {
+      "enum": [
+        "read-only",
+        "read-write"
+      ]
+    },
     "capabilities": {
       "type": "array",
       "uniqueItems": true,
       "items": {
-        "enum": ["read", "write", "metadata", "search", "index", "execute"]
+        "enum": [
+          "read",
+          "write",
+          "metadata",
+          "search",
+          "index",
+          "execute"
+        ]
       }
     },
     "policy_refs": {
       "type": "array",
       "uniqueItems": true,
-      "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
     },
-    "revision": { "type": "integer", "minimum": 1 }
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    }
   }
 }

@@ -4,21 +4,59 @@
   "title": "KRCN Core persisted worker checkpoint",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "checkpoint_record_id", "task_id", "plan_id", "authorization_id", "step_id", "execution", "revision", "record_digest"],
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "checkpoint_record_id",
+    "task_id",
+    "plan_id",
+    "authorization_id",
+    "step_id",
+    "execution",
+    "revision",
+    "record_digest"
+  ],
   "properties": {
-    "schema_ref": { "const": "schemas/orchestration-checkpoint.schema.json" },
-    "schema_version": { "const": 1 },
-    "checkpoint_record_id": { "$ref": "#/$defs/id" },
-    "task_id": { "$ref": "#/$defs/id" },
-    "plan_id": { "$ref": "#/$defs/digest" },
-    "authorization_id": { "$ref": "#/$defs/digest" },
-    "step_id": { "$ref": "#/$defs/id" },
-    "execution": { "$ref": "worker-execution.schema.json" },
-    "revision": { "type": "integer", "minimum": 1 },
-    "record_digest": { "$ref": "#/$defs/digest" }
+    "schema_ref": {
+      "const": "schemas/orchestration-checkpoint.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "checkpoint_record_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_id": {
+      "$ref": "#/$defs/id"
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "authorization_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "step_id": {
+      "$ref": "#/$defs/id"
+    },
+    "execution": {
+      "$ref": "worker-execution.schema.json"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "record_digest": {
+      "$ref": "#/$defs/digest"
+    }
   },
   "$defs": {
-    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-    "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
   }
 }

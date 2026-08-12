@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .installation import safe_installation_target
+from .json_documents import JsonDocumentError, pretty_json_bytes
 from .mutation_gate import MutationPlan, OwnershipResolver, plan_mutation
 from .update_effects import MigrationSpec
 
@@ -48,18 +49,10 @@ class MigrationWrite:
         }
 
 
-def _canonical_document(payload: object) -> bytes:
+def _stored_document(payload: object) -> bytes:
     try:
-        return (
-            json.dumps(
-                payload,
-                ensure_ascii=False,
-                sort_keys=True,
-                separators=(",", ":"),
-            )
-            + "\n"
-        ).encode("utf-8")
-    except (TypeError, ValueError) as exc:
+        return pretty_json_bytes(payload)
+    except JsonDocumentError as exc:
         raise MigrationError("migration output must be JSON-compatible") from exc
 
 
@@ -140,8 +133,8 @@ def plan_migration_writes(
                 repeated = handler.transform(_clone_json(transformed))
             except Exception as exc:
                 raise MigrationError("trusted migration handler failed") from exc
-            transformed_document = _canonical_document(transformed)
-            repeated_document = _canonical_document(repeated)
+            transformed_document = _stored_document(transformed)
+            repeated_document = _stored_document(repeated)
             if repeated_document != transformed_document:
                 raise MigrationError("migration transform must be idempotent")
             original_digest = hashlib.sha256(original_bytes).hexdigest()
