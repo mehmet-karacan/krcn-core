@@ -53,6 +53,10 @@ public class UserService {
             "Account lifecycle sample.\n",
             encoding="utf-8",
         )
+        (self.source / "application.properties").write_text(
+            "spring.datasource.password=" + "SYNTHETIC_PASSWORD_12345" + "\n",
+            encoding="utf-8",
+        )
         (self.source / "preview.png").write_bytes(b"\x89PNG\r\n\x1a\n")
         self.data_root = self.root / "data"
         self.store = LocalWorkspaceStore(
@@ -122,6 +126,7 @@ public class UserService {
         self.assertIn("source-code-index", summary["missing_stages"])
         code_plan = summary["source_code_index"]["plan"]
         self.assertEqual(3, code_plan["selected_file_count"])
+        self.assertEqual(1, code_plan["skipped"]["sensitive_content"])
         self.assertGreaterEqual(code_plan["chunk_count"], 3)
         self.assertFalse(code_plan["source_content_persisted"])
         self.assertFalse(code_plan["source_copy"])
@@ -142,10 +147,14 @@ public class UserService {
                 row[1] for row in connection.execute("PRAGMA table_info(chunks)")
             }
             metadata = dict(connection.execute("SELECT key, value FROM metadata"))
+            indexed_paths = {
+                row[0] for row in connection.execute("SELECT relative_path FROM files")
+            }
         finally:
             connection.close()
         self.assertNotIn("content", chunk_columns)
         self.assertNotIn("text", chunk_columns)
+        self.assertNotIn("application.properties", indexed_paths)
         self.assertEqual("false", metadata["source_content_persisted"])
 
     def test_search_returns_verified_relative_path_lines_and_live_content(self) -> None:

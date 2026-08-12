@@ -331,7 +331,13 @@ def _is_blocked_path(relative_path: str, patterns: Sequence[str]) -> bool:
     )
 
 
-def _detector_findings(text: str, relative_path: str, detectors: set[str]) -> list[Finding]:
+def detect_content_findings(
+    text: str,
+    relative_path: str,
+    detectors: set[str],
+) -> list[Finding]:
+    """Return detector identities without disclosing matched source values."""
+
     findings: list[Finding] = []
     regex_detectors = {
         "windows-absolute-path": re.compile(r"(?i)(?<![A-Za-z0-9_])[A-Z]:\\"),
@@ -340,8 +346,14 @@ def _detector_findings(text: str, relative_path: str, detectors: set[str]) -> li
         "github-token": re.compile(r"(?:github_pat_|gh[pousr]_)[A-Za-z0-9_]+"),
         "aws-access-key": re.compile(r"AKIA[0-9A-Z]{16}"),
         "generic-secret-assignment": re.compile(
-            r"(?im)^\s*[\"']?(?:password|passwd|token|api[_-]?key|secret)[\"']?\s*[:=]\s*"
-            r"[\"']?(?!\$\{|env://|keyring://|secret://|<)[A-Za-z0-9+/=_-]{12,}"
+            r"(?im)^\s*[\"']?(?:[A-Za-z0-9_.-]+[.-])?"
+            r"(?:password|passwd|token|api[_-]?key|secret|client[_-]?secret|access[_-]?token)"
+            r"[\"']?\s*[:=]\s*[\"']?"
+            r"(?!\$\{|\$[A-Za-z_]|env://|keyring://|secret://|<|\{\{)"
+            r"[A-Za-z0-9+/=_-]{8,}"
+        ),
+        "credential-uri": re.compile(
+            r"(?i)\b[a-z][a-z0-9+.-]{1,20}://[^\s/:@]+:[^\s/@]{4,}@"
         ),
         "email-address": re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"),
         "unicode-long-dash": re.compile("[\u2013\u2014]"),
@@ -382,7 +394,7 @@ def scan_paths(root: Path, paths: Iterable[Path], policy: dict) -> list[Finding]
         except UnicodeDecodeError:
             findings.append(Finding("non-utf8", relative, "text file is not valid UTF-8"))
             continue
-        findings.extend(_detector_findings(text, relative, detectors))
+        findings.extend(detect_content_findings(text, relative, detectors))
     return findings
 
 

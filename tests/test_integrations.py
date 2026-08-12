@@ -59,7 +59,7 @@ class IntegrationMetadataTests(unittest.TestCase):
     def test_secret_like_values_are_rejected(self) -> None:
         values = [
             "pass" + "word=literal-value",
-            "scheme://user:literal-value@service",
+            "scheme://" + "user:" + "literal-value" + "@service",
             "-----BEGIN " + "PRIVATE KEY-----",
         ]
         for value in values:

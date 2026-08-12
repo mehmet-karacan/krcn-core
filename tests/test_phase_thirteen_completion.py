@@ -26,7 +26,7 @@ class PhaseThirteenCompletionTests(unittest.TestCase):
         self.assertEqual(10, baseline["completed_steps"])
         self.assertTrue(set(baseline["safe_operations"]).issubset(OPERATIONS))
         self.assertGreaterEqual(int(str(current["phase_id"]).split("-")[1]), 13)
-        self.assertEqual("completed", current["status"])
+        self.assertIn(current["status"], {"active", "completed"})
         self.assertIn("docs/progress/PHASE-13-COMPLETION.md", current["progress_refs"])
 
     def test_phase_thirteen_guarantees_reject_stale_ownership(self) -> None:

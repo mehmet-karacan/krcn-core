@@ -21,7 +21,7 @@ from .adapter_gate import (
 )
 from .discovery import DiscoveryResult, FileEvidence
 from .embedding_models import load_embedding_model_catalog
-from .foundation import load_json
+from .foundation import detect_content_findings, load_json
 from .home_layout import home_layout_version, project_derived_path
 from .information_records import canonical_json
 from .mutation_gate import (
@@ -109,6 +109,7 @@ class SourceCodeIndexPolicy:
     maximum_search_content_characters: int
     supported_extensions: tuple[str, ...]
     supported_filenames: tuple[str, ...]
+    sensitive_content_detectors: tuple[str, ...]
     policy_digest: str
 
 
@@ -300,7 +301,23 @@ def load_source_code_index_policy(repo_root: Path) -> SourceCodeIndexPolicy:
     catalog = load_embedding_model_catalog(repo_root)
     if payload["offline_embedding_profile_id"] != catalog.offline_fallback_id:
         raise SourceCodeIndexError("source code and embedding policies disagree")
-    policy_digest = hashlib.sha256(canonical_json(payload)).hexdigest()
+    import_policy = load_json(repo_root / "config" / "import-policy.json")
+    configured_detectors = import_policy.get("content_detectors")
+    if not isinstance(configured_detectors, list) or any(
+        not isinstance(item, str) for item in configured_detectors
+    ):
+        raise SourceCodeIndexError("source code sensitive detector policy is invalid")
+    sensitive_detectors = tuple(
+        sorted(set(configured_detectors) - {"unicode-long-dash"})
+    )
+    policy_digest = hashlib.sha256(
+        canonical_json(
+            {
+                "source_code_policy": payload,
+                "sensitive_content_detectors": sensitive_detectors,
+            }
+        )
+    ).hexdigest()
     return SourceCodeIndexPolicy(
         index_revision=1,
         offline_embedding_profile_id="deterministic-hashing",
@@ -315,6 +332,7 @@ def load_source_code_index_policy(repo_root: Path) -> SourceCodeIndexPolicy:
         ],
         supported_extensions=tuple(extensions),
         supported_filenames=tuple(filenames),
+        sensitive_content_detectors=sensitive_detectors,
         policy_digest=policy_digest,
     )
 
@@ -537,8 +555,14 @@ def _build_file(
     evidence: FileEvidence,
     language: str,
     policy: SourceCodeIndexPolicy,
+    *,
+    verified_text: str | None = None,
 ) -> IndexedCodeFile:
-    text = _read_verified_text(root, evidence)
+    text = (
+        verified_text
+        if verified_text is not None
+        else _read_verified_text(root, evidence)
+    )
     chunks = []
     for start_offset, end_offset, start_line, end_line in _chunk_ranges(text, policy):
         content = text[start_offset:end_offset]
@@ -841,6 +865,7 @@ def prepare_source_code_index(
         "unsupported": 0,
         "too_large": 0,
         "non_utf8_or_binary": 0,
+        "sensitive_content": 0,
     }
     for evidence in discovery.files:
         language = _language(evidence.relative_path, policy)
@@ -866,8 +891,23 @@ def prepare_source_code_index(
             reused += 1
             continue
         try:
+            text = _read_verified_text(root, evidence)
+            if detect_content_findings(
+                text,
+                evidence.relative_path,
+                set(policy.sensitive_content_detectors),
+            ):
+                skipped["sensitive_content"] += 1
+                continue
             files.append(
-                _build_file(project_id, root, evidence, language, policy)
+                _build_file(
+                    project_id,
+                    root,
+                    evidence,
+                    language,
+                    policy,
+                    verified_text=text,
+                )
             )
             processed += 1
         except SourceCodeIndexError as exc:

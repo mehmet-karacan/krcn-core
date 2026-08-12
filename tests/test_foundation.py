@@ -83,6 +83,18 @@ class ImportBoundaryTests(unittest.TestCase):
         findings = self._scan_text("settings.txt", value)
         self.assertIn("generic-secret-assignment", {finding.code for finding in findings})
 
+    def test_prefixed_configuration_secret_is_blocked(self) -> None:
+        key = "spring.datasource." + "password"
+        value = key + "=" + "SYNTHETIC_PASSWORD_12345"
+        findings = self._scan_text("application.properties", value)
+        self.assertIn("generic-secret-assignment", {finding.code for finding in findings})
+
+    def test_credential_uri_is_blocked_without_disclosing_value(self) -> None:
+        value = "scheme://" + "sample:" + "synthetic-value" + "@service"
+        findings = self._scan_text("connection.txt", value)
+        self.assertIn("credential-uri", {finding.code for finding in findings})
+        self.assertTrue(all("synthetic-value" not in item.detail for item in findings))
+
     def test_unicode_long_dash_is_blocked(self) -> None:
         findings = self._scan_text("document.md", "left" + chr(0x2014) + "right")
         self.assertIn("unicode-long-dash", {finding.code for finding in findings})

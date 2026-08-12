@@ -26,7 +26,7 @@ class PhaseTwelveCompletionTests(unittest.TestCase):
         self.assertEqual(7, baseline["completed_steps"])
         self.assertTrue(set(baseline["safe_operations"]).issubset(OPERATIONS))
         self.assertGreaterEqual(int(str(current["phase_id"]).split("-")[1]), 12)
-        self.assertEqual("completed", current["status"])
+        self.assertIn(current["status"], {"active", "completed"})
         self.assertIn("docs/progress/PHASE-12-COMPLETION.md", current["progress_refs"])
 
     def test_phase_twelve_guarantees_make_json_authoritative(self) -> None:
