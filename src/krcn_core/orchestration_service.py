@@ -318,18 +318,42 @@ class OrchestrationApplicationService:
         operation_required = {"context"}
         optional = {
             "step_id", "handler_id", "input", "verifier_requests",
+            "project_id", "work_item_id",
         }
         _fields(arguments, required=operation_required, optional=optional, label="orchestration request")
         context = _object(arguments, "context")
         intent, _, plan, authorization = self._authorization_context(context)
+        project_id = arguments.get("project_id")
+        work_item_id = arguments.get("work_item_id")
+        if project_id is not None:
+            if not isinstance(project_id, str) or not IDENTIFIER.fullmatch(project_id):
+                raise OrchestrationServiceError("orchestration project id is invalid")
+            if self._store.read("projects", project_id) is None:
+                raise OrchestrationServiceError("orchestration project is not registered")
+        if work_item_id is not None:
+            if project_id is None or not isinstance(work_item_id, str) or not IDENTIFIER.fullmatch(work_item_id):
+                raise OrchestrationServiceError("orchestration work item id is invalid")
+            work = self._store.read("work-items", work_item_id)
+            if work is None or work.payload.get("project_id") != project_id:
+                raise OrchestrationServiceError("orchestration work item is not in the project")
+        if self._store.layout_version >= 2 and operation not in {
+            "orchestrator.authorize",
+        } and (project_id is None or work_item_id is None):
+            raise OrchestrationServiceError(
+                "layout v2 orchestration requires project_id and work_item_id"
+            )
         if operation == "orchestrator.authorize":
             if apply:
                 raise OrchestrationServiceError("authorization validation cannot be applied")
             return "ok", {"authorization": authorization.as_dict()}
         if operation == "orchestrator.start":
             self._require_apply_plan(apply, expected_plan_id, plan.plan_id)
-            state = self._states.initialize(plan, authorization.session_id, authorization)
-            handoff = self._states.save_handoff(state, plan)
+            state = self._states.initialize(
+                plan, authorization.session_id, authorization, project_id
+            )
+            handoff = self._states.save_handoff(
+                state, plan, project_id=project_id, work_item_id=work_item_id
+            )
             return "applied", {"state": state.as_dict(), "handoff": handoff.as_dict()}
         if operation in {
             "orchestrator.status",
@@ -362,6 +386,7 @@ class OrchestrationApplicationService:
                     event_type="worker-started",
                     subject_digest=authorization.authorization_id,
                     current_step_id=step_id,
+                    project_id=project_id,
                 )
             elif state.status != "running":
                 raise OrchestrationServiceError("orchestration state is not worker-executable")
@@ -379,7 +404,7 @@ class OrchestrationApplicationService:
                 self._worker_handlers,
                 history=resumed.executions,
             )
-            self._states.save_execution(execution)
+            self._states.save_execution(execution, project_id)
             all_executions = (*resumed.executions, execution)
             completed = {
                 item.checkpoint.step_id
@@ -404,8 +429,11 @@ class OrchestrationApplicationService:
                 completed_step_ids=completed,
                 failed_step_ids=failed,
                 current_step_id=None if target_status == "verifying" else step_id,
+                project_id=project_id,
             )
-            handoff = self._states.save_handoff(state, plan)
+            handoff = self._states.save_handoff(
+                state, plan, project_id=project_id, work_item_id=work_item_id
+            )
             return "applied", {
                 "execution": execution.as_dict(),
                 "state": state.as_dict(),
@@ -441,8 +469,15 @@ class OrchestrationApplicationService:
                 subject_digest=verification.verification_id,
                 verification=verification if target_status == "completed" else None,
                 completed_step_ids=resumed.state.completed_step_ids,
+                project_id=project_id,
             )
-            handoff = self._states.save_handoff(state, plan, verification=verification)
+            handoff = self._states.save_handoff(
+                state,
+                plan,
+                verification=verification,
+                project_id=project_id,
+                work_item_id=work_item_id,
+            )
             return "applied", {
                 "verification": verification.as_dict(),
                 "state": state.as_dict(),

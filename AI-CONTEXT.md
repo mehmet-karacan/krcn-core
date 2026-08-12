@@ -58,6 +58,10 @@ Layout v2 stores project-scoped KRCN records under `projects/<project-id>`. Read
 
 Project requests, defects, tasks, subtasks, decisions, relations, and delivery evidence live in the authoritative Work Graph. Use `work.query` or `project.resume` for current status and `work.history` for lifecycle history. SQLite and vector projections are rebuildable and must never override the JSON record.
 
+## Agent runtime
+
+Project workers, verifiers, and delegated agents use the shared runtime queue. A current lease and fencing token are required for heartbeat, completion, failure, and lock release. Never treat a client session or old handoff as execution authority. Active runtime ownership is never portable.
+
 ## Client compatibility
 
 - Codex uses `AGENTS.md` as its repository instruction entrypoint.

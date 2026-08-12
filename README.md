@@ -90,7 +90,7 @@ Core güncellemeleri de aynı disiplinle ilerler: incele, `dry-run` göster, yed
 
 ## Geliştirme durumu
 
-Faz 0 - Faz 12 tamamlandı. Proje kapsülü, KRCN home yerleşim v2 ve kesin Work Graph hazırdır. Görev durumu, geçmişi ve teslim kanıtları ajan oturumundan veya vektör benzerliğinden değil proje kapsülündeki revizyonlu kayıtlardan okunur. Proje kaynaklarını kopyalamayan artımlı kaynak kod RAG indeksi aynı yerleşimde çalışır. Yerel referans kaynaklarındaki kullanıcı verileri repository içine alınmamıştır. Faz detayları için `docs/plans/ROADMAP.md`.
+Faz 0 - Faz 13 tamamlandı. Proje kapsülü, KRCN home yerleşim v2, kesin Work Graph ve fencing korumalı ajan kuyruğu hazırdır. Görev durumu, geçmişi ve teslim kanıtları ajan oturumundan veya vektör benzerliğinden değil proje kapsülündeki revizyonlu kayıtlardan okunur. Proje kaynaklarını kopyalamayan artımlı kaynak kod RAG indeksi aynı yerleşimde çalışır. Yerel referans kaynaklarındaki kullanıcı verileri repository içine alınmamıştır. Faz detayları için `docs/plans/ROADMAP.md`.
 
 İlk proje entegrasyonu, yerel çalışma alanı, doctor ve hibrit bilgi araması için `docs/guides/HIZLI-BASLANGIC.md` belgesini kullanabilirsin.
 

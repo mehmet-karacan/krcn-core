@@ -1,0 +1,56 @@
+{
+  "schema_ref": "schemas/phase-13-baseline.schema.json",
+  "schema_version": 1,
+  "baseline_id": "phase-13-agent-runtime-queue",
+  "phase_id": "phase-13",
+  "status": "ready",
+  "completed_steps": 10,
+  "capabilities": [
+    "project-scoped-atomic-queue",
+    "idempotent-enqueue",
+    "lease-heartbeat",
+    "monotonic-fencing-token",
+    "portable-resource-locks",
+    "side-effect-aware-recovery",
+    "project-scoped-orchestration",
+    "delegated-agent-role-boundary",
+    "completion-projection-job",
+    "active-runtime-portability-exclusion"
+  ],
+  "safe_operations": [
+    "runtime.queue.enqueue",
+    "runtime.queue.claim",
+    "runtime.queue.heartbeat",
+    "runtime.queue.complete",
+    "runtime.queue.fail",
+    "runtime.queue.recover",
+    "runtime.queue.reconcile",
+    "runtime.queue.status"
+  ],
+  "guarantees": {
+    "owner_token_persisted": false,
+    "absolute_path_persisted": false,
+    "stale_worker_completion_allowed": false,
+    "write_retry_implicit": false,
+    "user_data_approval_bypassed": false,
+    "active_runtime_portable": false,
+    "atomic_claim": true,
+    "fencing_monotonic": true,
+    "read_only_retry_bounded": true,
+    "project_scope_required_in_layout_v2": true
+  },
+  "verification": {
+    "idempotent-enqueue": "passed",
+    "single-worker-claim": "passed",
+    "heartbeat-ownership": "passed",
+    "stale-fence-rejection": "passed",
+    "read-retry": "passed",
+    "write-recovery-required": "passed",
+    "resource-lock-conflicts": "passed",
+    "verifier-read-only": "passed",
+    "projection-reconciliation": "passed",
+    "runtime-portability-exclusion": "passed",
+    "project-scoped-orchestration": "passed",
+    "sqlite-integrity": "passed"
+  }
+}

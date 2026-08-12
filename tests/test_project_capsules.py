@@ -306,6 +306,45 @@ class ProjectCapsuleTests(unittest.TestCase):
 
     def test_ready_export_includes_verified_project_derived_index(self) -> None:
         self.migrate()
+        queue = (
+            self.home
+            / "projects"
+            / "sample"
+            / "runtime"
+            / "queue"
+            / "scheduler-v1.sqlite"
+        )
+        queue.parent.mkdir(parents=True)
+        queue.write_bytes(b"active runtime must not be portable")
+        states = (
+            self.home
+            / "projects"
+            / "sample"
+            / "runtime"
+            / "orchestration-states"
+        )
+        events = (
+            self.home
+            / "projects"
+            / "sample"
+            / "runtime"
+            / "events"
+            / "orchestration"
+        )
+        states.mkdir(parents=True)
+        events.mkdir(parents=True)
+        (states / "active-task.json").write_text(
+            json.dumps({"payload": {"task_id": "active-task", "status": "running"}}),
+            encoding="utf-8",
+        )
+        (events / "active-event.json").write_text(
+            json.dumps({"payload": {"task_id": "active-task", "to_status": "running"}}),
+            encoding="utf-8",
+        )
+        (states / "completed-task.json").write_text(
+            json.dumps({"payload": {"task_id": "completed-task", "status": "completed"}}),
+            encoding="utf-8",
+        )
         archive = self.root / "sample-ready.krcn-project"
         plan = prepare_project_capsule_export(
             self.home,
@@ -321,6 +360,23 @@ class ProjectCapsuleTests(unittest.TestCase):
                 "payload/derived/retrieval/source-code-v1.sqlite",
                 exported.namelist(),
             )
+            self.assertNotIn(
+                "payload/runtime/queue/scheduler-v1.sqlite",
+                exported.namelist(),
+            )
+            self.assertNotIn(
+                "payload/runtime/orchestration-states/active-task.json",
+                exported.namelist(),
+            )
+            self.assertNotIn(
+                "payload/runtime/events/orchestration/active-event.json",
+                exported.namelist(),
+            )
+            self.assertIn(
+                "payload/runtime/orchestration-states/completed-task.json",
+                exported.namelist(),
+            )
+        self.assertGreaterEqual(plan.excluded_runtime_count, 1)
 
     def test_application_service_exposes_exact_capsule_operations(self) -> None:
         backup = self.root / "service-layout-backup.zip"

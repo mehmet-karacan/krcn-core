@@ -16,6 +16,7 @@ from .source_code_index import source_code_index_summary
 from .source_bindings import SourceBinding, parse_source_binding
 from .source_state import parse_source_state
 from .work_graph import ACTIVE_STATUSES, parse_work_item
+from .agent_runtime import AgentRuntimeQueue, load_scheduler_policy
 
 
 ACTIVE_TASK_STATUSES = {
@@ -269,6 +270,7 @@ def _work_summary(
     store: LocalWorkspaceStore,
     project_id: str,
     binding_ids: set[str],
+    repo_root: Path | None = None,
 ) -> dict[str, object]:
     context_refs = {project_id, f"project:{project_id}"}
     context_refs.update(binding_ids)
@@ -309,6 +311,26 @@ def _work_summary(
             item.work_item_id,
         )
     )
+    runtime_queue: dict[str, object] = {
+        "counts": {},
+        "active_lease_count": 0,
+        "pending_projection_count": 0,
+        "integrity_verified": True,
+    }
+    if repo_root is not None:
+        runtime_status = AgentRuntimeQueue(
+            store.data_root,
+            project_id,
+            load_scheduler_policy(repo_root),
+        ).status()
+        runtime_queue = {
+            "counts": runtime_status["counts"],
+            "active_lease_count": runtime_status["active_lease_count"],
+            "pending_projection_count": runtime_status.get(
+                "pending_projection_count", 0
+            ),
+            "integrity_verified": runtime_status["integrity_verified"],
+        }
     return {
         "active_task_count": sum(
             item.status in ACTIVE_STATUSES for item in work_items
@@ -332,6 +354,7 @@ def _work_summary(
         ),
         "handoffs": public_handoffs,
         "authoritative_status": True,
+        "runtime_queue": runtime_queue,
     }
 
 
@@ -381,7 +404,12 @@ def build_project_resume_summary(
     context = match.public_summary(store)
     binding_ids = {binding.binding_id for binding in match.bindings}
     information = _information_summary(store, match.project.record_id, binding_ids)
-    work = _work_summary(store, match.project.record_id, binding_ids)
+    work = _work_summary(
+        store,
+        match.project.record_id,
+        binding_ids,
+        repo_root,
+    )
     integration = _integration_summary(store, match.project.record_id)
     source_code_index: dict[str, object] = {
         "status": "unknown",

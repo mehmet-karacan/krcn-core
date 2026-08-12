@@ -201,6 +201,21 @@ def _collect_entries(
     entries: list[PortableBackupEntry] = []
     dependencies: list[dict[str, object]] = []
     excluded_secret_count = 0
+    active_task_ids = set()
+    for state_path in user_home.glob(
+        "projects/*/runtime/orchestration-states/*.json"
+    ):
+        try:
+            envelope = json.loads(state_path.read_text(encoding="utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            continue
+        payload = envelope.get("payload") if isinstance(envelope, dict) else None
+        if (
+            isinstance(payload, dict)
+            and payload.get("status") != "completed"
+            and isinstance(payload.get("task_id"), str)
+        ):
+            active_task_ids.add(payload["task_id"])
     for path in sorted(user_home.rglob("*")):
         relative = path.relative_to(user_home).as_posix()
         if path.is_symlink():
@@ -226,6 +241,19 @@ def _collect_entries(
             excluded_secret_count += 1
             continue
         content = path.read_bytes()
+        if "runtime" in parts and active_task_ids:
+            try:
+                envelope = json.loads(content.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                envelope = None
+            payload = envelope.get("payload") if isinstance(envelope, dict) else None
+            task_id = payload.get("task_id") if isinstance(payload, dict) else None
+            if task_id is None and isinstance(payload, dict):
+                execution = payload.get("execution")
+                checkpoint = execution.get("checkpoint") if isinstance(execution, dict) else None
+                task_id = checkpoint.get("task_id") if isinstance(checkpoint, dict) else None
+            if task_id in active_task_ids:
+                continue
         sanitized, dependency = _sanitize_source_binding(content)
         transformed = dependency is not None
         if dependency is not None:

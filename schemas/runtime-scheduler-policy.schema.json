@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:runtime-scheduler-policy:1",
+  "title": "KRCN Core project runtime scheduler policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "database_schema_version",
+    "default_lease_seconds",
+    "minimum_lease_seconds",
+    "maximum_lease_seconds",
+    "heartbeat_interval_seconds",
+    "default_max_attempts",
+    "maximum_attempts",
+    "claim_busy_timeout_ms",
+    "automatic_replay_side_effects"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/runtime-scheduler-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "database_schema_version": {
+      "const": 1
+    },
+    "default_lease_seconds": {
+      "type": "integer",
+      "minimum": 10
+    },
+    "minimum_lease_seconds": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "maximum_lease_seconds": {
+      "type": "integer",
+      "minimum": 10
+    },
+    "heartbeat_interval_seconds": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "default_max_attempts": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "maximum_attempts": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "claim_busy_timeout_ms": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "automatic_replay_side_effects": {
+      "const": [
+        "read"
+      ]
+    }
+  }
+}

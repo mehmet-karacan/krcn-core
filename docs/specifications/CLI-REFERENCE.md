@@ -141,6 +141,23 @@ krcn work history --request-file <work-history-query.json>
 
 Work item JSON is authoritative. The local SQLite projection is rebuildable and is not used as the final source of lifecycle state.
 
+## Agent runtime queue
+
+Each mutation first produces an exact runtime plan. Apply the same request with its plan ID:
+
+```text
+krcn runtime enqueue --request-file <enqueue.json>
+krcn runtime claim --request-file <claim.json>
+krcn runtime heartbeat --request-file <heartbeat.json>
+krcn runtime complete --request-file <completion.json>
+krcn runtime fail --request-file <failure.json>
+krcn runtime recover --request-file <project.json>
+krcn runtime reconcile --request-file <project.json>
+krcn runtime status --request-file <project.json>
+```
+
+Mutation commands use `--apply --expected-plan <plan-id>`. Runtime state is not user data, so it does not consume a user-data approval. Work Graph changes and provider use keep their separate approval gates.
+
 ## Knowledge, context, and memory
 
 Revision-aware knowledge catalog and the Phase 4 shared services:

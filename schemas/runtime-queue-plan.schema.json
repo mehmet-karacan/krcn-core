@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:runtime-queue-plan:1",
+  "title": "KRCN Core exact project runtime queue plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "project_id",
+    "action",
+    "state_digest",
+    "owner_token_stored",
+    "source_content_included",
+    "mutation"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/runtime-queue-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "action": {
+      "enum": [
+        "enqueue",
+        "claim",
+        "heartbeat",
+        "complete",
+        "fail",
+        "recover",
+        "reconcile"
+      ]
+    },
+    "state_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "owner_token_stored": {
+      "const": false
+    },
+    "source_content_included": {
+      "const": false
+    },
+    "mutation": {
+      "$ref": "mutation-plan.schema.json"
+    }
+  }
+}

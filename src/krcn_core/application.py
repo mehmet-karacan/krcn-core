@@ -14,6 +14,12 @@ from .adapter_gate import (
     authorize_adapter_operation,
     prepare_adapter_operation,
 )
+from .agent_runtime import (
+    AgentRuntimeQueue,
+    apply_runtime_queue_action,
+    load_scheduler_policy,
+    prepare_runtime_queue_action,
+)
 from .discovery import (
     DiscoveryResult,
     LOCAL_DISCOVERY_ADAPTER,
@@ -212,6 +218,14 @@ OPERATIONS = {
     "work.item.put",
     "work.query",
     "work.history",
+    "runtime.queue.enqueue",
+    "runtime.queue.claim",
+    "runtime.queue.heartbeat",
+    "runtime.queue.complete",
+    "runtime.queue.fail",
+    "runtime.queue.recover",
+    "runtime.queue.reconcile",
+    "runtime.queue.status",
 } | ORCHESTRATION_OPERATIONS
 
 
@@ -453,6 +467,14 @@ class KrcnApplicationService:
             "work.item.put": self._put_work_item,
             "work.query": self._query_work,
             "work.history": self._work_history,
+            "runtime.queue.enqueue": self._runtime_queue_action,
+            "runtime.queue.claim": self._runtime_queue_action,
+            "runtime.queue.heartbeat": self._runtime_queue_action,
+            "runtime.queue.complete": self._runtime_queue_action,
+            "runtime.queue.fail": self._runtime_queue_action,
+            "runtime.queue.recover": self._runtime_queue_action,
+            "runtime.queue.reconcile": self._runtime_queue_action,
+            "runtime.queue.status": self._runtime_queue_status,
         }
         status, data = handlers[request.operation](request)
         return ServiceResponse(
@@ -493,6 +515,52 @@ class KrcnApplicationService:
         if request.apply:
             raise ApplicationServiceError("work history cannot be applied")
         return "ok", {"result": query_work_history(self._store, request.arguments)}
+
+    def _runtime_queue_action(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        action = request.operation.rsplit(".", 1)[1]
+        queue, plan = prepare_runtime_queue_action(
+            self._repo_root,
+            self._store,
+            self._ownership,
+            action,
+            request.arguments,
+        )
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        if request.expected_plan_id != plan.plan_id:
+            raise ApplicationServiceError(
+                "apply requires the exact runtime queue plan id"
+            )
+        authorization = authorize_mutation(
+            plan.mutation,
+            dry_run=DryRunEvidence(plan.mutation.plan_id, verified=True),
+        )
+        result = apply_runtime_queue_action(queue, plan, authorization)
+        return "applied", {
+            "plan": plan.public_summary(),
+            "result": result,
+            "applied": True,
+        }
+
+    def _runtime_queue_status(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"project_id"})
+        if request.apply:
+            raise ApplicationServiceError("runtime queue status is read-only")
+        project_id = _identifier_argument(request.arguments, "project_id")
+        if self._store.read("projects", project_id) is None:
+            raise ApplicationServiceError("runtime queue project is not registered")
+        queue = AgentRuntimeQueue(
+            self._store.data_root,
+            project_id,
+            load_scheduler_policy(self._repo_root),
+        )
+        return "ok", {"result": queue.status()}
 
     @staticmethod
     def _absolute_path_argument(

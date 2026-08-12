@@ -541,6 +541,8 @@ def create_handoff(
     *,
     revision: int,
     verification: TaskVerification | None = None,
+    project_id: str | None = None,
+    work_item_id: str | None = None,
 ) -> OrchestrationHandoff:
     if state.task_id != plan.task_id or state.plan_id != plan.plan_id:
         raise OrchestrationStateError("handoff state does not match task plan")
@@ -549,12 +551,20 @@ def create_handoff(
     approval_triggers = plan.approval_triggers if state.status == "awaiting-approval" else ()
     failure_codes = verification.failure_codes if verification and not verification.completion_allowed else ()
     handoff_id = f"{state.task_id}-handoff"
-    context_refs = (
+    context_refs = [
         ".ai/repository-context.json",
         "schemas/orchestration-state.schema.json",
         "schemas/task-plan.schema.json",
         f"orchestration-state:{state.state_id}",
-    )
+    ]
+    if project_id is not None:
+        if not IDENTIFIER.fullmatch(project_id):
+            raise OrchestrationStateError("handoff project id is invalid")
+        context_refs.append(f"project:{project_id}")
+    if work_item_id is not None:
+        if not IDENTIFIER.fullmatch(work_item_id):
+            raise OrchestrationStateError("handoff work item id is invalid")
+        context_refs.append(f"work-item:{work_item_id}")
     resume_identity = {
         "task_id": state.task_id,
         "plan_id": state.plan_id,
@@ -575,7 +585,7 @@ def create_handoff(
         "pending_step_ids": list(pending),
         "approval_triggers": list(approval_triggers),
         "failure_codes": list(failure_codes),
-        "context_refs": list(context_refs),
+        "context_refs": context_refs,
         "resume_token": hashlib.sha256(canonical_json(resume_identity)).hexdigest(),
         "revision": revision,
     }
@@ -596,7 +606,13 @@ class OrchestrationStateStore:
             dry_run=DryRunEvidence(write_plan.mutation.plan_id, True),
         )
 
-    def _put(self, record_type: str, record_id: str, payload: Mapping[str, object]):
+    def _put(
+        self,
+        record_type: str,
+        record_id: str,
+        payload: Mapping[str, object],
+        project_id: str | None = None,
+    ):
         current = self._store.read(record_type, record_id)
         expected_revision = current.revision if current else 0
         plan = self._store.prepare_put(
@@ -604,6 +620,7 @@ class OrchestrationStateStore:
             record_id,
             payload,
             expected_revision=expected_revision,
+            project_id=project_id,
         )
         if plan.mutation.ownership != "runtime" or plan.mutation.approval_required:
             raise OrchestrationStateError("orchestration records must stay in runtime ownership")
@@ -614,29 +631,35 @@ class OrchestrationStateStore:
         plan: TaskPlan,
         session_id: str,
         authorization: TaskAuthorization | None = None,
+        project_id: str | None = None,
     ) -> OrchestrationState:
         if self._store.read("orchestration-states", plan.task_id) is not None:
             raise OrchestrationStateError("orchestration state already exists")
         state, event = create_initial_state(plan, session_id, authorization)
-        self._put("orchestration-events", event.event_id, event.as_dict())
-        self._put("orchestration-states", state.state_id, state.as_dict())
+        self._put("orchestration-events", event.event_id, event.as_dict(), project_id)
+        self._put("orchestration-states", state.state_id, state.as_dict(), project_id)
         return state
 
     def transition(
         self,
         current: OrchestrationState,
         plan: TaskPlan,
+        project_id: str | None = None,
         **kwargs,
     ) -> OrchestrationState:
         stored = self._store.read("orchestration-states", current.state_id)
         if stored is None or stored.revision != current.revision or stored.payload_sha256 != hashlib.sha256((canonical_json(current.as_dict()) + b"\n")).hexdigest():
             raise OrchestrationStateError("orchestration state changed before transition")
         state, event = transition_state(current, plan, **kwargs)
-        self._put("orchestration-events", event.event_id, event.as_dict())
-        self._put("orchestration-states", state.state_id, state.as_dict())
+        self._put("orchestration-events", event.event_id, event.as_dict(), project_id)
+        self._put("orchestration-states", state.state_id, state.as_dict(), project_id)
         return state
 
-    def save_execution(self, execution: WorkerExecution) -> None:
+    def save_execution(
+        self,
+        execution: WorkerExecution,
+        project_id: str | None = None,
+    ) -> None:
         checkpoint = execution.checkpoint
         record_id = f"{checkpoint.task_id}-{checkpoint.step_id}"
         current = self._store.read("orchestration-checkpoints", record_id)
@@ -653,7 +676,7 @@ class OrchestrationStateStore:
             "revision": revision,
         }
         payload["record_digest"] = _digest(payload, "record_digest")
-        self._put("orchestration-checkpoints", record_id, payload)
+        self._put("orchestration-checkpoints", record_id, payload, project_id)
 
     def save_handoff(
         self,
@@ -661,6 +684,8 @@ class OrchestrationStateStore:
         plan: TaskPlan,
         *,
         verification: TaskVerification | None = None,
+        project_id: str | None = None,
+        work_item_id: str | None = None,
     ) -> OrchestrationHandoff:
         record_id = f"{state.task_id}-handoff"
         current = self._store.read("orchestration-handoffs", record_id)
@@ -669,8 +694,10 @@ class OrchestrationStateStore:
             plan,
             revision=current.revision + 1 if current else 1,
             verification=verification,
+            project_id=project_id,
+            work_item_id=work_item_id,
         )
-        self._put("orchestration-handoffs", record_id, handoff.as_dict())
+        self._put("orchestration-handoffs", record_id, handoff.as_dict(), project_id)
         return handoff
 
     def _event_chain(

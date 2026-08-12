@@ -1,11 +1,11 @@
 {
   "schema_ref": "schemas/current-work.schema.json",
   "schema_version": 1,
-  "phase_id": "phase-12",
-  "workstream_id": "authoritative-work-graph",
+  "phase_id": "phase-13",
+  "workstream_id": "agent-runtime-queue",
   "status": "completed",
-  "goal": "Persist authoritative project work, decisions, relations, evidence, and lifecycle history independently from agent sessions",
-  "plan_ref": "docs/plans/PLAN-014-WORK-GRAPH-VE-GOREV-ILISKILERI.md",
+  "goal": "Coordinate project workers and delegated agents with atomic queue ownership leases fencing and safe recovery",
+  "plan_ref": "docs/plans/PLAN-015-AJAN-KUYRUGU-VE-CALISMA-ZAMANI.md",
   "progress_refs": [
     "docs/progress/PHASE-1-FOUNDATION.md",
     "docs/progress/PHASE-1-PACKAGE-1.md",
@@ -92,14 +92,15 @@
     "docs/progress/PHASE-9-COMPLETION.md",
     "docs/progress/PHASE-10-COMPLETION.md",
     "docs/progress/PHASE-11-COMPLETION.md",
-    "docs/progress/PHASE-12-COMPLETION.md"
+    "docs/progress/PHASE-12-COMPLETION.md",
+    "docs/progress/PHASE-13-COMPLETION.md"
   ],
   "next_actions": [
-    "build project-scoped queue lease and fencing runtime",
-    "bind agent execution to authoritative work items",
-    "preserve exact approval and project capsule runtime boundaries"
+    "build Oracle metadata collection without reading application rows",
+    "preserve select-only and execute-deny user policies",
+    "index package specs bodies schema objects and dependency evidence"
   ],
-  "baseline_commit": "23d3601",
+  "baseline_commit": "d57bdec",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

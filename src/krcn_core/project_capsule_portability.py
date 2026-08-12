@@ -34,6 +34,16 @@ NON_PORTABLE_RUNTIME_PREFIXES = (
     "runtime/leases/",
     "runtime/active/",
 )
+NONTERMINAL_RUNTIME_STATUSES = {
+    "planned",
+    "awaiting-approval",
+    "authorized",
+    "running",
+    "verifying",
+    "failed",
+    "interrupted",
+    "blocked",
+}
 
 
 class ProjectCapsulePortabilityError(ValueError):
@@ -193,6 +203,21 @@ def _collect_capsule_entries(
     dependencies = []
     excluded_derived = 0
     excluded_runtime = 0
+    active_task_ids = set()
+    state_root = capsule_root / "runtime" / "orchestration-states"
+    if state_root.is_dir() and not state_root.is_symlink():
+        for state_path in state_root.glob("*.json"):
+            try:
+                envelope = json.loads(state_path.read_text(encoding="utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                continue
+            payload = envelope.get("payload") if isinstance(envelope, dict) else None
+            if (
+                isinstance(payload, dict)
+                and payload.get("status") in NONTERMINAL_RUNTIME_STATUSES
+                and isinstance(payload.get("task_id"), str)
+            ):
+                active_task_ids.add(payload["task_id"])
     for path in sorted(capsule_root.rglob("*")):
         relative = path.relative_to(capsule_root).as_posix()
         if path.is_symlink():
@@ -217,6 +242,20 @@ def _collect_capsule_entries(
             excluded_runtime += 1
             continue
         content = path.read_bytes()
+        if relative.startswith("runtime/") and active_task_ids:
+            try:
+                envelope = json.loads(content.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                envelope = None
+            payload = envelope.get("payload") if isinstance(envelope, dict) else None
+            task_id = payload.get("task_id") if isinstance(payload, dict) else None
+            if task_id is None and isinstance(payload, dict):
+                execution = payload.get("execution")
+                checkpoint = execution.get("checkpoint") if isinstance(execution, dict) else None
+                task_id = checkpoint.get("task_id") if isinstance(checkpoint, dict) else None
+            if task_id in active_task_ids:
+                excluded_runtime += 1
+                continue
         sanitized, dependency = _sanitize_source_binding(content)
         transformed = dependency is not None
         if dependency is not None:

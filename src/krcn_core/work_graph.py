@@ -308,6 +308,35 @@ def work_graph_index_path(data_root: Path, project_id: str) -> Path:
     return project_derived_path(data_root, project_id, "retrieval/work-graph-v1.sqlite")
 
 
+def work_graph_digest(store: "LocalWorkspaceStore", project_id: str) -> str:
+    return _digest([
+        value.as_dict()
+        for value in sorted(
+            _project_items(store, project_id),
+            key=lambda value: value.work_item_id,
+        )
+    ])
+
+
+def work_graph_projection_is_current(
+    store: "LocalWorkspaceStore",
+    project_id: str,
+) -> bool:
+    path = work_graph_index_path(store.data_root, project_id)
+    if not path.is_file() or path.is_symlink():
+        return False
+    connection = sqlite3.connect(path)
+    try:
+        if connection.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+            return False
+        metadata = dict(connection.execute("SELECT key,value FROM metadata"))
+        return metadata.get("graph_digest") == work_graph_digest(store, project_id)
+    except sqlite3.Error:
+        return False
+    finally:
+        connection.close()
+
+
 def _project_items(store: "LocalWorkspaceStore", project_id: str) -> tuple[WorkItem, ...]:
     return tuple(
         item for item in (

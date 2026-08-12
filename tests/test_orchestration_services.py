@@ -16,7 +16,14 @@ sys.path.insert(0, str(REPO_ROOT / "tests"))
 from krcn_core.application import KrcnApplicationService, ServiceRequest  # noqa: E402
 from krcn_core.cli.app import main as cli_main  # noqa: E402
 from krcn_core.local_store import LocalWorkspaceStore  # noqa: E402
-from krcn_core.mutation_gate import OwnershipResolver  # noqa: E402
+from krcn_core.home_layout import user_home_layout_bytes  # noqa: E402
+from krcn_core.mutation_gate import (  # noqa: E402
+    ApprovalEvidence,
+    DryRunEvidence,
+    OwnershipResolver,
+    authorize_mutation,
+)
+from krcn_core.work_graph import apply_work_item, prepare_work_item  # noqa: E402
 from krcn_core.orchestration_verifier import (  # noqa: E402
     VerifierHandlerRegistry,
     VerifierHandlerResult,
@@ -252,6 +259,91 @@ class OrchestrationServiceTests(unittest.TestCase):
             )
         )
         self.assertNotIn(request, json.dumps(response.as_dict(), ensure_ascii=False))
+
+    def test_layout_v2_orchestration_is_scoped_to_project_work_item(self) -> None:
+        (self.data_root / "layout.json").write_bytes(user_home_layout_bytes())
+        ownership = OwnershipResolver.from_repository(REPO_ROOT)
+        store = self.service._store
+
+        def apply_record(plan):
+            store.apply_put(
+                plan,
+                authorize_mutation(
+                    plan.mutation,
+                    dry_run=DryRunEvidence(plan.mutation.plan_id, True),
+                    approval=ApprovalEvidence(
+                        plan.mutation.plan_id,
+                        "test-approval",
+                        True,
+                    ),
+                ),
+            )
+
+        project = {
+            "schema_version": 1,
+            "project_id": "sample",
+            "name": "Sample",
+            "description": "Scoped orchestration",
+            "status": "active",
+            "source_refs": [],
+            "modules": [],
+            "technologies": [],
+            "skill_refs": [],
+        }
+        apply_record(store.prepare_put(
+            "projects", "sample", project,
+            expected_revision=0, project_id="sample",
+        ))
+        work_plan = prepare_work_item(
+            store,
+            ownership,
+            {
+                "work_item_id": "task-scoped",
+                "project_id": "sample",
+                "work_type": "task",
+                "title": "Scoped task",
+                "description": "Persist runtime inside the project capsule",
+                "status": "active",
+                "acceptance_criteria": ["State is project scoped"],
+                "relations": [],
+                "evidence": [],
+                "provenance": {"source_kind": "user", "source_ref": "test"},
+            },
+        )
+        apply_work_item(
+            store,
+            work_plan,
+            {
+                effect.plan_id: authorize_mutation(
+                    effect,
+                    dry_run=DryRunEvidence(effect.plan_id, True),
+                    approval=(
+                        ApprovalEvidence(effect.plan_id, "test-approval", True)
+                        if effect.approval_required
+                        else None
+                    ),
+                )
+                for effect in work_plan.effect_plans
+            },
+        )
+        arguments = {
+            "context": self.context,
+            "project_id": "sample",
+            "work_item_id": "task-scoped",
+        }
+        started = self.service.execute(ServiceRequest(
+            "plugin",
+            "orchestrator.start",
+            arguments,
+            apply=True,
+            expected_plan_id=self.plan.plan_id,
+        ))
+        self.assertEqual("authorized", started.data["state"]["status"])
+        runtime = self.data_root / "projects" / "sample" / "runtime"
+        self.assertTrue((runtime / "orchestration-states" / f"{self.plan.task_id}.json").is_file())
+        handoff = store.read("orchestration-handoffs", f"{self.plan.task_id}-handoff")
+        self.assertIn("project:sample", handoff.payload["context_refs"])
+        self.assertIn("work-item:task-scoped", handoff.payload["context_refs"])
 
     def test_cli_uses_the_same_plan_service_contract(self) -> None:
         request_path = self.data_root / "orchestrator-plan.json"

@@ -172,6 +172,36 @@ def _runtime_home(data_root: Path) -> list[str]:
                 errors.append("source code index cannot be inspected")
             finally:
                 connection.close()
+    queue_indexes = tuple(
+        root.glob("projects/*/runtime/queue/scheduler-v1.sqlite")
+    )
+    for queue_index in queue_indexes:
+        if queue_index.is_symlink() or not queue_index.is_file():
+            errors.append("runtime queue path is unsafe")
+            continue
+        connection = sqlite3.connect(queue_index)
+        try:
+            integrity = connection.execute("PRAGMA integrity_check").fetchone()[0]
+            metadata = dict(
+                connection.execute("SELECT key, value FROM metadata").fetchall()
+            )
+            lease_columns = {
+                row[1]
+                for row in connection.execute(
+                    "PRAGMA table_info(leases)"
+                ).fetchall()
+            }
+            if (
+                integrity != "ok"
+                or metadata.get("schema_version") != "1"
+                or "owner_digest" not in lease_columns
+                or "owner_token" in lease_columns
+            ):
+                errors.append("runtime queue integrity or secret boundary")
+        except sqlite3.Error:
+            errors.append("runtime queue cannot be inspected")
+        finally:
+            connection.close()
     return errors
 
 
@@ -452,6 +482,23 @@ def run_doctor(
             "phase-twelve-baseline",
             phase_twelve_errors,
             "Phase 12 authoritative Work Graph baseline is complete",
+        )
+    )
+    phase_thirteen = load_json(repo_root / ".ai" / "phase-13-baseline.json")
+    phase_thirteen_errors = []
+    if phase_thirteen.get("status") != "ready":
+        phase_thirteen_errors.append("Phase 13 baseline state")
+    if phase_thirteen.get("completed_steps") != 10:
+        phase_thirteen_errors.append("Phase 13 completed steps")
+    if not (
+        repo_root / "docs" / "progress" / "PHASE-13-COMPLETION.md"
+    ).is_file():
+        phase_thirteen_errors.append("Phase 13 completion evidence")
+    checks.append(
+        _check(
+            "phase-thirteen-baseline",
+            phase_thirteen_errors,
+            "Phase 13 agent runtime queue baseline is complete",
         )
     )
     return tuple(checks)

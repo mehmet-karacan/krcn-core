@@ -352,6 +352,25 @@ def build_parser() -> argparse.ArgumentParser:
             help=f"Read authoritative work {operation} from a JSON request",
         )
         _add_phase_four_options(command)
+    runtime = subparsers.add_parser(
+        "runtime",
+        help="Use the project-scoped agent queue and lease runtime",
+    )
+    runtime_commands = runtime.add_subparsers(dest="runtime_command")
+    for operation in (
+        "enqueue", "claim", "heartbeat", "complete", "fail", "recover",
+        "reconcile",
+    ):
+        command = runtime_commands.add_parser(
+            operation,
+            help=f"Plan or apply runtime queue {operation}",
+        )
+        _add_phase_four_options(command, mutation=True)
+    runtime_status = runtime_commands.add_parser(
+        "status",
+        help="Read runtime queue status from a JSON request",
+    )
+    _add_phase_four_options(runtime_status)
     orchestrator = subparsers.add_parser(
         "orchestrator",
         help="Use the shared client-neutral orchestration service",
@@ -902,6 +921,12 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
     elif args.command == "work" and args.work_command in {"put", "query", "history"}:
         operation = f"work.item.{args.work_command}" if args.work_command == "put" else f"work.{args.work_command}"
         arguments = _load_phase_four_arguments(args.request_file)
+    elif args.command == "runtime" and args.runtime_command in {
+        "enqueue", "claim", "heartbeat", "complete", "fail", "recover",
+        "reconcile", "status",
+    }:
+        operation = f"runtime.queue.{args.runtime_command}"
+        arguments = _load_phase_four_arguments(args.request_file)
     else:
         raise ApplicationServiceError("Phase 4 service command is required")
     return ServiceRequest(
@@ -1107,7 +1132,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command in {"installation", "release", "deployment"}:
         return _run_core_service_command(args)
 
-    if args.command in {"knowledge", "context-package", "memory", "work"}:
+    if args.command in {"knowledge", "context-package", "memory", "work", "runtime"}:
         return _run_phase_four_service_command(args)
 
     if args.command == "orchestrator":
