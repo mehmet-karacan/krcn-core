@@ -170,15 +170,31 @@ def prepare_project_learning(
         metadata.project_id,
         project_payload,
         expected_revision=0,
+        project_id=metadata.project_id,
     )
     state_plan = store.prepare_put(
         "source-states",
         metadata.binding_id,
         source_state_from_discovery(discovery).as_payload(),
         expected_revision=0,
+        project_id=metadata.project_id,
     )
-    binding_plan, _, workspace_plan = onboarding.record_plans
-    record_plans = (binding_plan, project_plan, workspace_plan, state_plan)
+    capsule_plans = tuple(
+        item for item in onboarding.record_plans if item.record_type == "project-capsules"
+    )
+    binding_plan = next(
+        item for item in onboarding.record_plans if item.record_type == "source-bindings"
+    )
+    workspace_plan = next(
+        item for item in onboarding.record_plans if item.record_type == "workspaces"
+    )
+    record_plans = (
+        *capsule_plans,
+        binding_plan,
+        project_plan,
+        workspace_plan,
+        state_plan,
+    )
     identity = {
         "action": intent.action,
         "metadata_digest": metadata.inference_digest,

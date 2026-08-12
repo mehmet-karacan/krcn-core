@@ -87,6 +87,28 @@ python tools/krcn.py portability merge-project-home --source-home "<project-home
 
 The source and target backups are written and verified before any target record is added. Existing target content is preserved. Derived state must be rebuilt with `project rescan` after the merge.
 
+Migrate one flat user home to layout v2 project capsules:
+
+```bash
+python tools/krcn.py portability migrate-project-capsules --backup-output "<layout-v1-backup>"
+python tools/krcn.py portability migrate-project-capsules --backup-output "<layout-v1-backup>" --apply --expected-plan <plan-id> --approval-id <approval-id>
+```
+
+Export one project without source content, secrets, active locks, or machine locators:
+
+```bash
+python tools/krcn.py portability export-project-capsule <project-id> --output "<capsule-file>" --mode thin
+python tools/krcn.py portability export-project-capsule <project-id> --output "<capsule-file>" --mode ready
+```
+
+Import a capsule into an existing layout v2 home:
+
+```bash
+python tools/krcn.py portability import-project-capsule --input "<capsule-file>"
+```
+
+Every command returns an exact plan before apply. Imported source bindings are unbound and require `project rebind` against the recipient's existing project directory.
+
 `onboard` and `rescan` also produce a plan only by default. Applying the plan requires the plan identity from the prior dry-run, and an explicit approval identity when the plan includes a user-data change.
 
 `project current` resolves a registered project from the current directory. `project resume` adds the persisted source, information, and active-work summary. Use `--project <project-id-or-name>` for an explicit selection or `--request "<user-request>"` when the request names a project while the client is running elsewhere. Both commands are read-only and never disclose a physical source locator.

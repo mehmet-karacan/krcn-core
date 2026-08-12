@@ -1,0 +1,59 @@
+{
+  "schema_ref": "schemas/phase-11-baseline.schema.json",
+  "schema_version": 1,
+  "baseline_id": "phase-11-project-capsule-layout-v2",
+  "phase_id": "phase-11",
+  "status": "ready",
+  "completed_steps": 9,
+  "capabilities": [
+    "project-scoped-user-data-layout",
+    "legacy-layout-read-compatibility",
+    "project-scoped-derived-indexes",
+    "verified-layout-migration-backup",
+    "automatic-migration-rollback",
+    "thin-project-capsule-export",
+    "ready-project-capsule-export",
+    "conflict-free-project-capsule-import",
+    "verified-source-rebind-boundary"
+  ],
+  "safe_operations": [
+    "portability.migrate-project-capsules",
+    "portability.export-project-capsule",
+    "portability.import-project-capsule",
+    "project.resolve-current",
+    "project.resume"
+  ],
+  "guarantees": {
+    "external_source_copied": false,
+    "external_source_mutated": false,
+    "secret_values_exported": false,
+    "active_locks_exported": false,
+    "machine_locator_trusted_after_import": false,
+    "exact_plan_required": true,
+    "verified_backup_before_migration": true,
+    "automatic_rollback_on_failure": true,
+    "legacy_read_compatible": true,
+    "derived_index_integrity_verified": true
+  },
+  "verification": {
+    "foundation": "passed",
+    "hermetic_tests": "passed",
+    "legacy-read-compatibility": "passed",
+    "migration-dry-run": "passed",
+    "migration-backup": "passed",
+    "migration-apply": "passed",
+    "global-cli-resume": "passed",
+    "real-gpu-fusion-capsule": "passed",
+    "source-code-index-integrity": "passed",
+    "source-preservation": "passed"
+  },
+  "maintenance": {
+    "status": "ready",
+    "layout_version": 2,
+    "portable_modes": [
+      "thin",
+      "ready"
+    ],
+    "rebind_required_after_import": true
+  }
+}

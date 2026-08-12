@@ -50,6 +50,10 @@ python tools/show_context.py --format json
 
 The output contains relative references and current work metadata. It must not contain local source paths, credentials, user data, or provider-specific secrets.
 
+## Project capsules
+
+Layout v2 stores project-scoped KRCN records under `projects/<project-id>`. Read `docs/specifications/PROJECT-CAPSULE-LAYOUT.md` before changing user-home placement, moving project records, or transferring one project's KRCN context. Use the shared exact-plan portability operations instead of copying individual records.
+
 ## Client compatibility
 
 - Codex uses `AGENTS.md` as its repository instruction entrypoint.

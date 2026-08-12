@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/project-capsule-manifest.schema.json",
+  "additionalProperties": false,
+  "properties": {
+    "active_locks_portable": {
+      "const": false
+    },
+    "layout_version": {
+      "const": 2
+    },
+    "machine_locator_portable": {
+      "const": false
+    },
+    "project_id": {
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "type": "string"
+    },
+    "schema_ref": {
+      "const": "schemas/project-capsule-manifest.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "secret_values_included": {
+      "const": false
+    },
+    "source_content_included": {
+      "const": false
+    }
+  },
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "layout_version",
+    "project_id",
+    "source_content_included",
+    "machine_locator_portable",
+    "secret_values_included",
+    "active_locks_portable"
+  ],
+  "title": "KRCN project capsule manifest",
+  "type": "object"
+}

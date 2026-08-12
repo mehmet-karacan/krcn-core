@@ -15,6 +15,9 @@ REQUIRED_PORTABILITY_OPERATIONS = {
     "portability.restore",
     "portability.migrate-repo-local",
     "portability.merge-project-home",
+    "portability.migrate-project-capsules",
+    "portability.export-project-capsule",
+    "portability.import-project-capsule",
     "client.bootstrap",
 }
 REQUIRED_PACKAGE_MODULES = {
@@ -24,6 +27,9 @@ REQUIRED_PACKAGE_MODULES = {
     "krcn_core/portable_restore.py",
     "krcn_core/repo_local_migration.py",
     "krcn_core/project_home_merge.py",
+    "krcn_core/home_layout.py",
+    "krcn_core/project_capsule_migration.py",
+    "krcn_core/project_capsule_portability.py",
     "krcn_core/client_bootstrap.py",
 }
 
@@ -41,7 +47,7 @@ def validate_release_quality(payload: object) -> list[str]:
     platforms = payload.get("supported_platforms")
     if not isinstance(platforms, list) or set(platforms) != REQUIRED_PLATFORMS:
         errors.append("release quality platforms must include Linux, Windows, and macOS")
-    if payload.get("user_home_layout_version") != 1:
+    if payload.get("user_home_layout_version") != 2:
         errors.append("release quality user-home layout version is invalid")
     operations = payload.get("required_operations")
     if not isinstance(operations, list) or set(operations) != REQUIRED_PORTABILITY_OPERATIONS:

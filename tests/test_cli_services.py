@@ -93,6 +93,52 @@ class CliServiceTests(unittest.TestCase):
         self.assertEqual(2, result)
         self.assertIn("exact plan", error)
 
+    def test_cli_migrates_flat_home_to_project_capsules(self) -> None:
+        result, output, error = self._run(self.base)
+        self.assertEqual(0, result, error)
+        onboarding_plan = json.loads(output)["data"]["plan"]["plan_id"]
+        result, _, error = self._run(
+            [
+                *self.base,
+                "--apply",
+                "--expected-plan",
+                onboarding_plan,
+                "--approval-id",
+                "onboarding-approval",
+            ]
+        )
+        self.assertEqual(0, result, error)
+        backup = (
+            Path(self.data_temp.name).parent
+            / f"{Path(self.data_temp.name).name}-layout-backup.zip"
+        )
+        migration = [
+            "portability",
+            "migrate-project-capsules",
+            "--repo",
+            str(REPO_ROOT),
+            "--data-root",
+            self.data_temp.name,
+            "--backup-output",
+            str(backup),
+        ]
+        result, output, error = self._run(migration)
+        self.assertEqual(0, result, error)
+        migration_plan = json.loads(output)["data"]["plan"]["plan_id"]
+        result, output, error = self._run(
+            [
+                *migration,
+                "--apply",
+                "--expected-plan",
+                migration_plan,
+                "--approval-id",
+                "migration-approval",
+            ]
+        )
+        self.assertEqual(0, result, error)
+        self.assertEqual("applied", json.loads(output)["status"])
+        backup.unlink(missing_ok=True)
+
 
 if __name__ == "__main__":
     unittest.main()

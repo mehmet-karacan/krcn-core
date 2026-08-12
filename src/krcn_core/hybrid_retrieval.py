@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Iterable
 
 from .dependency_retrieval import InformationRelation
+from .home_layout import global_derived_path, home_layout_version
 from .information_records import canonical_json, parse_information_record
 from .knowledge_catalog import AVAILABILITY_RANK, CatalogEntry, InformationCatalog
 from .mutation_gate import MutationAuthorization, MutationPlan, OwnershipResolver, plan_mutation
@@ -27,7 +28,6 @@ MAX_QUERY_LENGTH = 4096
 MAX_RESULT_LIMIT = 100
 VECTOR_DIMENSIONS = 192
 INDEX_REVISION = 1
-INDEX_TARGET_REF = ".krcn/derived/retrieval/hybrid-v1.sqlite"
 WEIGHTS = {
     "exact": 0.30,
     "fts": 0.25,
@@ -255,7 +255,14 @@ def _document_identity(catalog: InformationCatalog) -> list[dict[str, object]]:
 
 
 def hybrid_index_path(data_root: Path) -> Path:
+    if home_layout_version(data_root) >= 2:
+        return global_derived_path(data_root, "retrieval/hybrid-v1.sqlite")
     return data_root.resolve() / "derived" / "retrieval" / "hybrid-v1.sqlite"
+
+
+def hybrid_index_target_ref(data_root: Path) -> str:
+    target = hybrid_index_path(data_root)
+    return f".krcn/{target.relative_to(data_root.resolve()).as_posix()}"
 
 
 def hybrid_index_is_current(
@@ -303,7 +310,7 @@ def prepare_hybrid_index(
     mutation = plan_mutation(
         ownership,
         operation="update" if target.exists() else "create",
-        target_ref=INDEX_TARGET_REF,
+        target_ref=hybrid_index_target_ref(data_root),
         expected_ownership="derived",
         change_digest=document_digest,
         reversible=True,

@@ -14,6 +14,14 @@ from pathlib import Path
 from typing import Mapping
 
 from .json_documents import canonical_json_bytes, pretty_json_bytes
+from .home_layout import (
+    GLOBAL_COLLECTION_PATHS,
+    PROJECT_COLLECTION_PATHS,
+    HomeLayoutError,
+    collection_target,
+    home_layout_version,
+    validate_project_capsule_payload,
+)
 from .mutation_gate import (
     MutationAuthorization,
     MutationPlan,
@@ -37,6 +45,7 @@ from .project_integration_state import parse_project_integration_state
 
 IDENTIFIER = re.compile(r"^[a-z][a-z0-9-]*$")
 COLLECTIONS = {
+    "project-capsules": ("project_id", "projects/capsules", "user-data"),
     "workspaces": ("workspace_id", "workspaces", "user-data"),
     "projects": ("project_id", "projects", "user-data"),
     "source-bindings": ("binding_id", "source-bindings", "user-data"),
@@ -120,6 +129,9 @@ class RecordWritePlan:
     next_revision: int
     payload_sha256: str
     document: bytes
+    target: Path
+    layout_version: int
+    project_id: str | None
     mutation: MutationPlan
 
     def public_summary(self) -> dict[str, object]:
@@ -129,6 +141,8 @@ class RecordWritePlan:
             "previous_revision": self.previous_revision,
             "next_revision": self.next_revision,
             "payload_sha256": self.payload_sha256,
+            "layout_version": self.layout_version,
+            "project_id": self.project_id,
             "mutation": self.mutation.as_dict(),
         }
 
@@ -156,6 +170,12 @@ def _validate_record_identity(
         raise LocalStoreError("payload schema_version must be 1")
     if payload.get(identity_field) != record_id:
         raise LocalStoreError("record id does not match payload identity")
+    if record_type == "project-capsules":
+        try:
+            validate_project_capsule_payload(payload, record_id)
+        except HomeLayoutError as exc:
+            raise LocalStoreError(str(exc)) from exc
+        return None
     if record_type == "source-bindings":
         parse_source_binding(payload)
     if record_type == "integrations":
@@ -219,7 +239,14 @@ class LocalWorkspaceStore:
     def data_root(self) -> Path:
         return self._data_root
 
-    def _target(self, record_type: str, record_id: str) -> Path:
+    @property
+    def layout_version(self) -> int:
+        try:
+            return home_layout_version(self._data_root)
+        except HomeLayoutError as exc:
+            raise LocalStoreError(str(exc)) from exc
+
+    def _legacy_target(self, record_type: str, record_id: str) -> Path:
         collection = COLLECTIONS.get(record_type)
         if collection is None:
             raise LocalStoreError("record type is invalid")
@@ -227,9 +254,203 @@ class LocalWorkspaceStore:
             raise LocalStoreError("record id must be portable")
         return self._data_root.joinpath(*collection[1].split("/")) / f"{record_id}.json"
 
-    def _target_ref(self, record_type: str, record_id: str) -> str:
-        collection = COLLECTIONS[record_type]
-        return f".krcn/{collection[1]}/{record_id}.json"
+    def _v2_project_targets(
+        self,
+        record_type: str,
+        record_id: str,
+    ) -> tuple[Path, ...]:
+        if record_type not in PROJECT_COLLECTION_PATHS:
+            return ()
+        projects_root = self._data_root / "projects"
+        if not projects_root.is_dir() or projects_root.is_symlink():
+            return ()
+        if record_type in {"projects", "project-capsules"}:
+            direct = collection_target(
+                self._data_root,
+                record_type,
+                record_id,
+                record_id,
+            )
+            return (direct,) if direct.exists() else ()
+        targets = []
+        for project_root in sorted(projects_root.iterdir()):
+            if (
+                project_root.is_symlink()
+                or not project_root.is_dir()
+                or not IDENTIFIER.fullmatch(project_root.name)
+            ):
+                continue
+            target = collection_target(
+                self._data_root,
+                record_type,
+                record_id,
+                project_root.name,
+            )
+            if target.exists():
+                targets.append(target)
+        return tuple(targets)
+
+    def _existing_targets(
+        self,
+        record_type: str,
+        record_id: str,
+    ) -> tuple[Path, ...]:
+        candidates = []
+        legacy = self._legacy_target(record_type, record_id)
+        if legacy.exists():
+            candidates.append(legacy)
+        if self.layout_version >= 2:
+            global_target = collection_target(
+                self._data_root,
+                record_type,
+                record_id,
+                None,
+            )
+            if global_target.exists() and global_target not in candidates:
+                candidates.append(global_target)
+            for target in self._v2_project_targets(record_type, record_id):
+                if target not in candidates:
+                    candidates.append(target)
+        return tuple(candidates)
+
+    @staticmethod
+    def _subject_project_id(value: object) -> str | None:
+        if not isinstance(value, str) or not value.startswith("project:"):
+            return None
+        project_id = value[len("project:") :].split("/", 1)[0]
+        return project_id if IDENTIFIER.fullmatch(project_id) else None
+
+    def _binding_project_id(self, binding_id: object) -> str | None:
+        if not isinstance(binding_id, str) or not IDENTIFIER.fullmatch(binding_id):
+            return None
+        binding = self.read("source-bindings", binding_id)
+        if binding is None:
+            return None
+        source_id = binding.payload.get("source_id")
+        source_kind = binding.payload.get("source_kind")
+        if (
+            source_kind == "project"
+            and isinstance(source_id, str)
+            and IDENTIFIER.fullmatch(source_id)
+        ):
+            return source_id
+        return None
+
+    def _infer_project_id(
+        self,
+        record_type: str,
+        record_id: str,
+        payload: Mapping[str, object],
+    ) -> str | None:
+        if record_type in {"project-capsules", "projects", "project-integrations"}:
+            return record_id
+        explicit = payload.get("project_id")
+        if isinstance(explicit, str) and IDENTIFIER.fullmatch(explicit):
+            return explicit
+        if record_type == "workspaces":
+            project_refs = payload.get("project_refs")
+            if (
+                isinstance(project_refs, list)
+                and len(project_refs) == 1
+                and isinstance(project_refs[0], str)
+                and IDENTIFIER.fullmatch(project_refs[0])
+            ):
+                return project_refs[0]
+        if record_type == "source-bindings":
+            source_id = payload.get("source_id")
+            if (
+                payload.get("source_kind") == "project"
+                and isinstance(source_id, str)
+                and IDENTIFIER.fullmatch(source_id)
+            ):
+                return source_id
+        if record_type == "integrations":
+            return self._binding_project_id(payload.get("source_binding_ref"))
+        if record_type == "source-states":
+            return self._binding_project_id(payload.get("binding_id"))
+        subject_project = self._subject_project_id(payload.get("subject_ref"))
+        if subject_project is not None:
+            return subject_project
+        information_payload = payload.get("payload")
+        if isinstance(information_payload, Mapping):
+            subject_project = self._subject_project_id(
+                information_payload.get("subject_ref")
+            )
+            if subject_project is not None:
+                return subject_project
+        provenance = payload.get("provenance")
+        if isinstance(provenance, Mapping):
+            evidence = provenance.get("evidence")
+            if isinstance(evidence, list):
+                projects = set()
+                for item in evidence:
+                    if not isinstance(item, Mapping):
+                        continue
+                    source_ref = item.get("source_ref")
+                    if isinstance(source_ref, str) and source_ref.startswith("source:"):
+                        candidate = source_ref[len("source:") :].split("/", 1)[0]
+                        if IDENTIFIER.fullmatch(candidate):
+                            projects.add(candidate)
+                if len(projects) == 1:
+                    return next(iter(projects))
+        return None
+
+    def record_project_id(
+        self,
+        record_type: str,
+        record_id: str,
+        payload: Mapping[str, object],
+    ) -> str | None:
+        """Resolve one record's project scope without changing local state."""
+
+        if record_type not in COLLECTIONS:
+            raise LocalStoreError("record type is invalid")
+        return self._infer_project_id(record_type, record_id, payload)
+
+    def _target(self, record_type: str, record_id: str) -> Path:
+        candidates = self._existing_targets(record_type, record_id)
+        if len(candidates) > 1:
+            raise LocalStoreError("record exists in multiple home layout locations")
+        if candidates:
+            return candidates[0]
+        return self._legacy_target(record_type, record_id)
+
+    def _planned_target(
+        self,
+        record_type: str,
+        record_id: str,
+        payload: Mapping[str, object],
+        project_id: str | None,
+    ) -> tuple[Path, str | None]:
+        if self.layout_version < 2:
+            return self._legacy_target(record_type, record_id), None
+        inferred = self._infer_project_id(record_type, record_id, payload)
+        if project_id is not None:
+            if not IDENTIFIER.fullmatch(project_id):
+                raise LocalStoreError("project id must be portable")
+            if inferred is not None and inferred != project_id:
+                raise LocalStoreError("record project scope conflicts with its payload")
+            inferred = project_id
+        existing = self._existing_targets(record_type, record_id)
+        if len(existing) > 1:
+            raise LocalStoreError("record exists in multiple home layout locations")
+        if existing:
+            target = existing[0]
+            return target, inferred
+        target = collection_target(
+            self._data_root,
+            record_type,
+            record_id,
+            inferred,
+        )
+        return target, inferred
+
+    def _target_ref(self, target: Path) -> str:
+        try:
+            relative = target.relative_to(self._data_root).as_posix()
+        except ValueError as exc:
+            raise LocalStoreError("record target escaped the KRCN home") from exc
+        return f".krcn/{relative}"
 
     @contextmanager
     def _record_lock(self, record_type: str, record_id: str):
@@ -341,14 +562,63 @@ class LocalWorkspaceStore:
     def list_records(self, record_type: str) -> tuple[StoredRecord, ...]:
         """Read a collection in portable identifier order."""
 
-        directory = self._target(record_type, "placeholder").parent
-        if not directory.exists():
-            return ()
-        if directory.is_symlink() or not directory.is_dir():
-            raise LocalStoreError("record collection must be a regular directory")
+        if record_type not in COLLECTIONS:
+            raise LocalStoreError("record type is invalid")
+        record_ids = set()
+        legacy_directory = self._legacy_target(record_type, "placeholder").parent
+        if legacy_directory.exists():
+            if legacy_directory.is_symlink() or not legacy_directory.is_dir():
+                raise LocalStoreError("record collection must be a regular directory")
+            record_ids.update(path.stem for path in legacy_directory.glob("*.json"))
+        if self.layout_version >= 2:
+            global_directory = collection_target(
+                self._data_root,
+                record_type,
+                "placeholder",
+                None,
+            ).parent
+            if global_directory.exists():
+                if global_directory.is_symlink() or not global_directory.is_dir():
+                    raise LocalStoreError("global record collection must be regular")
+                record_ids.update(path.stem for path in global_directory.glob("*.json"))
+            projects_root = self._data_root / "projects"
+            if projects_root.exists():
+                if projects_root.is_symlink() or not projects_root.is_dir():
+                    raise LocalStoreError("project capsule root must be regular")
+                for project_root in sorted(projects_root.iterdir()):
+                    if (
+                        project_root.is_symlink()
+                        or not project_root.is_dir()
+                        or not IDENTIFIER.fullmatch(project_root.name)
+                    ):
+                        continue
+                    if record_type in {"projects", "project-capsules"}:
+                        candidate = collection_target(
+                            self._data_root,
+                            record_type,
+                            project_root.name,
+                            project_root.name,
+                        )
+                        if candidate.exists():
+                            record_ids.add(project_root.name)
+                    else:
+                        directory = collection_target(
+                            self._data_root,
+                            record_type,
+                            "placeholder",
+                            project_root.name,
+                        ).parent
+                        if directory.exists():
+                            if directory.is_symlink() or not directory.is_dir():
+                                raise LocalStoreError(
+                                    "project record collection must be regular"
+                                )
+                            record_ids.update(
+                                path.stem for path in directory.glob("*.json")
+                            )
         records: list[StoredRecord] = []
-        for path in sorted(directory.glob("*.json")):
-            record = self.read(record_type, path.stem)
+        for record_id in sorted(record_ids):
+            record = self.read(record_type, record_id)
             if record is not None:
                 records.append(record)
         return tuple(records)
@@ -371,6 +641,7 @@ class LocalWorkspaceStore:
         payload: Mapping[str, object],
         *,
         expected_revision: int,
+        project_id: str | None = None,
     ) -> RecordWritePlan:
         if not isinstance(payload, Mapping):
             raise LocalStoreError("record payload must be an object")
@@ -398,10 +669,16 @@ class LocalWorkspaceStore:
             "payload": payload_copy,
             "payload_sha256": payload_sha256,
         }
+        target, scoped_project_id = self._planned_target(
+            record_type,
+            record_id,
+            payload_copy,
+            project_id,
+        )
         mutation = plan_mutation(
             self._ownership,
             operation="create" if current is None else "update",
-            target_ref=self._target_ref(record_type, record_id),
+            target_ref=self._target_ref(target),
             expected_ownership=COLLECTIONS[record_type][2],
             change_digest=payload_sha256,
             reversible=True,
@@ -413,6 +690,9 @@ class LocalWorkspaceStore:
             next_revision=next_revision,
             payload_sha256=payload_sha256,
             document=pretty_json_bytes(envelope),
+            target=target,
+            layout_version=self.layout_version,
+            project_id=scoped_project_id,
             mutation=mutation,
         )
 
@@ -451,7 +731,7 @@ class LocalWorkspaceStore:
         planned_payload = planned_envelope.get("payload")
         if not isinstance(planned_payload, dict) or _payload_hash(planned_payload) != plan.payload_sha256:
             raise LocalStoreError("planned payload does not match its change digest")
-        target = self._target(plan.record_type, plan.record_id)
+        target = plan.target
         target.parent.mkdir(parents=True, exist_ok=True)
         if target.parent.is_symlink() or target.is_symlink():
             raise LocalStoreError("record path may not use symbolic links")
@@ -481,7 +761,11 @@ class LocalWorkspaceStore:
     def assert_plan_current(self, plan: RecordWritePlan) -> None:
         """Verify optimistic concurrency without performing a write."""
 
+        if self.layout_version != plan.layout_version:
+            raise RevisionConflictError("home layout changed after planning")
         current = self.read(plan.record_type, plan.record_id)
         current_revision = current.revision if current else 0
         if current_revision != plan.previous_revision:
             raise RevisionConflictError("record revision changed after planning")
+        if current is not None and self._target(plan.record_type, plan.record_id) != plan.target:
+            raise RevisionConflictError("record location changed after planning")

@@ -119,7 +119,8 @@ def _read_archive(
             "exclusions",
         }:
             raise PortableRestoreError("portable backup manifest fields are invalid")
-        if manifest.get("schema_version") != 1 or manifest.get("layout_version") != 1:
+        layout_version = manifest.get("layout_version")
+        if manifest.get("schema_version") != 1 or layout_version not in {1, 2}:
             raise PortableRestoreError("portable backup version is unsupported")
         exclusions = manifest.get("exclusions")
         if not isinstance(exclusions, dict) or not exclusions.get("secret_values") or not exclusions.get("external_source_content"):
@@ -163,7 +164,7 @@ def _read_archive(
         if not isinstance(dependencies, list) or any(not isinstance(item, dict) for item in dependencies):
             raise PortableRestoreError("external dependency manifest is invalid")
         identity = {
-            "layout_version": 1,
+            "layout_version": layout_version,
             "entries": entry_payload,
             "external_dependencies": dependencies,
             "excluded_secret_count": exclusions.get("excluded_secret_count"),
@@ -273,4 +274,3 @@ def apply_portable_restore(
         sum(bool(item.get("rebind_required")) for item in plan.external_dependencies),
         verification_digest,
     )
-

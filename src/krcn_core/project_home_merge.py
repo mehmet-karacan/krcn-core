@@ -13,6 +13,7 @@ from pathlib import Path, PurePosixPath
 from typing import Mapping
 
 from .json_documents import canonical_json_bytes, pretty_json_bytes
+from .home_layout import home_layout_version
 from .mutation_gate import MutationAuthorization, MutationPlan, OwnershipResolver, plan_mutation
 from .portable_backup import SECRET_NAMES, SECRET_PARTS, SECRET_PATTERNS, SECRET_SUFFIXES
 
@@ -344,6 +345,12 @@ def _merge_source_entries(home: Path) -> tuple[LocalBackupEntry, ...]:
         parts = PurePosixPath(relative).parts
         if not parts or parts[0] not in MERGE_TOP_LEVEL or parts[0] == "local-data":
             continue
+        if (
+            len(parts) >= 3
+            and parts[0] == "projects"
+            and parts[2] in {"derived", "runtime", "local-data", "secrets"}
+        ):
+            continue
         if _is_secret_path(relative):
             continue
         content = path.read_bytes()
@@ -378,6 +385,10 @@ def prepare_project_home_merge(
             raise ProjectHomeMergeError(f"merge {label} must be a regular directory")
     if source == target:
         raise ProjectHomeMergeError("merge source and target must differ")
+    if home_layout_version(source) >= 2 and home_layout_version(target) < 2:
+        raise ProjectHomeMergeError(
+            "layout v2 project capsules require a layout v2 merge target"
+        )
     _assert_separate(target, source, "merge target must be outside source home")
     _assert_separate(source, target, "merge source must be outside target home")
     _assert_separate(backup_root, source, "merge backup must be outside source home")

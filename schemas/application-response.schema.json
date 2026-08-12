@@ -66,7 +66,10 @@
         "portability.migrate-repo-local",
         "portability.migrate-project-home",
         "portability.restore-project-home",
-        "portability.merge-project-home"
+        "portability.merge-project-home",
+        "portability.migrate-project-capsules",
+        "portability.export-project-capsule",
+        "portability.import-project-capsule"
       ]
     },
     "status": {

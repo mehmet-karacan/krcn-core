@@ -146,6 +146,8 @@ def _verify_protected_json(root: Path) -> int:
     protected_roots = (
         ".krcn/workspaces",
         ".krcn/projects",
+        ".krcn/global",
+        ".krcn/local",
         ".krcn/integrations",
         ".krcn/documents",
         ".krcn/work-items",

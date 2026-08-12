@@ -91,6 +91,15 @@ The machine-readable route is `config/intent-routing.json`. Client adapters must
 - The index stores vectors and source metadata without persisted source text or a physical source root. A stale digest must stop retrieval and route back through `project.integrate`.
 - Do not send source chunks to a remote embedding provider unless the exact provider request, disclosure, and session approval are present.
 
+## Project capsules
+
+- Layout v2 groups project-scoped KRCN records under `.krcn/projects/<project-id>`.
+- Treat the project capsule manifest, work records, knowledge, policies, database metadata, and durable history as user-owned data.
+- Treat capsule `derived` content as rebuildable and capsule `runtime` content as local execution state.
+- Never place physical project source files, secret values, active locks, or active lease ownership in a portable project capsule.
+- An imported capsule has unbound external source dependencies until an exact source rebind is approved and verified.
+- Use the shared portability application operations for layout migration, capsule export, and capsule import. Do not move capsule files manually.
+
 ## Development record structure
 
 - `docs/architecture/`: English technical architecture.

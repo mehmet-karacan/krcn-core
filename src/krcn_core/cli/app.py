@@ -422,6 +422,30 @@ def build_parser() -> argparse.ArgumentParser:
     project_merge.add_argument("--target-home", type=Path, required=True)
     project_merge.add_argument("--backup-directory", type=Path, required=True)
     _add_service_options(project_merge, mutation=True)
+    capsule_migrate = portability_commands.add_parser(
+        "migrate-project-capsules",
+        help="Migrate a flat KRCN home into project capsules",
+    )
+    capsule_migrate.add_argument("--backup-output", type=Path, required=True)
+    _add_service_options(capsule_migrate, mutation=True)
+    capsule_export = portability_commands.add_parser(
+        "export-project-capsule",
+        help="Export one sanitized thin or ready project capsule",
+    )
+    capsule_export.add_argument("project_id")
+    capsule_export.add_argument("--output", type=Path, required=True)
+    capsule_export.add_argument(
+        "--mode",
+        choices=("thin", "ready"),
+        default="thin",
+    )
+    _add_service_options(capsule_export, mutation=True)
+    capsule_import = portability_commands.add_parser(
+        "import-project-capsule",
+        help="Import one sanitized project capsule into a layout v2 home",
+    )
+    capsule_import.add_argument("--input", type=Path, required=True)
+    _add_service_options(capsule_import, mutation=True)
     client = subparsers.add_parser(
         "client",
         help="Manage user-level AI client bootstrap guidance",
@@ -924,6 +948,9 @@ def _run_portability_command(args: argparse.Namespace) -> int:
             "migrate-project-home",
             "restore-project-home",
             "merge-project-home",
+            "migrate-project-capsules",
+            "export-project-capsule",
+            "import-project-capsule",
         }:
             raise ApplicationServiceError("portability command is required")
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
@@ -960,6 +987,16 @@ def _run_portability_command(args: argparse.Namespace) -> int:
             }
             if args.home_parent is not None:
                 arguments["selected_parent"] = str(args.home_parent.resolve())
+        elif args.portability_command == "migrate-project-capsules":
+            arguments = {"backup_path": str(args.backup_output.resolve())}
+        elif args.portability_command == "export-project-capsule":
+            arguments = {
+                "project_id": args.project_id,
+                "archive_path": str(args.output.resolve()),
+                "mode": args.mode,
+            }
+        elif args.portability_command == "import-project-capsule":
+            arguments = {"archive_path": str(args.input.resolve())}
         else:
             arguments = {
                 "source_home": str(args.source_home.resolve()),

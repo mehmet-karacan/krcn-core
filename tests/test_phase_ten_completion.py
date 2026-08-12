@@ -26,7 +26,7 @@ class PhaseTenCompletionTests(unittest.TestCase):
         self.assertEqual(10, baseline["completed_steps"])
         self.assertEqual(10, len(baseline["capabilities"]))
         self.assertTrue(set(baseline["safe_operations"]).issubset(OPERATIONS))
-        self.assertEqual("phase-10", current["phase_id"])
+        self.assertGreaterEqual(int(str(current["phase_id"]).split("-")[1]), 10)
         self.assertEqual("completed", current["status"])
         self.assertIn(
             "docs/progress/PHASE-10-COMPLETION.md",

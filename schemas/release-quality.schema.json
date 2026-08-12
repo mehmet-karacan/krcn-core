@@ -33,7 +33,7 @@
       }
     },
     "user_home_layout_version": {
-      "const": 1
+      "const": 2
     },
     "required_operations": {
       "type": "array",

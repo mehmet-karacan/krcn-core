@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/user-home-layout.schema.json",
+  "additionalProperties": false,
+  "properties": {
+    "global_root": {
+      "const": "global"
+    },
+    "layout_version": {
+      "const": 2
+    },
+    "local_root": {
+      "const": "local"
+    },
+    "projects_root": {
+      "const": "projects"
+    },
+    "schema_ref": {
+      "const": "schemas/user-home-layout.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "source_copy": {
+      "const": false
+    }
+  },
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "layout_version",
+    "projects_root",
+    "global_root",
+    "local_root",
+    "source_copy"
+  ],
+  "title": "KRCN user-home layout",
+  "type": "object"
+}

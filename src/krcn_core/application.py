@@ -108,6 +108,16 @@ from .project_home_merge import (
     apply_project_home_merge,
     prepare_project_home_merge,
 )
+from .project_capsule_migration import (
+    apply_project_capsule_migration,
+    prepare_project_capsule_migration,
+)
+from .project_capsule_portability import (
+    apply_project_capsule_export,
+    apply_project_capsule_import,
+    prepare_project_capsule_export,
+    prepare_project_capsule_import,
+)
 from .portable_backup import apply_portable_backup, prepare_portable_backup
 from .portable_restore import apply_portable_restore, prepare_portable_restore
 from .provider_gate import ProviderApproval, load_provider_gate_policy
@@ -179,6 +189,9 @@ OPERATIONS = {
     "portability.migrate-project-home",
     "portability.restore-project-home",
     "portability.merge-project-home",
+    "portability.migrate-project-capsules",
+    "portability.export-project-capsule",
+    "portability.import-project-capsule",
     "knowledge.catalog",
     "knowledge.search-exact",
     "knowledge.search-dependencies",
@@ -414,6 +427,9 @@ class KrcnApplicationService:
             "portability.migrate-project-home": self._migrate_project_home,
             "portability.restore-project-home": self._restore_project_home,
             "portability.merge-project-home": self._merge_project_home,
+            "portability.migrate-project-capsules": self._migrate_project_capsules,
+            "portability.export-project-capsule": self._export_project_capsule,
+            "portability.import-project-capsule": self._import_project_capsule,
             "knowledge.catalog": self._knowledge_catalog,
             "knowledge.search-exact": self._search_exact,
             "knowledge.search-dependencies": self._search_dependencies,
@@ -1635,6 +1651,87 @@ class KrcnApplicationService:
             "project-home merge",
         )
         result = apply_project_home_merge(plan, authorizations)
+        return "applied", {"plan": plan.public_summary(), **result.public_summary()}
+
+    def _migrate_project_capsules(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"backup_path"})
+        plan = prepare_project_capsule_migration(
+            self._store.data_root,
+            self._absolute_path_argument(request.arguments, "backup_path"),
+            self._ownership,
+        )
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        authorizations = self._authorize_effect_plans(
+            request,
+            plan.plan_id,
+            plan.effect_plans,
+            "project capsule migration",
+        )
+        result = apply_project_capsule_migration(
+            plan,
+            authorizations,
+            self._ownership,
+        )
+        return "applied", {"plan": plan.public_summary(), **result.public_summary()}
+
+    def _export_project_capsule(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"project_id", "archive_path", "mode"},
+        )
+        project_id = _identifier_argument(request.arguments, "project_id")
+        mode = _string_argument(request.arguments, "mode")
+        plan = prepare_project_capsule_export(
+            self._store.data_root,
+            project_id,
+            self._absolute_path_argument(request.arguments, "archive_path"),
+            mode,
+            self._ownership,
+        )
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        authorizations = self._authorize_effect_plans(
+            request,
+            plan.plan_id,
+            (plan.mutation,),
+            "project capsule export",
+        )
+        result = apply_project_capsule_export(
+            plan,
+            authorizations[plan.mutation.plan_id],
+        )
+        return "applied", {"plan": plan.public_summary(), **result.public_summary()}
+
+    def _import_project_capsule(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"archive_path"})
+        plan = prepare_project_capsule_import(
+            self._absolute_path_argument(request.arguments, "archive_path"),
+            self._store.data_root,
+            self._ownership,
+        )
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        authorizations = self._authorize_effect_plans(
+            request,
+            plan.plan_id,
+            plan.effect_plans,
+            "project capsule import",
+        )
+        result = apply_project_capsule_import(
+            plan,
+            authorizations,
+            self._ownership,
+        )
         return "applied", {"plan": plan.public_summary(), **result.public_summary()}
 
     @staticmethod

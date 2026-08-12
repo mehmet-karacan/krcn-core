@@ -29,6 +29,20 @@ class MutationGateTests(unittest.TestCase):
             "user-data", self.resolver.resolve(".krcn/projects/sample.json")
         )
         self.assertEqual("derived", self.resolver.resolve(".krcn/indexes/sample.db"))
+        self.assertEqual(
+            "user-data",
+            self.resolver.resolve(".krcn/projects/sample/project.json"),
+        )
+        self.assertEqual(
+            "derived",
+            self.resolver.resolve(
+                ".krcn/projects/sample/derived/retrieval/source-code-v1.sqlite"
+            ),
+        )
+        self.assertEqual(
+            "runtime",
+            self.resolver.resolve(".krcn/projects/sample/runtime/queue/task.json"),
+        )
 
     def test_core_update_requires_matching_dry_run(self) -> None:
         plan = plan_mutation(

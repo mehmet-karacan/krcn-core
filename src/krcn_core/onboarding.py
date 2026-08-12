@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Mapping
 
 from .local_store import LocalWorkspaceStore, RecordWritePlan, StoredRecord
+from .home_layout import project_capsule_payload
 from .mutation_gate import MutationAuthorization
 from .project_home_initialization import validate_initialized_project_home
 from .source_identity import SourceIdentityError, assert_external_source
@@ -158,25 +159,46 @@ def prepare_read_only_onboarding(
         "skill_refs": [],
         "status": "active",
     }
+    capsule_plans: tuple[RecordWritePlan, ...] = ()
+    if (
+        store.layout_version >= 2
+        and store.read("project-capsules", request.project_id) is None
+    ):
+        capsule_plans = (
+            store.prepare_put(
+                "project-capsules",
+                request.project_id,
+                project_capsule_payload(request.project_id),
+                expected_revision=0,
+                project_id=request.project_id,
+            ),
+        )
     binding_plan = store.prepare_put(
         "source-bindings",
         request.binding_id,
         source_binding_payload,
         expected_revision=0,
+        project_id=request.project_id,
     )
     project_plan = store.prepare_put(
         "projects",
         request.project_id,
         project_payload,
         expected_revision=0,
+        project_id=request.project_id,
     )
     workspace_plan = store.prepare_put(
         "workspaces",
         request.workspace_id,
         workspace_payload,
         expected_revision=request.expected_workspace_revision,
+        project_id=(
+            request.project_id
+            if workspace_payload.get("project_refs") == [request.project_id]
+            else None
+        ),
     )
-    record_plans = (binding_plan, project_plan, workspace_plan)
+    record_plans = (*capsule_plans, binding_plan, project_plan, workspace_plan)
     identity = [item.mutation.plan_id for item in record_plans]
     plan_id = hashlib.sha256(
         json.dumps(identity, separators=(",", ":")).encode("utf-8")

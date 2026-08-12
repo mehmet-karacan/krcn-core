@@ -13,6 +13,9 @@ Client adapters do not implement backup, restore, migration, or rebind rules. Th
 - `portability.migrate-project-home`
 - `portability.restore-project-home`
 - `portability.merge-project-home`
+- `portability.migrate-project-capsules`
+- `portability.export-project-capsule`
+- `portability.import-project-capsule`
 
 Project-home migration always creates and verifies a secret-safe backup before restoring an empty approved target. The original home remains untouched. Clean-clone recovery restores an archive that already contains a valid project-home manifest and applies the same local Git exclusion boundary before making the restored home active.
 

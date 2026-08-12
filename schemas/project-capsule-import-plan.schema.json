@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/project-capsule-import-plan.schema.json",
+  "additionalProperties": true,
+  "properties": {
+    "mode": {
+      "enum": [
+        "thin",
+        "ready"
+      ]
+    },
+    "plan_id": {
+      "pattern": "^[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "project_id": {
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "type": "string"
+    },
+    "schema_ref": {
+      "const": "schemas/project-capsule-import-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    }
+  },
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "project_id",
+    "mode"
+  ],
+  "title": "KRCN project capsule import plan",
+  "type": "object"
+}

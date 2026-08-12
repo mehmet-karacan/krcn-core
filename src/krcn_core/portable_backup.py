@@ -14,6 +14,7 @@ from pathlib import Path, PurePosixPath
 from typing import Mapping
 
 from .json_documents import canonical_json_bytes, pretty_json_bytes
+from .home_layout import home_layout_version
 from .mutation_gate import MutationAuthorization, MutationPlan, OwnershipResolver, plan_mutation
 
 
@@ -62,6 +63,7 @@ class PortableBackupEntry:
 class PortableBackupPlan:
     plan_id: str
     backup_id: str
+    layout_version: int
     user_home: Path
     archive_path: Path
     entries: tuple[PortableBackupEntry, ...]
@@ -74,7 +76,7 @@ class PortableBackupPlan:
         return {
             "schema_version": 1,
             "backup_id": self.backup_id,
-            "layout_version": 1,
+            "layout_version": self.layout_version,
             "entries": [item.manifest_entry() for item in self.entries],
             "external_dependencies": list(self.external_dependencies),
             "exclusions": {
@@ -89,6 +91,7 @@ class PortableBackupPlan:
             "schema_version": 1,
             "plan_id": self.plan_id,
             "backup_id": self.backup_id,
+            "layout_version": self.layout_version,
             "entry_count": len(self.entries),
             "external_dependency_count": len(self.external_dependencies),
             "excluded_secret_count": self.excluded_secret_count,
@@ -122,7 +125,18 @@ def _canonical_json(payload: object) -> bytes:
 
 
 def _ownership(relative: str) -> str:
-    first = PurePosixPath(relative).parts[0]
+    parts = PurePosixPath(relative).parts
+    first = parts[0]
+    if first == "projects" and len(parts) >= 3:
+        if parts[2] == "derived":
+            return "derived"
+        if parts[2] == "runtime":
+            return "runtime"
+    if first == "global" and len(parts) >= 2:
+        if parts[1] == "derived":
+            return "derived"
+        if parts[1] == "runtime":
+            return "runtime"
     if first in {"runtime", "events", "checkpoints", "locks"}:
         return "runtime"
     if first in {"derived", "indexes", "cache"}:
@@ -194,6 +208,19 @@ def _collect_entries(
         if not path.is_file():
             continue
         if PurePosixPath(relative).parts[0] == "locks":
+            continue
+        parts = PurePosixPath(relative).parts
+        if (
+            len(parts) >= 4
+            and parts[0] == "projects"
+            and parts[2] == "runtime"
+            and parts[3] in {"queue", "leases", "active"}
+        ) or (
+            len(parts) >= 3
+            and parts[0] == "global"
+            and parts[1] == "runtime"
+            and parts[2] in {"queue", "leases", "active"}
+        ):
             continue
         if _is_secret_path(relative):
             excluded_secret_count += 1
@@ -276,12 +303,13 @@ def prepare_portable_backup(
     if target.exists():
         raise PortableBackupError("portable backup archive already exists")
     source_entries, dependencies, excluded_count = _collect_entries(home)
+    layout_version = home_layout_version(home)
     generated_entries = _generated_entries(generated_files, source_entries)
     entries = tuple(
         sorted((*source_entries, *generated_entries), key=lambda item: item.path)
     )
     identity = {
-        "layout_version": 1,
+        "layout_version": layout_version,
         "entries": [item.manifest_entry() for item in entries],
         "external_dependencies": list(dependencies),
         "excluded_secret_count": excluded_count,
@@ -302,6 +330,7 @@ def prepare_portable_backup(
     return PortableBackupPlan(
         plan_id=mutation.plan_id,
         backup_id=backup_id,
+        layout_version=layout_version,
         user_home=home,
         archive_path=target,
         entries=entries,
@@ -349,7 +378,7 @@ def apply_portable_backup(
         )
     )
     current_identity = {
-        "layout_version": 1,
+        "layout_version": plan.layout_version,
         "entries": [item.manifest_entry() for item in current_entries],
         "external_dependencies": list(current_dependencies),
         "excluded_secret_count": current_excluded,

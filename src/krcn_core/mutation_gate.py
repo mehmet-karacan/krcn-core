@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import fnmatch
 import hashlib
 import json
 import re
@@ -80,8 +79,22 @@ def _portable_target_ref(value: str) -> str:
 
 
 def _matches(relative_path: str, pattern: str) -> bool:
-    candidates = {relative_path, f"x/{relative_path}"}
-    return any(fnmatch.fnmatch(candidate, pattern) for candidate in candidates)
+    expression = []
+    index = 0
+    while index < len(pattern):
+        character = pattern[index]
+        if character == "*":
+            if index + 1 < len(pattern) and pattern[index + 1] == "*":
+                expression.append(".*")
+                index += 2
+                continue
+            expression.append("[^/]*")
+        elif character == "?":
+            expression.append("[^/]")
+        else:
+            expression.append(re.escape(character))
+        index += 1
+    return re.fullmatch("".join(expression), relative_path) is not None
 
 
 class OwnershipResolver:

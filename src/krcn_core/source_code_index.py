@@ -22,6 +22,7 @@ from .adapter_gate import (
 from .discovery import DiscoveryResult, FileEvidence
 from .embedding_models import load_embedding_model_catalog
 from .foundation import load_json
+from .home_layout import home_layout_version, project_derived_path
 from .information_records import canonical_json
 from .mutation_gate import (
     MutationAuthorization,
@@ -38,7 +39,6 @@ TOKEN = re.compile(r"\w+", re.UNICODE)
 SAFE_SYMBOL = re.compile(r"^[A-Za-z_$][A-Za-z0-9_$.-]{0,127}$")
 MAX_QUERY_LENGTH = 4096
 MAX_RESULT_LIMIT = 50
-INDEX_DIRECTORY_REF = ".krcn/derived/retrieval/source-code-v1"
 WEIGHTS = {"exact": 0.35, "fts": 0.25, "vector": 0.40}
 
 LANGUAGE_BY_EXTENSION = {
@@ -590,13 +590,19 @@ def _build_file(
 def source_code_index_path(data_root: Path, project_id: str) -> Path:
     if not IDENTIFIER.fullmatch(project_id):
         raise SourceCodeIndexError("source code project id is invalid")
-    return (
-        data_root.resolve()
-        / "derived"
-        / "retrieval"
-        / "source-code-v1"
-        / f"{project_id}.sqlite"
-    )
+    if home_layout_version(data_root) >= 2:
+        return project_derived_path(
+            data_root,
+            project_id,
+            "retrieval/source-code-v1.sqlite",
+        )
+    return data_root.resolve() / "derived" / "retrieval" / "source-code-v1" / f"{project_id}.sqlite"
+
+
+def source_code_index_target_ref(data_root: Path, project_id: str) -> str:
+    target = source_code_index_path(data_root, project_id)
+    relative = target.relative_to(data_root.resolve()).as_posix()
+    return f".krcn/{relative}"
 
 
 def _metadata(connection: sqlite3.Connection) -> dict[str, str]:
@@ -887,7 +893,7 @@ def prepare_source_code_index(
         files_tuple,
     )
     index_digest = hashlib.sha256(canonical_json(identity)).hexdigest()
-    target_ref = f"{INDEX_DIRECTORY_REF}/{project_id}.sqlite"
+    target_ref = source_code_index_target_ref(data_root, project_id)
     mutation = plan_mutation(
         ownership,
         operation="update" if target.exists() else "create",

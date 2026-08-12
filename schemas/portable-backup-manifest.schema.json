@@ -21,7 +21,10 @@
       "pattern": "^[a-f0-9]{64}$"
     },
     "layout_version": {
-      "const": 1
+      "enum": [
+        1,
+        2
+      ]
     },
     "entries": {
       "type": "array",

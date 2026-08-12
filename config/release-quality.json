@@ -6,13 +6,16 @@
     "windows",
     "macos"
   ],
-  "user_home_layout_version": 1,
+  "user_home_layout_version": 2,
   "required_operations": [
     "project.rebind",
     "portability.backup",
     "portability.restore",
     "portability.migrate-repo-local",
     "portability.merge-project-home",
+    "portability.migrate-project-capsules",
+    "portability.export-project-capsule",
+    "portability.import-project-capsule",
     "client.bootstrap"
   ],
   "required_package_modules": [
@@ -22,6 +25,9 @@
     "krcn_core/portable_restore.py",
     "krcn_core/repo_local_migration.py",
     "krcn_core/project_home_merge.py",
+    "krcn_core/home_layout.py",
+    "krcn_core/project_capsule_migration.py",
+    "krcn_core/project_capsule_portability.py",
     "krcn_core/client_bootstrap.py"
   ],
   "required_gates": [

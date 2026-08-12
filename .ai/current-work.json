@@ -1,11 +1,11 @@
 {
   "schema_ref": "schemas/current-work.schema.json",
   "schema_version": 1,
-  "phase_id": "phase-10",
-  "workstream_id": "source-code-rag-index",
+  "phase_id": "phase-11",
+  "workstream_id": "project-capsule-layout-v2",
   "status": "completed",
-  "goal": "Build a contentless incremental source-code RAG index that reads verified chunks from registered projects in place",
-  "plan_ref": "docs/plans/PLAN-012-KAYNAK-KOD-RAG-INDEKSI.md",
+  "goal": "Group durable project context under portable project capsules without copying registered source trees",
+  "plan_ref": "docs/plans/PLAN-013-PROJE-KAPSULU-VE-YERLESIM-V2.md",
   "progress_refs": [
     "docs/progress/PHASE-1-FOUNDATION.md",
     "docs/progress/PHASE-1-PACKAGE-1.md",
@@ -90,14 +90,15 @@
     "docs/progress/JSON-BELGE-BICIMI.md",
     "docs/progress/EMBEDDING-MODEL-ENTEGRASYONU.md",
     "docs/progress/PHASE-9-COMPLETION.md",
-    "docs/progress/PHASE-10-COMPLETION.md"
+    "docs/progress/PHASE-10-COMPLETION.md",
+    "docs/progress/PHASE-11-COMPLETION.md"
   ],
   "next_actions": [
-    "keep source-code index policy and schemas backward compatible",
-    "refresh registered project indexes through project.integrate",
-    "evaluate remote embedding profiles only through explicit provider approval"
+    "build a durable work graph for tasks commits decisions and artifacts",
+    "preserve project capsule portability while adding work records",
+    "keep all project source bindings read-only by default"
   ],
-  "baseline_commit": "d6e5f46",
+  "baseline_commit": "a343b0e",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

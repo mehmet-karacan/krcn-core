@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "schemas/project-capsule-migration-plan.schema.json",
+  "additionalProperties": true,
+  "properties": {
+    "from_layout_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "pattern": "^[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "project_ids": {
+      "items": {
+        "pattern": "^[a-z][a-z0-9-]*$",
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "schema_ref": {
+      "const": "schemas/project-capsule-migration-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "to_layout_version": {
+      "const": 2
+    }
+  },
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "from_layout_version",
+    "to_layout_version",
+    "project_ids"
+  ],
+  "title": "KRCN project capsule migration plan",
+  "type": "object"
+}

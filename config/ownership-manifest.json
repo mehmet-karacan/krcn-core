@@ -34,7 +34,9 @@
         ".krcn/runtime/**",
         ".krcn/events/**",
         ".krcn/locks/**",
-        ".krcn/checkpoints/**"
+        ".krcn/checkpoints/**",
+        ".krcn/projects/*/runtime/**",
+        ".krcn/global/runtime/**"
       ]
     },
     {
@@ -43,7 +45,20 @@
       "merge_strategy": "preserve",
       "paths": [
         ".krcn/workspaces/**",
-        ".krcn/projects/**",
+        ".krcn/projects/*.json",
+        ".krcn/projects/integration-states/**",
+        ".krcn/projects/capsules/**",
+        ".krcn/projects/*/manifest.json",
+        ".krcn/projects/*/project.json",
+        ".krcn/projects/*/workspaces/**",
+        ".krcn/projects/*/bindings/**",
+        ".krcn/projects/*/integration/**",
+        ".krcn/projects/*/knowledge/**",
+        ".krcn/projects/*/memory/**",
+        ".krcn/projects/*/policies/**",
+        ".krcn/projects/*/work/**",
+        ".krcn/projects/*/database/**",
+        ".krcn/projects/*/local-data/**",
         ".krcn/integrations/**",
         ".krcn/documents/**",
         ".krcn/work-items/**",
@@ -53,7 +68,20 @@
         ".krcn/policies/**",
         ".krcn/source-bindings/**",
         ".krcn/project-home.json",
-        ".krcn/local-data/**"
+        ".krcn/layout.json",
+        ".krcn/local-data/**",
+        ".krcn/local/**",
+        ".krcn/global/project-capsules/**",
+        ".krcn/global/projects/**",
+        ".krcn/global/workspaces/**",
+        ".krcn/global/bindings/**",
+        ".krcn/global/integration/**",
+        ".krcn/global/knowledge/**",
+        ".krcn/global/memory/**",
+        ".krcn/global/policies/**",
+        ".krcn/global/work/**",
+        ".krcn/global/database/**",
+        ".krcn/global/local-data/**"
       ]
     },
     {
@@ -63,7 +91,9 @@
       "paths": [
         ".krcn/derived/**",
         ".krcn/indexes/**",
-        ".krcn/cache/**"
+        ".krcn/cache/**",
+        ".krcn/projects/*/derived/**",
+        ".krcn/global/derived/**"
       ]
     },
     {
@@ -72,6 +102,8 @@
       "merge_strategy": "preserve",
       "paths": [
         ".krcn/secrets/**",
+        ".krcn/projects/*/secrets/**",
+        ".krcn/global/secrets/**",
         ".env",
         ".env.*"
       ]

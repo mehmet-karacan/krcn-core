@@ -42,9 +42,9 @@ flowchart LR
 
     subgraph home["KRCN_HOME - kullanici veri koku"]
         direction TB
-        proj[("Workspace / Project<br/>Binding")]:::home
-        data[("Belge / Talep<br/>Karar / Policy")]:::home
-        state[("Runtime / Checkpoint<br/>Derived state / Code vectors")]:::home
+        proj[("Project capsules<br/>Binding / Knowledge")]:::home
+        data[("Talep / Defect / Gorev<br/>Karar / Policy")]:::home
+        state[("Runtime / Checkpoint<br/>Derived / Database metadata")]:::home
     end
 
     subgraph ext["Yerinde kullanilan dis kaynaklar"]
@@ -73,7 +73,7 @@ flowchart LR
 | Alan | Konum | Temel kural |
 | --- | --- | --- |
 | Ürün çekirdeği | Git repository | Kod, şema, migration, policy tanımı ve teknik belgeler sürümlenir. |
-| Kullanıcı verisi | `KRCN_HOME` | Projeler, belgeler, talepler, kararlar, bellek ve kullanıcı policy'leri korunur. |
+| Kullanıcı verisi | `KRCN_HOME/projects/<project-id>` | Proje bağlamı, belgeler, talepler, defect kayıtları, görevler, kararlar, bellek ve kullanıcı policy'leri proje kapsülünde korunur. |
 | Runtime ve derived state | `KRCN_HOME` | İş durumu korunur; türetilmiş içerik gerektiğinde yeniden üretilebilir. |
 | Dış proje ve kaynaklar | Kendi fiziksel dizinleri | Yerinde okunur, KRCN içine kopyalanmaz, varsayılan olarak değiştirilmez. |
 | Secret değerleri | Yerel veya harici secret store | Git'e, loglara veya backup içine yazılmaz. |
@@ -90,7 +90,7 @@ Core güncellemeleri de aynı disiplinle ilerler: incele, `dry-run` göster, yed
 
 ## Geliştirme durumu
 
-Faz 0 - Faz 10 tamamlandı. Proje kaynaklarını kopyalamayan, ham kodu SQLite içinde saklamayan ve sonuçları gerçek dosyadan doğrulayarak okuyan artımlı kaynak kod RAG indeksi hazırdır. Yerel referans kaynaklarındaki kullanıcı verileri repository içine alınmamıştır. Faz detayları için `docs/plans/ROADMAP.md`.
+Faz 0 - Faz 11 tamamlandı. Proje kapsülü ve KRCN home yerleşim v2 hazırdır. Proje kaynaklarını kopyalamayan, ham kodu SQLite içinde saklamayan ve sonuçları gerçek dosyadan doğrulayarak okuyan artımlı kaynak kod RAG indeksi yeni kapsül yerleşiminde çalışır. Yerel referans kaynaklarındaki kullanıcı verileri repository içine alınmamıştır. Faz detayları için `docs/plans/ROADMAP.md`.
 
 İlk proje entegrasyonu, yerel çalışma alanı, doctor ve hibrit bilgi araması için `docs/guides/HIZLI-BASLANGIC.md` belgesini kullanabilirsin.
 
@@ -118,6 +118,7 @@ Bu komut kurulum gerektirmeden sağlık kontrolünü çalıştırır ve ortamın
 - Komut referansı: `docs/specifications/CLI-REFERENCE.md`
 - Yol haritası: `docs/plans/ROADMAP.md`
 - Güncelleme sözleşmesi: `docs/specifications/UPDATE-MERGE-CONTRACT.md`
+- Proje kapsülü sözleşmesi: `docs/specifications/PROJECT-CAPSULE-LAYOUT.md`
 
 Codex doğrudan `AGENTS.md` kullanır; Claude Code için `CLAUDE.md` aynı ortak kaynakları içe aktarır; diğer istemciler ve plugin'ler `.ai/repository-context.json` manifestini okuyabilir.
 

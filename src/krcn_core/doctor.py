@@ -9,6 +9,8 @@ from pathlib import Path
 
 from .cli.registry import compatibility_registry
 from .foundation import load_json, validate_foundation, verify_repository
+from .home_layout import home_layout_version
+from .hybrid_retrieval import hybrid_index_path
 from .provider_gate import load_provider_gate_policy, select_default_provider
 from .repository_context import validate_repository_context
 from .release_quality import validate_release_quality_repository
@@ -89,11 +91,15 @@ def _runtime_home(data_root: Path) -> list[str]:
     if not root.is_dir() or root.is_symlink():
         return ["runtime home is unavailable or unsafe"]
     errors = []
-    for name in ("secrets", "derived", "runtime", "locks"):
+    for name in ("secrets", "derived", "runtime", "locks", "projects", "global", "local"):
         candidate = root / name
         if candidate.is_symlink():
             errors.append(f"runtime home {name} path is a symbolic link")
-    index = root / "derived" / "retrieval" / "hybrid-v1.sqlite"
+    try:
+        layout_version = home_layout_version(root)
+    except ValueError:
+        return ["runtime home layout marker is invalid"]
+    index = hybrid_index_path(root)
     if index.exists():
         if index.is_symlink() or not index.is_file():
             errors.append("hybrid index path is unsafe")
@@ -110,45 +116,62 @@ def _runtime_home(data_root: Path) -> list[str]:
                 errors.append("hybrid index cannot be inspected")
             finally:
                 connection.close()
-    source_code_directory = (
-        root / "derived" / "retrieval" / "source-code-v1"
-    )
-    if source_code_directory.exists():
-        if source_code_directory.is_symlink() or not source_code_directory.is_dir():
-            errors.append("source code index directory is unsafe")
+    source_code_directories = [root / "derived" / "retrieval" / "source-code-v1"]
+    if layout_version >= 2:
+        source_code_directories.extend(
+            path
+            for path in sorted(
+                (root / "projects").glob(
+                    "*/derived/retrieval/source-code-v1.sqlite"
+                )
+            )
+        )
+    inspected_indexes = set()
+    for source_code_directory in source_code_directories:
+        if source_code_directory.is_file() and source_code_directory.name.endswith(".sqlite"):
+            candidates = (source_code_directory,)
+        elif source_code_directory.exists():
+            if source_code_directory.is_symlink() or not source_code_directory.is_dir():
+                errors.append("source code index directory is unsafe")
+                continue
+            candidates = tuple(source_code_directory.glob("*.sqlite"))
         else:
-            for source_code_index in source_code_directory.glob("*.sqlite"):
-                if source_code_index.is_symlink() or not source_code_index.is_file():
-                    errors.append("source code index path is unsafe")
-                    continue
-                connection = sqlite3.connect(source_code_index)
-                try:
-                    integrity = connection.execute(
-                        "PRAGMA integrity_check"
-                    ).fetchone()[0]
-                    metadata = dict(
-                        connection.execute(
-                            "SELECT key, value FROM metadata"
-                        ).fetchall()
-                    )
-                    chunk_columns = {
-                        row[1]
-                        for row in connection.execute(
-                            "PRAGMA table_info(chunks)"
-                        ).fetchall()
-                    }
-                    if (
-                        integrity != "ok"
-                        or metadata.get("index_revision") != "1"
-                        or metadata.get("source_content_persisted") != "false"
-                        or metadata.get("remote_provider_used") != "false"
-                        or {"content", "text"}.intersection(chunk_columns)
-                    ):
-                        errors.append("source code index integrity or boundary")
-                except sqlite3.Error:
-                    errors.append("source code index cannot be inspected")
-                finally:
-                    connection.close()
+            candidates = ()
+        for source_code_index in candidates:
+            if source_code_index in inspected_indexes:
+                continue
+            inspected_indexes.add(source_code_index)
+            if source_code_index.is_symlink() or not source_code_index.is_file():
+                errors.append("source code index path is unsafe")
+                continue
+            connection = sqlite3.connect(source_code_index)
+            try:
+                integrity = connection.execute(
+                    "PRAGMA integrity_check"
+                ).fetchone()[0]
+                metadata = dict(
+                    connection.execute(
+                        "SELECT key, value FROM metadata"
+                    ).fetchall()
+                )
+                chunk_columns = {
+                    row[1]
+                    for row in connection.execute(
+                        "PRAGMA table_info(chunks)"
+                    ).fetchall()
+                }
+                if (
+                    integrity != "ok"
+                    or metadata.get("index_revision") != "1"
+                    or metadata.get("source_content_persisted") != "false"
+                    or metadata.get("remote_provider_used") != "false"
+                    or {"content", "text"}.intersection(chunk_columns)
+                ):
+                    errors.append("source code index integrity or boundary")
+            except sqlite3.Error:
+                errors.append("source code index cannot be inspected")
+            finally:
+                connection.close()
     return errors
 
 
@@ -395,6 +418,23 @@ def run_doctor(
             "phase-ten-baseline",
             phase_ten_errors,
             "Phase 10 source-code RAG index baseline is complete",
+        )
+    )
+    phase_eleven = load_json(repo_root / ".ai" / "phase-11-baseline.json")
+    phase_eleven_errors = []
+    if phase_eleven.get("status") != "ready":
+        phase_eleven_errors.append("Phase 11 baseline state")
+    if phase_eleven.get("completed_steps") != 9:
+        phase_eleven_errors.append("Phase 11 completed steps")
+    if not (
+        repo_root / "docs" / "progress" / "PHASE-11-COMPLETION.md"
+    ).is_file():
+        phase_eleven_errors.append("Phase 11 completion evidence")
+    checks.append(
+        _check(
+            "phase-eleven-baseline",
+            phase_eleven_errors,
+            "Phase 11 project-capsule layout v2 baseline is complete",
         )
     )
     return tuple(checks)
