@@ -24,6 +24,20 @@
 - Dry-run dört user-data kaydı belirledi: workspace, project, source binding ve integration.
 - Hedefteki mevcut staging içeriğine yönelik hiçbir mutation planlanmadı.
 
+## Gerçek veri uygulaması
+
+Onaylanan exact plan, `gpu-fusion` proje evinden ortak kullanıcı veri köküne başarıyla uygulandı.
+
+- Workspace, project, source binding ve integration olmak üzere dört user-data kaydı eklendi.
+- Kaynak ve hedef için iki ayrı secret-safe yedek oluşturuldu ve doğrulandı.
+- Kaynak evin bütün dosyaları işlem öncesi hash değerleriyle aynı kaldı.
+- Hedefte birleşme öncesinde bulunan bütün dosyalar işlem öncesi hash değerleriyle aynı kaldı.
+- Derived source state ortak kullanıcı veri kökünde yeniden üretildi.
+- Yeniden üretim 1752 kaynak kaydı, Java ve Node.js teknolojileri ile tutarlı bir root digest verdi.
+- Hem proje kökünden hem KRCN Core kökünden aynı `gpu-fusion` projesi ve source state okundu.
+- Kullanıcı düzeyindeki `KRCN_HOME` onaylanan ortak veri köküne ayarlandı.
+- `.krcn` altında Git tarafından izlenen dosya sayısı sıfır olarak doğrulandı.
+
 ## Sonraki adım
 
-Operasyon commit ve uzak CI doğrulamasından sonra onaylanan exact plan ile gerçek kayıtlara uygulanacaktır. Ardından derived source state hedefte yeniden üretilecek ve ortak `KRCN_HOME` erişimi iki çalışma dizininden doğrulanacaktır.
+Çalışma dizinine göre otomatik proje eşleştirme, `Nerede kaldık?` özeti ve Codex, Claude Code ile OpenCode için kullanıcı düzeyindeki başlangıç bağlantıları geliştirilecektir.
