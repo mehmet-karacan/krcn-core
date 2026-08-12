@@ -90,7 +90,7 @@ Core güncellemeleri de aynı disiplinle ilerler: incele, `dry-run` göster, yed
 
 ## Geliştirme durumu
 
-Faz 0 - Faz 7 tamamlandı: revision-aware bilgi kataloğu, retrieval, bütçeli context paketleri, onay kontrollü Memory Gate, capability-bound orchestrator, taşınabilir kullanıcı evi ve doğal dille proje öğrenme dahil olmak üzere platformun uçtan uca temel akışı çalışır durumda. Yerel referans kaynaklarındaki kullanıcı verileri repository içine alınmamıştır. Faz detayları için `docs/plans/ROADMAP.md`.
+Faz 0 - Faz 7 tamamlandı: revision-aware bilgi kataloğu, retrieval, bütçeli context paketleri, onay kontrollü Memory Gate, capability-bound orchestrator, taşınabilir kullanıcı evi ve doğal dille proje öğrenme dahil olmak üzere platformun uçtan uca temel akışı çalışır durumda. Faz 8 kapsamında proje bazlı KRCN_HOME ve üretim olgunlaştırması geliştirilmektedir. Yerel referans kaynaklarındaki kullanıcı verileri repository içine alınmamıştır. Faz detayları için `docs/plans/ROADMAP.md`.
 
 ## Başlarken
 

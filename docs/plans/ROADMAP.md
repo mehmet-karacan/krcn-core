@@ -16,6 +16,7 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
 - Faz 5 tamamlandı.
 - Faz 6 tamamlandı.
 - Faz 7 tamamlandı.
+- Faz 8 başlatıldı. Proje bazlı KRCN_HOME ve mimari olgunlaştırma uygulanıyor.
 
 ## Temel kullanım modeli
 
@@ -114,6 +115,18 @@ Tamamlanma ölçütü: `clone -> install -> init/onboard -> doctor -> run` ve `p
 - Proje dizininde dosya kopyalamadan veya KRCN dosyası oluşturmadan çalış.
 
 Tamamlanma ölçütü: Kullanıcı yalnız mevcut proje dizinini verdiğinde sistem güvenli inference yapıp exact planı sunmalı ve tek onaydan sonra projeyi KRCN'e tanıtıp ilk discovery kaydını tamamlamalı.
+
+## Faz 8 - Proje bazlı KRCN_HOME ve mimari olgunlaştırma
+
+- Proje kapsamındaki varsayılan kullanıcı evini `<proje-kökü>/.krcn` olarak öner.
+- İlk kullanımda konumu, Git dışlama sınırını ve backup gereksinimini kullanıcıya göster.
+- Varsayılan konum, özel konum ve iptal kararlarını aynı exact-plan akışında ele al.
+- Mevcut merkezi kullanıcı evleriyle geriye dönük uyumluluğu ve kontrollü migration'ı koru.
+- Eş zamanlı yazma, deployment durumu, staleness ve kurtarma açıklarını kapat.
+- Gerçek adapter, worker, verifier ve secret provider genişleme sınırlarını tamamla.
+- Retrieval kalitesi, ölçek, CI, gözlemlenebilirlik ve kullanıcı deneyimini ölçülebilir hale getir.
+
+Tamamlanma ölçütü: Proje bazlı veya özel konumda çalışan KRCN verisi Git'e ve proje kaynaklarına karışmadan kurulabilmeli, taşınabilmeli, eş zamanlı kullanıma dayanmalı ve farklı istemcilerden aynı güvenlik sözleşmesiyle işletilebilmelidir.
 
 ## Değişmez kabul ölçütleri
 

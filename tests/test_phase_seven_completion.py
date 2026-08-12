@@ -35,9 +35,10 @@ class PhaseSevenCompletionTests(unittest.TestCase):
         self.assertTrue(baseline["guarantees"]["single_user_approval"])
         self.assertTrue(baseline["maintenance"]["new_phase_requires_user_approval"])
 
-    def test_current_work_and_completion_evidence_are_closed(self) -> None:
+    def test_phase_seven_completion_evidence_is_preserved(self) -> None:
         current = load_json(REPO_ROOT / ".ai" / "current-work.json")
-        self.assertEqual("completed", current["status"])
+        baseline = load_json(REPO_ROOT / ".ai" / "phase-7-baseline.json")
+        self.assertEqual("ready", baseline["status"])
         for reference in (
             "docs/progress/PHASE-7-INTEGRATION-TESTS.md",
             "docs/progress/PHASE-7-COMPLETION.md",

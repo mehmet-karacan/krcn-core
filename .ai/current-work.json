@@ -1,11 +1,11 @@
 {
   "schema_ref": "schemas/current-work.schema.json",
   "schema_version": 1,
-  "phase_id": "phase-7",
-  "workstream_id": "natural-language-project-learning",
-  "status": "completed",
-  "goal": "Learn and register a local project from only its directory or a natural-language request without copying source files",
-  "plan_ref": "docs/plans/PLAN-008-DOGAL-DILLE-PROJE-OGRENME.md",
+  "phase_id": "phase-8",
+  "workstream_id": "project-local-home-production-hardening",
+  "status": "active",
+  "goal": "Make project-root .krcn the safe default for project-scoped KRCN data and harden the completed architecture for production use",
+  "plan_ref": "docs/plans/PLAN-009-PROJE-BAZLI-KRCN-HOME-VE-MIMARI-OLGUNLASTIRMA.md",
   "progress_refs": [
     "docs/progress/PHASE-1-FOUNDATION.md",
     "docs/progress/PHASE-1-PACKAGE-1.md",
@@ -75,13 +75,15 @@
     "docs/progress/PHASE-7-CLIENT-INTENT-ROUTING.md",
     "docs/progress/PHASE-7-INTEGRATION-TESTS.md",
     "docs/progress/PHASE-7-COMPLETION.md",
-    "docs/progress/PHASE-7-LARGE-PROJECT-DISCOVERY-FIX.md"
+    "docs/progress/PHASE-7-LARGE-PROJECT-DISCOVERY-FIX.md",
+    "docs/progress/PHASE-8-KICKOFF.md",
+    "docs/progress/PHASE-8-RESEARCH-EVALUATION.md"
   ],
   "next_actions": [
-    "maintain the completed Phase 7 baseline",
-    "await explicit approval before starting a new phase"
+    "implement non-mutating project-local home resolution",
+    "prepare exact-plan initialization and Git exclusion checks"
   ],
-  "baseline_commit": "7ccc16b",
+  "baseline_commit": "2ab1cb1",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

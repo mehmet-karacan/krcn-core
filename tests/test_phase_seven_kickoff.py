@@ -15,14 +15,10 @@ def load_json(path: Path) -> dict:
 class PhaseSevenKickoffTests(unittest.TestCase):
     def test_phase_seven_was_started_with_explicit_user_approval(self) -> None:
         current = load_json(REPO_ROOT / ".ai" / "current-work.json")
-        self.assertEqual("phase-7", current["phase_id"])
-        self.assertIn(current["status"], {"active", "completed"})
-        self.assertEqual("7ccc16b", current["baseline_commit"])
-        self.assertEqual(
-            "docs/plans/PLAN-008-DOGAL-DILLE-PROJE-OGRENME.md",
-            current["plan_ref"],
-        )
         self.assertIn("docs/progress/PHASE-7-KICKOFF.md", current["progress_refs"])
+        baseline = load_json(REPO_ROOT / ".ai" / "phase-7-baseline.json")
+        self.assertEqual("phase-7", baseline["phase_id"])
+        self.assertEqual("ready", baseline["status"])
 
     def test_learning_boundary_requires_one_exact_plan_and_no_copy(self) -> None:
         boundary = (
