@@ -60,6 +60,15 @@ python tools/krcn.py project learn "<source-directory>" --home-choice cancel
 
 An explicit `--data-root` or `KRCN_HOME` continues to select an existing compatible home. Project-local `.krcn` content is excluded from source discovery and Git. Git ignore is not backup, so portable backup and restore remain required for machine recovery.
 
+Migrate an existing compatible KRCN home without deleting it, or restore its verified backup into a clean project clone:
+
+```bash
+python tools/krcn.py portability migrate-project-home --source-home "<existing-home>" --project "<project-directory>" --backup-output "<backup-file>" --home-choice use-default
+python tools/krcn.py portability restore-project-home --input "<backup-file>" --project "<clean-project-directory>" --home-choice use-default
+```
+
+Both commands produce a dry-run plan first. Apply requires the exact returned plan identity and an explicit approval identity. A migration writes the backup before the target and never deletes the original home.
+
 `onboard` and `rescan` also produce a plan only by default. Applying the plan requires the plan identity from the prior dry-run, and an explicit approval identity when the plan includes a user-data change.
 
 ## Knowledge, context, and memory

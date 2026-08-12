@@ -42,7 +42,9 @@
         "orchestrator.resume",
         "portability.backup",
         "portability.restore",
-        "portability.migrate-repo-local"
+        "portability.migrate-repo-local",
+        "portability.migrate-project-home",
+        "portability.restore-project-home"
       ]
     },
     "status": { "enum": ["ok", "planned", "applied", "choice-required", "cancelled"] },

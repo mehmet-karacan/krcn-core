@@ -181,6 +181,12 @@ def _parse_manifest(content: bytes) -> str:
     return home_id
 
 
+def validate_project_home_manifest_content(content: bytes) -> str:
+    """Validate portable project-home manifest bytes."""
+
+    return _parse_manifest(content)
+
+
 def validate_initialized_project_home(home: Path) -> str:
     """Validate one existing project-home marker without changing local state."""
 
@@ -194,7 +200,7 @@ def validate_initialized_project_home(home: Path) -> str:
         raise ProjectHomeInitializationError(
             "project-home manifest must be a regular file"
         )
-    return _parse_manifest(marker.read_bytes())
+    return validate_project_home_manifest_content(marker.read_bytes())
 
 
 def _git(
@@ -440,6 +446,36 @@ def _restore_exclude(change: GitExclusionPlan) -> None:
         change.exclude_path.unlink(missing_ok=True)
 
 
+def apply_git_exclusion(change: GitExclusionPlan) -> None:
+    """Apply and verify one exact local Git exclusion effect."""
+
+    if _read_exclude(change.exclude_path) != change.previous_content:
+        raise ProjectHomeInitializationError(
+            "Git exclude file changed before initialization"
+        )
+    _atomic_replace(change.exclude_path, change.next_content)
+    probe = f"{change.relative_home}/{MANIFEST_NAME}"
+    ignored = _git(
+        change.git_root,
+        "check-ignore",
+        "--no-index",
+        "-q",
+        "--",
+        probe,
+    )
+    if ignored.returncode != 0:
+        _restore_exclude(change)
+        raise ProjectHomeInitializationError(
+            "project-home Git exclusion verification failed"
+        )
+
+
+def rollback_git_exclusion(change: GitExclusionPlan) -> None:
+    """Restore the exact pre-plan Git exclusion bytes."""
+
+    _restore_exclude(change)
+
+
 def apply_project_home_initialization(
     plan: ProjectHomeInitializationPlan,
     authorizations: Mapping[str, MutationAuthorization],
@@ -458,15 +494,7 @@ def apply_project_home_initialization(
     created_directory = False
     try:
         if plan.git_exclusion is not None:
-            current_exclude = _read_exclude(plan.git_exclusion.exclude_path)
-            if current_exclude != plan.git_exclusion.previous_content:
-                raise ProjectHomeInitializationError(
-                    "Git exclude file changed before initialization"
-                )
-            _atomic_replace(
-                plan.git_exclusion.exclude_path,
-                plan.git_exclusion.next_content,
-            )
+            apply_git_exclusion(plan.git_exclusion)
             exclusion_updated = True
         if plan.home_mutation is not None:
             home = plan.resolution.path
@@ -484,20 +512,6 @@ def apply_project_home_initialization(
             raise ProjectHomeInitializationError(
                 "project-home manifest verification failed"
             )
-        if plan.git_exclusion is not None:
-            probe = f"{plan.git_exclusion.relative_home}/{MANIFEST_NAME}"
-            ignored = _git(
-                plan.git_exclusion.git_root,
-                "check-ignore",
-                "--no-index",
-                "-q",
-                "--",
-                probe,
-            )
-            if ignored.returncode != 0:
-                raise ProjectHomeInitializationError(
-                    "project-home Git exclusion verification failed"
-                )
     except (OSError, ProjectHomeInitializationError) as exc:
         if home_created:
             (plan.resolution.path / MANIFEST_NAME).unlink(missing_ok=True)
@@ -507,7 +521,7 @@ def apply_project_home_initialization(
             except OSError:
                 pass
         if exclusion_updated and plan.git_exclusion is not None:
-            _restore_exclude(plan.git_exclusion)
+            rollback_git_exclusion(plan.git_exclusion)
         if isinstance(exc, ProjectHomeInitializationError):
             raise
         raise ProjectHomeInitializationError(

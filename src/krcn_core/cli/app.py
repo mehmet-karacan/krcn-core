@@ -258,6 +258,33 @@ def build_parser() -> argparse.ArgumentParser:
     )
     migrate.add_argument("--backup-output", type=Path, required=True)
     _add_service_options(migrate, mutation=True)
+    project_migrate = portability_commands.add_parser(
+        "migrate-project-home",
+        help="Migrate one existing home into an approved project-scoped home",
+    )
+    project_migrate.add_argument("--source-home", type=Path, required=True)
+    project_migrate.add_argument("--project", type=Path, required=True)
+    project_migrate.add_argument("--backup-output", type=Path, required=True)
+    project_migrate.add_argument(
+        "--home-choice",
+        choices=("use-default", "choose-parent"),
+        required=True,
+    )
+    project_migrate.add_argument("--home-parent", type=Path)
+    _add_service_options(project_migrate, mutation=True)
+    project_restore = portability_commands.add_parser(
+        "restore-project-home",
+        help="Restore a project-home backup into a clean project clone",
+    )
+    project_restore.add_argument("--input", type=Path, required=True)
+    project_restore.add_argument("--project", type=Path, required=True)
+    project_restore.add_argument(
+        "--home-choice",
+        choices=("use-default", "choose-parent"),
+        required=True,
+    )
+    project_restore.add_argument("--home-parent", type=Path)
+    _add_service_options(project_restore, mutation=True)
     return parser
 
 
@@ -670,6 +697,8 @@ def _run_portability_command(args: argparse.Namespace) -> int:
             "backup",
             "restore",
             "migrate-repo-local",
+            "migrate-project-home",
+            "restore-project-home",
         }:
             raise ApplicationServiceError("portability command is required")
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
@@ -679,8 +708,25 @@ def _run_portability_command(args: argparse.Namespace) -> int:
             arguments = {"archive_path": str(args.output.resolve())}
         elif args.portability_command == "restore":
             arguments = {"archive_path": str(args.input.resolve())}
-        else:
+        elif args.portability_command == "migrate-repo-local":
             arguments = {"backup_path": str(args.backup_output.resolve())}
+        elif args.portability_command == "migrate-project-home":
+            arguments = {
+                "source_home": str(args.source_home.resolve()),
+                "project_root": str(args.project.resolve()),
+                "backup_path": str(args.backup_output.resolve()),
+                "choice": args.home_choice,
+            }
+            if args.home_parent is not None:
+                arguments["selected_parent"] = str(args.home_parent.resolve())
+        else:
+            arguments = {
+                "archive_path": str(args.input.resolve()),
+                "project_root": str(args.project.resolve()),
+                "choice": args.home_choice,
+            }
+            if args.home_parent is not None:
+                arguments["selected_parent"] = str(args.home_parent.resolve())
         request = ServiceRequest(
             client_kind="cli",
             operation=operation,

@@ -80,11 +80,12 @@
     "docs/progress/PHASE-8-RESEARCH-EVALUATION.md",
     "docs/progress/PHASE-8-PROJECT-HOME-RESOLUTION.md",
     "docs/progress/PHASE-8-PROJECT-HOME-INITIALIZATION.md",
-    "docs/progress/PHASE-8-PROJECT-HOME-CLIENT-INTEGRATION.md"
+    "docs/progress/PHASE-8-PROJECT-HOME-CLIENT-INTEGRATION.md",
+    "docs/progress/PHASE-8-PROJECT-HOME-PORTABILITY.md"
   ],
   "next_actions": [
-    "add exact backup-backed migration into a selected project home",
-    "verify project-home restore and clean-machine recovery"
+    "fix deployment state detection for interrupted outcomes",
+    "add cross-process record locking and memory staleness enforcement"
   ],
   "baseline_commit": "2ab1cb1",
   "approval_gates": {

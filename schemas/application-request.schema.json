@@ -26,6 +26,8 @@
         "portability.backup",
         "portability.restore",
         "portability.migrate-repo-local",
+        "portability.migrate-project-home",
+        "portability.restore-project-home",
         "knowledge.catalog",
         "knowledge.search-exact",
         "knowledge.search-dependencies",

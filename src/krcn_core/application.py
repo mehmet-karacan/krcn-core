@@ -57,6 +57,7 @@ from .mutation_gate import (
     ApprovalEvidence,
     DryRunEvidence,
     MutationAuthorization,
+    MutationPlan,
     OwnershipResolver,
     authorize_mutation,
 )
@@ -78,6 +79,12 @@ from .project_home import choose_project_home, resolve_project_home
 from .project_home_initialization import (
     apply_project_home_initialization,
     prepare_project_home_initialization,
+)
+from .project_home_portability import (
+    apply_project_home_migration,
+    apply_project_home_restore,
+    prepare_project_home_migration,
+    prepare_project_home_restore,
 )
 from .portable_backup import apply_portable_backup, prepare_portable_backup
 from .portable_restore import apply_portable_restore, prepare_portable_restore
@@ -129,6 +136,8 @@ OPERATIONS = {
     "portability.backup",
     "portability.restore",
     "portability.migrate-repo-local",
+    "portability.migrate-project-home",
+    "portability.restore-project-home",
     "knowledge.catalog",
     "knowledge.search-exact",
     "knowledge.search-dependencies",
@@ -350,6 +359,8 @@ class KrcnApplicationService:
             "portability.backup": self._portable_backup,
             "portability.restore": self._portable_restore,
             "portability.migrate-repo-local": self._migrate_repo_local,
+            "portability.migrate-project-home": self._migrate_project_home,
+            "portability.restore-project-home": self._restore_project_home,
             "knowledge.catalog": self._knowledge_catalog,
             "knowledge.search-exact": self._search_exact,
             "knowledge.search-dependencies": self._search_dependencies,
@@ -1104,6 +1115,101 @@ class KrcnApplicationService:
             )
         result = apply_repo_local_migration(plan, authorizations)
         return "applied", {"plan": plan.public_summary(), **result.public_summary()}
+
+    def _migrate_project_home(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"source_home", "project_root", "backup_path", "choice"},
+            optional={"selected_parent"},
+        )
+        resolution = self._project_home_resolution(
+            {
+                key: value
+                for key, value in request.arguments.items()
+                if key in {"project_root", "choice", "selected_parent"}
+            }
+        )
+        if resolution is None:
+            raise ApplicationServiceError("cancelled migration cannot be planned")
+        plan = prepare_project_home_migration(
+            self._absolute_path_argument(request.arguments, "source_home"),
+            resolution,
+            self._absolute_path_argument(request.arguments, "backup_path"),
+            self._ownership,
+        )
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        authorizations = self._authorize_effect_plans(
+            request,
+            plan.plan_id,
+            plan.effect_plans,
+            "project-home migration",
+        )
+        result = apply_project_home_migration(plan, authorizations)
+        return "applied", {"plan": plan.public_summary(), **result.public_summary()}
+
+    def _restore_project_home(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"archive_path", "project_root", "choice"},
+            optional={"selected_parent"},
+        )
+        resolution = self._project_home_resolution(
+            {
+                key: value
+                for key, value in request.arguments.items()
+                if key in {"project_root", "choice", "selected_parent"}
+            }
+        )
+        if resolution is None:
+            raise ApplicationServiceError("cancelled restore cannot be planned")
+        plan = prepare_project_home_restore(
+            self._absolute_path_argument(request.arguments, "archive_path"),
+            resolution,
+            self._ownership,
+        )
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        authorizations = self._authorize_effect_plans(
+            request,
+            plan.plan_id,
+            plan.effect_plans,
+            "project-home restore",
+        )
+        result = apply_project_home_restore(plan, authorizations)
+        return "applied", {"plan": plan.public_summary(), **result}
+
+    @staticmethod
+    def _authorize_effect_plans(
+        request: ServiceRequest,
+        plan_id: str,
+        effects: tuple[MutationPlan, ...],
+        label: str,
+    ) -> dict[str, MutationAuthorization]:
+        if request.expected_plan_id != plan_id:
+            raise ApplicationServiceError(
+                "apply requires the exact plan id returned by a prior dry-run"
+            )
+        if request.approval_id is None:
+            raise ApplicationServiceError(f"{label} requires approval id")
+        return {
+            mutation.plan_id: authorize_mutation(
+                mutation,
+                dry_run=DryRunEvidence(mutation.plan_id, verified=True),
+                approval=ApprovalEvidence(
+                    mutation.plan_id,
+                    request.approval_id,
+                    approved=True,
+                ),
+            )
+            for mutation in effects
+        }
 
     def _information_catalog(self) -> InformationCatalog:
         bindings = tuple(

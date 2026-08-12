@@ -49,6 +49,8 @@ Creating or reading a project-local home does not grant network authority. Local
 
 Git ignore is not backup. A clean clone does not restore project-local KRCN records. Portable backup and restore include approved KRCN-owned records while excluding project source content and secret values. A custom home outside the project is reported as an external local dependency when only the project directory is copied.
 
+Moving a compatible central or legacy home into a project scope is an explicit backup-backed migration. The source is retained, the backup is written first, the target must be empty, and the restored target includes a validated project-home manifest. A clean project clone uses the separate project-home restore operation so Git protection and manifest validation are applied as one exact plan. External source bindings are restored as unbound dependencies and require explicit rebind.
+
 ## Compatibility
 
 Existing explicit and platform-default Phase 6 homes remain valid. No installation, pull, merge, project learning, or discovery command migrates them implicitly. Moving data to a project-local home requires inspect, backup, exact-plan approval, apply, verification, and rollback evidence.

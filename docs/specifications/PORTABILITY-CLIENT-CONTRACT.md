@@ -10,6 +10,10 @@ Client adapters do not implement backup, restore, migration, or rebind rules. Th
 - `portability.backup`
 - `portability.restore`
 - `portability.migrate-repo-local`
+- `portability.migrate-project-home`
+- `portability.restore-project-home`
+
+Project-home migration always creates and verifies a secret-safe backup before restoring an empty approved target. The original home remains untouched. Clean-clone recovery restores an archive that already contains a valid project-home manifest and applies the same local Git exclusion boundary before making the restored home active.
 
 ## Platform rule
 
@@ -18,4 +22,3 @@ Windows and macOS use platform-appropriate physical defaults. Portable archives 
 ## Security parity
 
 The `client_kind` field identifies the caller for traceability. It cannot change the plan, capability, policy, ownership, approval, no-copy, secret, or verification decision. No client receives a physical source locator in a public response.
-

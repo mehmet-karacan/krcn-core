@@ -11,6 +11,7 @@ import tempfile
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
+from typing import Mapping
 
 from .mutation_gate import MutationAuthorization, MutationPlan, OwnershipResolver, plan_mutation
 
@@ -63,6 +64,7 @@ class PortableBackupPlan:
     user_home: Path
     archive_path: Path
     entries: tuple[PortableBackupEntry, ...]
+    generated_entries: tuple[PortableBackupEntry, ...]
     external_dependencies: tuple[dict[str, object], ...]
     excluded_secret_count: int
     mutation: MutationPlan
@@ -216,10 +218,46 @@ def _collect_entries(
     return tuple(entries), tuple(dependencies), excluded_secret_count
 
 
+def _generated_entries(
+    generated_files: Mapping[str, bytes] | None,
+    source_entries: tuple[PortableBackupEntry, ...],
+) -> tuple[PortableBackupEntry, ...]:
+    existing = {item.path for item in source_entries}
+    generated: list[PortableBackupEntry] = []
+    for relative, content in sorted((generated_files or {}).items()):
+        path = PurePosixPath(relative)
+        if (
+            not relative
+            or "\\" in relative
+            or path.is_absolute()
+            or ".." in path.parts
+            or path.as_posix() != relative
+        ):
+            raise PortableBackupError("generated backup path is not portable")
+        if relative in existing or _is_secret_path(relative):
+            raise PortableBackupError("generated backup path is unsafe or duplicated")
+        if not isinstance(content, bytes):
+            raise PortableBackupError("generated backup content must be bytes")
+        _assert_portable_content(relative, content)
+        generated.append(
+            PortableBackupEntry(
+                path=relative,
+                ownership=_ownership(relative),
+                size=len(content),
+                sha256=hashlib.sha256(content).hexdigest(),
+                content=content,
+                transformed=False,
+            )
+        )
+    return tuple(generated)
+
+
 def prepare_portable_backup(
     user_home: Path,
     archive_path: Path,
     ownership: OwnershipResolver,
+    *,
+    generated_files: Mapping[str, bytes] | None = None,
 ) -> PortableBackupPlan:
     """Inspect and freeze a portable backup without writing the archive."""
 
@@ -237,7 +275,11 @@ def prepare_portable_backup(
         raise PortableBackupError("portable backup archive must be outside KRCN user home")
     if target.exists():
         raise PortableBackupError("portable backup archive already exists")
-    entries, dependencies, excluded_count = _collect_entries(home)
+    source_entries, dependencies, excluded_count = _collect_entries(home)
+    generated_entries = _generated_entries(generated_files, source_entries)
+    entries = tuple(
+        sorted((*source_entries, *generated_entries), key=lambda item: item.path)
+    )
     identity = {
         "layout_version": 1,
         "entries": [item.manifest_entry() for item in entries],
@@ -263,6 +305,7 @@ def prepare_portable_backup(
         user_home=home,
         archive_path=target,
         entries=entries,
+        generated_entries=generated_entries,
         external_dependencies=dependencies,
         excluded_secret_count=excluded_count,
         mutation=mutation,
@@ -296,7 +339,15 @@ def apply_portable_backup(
         raise PortableBackupError("portable backup requires dry-run and user approval")
     if plan.archive_path.exists():
         raise PortableBackupError("portable backup archive appeared after planning")
-    current_entries, current_dependencies, current_excluded = _collect_entries(plan.user_home)
+    current_source_entries, current_dependencies, current_excluded = _collect_entries(
+        plan.user_home
+    )
+    current_entries = tuple(
+        sorted(
+            (*current_source_entries, *plan.generated_entries),
+            key=lambda item: item.path,
+        )
+    )
     current_identity = {
         "layout_version": 1,
         "entries": [item.manifest_entry() for item in current_entries],
