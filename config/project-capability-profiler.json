@@ -1,0 +1,469 @@
+{
+  "schema_ref": "schemas/project-capability-profiler-policy.schema.json",
+  "schema_version": 1,
+  "profiler_id": "deterministic-project-capability-profiler",
+  "profiler_revision": 1,
+  "maximum_inspected_file_bytes": 262144,
+  "maximum_inspected_files": 5000,
+  "maximum_total_inspected_bytes": 67108864,
+  "maximum_evidence_items": 2000,
+  "minimum_persisted_confidence": 0.65,
+  "confidence_bands": {
+    "confirmed": 0.9,
+    "high": 0.8,
+    "medium": 0.65
+  },
+  "capability_catalog": [
+    {
+      "capability_id": "api",
+      "category": "architecture",
+      "name": "API"
+    },
+    {
+      "capability_id": "automated-tests",
+      "category": "testing",
+      "name": "Automated tests"
+    },
+    {
+      "capability_id": "azure-pipelines",
+      "category": "delivery",
+      "name": "Azure Pipelines"
+    },
+    {
+      "capability_id": "backend",
+      "category": "architecture",
+      "name": "Backend"
+    },
+    {
+      "capability_id": "bitbucket-pipelines",
+      "category": "delivery",
+      "name": "Bitbucket Pipelines"
+    },
+    {
+      "capability_id": "container",
+      "category": "delivery",
+      "name": "Container image build"
+    },
+    {
+      "capability_id": "container-compose",
+      "category": "delivery",
+      "name": "Container composition"
+    },
+    {
+      "capability_id": "cypress",
+      "category": "testing",
+      "name": "Cypress"
+    },
+    {
+      "capability_id": "data-migration",
+      "category": "architecture",
+      "name": "Data migration"
+    },
+    {
+      "capability_id": "database-development",
+      "category": "architecture",
+      "name": "Database development"
+    },
+    {
+      "capability_id": "django",
+      "category": "frameworks",
+      "name": "Django"
+    },
+    {
+      "capability_id": "dotnet",
+      "category": "technologies",
+      "name": ".NET"
+    },
+    {
+      "capability_id": "eslint",
+      "category": "quality",
+      "name": "ESLint"
+    },
+    {
+      "capability_id": "express",
+      "category": "frameworks",
+      "name": "Express"
+    },
+    {
+      "capability_id": "fastapi",
+      "category": "frameworks",
+      "name": "FastAPI"
+    },
+    {
+      "capability_id": "flask",
+      "category": "frameworks",
+      "name": "Flask"
+    },
+    {
+      "capability_id": "frontend",
+      "category": "architecture",
+      "name": "Frontend"
+    },
+    {
+      "capability_id": "full-stack",
+      "category": "architecture",
+      "name": "Full stack"
+    },
+    {
+      "capability_id": "github-actions",
+      "category": "delivery",
+      "name": "GitHub Actions"
+    },
+    {
+      "capability_id": "gitlab-ci",
+      "category": "delivery",
+      "name": "GitLab CI"
+    },
+    {
+      "capability_id": "go",
+      "category": "technologies",
+      "name": "Go"
+    },
+    {
+      "capability_id": "gradle",
+      "category": "build",
+      "name": "Gradle"
+    },
+    {
+      "capability_id": "java",
+      "category": "technologies",
+      "name": "Java"
+    },
+    {
+      "capability_id": "jenkins",
+      "category": "delivery",
+      "name": "Jenkins"
+    },
+    {
+      "capability_id": "jest",
+      "category": "testing",
+      "name": "Jest"
+    },
+    {
+      "capability_id": "junit",
+      "category": "testing",
+      "name": "JUnit"
+    },
+    {
+      "capability_id": "kubernetes",
+      "category": "delivery",
+      "name": "Kubernetes"
+    },
+    {
+      "capability_id": "maven",
+      "category": "build",
+      "name": "Maven"
+    },
+    {
+      "capability_id": "multi-module",
+      "category": "architecture",
+      "name": "Multi-module"
+    },
+    {
+      "capability_id": "nextjs",
+      "category": "frameworks",
+      "name": "Next.js"
+    },
+    {
+      "capability_id": "nodejs",
+      "category": "technologies",
+      "name": "Node.js"
+    },
+    {
+      "capability_id": "npm",
+      "category": "build",
+      "name": "npm-compatible package management"
+    },
+    {
+      "capability_id": "oracle",
+      "category": "databases",
+      "name": "Oracle"
+    },
+    {
+      "capability_id": "oracle-metadata",
+      "category": "databases",
+      "name": "Oracle metadata analysis"
+    },
+    {
+      "capability_id": "playwright",
+      "category": "testing",
+      "name": "Playwright"
+    },
+    {
+      "capability_id": "plsql",
+      "category": "databases",
+      "name": "PL/SQL"
+    },
+    {
+      "capability_id": "postgresql",
+      "category": "databases",
+      "name": "PostgreSQL"
+    },
+    {
+      "capability_id": "pytest",
+      "category": "testing",
+      "name": "pytest"
+    },
+    {
+      "capability_id": "python",
+      "category": "technologies",
+      "name": "Python"
+    },
+    {
+      "capability_id": "python-package",
+      "category": "build",
+      "name": "Python package build"
+    },
+    {
+      "capability_id": "react",
+      "category": "frameworks",
+      "name": "React"
+    },
+    {
+      "capability_id": "ruff",
+      "category": "quality",
+      "name": "Ruff"
+    },
+    {
+      "capability_id": "rust",
+      "category": "technologies",
+      "name": "Rust"
+    },
+    {
+      "capability_id": "spring-boot",
+      "category": "frameworks",
+      "name": "Spring Boot"
+    },
+    {
+      "capability_id": "spring-data",
+      "category": "frameworks",
+      "name": "Spring Data"
+    },
+    {
+      "capability_id": "spring-web",
+      "category": "frameworks",
+      "name": "Spring Web"
+    },
+    {
+      "capability_id": "utplsql",
+      "category": "testing",
+      "name": "utPLSQL"
+    },
+    {
+      "capability_id": "vitest",
+      "category": "testing",
+      "name": "Vitest"
+    }
+  ],
+  "workload_catalog": [
+    {
+      "workload_id": "analysis",
+      "workload_kind": "analysis",
+      "trust_role": "read-only-worker-agent",
+      "specialization_profile_id": "analysis-agent",
+      "fixture_policy": "sanitized-derived",
+      "benchmark_dimensions": [
+        "correctness",
+        "evidence-grounding",
+        "format-reliability",
+        "latency"
+      ],
+      "evaluation_traits": [
+        "causal-reasoning",
+        "source-grounding"
+      ],
+      "trigger_capabilities": []
+    },
+    {
+      "workload_id": "architecture-design",
+      "workload_kind": "architecture",
+      "trust_role": "read-only-worker-agent",
+      "specialization_profile_id": "architecture-agent",
+      "fixture_policy": "sanitized-derived",
+      "benchmark_dimensions": [
+        "correctness",
+        "evidence-grounding",
+        "constraint-fit",
+        "latency"
+      ],
+      "evaluation_traits": [
+        "boundary-design",
+        "tradeoff-analysis"
+      ],
+      "trigger_capabilities": []
+    },
+    {
+      "workload_id": "implementation",
+      "workload_kind": "implementation",
+      "trust_role": "worker-agent",
+      "specialization_profile_id": "implementation-agent",
+      "fixture_policy": "synthetic-only",
+      "benchmark_dimensions": [
+        "correctness",
+        "test-pass-rate",
+        "format-reliability",
+        "latency"
+      ],
+      "evaluation_traits": [
+        "minimal-change",
+        "backward-compatibility"
+      ],
+      "trigger_capabilities": []
+    },
+    {
+      "workload_id": "verification",
+      "workload_kind": "verification",
+      "trust_role": "verifier-agent",
+      "specialization_profile_id": "test-agent",
+      "fixture_policy": "synthetic-only",
+      "benchmark_dimensions": [
+        "defect-detection",
+        "evidence-grounding",
+        "false-positive-control",
+        "latency"
+      ],
+      "evaluation_traits": [
+        "independent-verification",
+        "regression-detection"
+      ],
+      "trigger_capabilities": []
+    },
+    {
+      "workload_id": "code-review",
+      "workload_kind": "code-review",
+      "trust_role": "verifier-agent",
+      "specialization_profile_id": "code-review-agent",
+      "fixture_policy": "sanitized-derived",
+      "benchmark_dimensions": [
+        "defect-detection",
+        "evidence-grounding",
+        "severity-calibration",
+        "latency"
+      ],
+      "evaluation_traits": [
+        "risk-analysis",
+        "compatibility-review"
+      ],
+      "trigger_capabilities": []
+    },
+    {
+      "workload_id": "database-analysis",
+      "workload_kind": "database-analysis",
+      "trust_role": "read-only-worker-agent",
+      "specialization_profile_id": "database-analysis-agent",
+      "fixture_policy": "local-only",
+      "benchmark_dimensions": [
+        "correctness",
+        "dependency-grounding",
+        "safety",
+        "latency"
+      ],
+      "evaluation_traits": [
+        "schema-reasoning",
+        "dependency-analysis"
+      ],
+      "trigger_capabilities": [
+        "oracle",
+        "oracle-metadata",
+        "plsql",
+        "postgresql"
+      ]
+    },
+    {
+      "workload_id": "ui-analysis",
+      "workload_kind": "analysis",
+      "trust_role": "read-only-worker-agent",
+      "specialization_profile_id": "ui-analysis-agent",
+      "fixture_policy": "sanitized-derived",
+      "benchmark_dimensions": [
+        "correctness",
+        "evidence-grounding",
+        "usability-risk",
+        "latency"
+      ],
+      "evaluation_traits": [
+        "component-reasoning",
+        "user-flow-analysis"
+      ],
+      "trigger_capabilities": [
+        "frontend",
+        "react",
+        "nextjs"
+      ]
+    },
+    {
+      "workload_id": "security-review",
+      "workload_kind": "security-review",
+      "trust_role": "verifier-agent",
+      "specialization_profile_id": "security-review-agent",
+      "fixture_policy": "synthetic-only",
+      "benchmark_dimensions": [
+        "defect-detection",
+        "false-positive-control",
+        "safety",
+        "latency"
+      ],
+      "evaluation_traits": [
+        "threat-analysis",
+        "secret-boundary-awareness"
+      ],
+      "trigger_capabilities": [
+        "api",
+        "backend",
+        "database-development"
+      ]
+    },
+    {
+      "workload_id": "delivery-analysis",
+      "workload_kind": "analysis",
+      "trust_role": "read-only-worker-agent",
+      "specialization_profile_id": "delivery-analysis-agent",
+      "fixture_policy": "sanitized-derived",
+      "benchmark_dimensions": [
+        "correctness",
+        "evidence-grounding",
+        "operational-risk",
+        "latency"
+      ],
+      "evaluation_traits": [
+        "pipeline-reasoning",
+        "deployment-safety"
+      ],
+      "trigger_capabilities": [
+        "azure-pipelines",
+        "bitbucket-pipelines",
+        "container",
+        "container-compose",
+        "github-actions",
+        "gitlab-ci",
+        "jenkins",
+        "kubernetes"
+      ]
+    },
+    {
+      "workload_id": "embedding-evaluation",
+      "workload_kind": "embedding",
+      "trust_role": "verifier-agent",
+      "specialization_profile_id": "retrieval-evaluation-agent",
+      "fixture_policy": "sanitized-derived",
+      "benchmark_dimensions": [
+        "recall-at-k",
+        "mrr",
+        "ndcg",
+        "latency"
+      ],
+      "evaluation_traits": [
+        "semantic-retrieval",
+        "ranking-quality"
+      ],
+      "trigger_capabilities": []
+    }
+  ],
+  "invariants": {
+    "offline_only": true,
+    "source_content_persisted": false,
+    "secret_values_persisted": false,
+    "absolute_paths_persisted": false,
+    "grants_authority": false
+  }
+}

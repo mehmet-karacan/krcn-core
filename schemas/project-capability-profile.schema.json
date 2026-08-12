@@ -1,0 +1,490 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:project-capability-profile:1",
+  "title": "KRCN Core evidence-bound project capability profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "project_id",
+    "profile_revision",
+    "binding_id",
+    "binding_revision",
+    "source_digest",
+    "profiler",
+    "modules",
+    "evidence_catalog",
+    "dimensions",
+    "workload_profiles",
+    "limitations",
+    "coverage_state",
+    "authoritative_for_model_assignment",
+    "evidence_digest",
+    "capability_digest",
+    "profile_digest",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/project-capability-profile.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "profile_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "binding_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "binding_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "source_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "profiler": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profiler_id",
+        "profiler_revision",
+        "policy_digest"
+      ],
+      "properties": {
+        "profiler_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "profiler_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policy_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "modules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "module_id",
+          "relative_path",
+          "manifest_evidence_refs"
+        ],
+        "properties": {
+          "module_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "relative_path": {
+            "$ref": "#/$defs/portableRelativePath"
+          },
+          "manifest_evidence_refs": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^evidence-[a-f0-9]{64}$"
+            }
+          }
+        }
+      }
+    },
+    "evidence_catalog": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence_id",
+          "marker_id",
+          "evidence_family",
+          "kind",
+          "relative_path",
+          "file_digest",
+          "scope"
+        ],
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "pattern": "^evidence-[a-f0-9]{64}$"
+          },
+          "marker_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "evidence_family": {
+            "enum": [
+              "manifest",
+              "path",
+              "source-marker",
+              "sql-marker",
+              "pipeline",
+              "container",
+              "structure"
+            ]
+          },
+          "kind": {
+            "enum": [
+              "manifest",
+              "project-descriptor",
+              "test-marker",
+              "pipeline",
+              "container",
+              "database-marker",
+              "quality-marker",
+              "source-structure"
+            ]
+          },
+          "relative_path": {
+            "$ref": "#/$defs/portableRelativePath"
+          },
+          "file_digest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "scope": {
+            "enum": [
+              "production",
+              "test",
+              "migration",
+              "ci",
+              "example",
+              "fixture",
+              "documentation"
+            ]
+          },
+          "line_start": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "line_end": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "technologies",
+        "frameworks",
+        "architecture",
+        "databases",
+        "testing",
+        "build",
+        "delivery",
+        "quality"
+      ],
+      "properties": {
+        "technologies": {
+          "$ref": "#/$defs/signals"
+        },
+        "frameworks": {
+          "$ref": "#/$defs/signals"
+        },
+        "architecture": {
+          "$ref": "#/$defs/signals"
+        },
+        "databases": {
+          "$ref": "#/$defs/signals"
+        },
+        "testing": {
+          "$ref": "#/$defs/signals"
+        },
+        "build": {
+          "$ref": "#/$defs/signals"
+        },
+        "delivery": {
+          "$ref": "#/$defs/signals"
+        },
+        "quality": {
+          "$ref": "#/$defs/signals"
+        }
+      }
+    },
+    "workload_profiles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "workload_id",
+          "workload_kind",
+          "trust_role",
+          "specialization_profile_id",
+          "scope_refs",
+          "required_capability_refs",
+          "context_evidence_refs",
+          "benchmark_dimensions",
+          "evaluation_traits",
+          "fixture_policy",
+          "workload_digest"
+        ],
+        "properties": {
+          "workload_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "workload_kind": {
+            "enum": [
+              "analysis",
+              "architecture",
+              "implementation",
+              "verification",
+              "code-review",
+              "database-analysis",
+              "security-review",
+              "performance-analysis",
+              "embedding",
+              "reranking"
+            ]
+          },
+          "trust_role": {
+            "enum": [
+              "read-only-worker-agent",
+              "worker-agent",
+              "verifier-agent"
+            ]
+          },
+          "specialization_profile_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "scope_refs": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            }
+          },
+          "required_capability_refs": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            }
+          },
+          "context_evidence_refs": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^evidence-[a-f0-9]{64}$"
+            }
+          },
+          "benchmark_dimensions": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            }
+          },
+          "evaluation_traits": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            }
+          },
+          "fixture_policy": {
+            "enum": [
+              "synthetic-only",
+              "sanitized-derived",
+              "local-only"
+            ]
+          },
+          "workload_digest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      }
+    },
+    "limitations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "discovery_skipped",
+        "sensitive_content_skipped",
+        "oversized_content_skipped",
+        "unreadable_content_skipped",
+        "invalid_content_skipped",
+        "inspection_budget_skipped",
+        "evidence_limit_skipped"
+      ],
+      "properties": {
+        "discovery_skipped": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sensitive_content_skipped": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "oversized_content_skipped": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unreadable_content_skipped": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "invalid_content_skipped": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "inspection_budget_skipped": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "evidence_limit_skipped": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "coverage_state": {
+      "enum": [
+        "complete",
+        "partial-safe"
+      ]
+    },
+    "authoritative_for_model_assignment": {
+      "type": "boolean"
+    },
+    "evidence_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "capability_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "profile_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_content_included",
+        "sensitive_values_included",
+        "absolute_paths_included",
+        "network_effect_performed",
+        "grants_authority"
+      ],
+      "properties": {
+        "source_content_included": {
+          "const": false
+        },
+        "sensitive_values_included": {
+          "const": false
+        },
+        "absolute_paths_included": {
+          "const": false
+        },
+        "network_effect_performed": {
+          "const": false
+        },
+        "grants_authority": {
+          "const": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "portableRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*:)(?!.*\\\\)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\u0000-\\u001F\\u007F]+$"
+    },
+    "signals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "capability_id",
+          "name",
+          "confidence",
+          "confidence_band",
+          "detection_method",
+          "module_refs",
+          "evidence_refs"
+        ],
+        "properties": {
+          "capability_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "confidence_band": {
+            "enum": [
+              "medium",
+              "high",
+              "confirmed"
+            ]
+          },
+          "detection_method": {
+            "enum": [
+              "explicit-marker",
+              "structural-inference",
+              "multi-signal-inference"
+            ]
+          },
+          "module_refs": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            }
+          },
+          "evidence_refs": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^evidence-[a-f0-9]{64}$"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -74,6 +74,10 @@ REQUIRED_CANONICAL_KEYS = {
     "model_routing_policy_schema",
     "model_route_selection_schema",
     "model_routing_boundary",
+    "project_capability_profiler_policy",
+    "project_capability_profiler_policy_schema",
+    "project_capability_profile_schema",
+    "project_capability_profile_boundary",
     "remote_embedding_providers",
     "import_policy",
 }

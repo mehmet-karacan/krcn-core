@@ -16,6 +16,7 @@ from krcn_core.local_store import (  # noqa: E402
     LocalWorkspaceStore,
     RevisionConflictError,
 )
+from krcn_core.information_records import payload_digest  # noqa: E402
 from krcn_core.mutation_gate import (  # noqa: E402
     ApprovalEvidence,
     DryRunEvidence,
@@ -246,6 +247,45 @@ class LocalWorkspaceStoreTests(unittest.TestCase):
         )
         user_data = next(item for item in manifest["classes"] if item["id"] == "user-data")
         self.assertIn(".krcn/workspaces/**", user_data["paths"])
+
+    def test_regular_knowledge_write_rejects_a_structured_project_profile(self) -> None:
+        content = {
+            "title": "Unsafe profile carrier",
+            "text": "Ordinary knowledge",
+            "keywords": [],
+            "aliases": [],
+            "profile": {"source_content": "must not be persisted"},
+        }
+        payload = {
+            "schema_ref": "schemas/information-record.schema.json",
+            "schema_version": 1,
+            "record_id": "ordinary-knowledge",
+            "information_class": "knowledge",
+            "ownership": "user-data",
+            "subject_ref": "project:sample/ordinary",
+            "revision": 1,
+            "content_digest": payload_digest(content),
+            "provenance": {
+                "kind": "explicit-user",
+                "evidence": [
+                    {
+                        "source_ref": "source:sample",
+                        "revision_id": "rev-1",
+                        "digest": "a" * 64,
+                        "relation": "supports",
+                    }
+                ],
+            },
+            "lifecycle": "current",
+            "payload": content,
+        }
+        with self.assertRaisesRegex(LocalStoreError, "capability record identity"):
+            self.store.prepare_put(
+                "knowledge",
+                "ordinary-knowledge",
+                payload,
+                expected_revision=0,
+            )
 
 
 if __name__ == "__main__":

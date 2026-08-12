@@ -262,6 +262,32 @@ def _validate_record_identity(
                 validate_memory_record(information_record)
             except InformationRecordError as exc:
                 raise LocalStoreError(str(exc)) from exc
+        if record_type == "knowledge":
+            has_capability_identity = bool(
+                record_id.endswith("-capabilities")
+                and information_record.subject_ref
+                == f"project:{record_id.removesuffix('-capabilities')}/capabilities"
+            )
+            profile = information_record.payload.get("profile")
+            if profile is not None and not has_capability_identity:
+                raise LocalStoreError(
+                    "structured project profile requires the capability record identity"
+                )
+            if profile is not None:
+                from .project_capability_profile import (
+                    parse_project_capability_profile,
+                )
+
+                try:
+                    parsed_profile = parse_project_capability_profile(profile)
+                except ValueError as exc:
+                    raise LocalStoreError(str(exc)) from exc
+                if parsed_profile["project_id"] != record_id.removesuffix(
+                    "-capabilities"
+                ):
+                    raise LocalStoreError(
+                        "structured project profile identity is inconsistent"
+                    )
         return information_record.revision
     return None
 

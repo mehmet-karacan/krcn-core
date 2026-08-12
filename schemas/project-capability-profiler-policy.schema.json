@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:project-capability-profiler-policy:1",
+  "title": "KRCN Core deterministic project capability profiler policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "profiler_id",
+    "profiler_revision",
+    "maximum_inspected_file_bytes",
+    "maximum_inspected_files",
+    "maximum_total_inspected_bytes",
+    "maximum_evidence_items",
+    "minimum_persisted_confidence",
+    "confidence_bands",
+    "capability_catalog",
+    "workload_catalog",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/project-capability-profiler-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "profiler_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "profiler_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "maximum_inspected_file_bytes": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 1048576
+    },
+    "maximum_inspected_files": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+    },
+    "maximum_total_inspected_bytes": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 1073741824
+    },
+    "maximum_evidence_items": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000
+    },
+    "minimum_persisted_confidence": {
+      "type": "number",
+      "minimum": 0.5,
+      "maximum": 1
+    },
+    "confidence_bands": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "confirmed",
+        "high",
+        "medium"
+      ],
+      "properties": {
+        "confirmed": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "high": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "medium": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "capability_catalog": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "capability_id",
+          "category",
+          "name"
+        ],
+        "properties": {
+          "capability_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "category": {
+            "enum": [
+              "technologies",
+              "frameworks",
+              "architecture",
+              "databases",
+              "testing",
+              "build",
+              "delivery",
+              "quality"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        }
+      }
+    },
+    "workload_catalog": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "workload_id",
+          "workload_kind",
+          "trust_role",
+          "specialization_profile_id",
+          "fixture_policy",
+          "benchmark_dimensions",
+          "evaluation_traits",
+          "trigger_capabilities"
+        ],
+        "properties": {
+          "workload_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "workload_kind": {
+            "enum": [
+              "analysis",
+              "architecture",
+              "implementation",
+              "verification",
+              "code-review",
+              "database-analysis",
+              "security-review",
+              "performance-analysis",
+              "embedding",
+              "reranking"
+            ]
+          },
+          "trust_role": {
+            "enum": [
+              "read-only-worker-agent",
+              "worker-agent",
+              "verifier-agent"
+            ]
+          },
+          "specialization_profile_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "fixture_policy": {
+            "enum": [
+              "synthetic-only",
+              "sanitized-derived",
+              "local-only"
+            ]
+          },
+          "benchmark_dimensions": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            }
+          },
+          "evaluation_traits": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            }
+          },
+          "trigger_capabilities": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            }
+          }
+        }
+      }
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "offline_only",
+        "source_content_persisted",
+        "secret_values_persisted",
+        "absolute_paths_persisted",
+        "grants_authority"
+      ],
+      "properties": {
+        "offline_only": {
+          "const": true
+        },
+        "source_content_persisted": {
+          "const": false
+        },
+        "secret_values_persisted": {
+          "const": false
+        },
+        "absolute_paths_persisted": {
+          "const": false
+        },
+        "grants_authority": {
+          "const": false
+        }
+      }
+    }
+  }
+}

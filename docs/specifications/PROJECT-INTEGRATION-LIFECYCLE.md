@@ -22,7 +22,19 @@ Every knowledge record binds to the exact authoritative source revision and dige
 
 ## Capability profile
 
-Planner, read-only worker, verifier, and technology-relevant skill records must already be active in the capability registry. Selection grants no authority. Policy, ownership, mutation, adapter, and provider gates remain authoritative.
+The capability profile has two separate layers.
+
+The first layer selects active trust roles and technology skills from the capability registry. Planner, read-only worker, verifier, and technology-relevant skill records must already be active.
+
+The second layer derives a project and module scoped semantic profile. It identifies supported technologies, frameworks, architecture styles, databases, testing, build, delivery, and quality markers. It also creates workload requirements for analysis, architecture, implementation, verification, code review, database analysis, security review, delivery analysis, and retrieval evaluation.
+
+Every semantic finding is bound to a discovery file digest and a portable relative path. Source content, excerpts, physical source roots, connection values, and sensitive values are not stored. Known manifests are parsed offline through allowlisted fields. Build tools, package managers, plugins, scripts, and project code are never executed by the profiler.
+
+The profile is stored inside the existing `<project-id>-capabilities` knowledge record. This preserves exact-plan approval, optimistic revision control, hybrid retrieval, project capsule export, and backward compatibility. An older shallow capability record is treated as one missing integration stage and is upgraded only through an approved repair plan.
+
+The semantic profile does not select a model and does not grant authority. It is the deterministic input for later project-specific model health checks and micro benchmarks. Policy, ownership, mutation, adapter, database, and provider gates remain authoritative.
+
+The profile declares whether inspection coverage is complete. Any source candidate excluded because of sensitive content, invalid syntax, unreadable or oversized content, or inspection limits produces a safe partial profile that cannot authorize a later model assignment. Expected discovery exclusions such as Git internals remain telemetry and do not cause a fresh project to enter an endless repair cycle.
 
 ## Vector index
 

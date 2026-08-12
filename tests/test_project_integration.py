@@ -14,12 +14,19 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from krcn_core.application import (  # noqa: E402
+    ApplicationServiceError,
     KrcnApplicationService,
     ServiceRequest,
 )
 from krcn_core.hybrid_retrieval import hybrid_index_path  # noqa: E402
 from krcn_core.local_store import LocalWorkspaceStore  # noqa: E402
-from krcn_core.mutation_gate import OwnershipResolver  # noqa: E402
+from krcn_core.information_records import payload_digest  # noqa: E402
+from krcn_core.mutation_gate import (  # noqa: E402
+    ApprovalEvidence,
+    DryRunEvidence,
+    OwnershipResolver,
+    authorize_mutation,
+)
 from krcn_core.project_integration_state import (  # noqa: E402
     parse_project_integration_state,
 )
@@ -90,6 +97,18 @@ class CompleteProjectIntegrationTests(unittest.TestCase):
             )
         )
 
+    @staticmethod
+    def _authorize_record(plan):
+        return authorize_mutation(
+            plan.mutation,
+            dry_run=DryRunEvidence(plan.mutation.plan_id, verified=True),
+            approval=ApprovalEvidence(
+                plan.mutation.plan_id,
+                "synthetic-test-approval",
+                approved=True,
+            ),
+        )
+
     def test_new_project_integration_completes_every_stage_without_source_copy(self) -> None:
         before = source_snapshot(self.source)
         plan = self._plan()
@@ -116,6 +135,9 @@ class CompleteProjectIntegrationTests(unittest.TestCase):
         self.assertFalse(
             summary["source_code_index"]["source_content_persisted"]
         )
+        self.assertEqual("planned", summary["capability_profile"]["status"])
+        self.assertIn("analysis", summary["capability_profile"]["workload_ids"])
+        self.assertFalse(summary["capability_profile"]["paths_disclosed"])
         applied = self._apply(plan)
         self.assertEqual("applied", applied.status)
         self.assertTrue(applied.data["verified"])
@@ -123,6 +145,11 @@ class CompleteProjectIntegrationTests(unittest.TestCase):
         self.assertIsNotNone(self.store.read("projects", "complete-sample"))
         self.assertEqual(1, len(self.store.list_records("authoritative-sources")))
         self.assertEqual(4, len(self.store.list_records("knowledge")))
+        capability_record = self.store.read("knowledge", "complete-sample-capabilities")
+        self.assertEqual(
+            "schemas/project-capability-profile.schema.json",
+            capability_record.payload["payload"]["profile"]["schema_ref"],
+        )
         state = parse_project_integration_state(
             self.store.read("project-integrations", "complete-sample").payload
         )
@@ -152,6 +179,120 @@ class CompleteProjectIntegrationTests(unittest.TestCase):
             response.data["plan"]["scan"]["trigger"],
         )
         self.assertFalse(response.data["plan"]["scan"]["performed_during_plan"])
+
+    def test_blocked_git_metadata_does_not_cause_an_endless_repair_plan(self) -> None:
+        git_directory = self.source / ".git"
+        git_directory.mkdir()
+        (git_directory / "config").write_text(
+            "[core]\n\trepositoryformatversion = 0\n",
+            encoding="utf-8",
+        )
+        self._apply(self._plan())
+        capability_record = self.store.read(
+            "knowledge",
+            "complete-sample-capabilities",
+        )
+        self.assertGreater(
+            capability_record.payload["payload"]["profile"]["limitations"][
+                "discovery_skipped"
+            ],
+            0,
+        )
+        response = self.service.execute(
+            ServiceRequest(
+                "codex",
+                "project.integrate",
+                {"project_id": "complete-sample", "scan_mode": "automatic"},
+            )
+        )
+        self.assertEqual("ok", response.status)
+        self.assertTrue(response.data["no_op"])
+        self.assertEqual(
+            "freshness-current",
+            response.data["plan"]["scan"]["trigger"],
+        )
+
+    def test_legacy_shallow_capability_record_gets_one_approved_repair(self) -> None:
+        self._apply(self._plan())
+        current = self.store.read("knowledge", "complete-sample-capabilities")
+        legacy_payload = dict(current.payload)
+        legacy_content = {
+            key: value
+            for key, value in legacy_payload["payload"].items()
+            if key in {"title", "text", "keywords", "aliases"}
+        }
+        legacy_payload["revision"] = current.revision + 1
+        legacy_payload["payload"] = legacy_content
+        legacy_payload["content_digest"] = payload_digest(legacy_content)
+        downgrade = self.store.prepare_put(
+            "knowledge",
+            "complete-sample-capabilities",
+            legacy_payload,
+            expected_revision=current.revision,
+        )
+        self.store.apply_put(downgrade, self._authorize_record(downgrade))
+
+        repair = self.service.execute(
+            ServiceRequest(
+                "codex",
+                "project.integrate",
+                {"project_id": "complete-sample", "scan_mode": "automatic"},
+            )
+        )
+        self.assertEqual("planned", repair.status)
+        self.assertIn("capability-profile", repair.data["plan"]["missing_stages"])
+        self.assertEqual(
+            "missing-integration-stage",
+            repair.data["plan"]["scan"]["trigger"],
+        )
+        applied = self.service.execute(
+            ServiceRequest(
+                "codex",
+                "project.integrate",
+                {"project_id": "complete-sample", "scan_mode": "automatic"},
+                apply=True,
+                expected_plan_id=repair.data["plan"]["plan_id"],
+                approval_id="capability-profile-repair",
+            )
+        )
+        self.assertEqual("applied", applied.status)
+        final = self.service.execute(
+            ServiceRequest(
+                "codex",
+                "project.integrate",
+                {"project_id": "complete-sample", "scan_mode": "automatic"},
+            )
+        )
+        self.assertEqual("ok", final.status)
+        self.assertTrue(final.data["no_op"])
+
+    def test_source_change_before_apply_rejects_plan_without_writes(self) -> None:
+        plan = self._plan()
+        (self.source / "package.json").write_text(
+            json.dumps({"name": "changed-before-apply"}),
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(ApplicationServiceError, "exact plan id"):
+            self._apply(plan)
+        self.assertIsNone(self.store.read("knowledge", "complete-sample-capabilities"))
+        self.assertIsNone(self.store.read("project-integrations", "complete-sample"))
+
+    def test_resume_exposes_compact_current_profile_without_paths(self) -> None:
+        self._apply(self._plan())
+        response = self.service.execute(
+            ServiceRequest(
+                "codex",
+                "project.resume",
+                {
+                    "working_directory": str(self.source),
+                    "request_text": "Nerede kaldık?",
+                },
+            )
+        )
+        profile = response.data["resume"]["integration"]["capability_profile"]
+        self.assertEqual("current", profile["status"])
+        self.assertFalse(profile["paths_disclosed"])
+        self.assertNotIn(str(self.source), json.dumps(response.as_dict()))
 
     def test_missing_vector_index_is_repaired_without_unneeded_rescan(self) -> None:
         self._apply(self._plan())

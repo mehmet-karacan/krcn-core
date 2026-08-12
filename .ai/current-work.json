@@ -2,9 +2,9 @@
   "schema_ref": "schemas/current-work.schema.json",
   "schema_version": 1,
   "phase_id": "phase-16",
-  "workstream_id": "real-projects-and-work-history",
+  "workstream_id": "project-aware-agent-orchestration",
   "status": "active",
-  "goal": "Integrate six real projects and migrate high-confidence historical work without copying sources or weakening policy",
+  "goal": "Qualify models per project and workload, enforce evidence-bound subagent orchestration, pilot gpu-fusion, then integrate six real projects and migrate high-confidence historical work",
   "plan_ref": "docs/plans/PLAN-018-GERCEK-PROJELER-VE-GOREV-MIRASI.md",
   "progress_refs": [
     "docs/progress/PHASE-1-FOUNDATION.md",
@@ -96,12 +96,14 @@
     "docs/progress/PHASE-13-COMPLETION.md",
     "docs/progress/PHASE-14-COMPLETION.md",
     "docs/progress/PHASE-15-COMPLETION.md",
-    "docs/progress/PHASE-16-READ-ONLY-AUDIT.md"
+    "docs/progress/PHASE-16-READ-ONLY-AUDIT.md",
+    "docs/progress/PHASE-16-PROJECT-CAPABILITY-PROFILE.md"
   ],
   "next_actions": [
-    "verify source scanning hardening across the six external projects",
-    "prepare exact project integration and high-confidence Work Graph plans",
-    "request explicit approval before applying any user-data plan"
+    "implement credential-free model inventory and synthetic health checks",
+    "build project-specific workload benchmarks and model assignments",
+    "enforce coordinator delegation through the runtime queue",
+    "pilot the complete architecture on gpu-fusion before integrating six external projects"
   ],
   "baseline_commit": "ae9e291",
   "approval_gates": {

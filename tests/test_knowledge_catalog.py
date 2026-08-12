@@ -206,6 +206,16 @@ class KnowledgeCatalogTests(unittest.TestCase):
         with self.assertRaisesRegex(KnowledgeCatalogError, "record is invalid"):
             build_information_catalog([source_binding()], [record])
 
+    def test_regular_knowledge_record_cannot_smuggle_a_structured_profile(self) -> None:
+        payload = knowledge_record().as_payload()
+        content = dict(payload["payload"])
+        content["profile"] = {"source_content": "must not be persisted"}
+        payload["payload"] = content
+        payload["content_digest"] = payload_digest(content)
+        record = parse_information_record(payload)
+        with self.assertRaisesRegex(KnowledgeCatalogError, "payload fields"):
+            build_information_catalog([source_binding()], [record])
+
 
 class CatalogPersistenceTests(unittest.TestCase):
     def setUp(self) -> None:

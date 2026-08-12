@@ -12,11 +12,18 @@ from .information_records import parse_information_record, record_is_stale
 from .local_store import LocalWorkspaceStore, StoredRecord
 from .orchestration_state import parse_orchestration_handoff
 from .project_integration_state import parse_project_integration_state
+from .project_capability_profile import (
+    ProjectCapabilityProfileError,
+    parse_project_capability_profile,
+    project_capability_public_summary,
+)
 from .source_code_index import source_code_index_summary
 from .source_bindings import SourceBinding, parse_source_binding
 from .source_state import parse_source_state
 from .work_graph import ACTIVE_STATUSES, parse_work_item
 from .agent_runtime import AgentRuntimeQueue, load_scheduler_policy
+from .discovery import DiscoveryResult
+from .project_capability_profile import project_capability_profile_is_current
 
 
 ACTIVE_TASK_STATUSES = {
@@ -361,6 +368,8 @@ def _work_summary(
 def _integration_summary(
     store: LocalWorkspaceStore,
     project_id: str,
+    repo_root: Path | None = None,
+    binding: SourceBinding | None = None,
 ) -> dict[str, object]:
     stored = store.read("project-integrations", project_id)
     modified = store.record_mtime_ns("project-integrations", project_id)
@@ -374,12 +383,65 @@ def _integration_summary(
             "stages": {},
             "role_refs": [],
             "skill_refs": [],
+            "capability_profile": {"status": "missing", "paths_disclosed": False},
         }
     state = parse_project_integration_state(stored.payload)
+    capability_summary: dict[str, object] = {
+        "status": "missing",
+        "paths_disclosed": False,
+    }
+    capability_record = store.read("knowledge", f"{project_id}-capabilities")
+    if capability_record is not None:
+        try:
+            information = parse_information_record(capability_record.payload)
+            profile = parse_project_capability_profile(
+                information.payload.get("profile")
+            )
+            profile_current = False
+            if repo_root is not None and binding is not None:
+                source_state_record = store.read("source-states", binding.binding_id)
+                source_state = (
+                    parse_source_state(source_state_record.payload)
+                    if source_state_record
+                    else None
+                )
+                if source_state is not None:
+                    discovery = DiscoveryResult(
+                        binding.binding_id,
+                        binding.source_id,
+                        binding.revision,
+                        source_state.root_digest,
+                        source_state.files,
+                        source_state.technologies,
+                        {
+                            "blocked": 0,
+                            "symlink": 0,
+                            "too_large": 0,
+                            "unstable": 0,
+                            "unreadable": 0,
+                        },
+                    )
+                    profile_current = project_capability_profile_is_current(
+                        repo_root,
+                        profile,
+                        project_id,
+                        binding,
+                        discovery,
+                    )
+            capability_summary = {
+                "status": "current" if profile_current else "stale",
+                **project_capability_public_summary(profile),
+            }
+        except (ProjectCapabilityProfileError, ValueError):
+            capability_summary = {"status": "stale", "paths_disclosed": False}
     last_scan = datetime.fromtimestamp(modified / 1_000_000_000, timezone.utc)
     next_scan = last_scan + timedelta(hours=state.freshness_hours)
     return {
-        "status": "complete",
+        "status": (
+            "complete"
+            if capability_summary["status"] == "current"
+            else "incomplete"
+        ),
         "last_scan_mode": state.scan_mode,
         "last_scan_reason": state.scan_reason,
         "scan_sequence": state.scan_sequence,
@@ -391,6 +453,7 @@ def _integration_summary(
         "stages": dict(state.stages),
         "role_refs": list(state.role_refs),
         "skill_refs": list(state.skill_refs),
+        "capability_profile": capability_summary,
     }
 
 
@@ -410,7 +473,12 @@ def build_project_resume_summary(
         binding_ids,
         repo_root,
     )
-    integration = _integration_summary(store, match.project.record_id)
+    integration = _integration_summary(
+        store,
+        match.project.record_id,
+        repo_root,
+        match.bindings[0] if len(match.bindings) == 1 else None,
+    )
     source_code_index: dict[str, object] = {
         "status": "unknown",
         "project_id": match.project.record_id,
@@ -436,6 +504,8 @@ def build_project_resume_summary(
         next_actions.append("extract-project-information")
     if integration["status"] != "complete":
         next_actions.append("complete-project-integration")
+        if integration["capability_profile"]["status"] != "current":
+            next_actions.append("refresh-project-capability-profile")
     elif integration["automatic_scan_due"]:
         next_actions.append("refresh-project-integration")
     if source_code_index["status"] not in {"current", "unknown"}:

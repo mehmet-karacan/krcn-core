@@ -200,8 +200,23 @@ def _authoritative_metadata(record: InformationRecord) -> AuthoritativeSourceMet
 
 def _knowledge_metadata(record: InformationRecord) -> KnowledgeMetadata:
     expected = {"title", "text", "keywords", "aliases"}
-    if set(record.payload) != expected:
+    capability_identity = bool(
+        record.record_id.endswith("-capabilities")
+        and record.subject_ref
+        == f"project:{record.record_id.removesuffix('-capabilities')}/capabilities"
+    )
+    allowed = expected | ({"profile"} if capability_identity else set())
+    if not expected.issubset(record.payload) or not set(record.payload).issubset(allowed):
         raise KnowledgeCatalogError("knowledge payload fields are invalid")
+    if capability_identity and "profile" in record.payload:
+        from .project_capability_profile import parse_project_capability_profile
+
+        try:
+            profile = parse_project_capability_profile(record.payload.get("profile"))
+        except ValueError as exc:
+            raise KnowledgeCatalogError(str(exc)) from exc
+        if profile["project_id"] != record.record_id.removesuffix("-capabilities"):
+            raise KnowledgeCatalogError("project capability profile identity is invalid")
     return KnowledgeMetadata(
         title=_non_empty_text(record.payload.get("title"), "title"),
         text=_non_empty_text(record.payload.get("text"), "text"),

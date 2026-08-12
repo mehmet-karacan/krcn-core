@@ -47,6 +47,13 @@ from .project_integration_state import (
 from .project_learning import prepare_project_learning
 from .project_learning_intent import parse_project_learning_intent
 from .project_metadata import portable_slug
+from .project_capability_profile import (
+    ProjectCapabilityProfileError,
+    build_project_capability_profile,
+    parse_project_capability_profile,
+    project_capability_profile_is_current,
+    project_capability_public_summary,
+)
 from .source_bindings import SourceBinding, parse_source_binding
 from .source_code_index import (
     LOCAL_SOURCE_CODE_ADAPTER,
@@ -108,6 +115,7 @@ class ProjectIntegrationPlan:
     missing_stages: tuple[str, ...]
     role_refs: tuple[str, ...]
     skill_refs: tuple[str, ...]
+    capability_profile: Mapping[str, object]
     knowledge_digest: str
     record_plans: tuple[RecordWritePlan, ...]
     future_catalog: InformationCatalog
@@ -156,10 +164,15 @@ class ProjectIntegrationPlan:
             "missing_stages": list(self.missing_stages),
             "stages": stages,
             "capability_profile": {
+                "status": (
+                    "planned"
+                    if "capability-profile" in self.missing_stages
+                    else "current"
+                ),
                 "role_refs": list(self.role_refs),
                 "skill_refs": list(self.skill_refs),
                 "selected_from_registry": True,
-                "grants_authority": False,
+                **project_capability_public_summary(self.capability_profile),
             },
             "knowledge": {
                 "planned_record_count": sum(
@@ -475,6 +488,7 @@ def _knowledge_contents(
     modules: tuple[dict[str, object], ...],
     role_refs: tuple[str, ...],
     skill_refs: tuple[str, ...],
+    capability_profile: Mapping[str, object],
 ) -> dict[str, dict[str, object]]:
     kinds = Counter(item.kind for item in discovery.files)
     extensions = Counter(
@@ -488,6 +502,15 @@ def _knowledge_contents(
     module_names = ", ".join(str(item["name"]) for item in modules) or "root"
     workflows = _workflow_names(discovery)
     workflow_text = ", ".join(workflows) or "No standard workflow marker was identified"
+    capability_summary = project_capability_public_summary(capability_profile)
+    capability_ids = sorted(
+        {
+            capability
+            for values in capability_summary["categories"].values()
+            for capability in values
+        }
+    )
+    workload_ids = list(capability_summary["workload_ids"])
     return {
         "overview": {
             "title": f"{project_name} project overview",
@@ -515,10 +538,22 @@ def _knowledge_contents(
             "title": f"{project_name} capability profile",
             "text": (
                 "Selected roles: " + ", ".join(role_refs) + ". Selected skills: "
-                + ", ".join(skill_refs) + ". Selection grants no additional authority."
+                + ", ".join(skill_refs) + ". Detected capabilities: "
+                + (", ".join(capability_ids) or "none")
+                + ". Workload profiles: "
+                + ", ".join(workload_ids)
+                + ". Selection grants no additional authority."
             ),
-            "keywords": [project_id, "roles", "skills", "capabilities"],
+            "keywords": [
+                project_id,
+                "roles",
+                "skills",
+                "capabilities",
+                *capability_ids,
+                *workload_ids,
+            ],
             "aliases": [f"{project_name} skills", f"{project_name} roles"],
+            "profile": dict(capability_profile),
         },
     }
 
@@ -671,16 +706,18 @@ def _knowledge_digest(records: tuple[InformationRecord, ...]) -> str:
 
 
 def _integration_missing_stages(
+    repo_root: Path,
     store: LocalWorkspaceStore,
     project_id: str,
-    binding_id: str,
+    binding: SourceBinding,
+    discovery: DiscoveryResult | None,
     role_refs: tuple[str, ...] | None,
     skill_refs: tuple[str, ...] | None,
 ) -> list[str]:
     missing = []
-    if store.read("projects", project_id) is None or store.read("source-bindings", binding_id) is None:
+    if store.read("projects", project_id) is None or store.read("source-bindings", binding.binding_id) is None:
         missing.append("registration")
-    if store.read("source-states", binding_id) is None:
+    if store.read("source-states", binding.binding_id) is None:
         missing.append("discovery")
     required_information = (
         ("authoritative-sources", f"{project_id}-source"),
@@ -688,6 +725,22 @@ def _integration_missing_stages(
     )
     if any(store.read(collection, record_id) is None for collection, record_id in required_information):
         missing.append("knowledge")
+    capability_record = store.read("knowledge", f"{project_id}-capabilities")
+    capability_current = False
+    if capability_record is not None and discovery is not None:
+        try:
+            information = parse_information_record(capability_record.payload)
+            capability_current = project_capability_profile_is_current(
+                repo_root,
+                information.payload.get("profile"),
+                project_id,
+                binding,
+                discovery,
+            )
+        except (ProjectCapabilityProfileError, ValueError):
+            capability_current = False
+    if not capability_current:
+        missing.append("capability-profile")
     state_record = store.read("project-integrations", project_id)
     if state_record is None:
         missing.extend(("capability-profile", "verification"))
@@ -773,7 +826,13 @@ def prepare_project_integration(
                 previous_state.technologies if previous_state else (),
             )
             missing_stages = _integration_missing_stages(
-                store, project_id, binding.binding_id, role_refs, skill_refs
+                repo_root,
+                store,
+                project_id,
+                binding,
+                _stored_discovery(binding, previous_state) if previous_state else None,
+                role_refs,
+                skill_refs,
             )
             fresh, last_scan, next_scan = _freshness(
                 store, project_id, policy.freshness_hours, current_time
@@ -822,7 +881,13 @@ def prepare_project_integration(
             previous_state.technologies if previous_state else (),
         )
         missing_stages = _integration_missing_stages(
-            store, project_id, binding.binding_id, role_refs, skill_refs
+            repo_root,
+            store,
+            project_id,
+            binding,
+            _stored_discovery(binding, previous_state) if previous_state else None,
+            role_refs,
+            skill_refs,
         )
         fresh, last_scan, next_scan = _freshness(
             store, project_id, policy.freshness_hours, current_time
@@ -851,7 +916,13 @@ def prepare_project_integration(
     role_refs, skill_refs = _capability_profile(repo_root, discovery.technologies)
     if already_registered:
         missing_stages = _integration_missing_stages(
-            store, project_id, binding.binding_id, role_refs, skill_refs
+            repo_root,
+            store,
+            project_id,
+            binding,
+            discovery,
+            role_refs,
+            skill_refs,
         )
     modules = _modules(project_id, binding.binding_id, discovery)
     desired_project = _project_payload(
@@ -898,6 +969,38 @@ def prepare_project_integration(
     source_record = _source_record(
         store, project_id, project_name, binding, discovery
     )
+    current_capability_record = store.read("knowledge", f"{project_id}-capabilities")
+    stored_capability_profile: Mapping[str, object] | None = None
+    if current_capability_record is not None:
+        try:
+            current_capability_information = parse_information_record(
+                current_capability_record.payload
+            )
+            candidate_profile = current_capability_information.payload.get("profile")
+            if project_capability_profile_is_current(
+                repo_root,
+                candidate_profile,
+                project_id,
+                binding,
+                discovery,
+            ):
+                stored_capability_profile = parse_project_capability_profile(
+                    candidate_profile,
+                    discovery=discovery,
+                )
+        except (ProjectCapabilityProfileError, ValueError):
+            stored_capability_profile = None
+    capability_profile = (
+        stored_capability_profile
+        if stored_capability_profile is not None and not scan_required
+        else build_project_capability_profile(
+            repo_root,
+            source_root,
+            project_id,
+            binding,
+            discovery,
+        )
+    )
     contents = _knowledge_contents(
         project_id,
         project_name,
@@ -905,6 +1008,7 @@ def prepare_project_integration(
         modules,
         role_refs,
         skill_refs,
+        capability_profile,
     )
     knowledge_records = _knowledge_records(
         store, project_id, source_record, contents
@@ -1027,6 +1131,7 @@ def prepare_project_integration(
             source_code_index_plan.plan_id if source_code_index_plan else None
         ),
         "knowledge_digest": knowledge_digest,
+        "capability_profile_digest": capability_profile["profile_digest"],
     }
     plan_id = hashlib.sha256(
         json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -1049,6 +1154,7 @@ def prepare_project_integration(
         missing_stages=tuple(missing_stages),
         role_refs=role_refs,
         skill_refs=skill_refs,
+        capability_profile=capability_profile,
         knowledge_digest=knowledge_digest,
         record_plans=tuple(base_plans),
         future_catalog=future_catalog,
@@ -1077,6 +1183,15 @@ def apply_project_integration(
         current = _discover(repo_root, store, plan.binding)
         if current.root_digest != plan.discovery.root_digest:
             raise ProjectIntegrationError("project integration plan is stale")
+    current_capability_profile = build_project_capability_profile(
+        repo_root,
+        plan.source_root,
+        plan.project_id,
+        plan.binding,
+        plan.discovery,
+    )
+    if current_capability_profile != plan.capability_profile:
+        raise ProjectIntegrationError("project capability profile plan is stale")
     for record_plan in plan.record_plans:
         store.assert_plan_current(record_plan)
         authorization = record_authorizations.get(record_plan.mutation.plan_id)
@@ -1150,6 +1265,27 @@ def apply_project_integration(
         raise ProjectIntegrationError("project source code index verification failed")
     if store.read("project-integrations", plan.project_id) is None:
         raise ProjectIntegrationError("project integration state verification failed")
+    capability_record = store.read(
+        "knowledge",
+        f"{plan.project_id}-capabilities",
+    )
+    if capability_record is None:
+        raise ProjectIntegrationError("project capability profile verification failed")
+    capability_information = parse_information_record(capability_record.payload)
+    if not project_capability_profile_is_current(
+        repo_root,
+        capability_information.payload.get("profile"),
+        plan.project_id,
+        plan.binding,
+        plan.discovery,
+    ):
+        raise ProjectIntegrationError("project capability profile verification failed")
+    applied_profile = parse_project_capability_profile(
+        capability_information.payload.get("profile"),
+        discovery=plan.discovery,
+    )
+    if applied_profile["profile_digest"] != plan.capability_profile["profile_digest"]:
+        raise ProjectIntegrationError("project capability profile changed during apply")
     return ProjectIntegrationResult(
         plan_id=plan.plan_id,
         records=records,

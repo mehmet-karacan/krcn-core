@@ -324,6 +324,14 @@ def validate_foundation(repo_root: Path) -> list[str]:
         load_model_routing_policy(repo_root)
     except (ImportError, ValueError) as exc:
         errors.append(f"model routing policy is invalid: {exc}")
+    try:
+        from .project_capability_profile import (
+            load_project_capability_profiler_policy,
+        )
+
+        load_project_capability_profiler_policy(repo_root)
+    except (ImportError, ValueError) as exc:
+        errors.append(f"project capability profiler policy is invalid: {exc}")
     return errors
 
 
