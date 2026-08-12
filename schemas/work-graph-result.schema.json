@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-graph-result:1",
+  "title": "KRCN Core authoritative work graph query result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "project_id",
+    "active_count",
+    "matched_count",
+    "items",
+    "authoritative_status",
+    "paths_disclosed",
+    "result_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-graph-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "active_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "matched_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "$ref": "work-item.schema.json"
+      }
+    },
+    "authoritative_status": {
+      "const": true
+    },
+    "paths_disclosed": {
+      "const": false
+    },
+    "result_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

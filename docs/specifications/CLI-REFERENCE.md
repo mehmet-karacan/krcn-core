@@ -128,6 +128,19 @@ krcn client bootstrap --apply --expected-plan <plan-id> --approval-id <approval-
 
 The first command is read-only. Apply backs up every existing client instruction file into the active ignored KRCN local-data area, preserves content outside the managed KRCN markers, and rolls back already changed client files if a later write fails.
 
+## Work Graph
+
+Prepare a JSON request containing the project and work item fields, inspect the exact plan, then apply the same plan with approval:
+
+```text
+krcn work put --request-file <work-item.json>
+krcn work put --request-file <work-item.json> --apply --expected-plan <plan-id> --approval-id <approval-id>
+krcn work query --request-file <work-query.json>
+krcn work history --request-file <work-history-query.json>
+```
+
+Work item JSON is authoritative. The local SQLite projection is rebuildable and is not used as the final source of lifecycle state.
+
 ## Knowledge, context, and memory
 
 Revision-aware knowledge catalog and the Phase 4 shared services:

@@ -41,6 +41,7 @@ from .dependency_retrieval import (
 from .source_bindings import parse_source_binding
 from .source_state import parse_source_state
 from .project_integration_state import parse_project_integration_state
+from .work_graph import parse_work_event, parse_work_item
 
 
 IDENTIFIER = re.compile(r"^[a-z][a-z0-9-]*$")
@@ -68,6 +69,8 @@ COLLECTIONS = {
         "user-data",
     ),
     "memory": ("record_id", "memory", "user-data"),
+    "work-items": ("work_item_id", "work-items", "user-data"),
+    "work-events": ("work_event_id", "work-events", "user-data"),
     "orchestration-states": (
         "state_id",
         "runtime/orchestration-states",
@@ -191,6 +194,16 @@ def _validate_record_identity(
         except DependencyRetrievalError as exc:
             raise LocalStoreError(str(exc)) from exc
         return relation.revision
+    if record_type == "work-items":
+        try:
+            return parse_work_item(payload).revision
+        except ValueError as exc:
+            raise LocalStoreError(str(exc)) from exc
+    if record_type == "work-events":
+        try:
+            return parse_work_event(payload).revision
+        except ValueError as exc:
+            raise LocalStoreError(str(exc)) from exc
     if record_type.startswith("orchestration-"):
         from .orchestration_state import (
             parse_orchestration_checkpoint,

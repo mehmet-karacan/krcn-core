@@ -15,6 +15,7 @@ from .project_integration_state import parse_project_integration_state
 from .source_code_index import source_code_index_summary
 from .source_bindings import SourceBinding, parse_source_binding
 from .source_state import parse_source_state
+from .work_graph import ACTIVE_STATUSES, parse_work_item
 
 
 ACTIVE_TASK_STATUSES = {
@@ -297,11 +298,40 @@ def _work_summary(
         }
         for handoff in handoffs[:5]
     ]
+    work_items = [
+        parse_work_item(record.payload)
+        for record in store.list_records("work-items")
+        if record.payload.get("project_id") == project_id
+    ]
+    work_items.sort(
+        key=lambda item: (
+            item.status not in ACTIVE_STATUSES,
+            item.work_item_id,
+        )
+    )
     return {
         "active_task_count": sum(
+            item.status in ACTIVE_STATUSES for item in work_items
+        ),
+        "historical_task_count": sum(
+            item.status not in ACTIVE_STATUSES for item in work_items
+        ),
+        "items": [
+            {
+                "work_item_id": item.work_item_id,
+                "work_type": item.work_type,
+                "title": item.title,
+                "status": item.status,
+                "revision": item.revision,
+                "evidence_count": len(item.evidence),
+            }
+            for item in work_items[:10]
+        ],
+        "active_orchestration_count": sum(
             handoff.status in ACTIVE_TASK_STATUSES for handoff in handoffs
         ),
         "handoffs": public_handoffs,
+        "authoritative_status": True,
     }
 
 

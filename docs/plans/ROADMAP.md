@@ -20,7 +20,7 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
 - Faz 9 tamamlandı. Sürekli ve eksik aşama onaran proje entegrasyonu hazır.
 - Faz 10 tamamlandı. İçeriksiz ve artımlı kaynak kod RAG indeksi hazır.
 - Faz 11 tamamlandı. Proje kapsülü ve yerleşim v2 hazır.
-- Faz 12 bekliyor. Work Graph ve görev ilişkileri hazırlanacak.
+- Faz 12 tamamlandı. Work Graph ve görev ilişkileri hazır.
 - Faz 13 bekliyor. Ajan kuyruğu ve çalışma zamanı hazırlanacak.
 - Faz 14 bekliyor. Oracle metadata RAG hazırlanacak.
 - Faz 15 bekliyor. Birleşik RAG ve üretim sağlamlaştırması yapılacak.

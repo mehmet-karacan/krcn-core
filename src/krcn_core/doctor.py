@@ -437,4 +437,21 @@ def run_doctor(
             "Phase 11 project-capsule layout v2 baseline is complete",
         )
     )
+    phase_twelve = load_json(repo_root / ".ai" / "phase-12-baseline.json")
+    phase_twelve_errors = []
+    if phase_twelve.get("status") != "ready":
+        phase_twelve_errors.append("Phase 12 baseline state")
+    if phase_twelve.get("completed_steps") != 7:
+        phase_twelve_errors.append("Phase 12 completed steps")
+    if not (
+        repo_root / "docs" / "progress" / "PHASE-12-COMPLETION.md"
+    ).is_file():
+        phase_twelve_errors.append("Phase 12 completion evidence")
+    checks.append(
+        _check(
+            "phase-twelve-baseline",
+            phase_twelve_errors,
+            "Phase 12 authoritative Work Graph baseline is complete",
+        )
+    )
     return tuple(checks)

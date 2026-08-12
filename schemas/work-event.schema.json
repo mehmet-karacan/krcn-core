@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-event:1",
+  "title": "KRCN Core append-only work item event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "work_event_id",
+    "project_id",
+    "work_item_id",
+    "from_status",
+    "to_status",
+    "item_revision",
+    "item_digest",
+    "provenance",
+    "revision",
+    "event_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-event.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "work_event_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "work_item_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "from_status": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "to_status": {
+      "type": "string"
+    },
+    "item_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "item_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "provenance": {
+      "type": "object"
+    },
+    "revision": {
+      "const": 1
+    },
+    "event_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

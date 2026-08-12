@@ -54,6 +54,10 @@ The output contains relative references and current work metadata. It must not c
 
 Layout v2 stores project-scoped KRCN records under `projects/<project-id>`. Read `docs/specifications/PROJECT-CAPSULE-LAYOUT.md` before changing user-home placement, moving project records, or transferring one project's KRCN context. Use the shared exact-plan portability operations instead of copying individual records.
 
+## Work Graph
+
+Project requests, defects, tasks, subtasks, decisions, relations, and delivery evidence live in the authoritative Work Graph. Use `work.query` or `project.resume` for current status and `work.history` for lifecycle history. SQLite and vector projections are rebuildable and must never override the JSON record.
+
 ## Client compatibility
 
 - Codex uses `AGENTS.md` as its repository instruction entrypoint.

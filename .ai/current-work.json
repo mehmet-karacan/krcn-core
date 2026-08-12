@@ -1,11 +1,11 @@
 {
   "schema_ref": "schemas/current-work.schema.json",
   "schema_version": 1,
-  "phase_id": "phase-11",
-  "workstream_id": "project-capsule-layout-v2",
+  "phase_id": "phase-12",
+  "workstream_id": "authoritative-work-graph",
   "status": "completed",
-  "goal": "Group durable project context under portable project capsules without copying registered source trees",
-  "plan_ref": "docs/plans/PLAN-013-PROJE-KAPSULU-VE-YERLESIM-V2.md",
+  "goal": "Persist authoritative project work, decisions, relations, evidence, and lifecycle history independently from agent sessions",
+  "plan_ref": "docs/plans/PLAN-014-WORK-GRAPH-VE-GOREV-ILISKILERI.md",
   "progress_refs": [
     "docs/progress/PHASE-1-FOUNDATION.md",
     "docs/progress/PHASE-1-PACKAGE-1.md",
@@ -91,14 +91,15 @@
     "docs/progress/EMBEDDING-MODEL-ENTEGRASYONU.md",
     "docs/progress/PHASE-9-COMPLETION.md",
     "docs/progress/PHASE-10-COMPLETION.md",
-    "docs/progress/PHASE-11-COMPLETION.md"
+    "docs/progress/PHASE-11-COMPLETION.md",
+    "docs/progress/PHASE-12-COMPLETION.md"
   ],
   "next_actions": [
-    "build a durable work graph for tasks commits decisions and artifacts",
-    "preserve project capsule portability while adding work records",
-    "keep all project source bindings read-only by default"
+    "build project-scoped queue lease and fencing runtime",
+    "bind agent execution to authoritative work items",
+    "preserve exact approval and project capsule runtime boundaries"
   ],
-  "baseline_commit": "a343b0e",
+  "baseline_commit": "23d3601",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

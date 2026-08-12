@@ -2,7 +2,7 @@
 
 ## Durum
 
-Bekliyor.
+Tamamlandı.
 
 ## Amaç
 

@@ -1,0 +1,46 @@
+{
+  "schema_ref": "schemas/phase-12-baseline.schema.json",
+  "schema_version": 1,
+  "baseline_id": "phase-12-authoritative-work-graph",
+  "phase_id": "phase-12",
+  "status": "ready",
+  "completed_steps": 7,
+  "capabilities": [
+    "authoritative-work-items",
+    "append-only-work-events",
+    "typed-work-relations",
+    "delivery-evidence-links",
+    "lifecycle-transition-validation",
+    "exact-work-resume",
+    "rebuildable-work-projection"
+  ],
+  "safe_operations": [
+    "work.item.put",
+    "work.query",
+    "work.history",
+    "project.resume"
+  ],
+  "guarantees": {
+    "status_from_vector_similarity": false,
+    "source_content_copied": false,
+    "absolute_path_required": false,
+    "completion_requires_evidence": true,
+    "dependency_cycles_rejected": true,
+    "stale_plans_rejected": true,
+    "append_only_history": true,
+    "derived_projection_authoritative": false,
+    "client_parity": true
+  },
+  "verification": {
+    "work-item-validation": "passed",
+    "status-transitions": "passed",
+    "completion-evidence": "passed",
+    "relation-integrity": "passed",
+    "cycle-rejection": "passed",
+    "append-only-history": "passed",
+    "exact-plan-staleness": "passed",
+    "sqlite-integrity": "passed",
+    "project-resume": "passed",
+    "capsule-boundary": "passed"
+  }
+}

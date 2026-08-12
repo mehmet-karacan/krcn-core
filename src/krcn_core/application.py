@@ -159,6 +159,12 @@ from .sqlite_reference_runtime import SqliteReferenceRuntime
 from .update_effects import DerivedActionRegistry, MigrationRegistry
 from .user_home import resolve_user_home
 from .verification import verify_installation
+from .work_graph import (
+    apply_work_item,
+    prepare_work_item,
+    query_work_graph,
+    query_work_history,
+)
 
 
 IDENTIFIER = re.compile(r"^[a-z][a-z0-9-]*$")
@@ -203,6 +209,9 @@ OPERATIONS = {
     "memory.review",
     "memory.persist",
     "memory.lifecycle",
+    "work.item.put",
+    "work.query",
+    "work.history",
 } | ORCHESTRATION_OPERATIONS
 
 
@@ -441,6 +450,9 @@ class KrcnApplicationService:
             "memory.review": self._review_memory,
             "memory.persist": self._persist_memory,
             "memory.lifecycle": self._change_memory_lifecycle,
+            "work.item.put": self._put_work_item,
+            "work.query": self._query_work,
+            "work.history": self._work_history,
         }
         status, data = handlers[request.operation](request)
         return ServiceResponse(
@@ -449,6 +461,38 @@ class KrcnApplicationService:
             status=status,
             data=data,
         )
+
+    def _put_work_item(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        plan = prepare_work_item(self._store, self._ownership, request.arguments)
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        authorizations = self._authorize_effect_plans(
+            request,
+            plan.plan_id,
+            plan.effect_plans,
+            "work item update",
+        )
+        result = apply_work_item(self._store, plan, authorizations)
+        return "applied", {"plan": plan.public_summary(), "result": result, "applied": True}
+
+    def _query_work(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        if request.apply:
+            raise ApplicationServiceError("work query cannot be applied")
+        return "ok", {"result": query_work_graph(self._store, request.arguments)}
+
+    def _work_history(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        if request.apply:
+            raise ApplicationServiceError("work history cannot be applied")
+        return "ok", {"result": query_work_history(self._store, request.arguments)}
 
     @staticmethod
     def _absolute_path_argument(

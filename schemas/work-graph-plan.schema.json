@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-graph-plan:1",
+  "title": "KRCN Core exact work graph mutation plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "project_id",
+    "work_item_id",
+    "status",
+    "next_revision",
+    "graph_digest",
+    "authoritative_status",
+    "effect_plans"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-graph-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/id"
+    },
+    "status": {
+      "type": "string"
+    },
+    "next_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "graph_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "authoritative_status": {
+      "const": true
+    },
+    "effect_plans": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "mutation-plan.schema.json"
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

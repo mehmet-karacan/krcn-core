@@ -29,6 +29,8 @@ PROJECT_COLLECTION_PATHS = {
     "knowledge": "knowledge/records",
     "information-relations": "knowledge/relations",
     "memory": "memory",
+    "work-items": "work/items",
+    "work-events": "work/events",
     "orchestration-states": "runtime/orchestration-states",
     "orchestration-events": "runtime/events/orchestration",
     "orchestration-checkpoints": "runtime/checkpoints/orchestration",
