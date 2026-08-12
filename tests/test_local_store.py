@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import multiprocessing
 import sys
 import tempfile
 import unittest
@@ -21,6 +22,19 @@ from krcn_core.mutation_gate import (  # noqa: E402
     OwnershipResolver,
     authorize_mutation,
 )
+
+
+def _concurrent_apply_worker(data_root, plan, authorization, start, results):
+    store = LocalWorkspaceStore(
+        Path(data_root),
+        OwnershipResolver.from_repository(REPO_ROOT),
+    )
+    start.wait(10)
+    try:
+        stored = store.apply_put(plan, authorization)
+        results.put(("applied", stored.revision))
+    except Exception as exc:  # pragma: no cover - asserted in parent process
+        results.put(("rejected", type(exc).__name__))
 
 
 def workspace_payload() -> dict:
@@ -108,6 +122,53 @@ class LocalWorkspaceStoreTests(unittest.TestCase):
                 workspace_payload(),
                 expected_revision=0,
             )
+
+    def test_cross_process_writers_cannot_silently_overwrite_same_revision(self) -> None:
+        first_payload = workspace_payload()
+        first_payload["metadata"] = {"writer": "first"}
+        second_payload = workspace_payload()
+        second_payload["metadata"] = {"writer": "second"}
+        first = self.store.prepare_put(
+            "workspaces",
+            "sample-workspace",
+            first_payload,
+            expected_revision=0,
+        )
+        second = self.store.prepare_put(
+            "workspaces",
+            "sample-workspace",
+            second_payload,
+            expected_revision=0,
+        )
+        context = multiprocessing.get_context("spawn")
+        start = context.Event()
+        results = context.Queue()
+        processes = [
+            context.Process(
+                target=_concurrent_apply_worker,
+                args=(
+                    self.temporary.name,
+                    plan,
+                    self.authorize(plan),
+                    start,
+                    results,
+                ),
+            )
+            for plan in (first, second)
+        ]
+        for process in processes:
+            process.start()
+        start.set()
+        outcomes = [results.get(timeout=20) for _ in processes]
+        for process in processes:
+            process.join(timeout=20)
+            self.assertEqual(0, process.exitcode)
+        self.assertEqual(1, sum(item[0] == "applied" for item in outcomes))
+        self.assertEqual(1, sum(item[0] == "rejected" for item in outcomes))
+        stored = self.store.read("workspaces", "sample-workspace")
+        self.assertIsNotNone(stored)
+        self.assertEqual(1, stored.revision)
+        self.assertIn(stored.payload["metadata"]["writer"], {"first", "second"})
 
     def test_payload_tampering_is_detected(self) -> None:
         plan = self.store.prepare_put(

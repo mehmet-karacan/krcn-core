@@ -107,6 +107,19 @@ class InformationCatalog:
             None,
         )
 
+    def current_source_revisions(self) -> dict[str, tuple[str, str]]:
+        """Return authoritative revision evidence accepted as current."""
+
+        return {
+            entry.record.subject_ref: (
+                str(entry.record.payload["source_revision_id"]),
+                str(entry.record.payload["source_digest"]),
+            )
+            for entry in self.entries
+            if entry.record.information_class == "authoritative-source"
+            and entry.availability == "current"
+        }
+
 
 def _non_empty_text(value: object, label: str) -> str:
     if not isinstance(value, str) or not value.strip():

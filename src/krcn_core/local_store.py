@@ -7,6 +7,8 @@ import json
 import os
 import re
 import tempfile
+import time
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping
@@ -222,6 +224,58 @@ class LocalWorkspaceStore:
         collection = COLLECTIONS[record_type]
         return f".krcn/{collection[1]}/{record_id}.json"
 
+    @contextmanager
+    def _record_lock(self, record_type: str, record_id: str):
+        """Hold one cross-process advisory lock for a logical record."""
+
+        self._target(record_type, record_id)
+        directory = self._data_root / "locks" / "records"
+        directory.mkdir(parents=True, exist_ok=True)
+        if directory.is_symlink() or not directory.is_dir():
+            raise LocalStoreError("record lock directory must be regular")
+        lock_path = directory / f"{record_type}--{record_id}.lock"
+        deadline = time.monotonic() + 10.0
+        with lock_path.open("a+b") as stream:
+            if lock_path.is_symlink():
+                raise LocalStoreError("record lock may not be a symbolic link")
+            stream.seek(0, os.SEEK_END)
+            if stream.tell() == 0:
+                stream.write(b"\0")
+                stream.flush()
+            acquired = False
+            if os.name == "nt":
+                import msvcrt
+
+                while not acquired:
+                    try:
+                        stream.seek(0)
+                        msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
+                        acquired = True
+                    except OSError as exc:
+                        if time.monotonic() >= deadline:
+                            raise LocalStoreError("record lock acquisition timed out") from exc
+                        time.sleep(0.01)
+            else:
+                import fcntl
+
+                while not acquired:
+                    try:
+                        fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                        acquired = True
+                    except BlockingIOError as exc:
+                        if time.monotonic() >= deadline:
+                            raise LocalStoreError("record lock acquisition timed out") from exc
+                        time.sleep(0.01)
+            try:
+                yield
+            finally:
+                if acquired:
+                    stream.seek(0)
+                    if os.name == "nt":
+                        msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
+                    else:
+                        fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+
     def read(self, record_type: str, record_id: str) -> StoredRecord | None:
         target = self._target(record_type, record_id)
         if not target.exists():
@@ -355,6 +409,12 @@ class LocalWorkspaceStore:
             raise LocalStoreError("verified dry-run is required")
         if plan.mutation.approval_required and not authorization.approval_verified:
             raise LocalStoreError("user approval is required")
+        with self._record_lock(plan.record_type, plan.record_id):
+            return self._apply_put_locked(plan)
+
+    def _apply_put_locked(self, plan: RecordWritePlan) -> StoredRecord:
+        """Apply after the caller has serialized writers for this record."""
+
         self.assert_plan_current(plan)
         if plan.mutation.change_digest != plan.payload_sha256:
             raise LocalStoreError("mutation change digest does not match payload")

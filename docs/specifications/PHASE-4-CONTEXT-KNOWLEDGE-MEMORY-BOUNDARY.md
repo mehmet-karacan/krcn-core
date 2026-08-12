@@ -27,7 +27,9 @@ Information class and ownership class are separate dimensions. A classification 
 
 ## Revision and staleness
 
-Every retrievable record binds to a logical identity, revision, content digest, provenance, and evidence references. When a source revision changes, dependent knowledge and derived records become stale until revalidated or rebuilt. Historical evidence stays immutable and is not relabeled as current truth.
+Every retrievable record binds to a logical identity, revision, content digest, provenance, and evidence references. When a source revision changes, dependent knowledge, memory, and derived records become stale until revalidated or rebuilt. Stale memory is excluded from context through the same evidence comparison used for knowledge. Historical evidence stays immutable and is not relabeled as current truth.
+
+Source discovery and rescan are explicit local operations, not a background filesystem watcher. A source change becomes visible to revision-based staleness checks after a user or client runs the read-only comparison and approved rescan flow.
 
 ## Retrieval order
 

@@ -123,6 +123,28 @@ class InstallationInspectionTests(unittest.TestCase):
         )
         self.assertNotIn(str(self.root), json.dumps(inspection.public_summary()))
 
+    def test_failed_deployment_is_interrupted_and_unknown_status_fails_closed(self) -> None:
+        journal_directory = self.root / ".krcn" / "runtime" / "deployments"
+        journal_directory.mkdir()
+        journal = journal_directory / "deploy-failed.json"
+        journal.write_text(
+            json.dumps({"deployment_id": "deploy-failed", "status": "failed"}),
+            encoding="utf-8",
+        )
+        inspection = inspect_installation(self.root, self.ownership)
+        self.assertEqual(
+            ({"deployment_id": "deploy-failed", "status": "failed"},),
+            inspection.interrupted_deployments,
+        )
+        journal.write_text(
+            json.dumps(
+                {"deployment_id": "deploy-failed", "status": "backing-up"}
+            ),
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(InstallationError, "status is invalid"):
+            inspect_installation(self.root, self.ownership)
+
     def test_managed_user_data_path_is_rejected(self) -> None:
         changed = dict(self.state)
         changed["managed_files"] = [

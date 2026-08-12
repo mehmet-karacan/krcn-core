@@ -18,16 +18,19 @@ RELEASE_IDENTIFIER = re.compile(r"^[a-z][a-z0-9.-]*$")
 SEMVER = re.compile(r"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
 SHA256 = re.compile(r"^[a-f0-9]{64}$")
 COMMIT = re.compile(r"^[a-f0-9]{40}$")
-INCOMPLETE_DEPLOYMENT_STATUSES = {
+DEPLOYMENT_STATUSES = {
     "preparing",
-    "backing-up",
     "backed-up",
     "applying",
     "migrating",
     "rebuilding",
     "verifying",
+    "completed",
     "rolling-back",
+    "rolled-back",
+    "failed",
 }
+INCOMPLETE_DEPLOYMENT_STATUSES = DEPLOYMENT_STATUSES - {"completed", "rolled-back"}
 
 
 class InstallationError(ValueError):
@@ -360,6 +363,8 @@ def _interrupted_deployments(root: Path) -> tuple[Mapping[str, str], ...]:
             or not IDENTIFIER.fullmatch(status)
         ):
             raise InstallationError("deployment journal identity is invalid")
+        if status not in DEPLOYMENT_STATUSES:
+            raise InstallationError("deployment journal status is invalid")
         if status in INCOMPLETE_DEPLOYMENT_STATUSES:
             interrupted.append(
                 {"deployment_id": deployment_id, "status": status}

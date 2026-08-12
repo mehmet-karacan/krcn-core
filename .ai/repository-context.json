@@ -46,6 +46,7 @@
     "phase_five_baseline": ".ai/phase-5-baseline.json",
     "phase_six_baseline": ".ai/phase-6-baseline.json",
     "phase_seven_baseline": ".ai/phase-7-baseline.json",
+    "phase_eight_data_integrity": "docs/specifications/PHASE-8-DATA-INTEGRITY.md",
     "project_learning_boundary": "docs/specifications/PROJECT-LEARNING-BOUNDARY.md",
     "project_local_home_boundary": "docs/specifications/PROJECT-LOCAL-HOME.md",
     "project_home_resolution_schema": "schemas/project-home-resolution.schema.json",

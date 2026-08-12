@@ -28,7 +28,7 @@ from .dependency_retrieval import (
 from .derived_actions import DerivedActionHandlerRegistry
 from .exact_retrieval import parse_exact_retrieval_query, retrieve_exact
 from .foundation import load_json
-from .information_records import parse_information_record
+from .information_records import parse_information_record, record_is_stale
 from .intent_routing import project_learning_route
 from .installation import (
     inspect_installation,
@@ -1309,13 +1309,23 @@ class KrcnApplicationService:
 
     def _context_entries(self, catalog: InformationCatalog) -> dict[str, CatalogEntry]:
         entries = {entry.record.record_id: entry for entry in catalog.entries}
+        current_revisions = catalog.current_source_revisions()
         for stored in self._store.list_records("memory"):
             record = parse_information_record(dict(stored.payload))
             if record.record_id in entries:
                 raise ApplicationServiceError("context record ids must be unique")
+            if record.lifecycle in {"superseded", "archived"}:
+                availability = record.lifecycle
+            elif record.lifecycle == "stale" or record_is_stale(
+                record,
+                current_revisions,
+            ):
+                availability = "stale"
+            else:
+                availability = "current"
             entries[record.record_id] = CatalogEntry(
                 record=record,
-                availability=record.lifecycle,
+                availability=availability,
                 binding_ref=None,
             )
         return entries

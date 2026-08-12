@@ -98,6 +98,7 @@ class PortableBackupTests(unittest.TestCase):
             names = set(archive.namelist())
             self.assertIn("manifest.json", names)
             self.assertNotIn("payload/secrets/provider.txt", names)
+            self.assertFalse(any(name.startswith("payload/locks/") for name in names))
             archive_bytes = b"".join(archive.read(name) for name in names)
             self.assertNotIn(str(self.source_root).encode(), archive_bytes)
             self.assertNotIn(b"synthetic-secret-value", archive_bytes)

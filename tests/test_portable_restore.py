@@ -111,6 +111,13 @@ class PortableRestoreTests(unittest.TestCase):
             prepare_portable_restore(malicious, self.target_home, self.ownership)
         self.assertFalse((self.target_home.parent / "outside.txt").exists())
 
+    def test_restore_rejects_corrupted_backup_without_creating_target(self) -> None:
+        corrupted = self.archive.parent / "corrupted.zip"
+        corrupted.write_bytes(self.archive.read_bytes()[:37])
+        with self.assertRaisesRegex(PortableRestoreError, "invalid"):
+            prepare_portable_restore(corrupted, self.target_home, self.ownership)
+        self.assertFalse(self.target_home.exists())
+
 
 if __name__ == "__main__":
     unittest.main()

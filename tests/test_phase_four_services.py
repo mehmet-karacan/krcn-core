@@ -28,6 +28,10 @@ from krcn_core.information_records import (  # noqa: E402
     parse_information_record,
 )
 from krcn_core.local_store import LocalWorkspaceStore  # noqa: E402
+from krcn_core.memory_gate import (  # noqa: E402
+    apply_memory_persistence,
+    prepare_memory_persistence,
+)
 from krcn_core.mutation_gate import (  # noqa: E402
     ApprovalEvidence,
     DryRunEvidence,
@@ -252,6 +256,74 @@ class PhaseFourServiceTests(unittest.TestCase):
                     approval_id="synthetic-session-approval",
                 )
             )
+
+    def test_source_revision_change_excludes_stale_memory_from_context(self) -> None:
+        candidate = memory_candidate(origin="explicit-user")
+        review = memory_review(candidate)
+        plan = prepare_memory_persistence(
+            self.store,
+            candidate,
+            review,
+            expected_revision=0,
+        )
+        apply_memory_persistence(
+            self.store,
+            plan,
+            candidate,
+            review,
+            authorize_mutation(
+                plan.write_plan.mutation,
+                dry_run=DryRunEvidence(plan.write_plan.mutation.plan_id, True),
+                approval=ApprovalEvidence(
+                    plan.write_plan.mutation.plan_id,
+                    "memory-kayit-onayi",
+                    True,
+                ),
+            ),
+        )
+        changed_source = source_record(
+            record_revision=2,
+            source_revision="rev-2",
+            source_digest="b" * 64,
+        )
+        update = self.store.prepare_put(
+            "authoritative-sources",
+            self.source.record_id,
+            changed_source.as_payload(),
+            expected_revision=1,
+        )
+        self.store.apply_put(
+            update,
+            authorize_mutation(
+                update.mutation,
+                dry_run=DryRunEvidence(update.mutation.plan_id, True),
+                approval=ApprovalEvidence(update.mutation.plan_id, "kaynak-onayi", True),
+            ),
+        )
+        request = build_request().as_dict()
+        response = self.service.execute(
+            ServiceRequest(
+                "codex",
+                "context.build",
+                {
+                    "request": request,
+                    "candidates": [
+                        {
+                            "record_id": "database-access-memory",
+                            "layer": "persistent",
+                            "selection_source": "memory",
+                            "selection_reason": "memory:approved",
+                            "required": False,
+                            "priority": 100,
+                            "allow_truncation": True,
+                        }
+                    ],
+                },
+            )
+        )
+        context = response.data["context"]
+        self.assertEqual([], context["items"])
+        self.assertEqual("stale-or-unavailable", context["exclusions"][0]["reason"])
 
     def test_memory_propose_review_persist_and_lifecycle_keep_exact_gates(self) -> None:
         candidate = memory_candidate(origin="explicit-user")

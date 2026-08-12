@@ -8,6 +8,7 @@ import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest.mock import patch
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -207,6 +208,27 @@ class ProjectHomePortabilityTests(unittest.TestCase):
                 self.ownership,
             )
         self.assertEqual("koru", existing.read_text(encoding="utf-8"))
+
+    def test_interrupted_migration_keeps_backup_source_and_git_state(self) -> None:
+        exclude = self.project / ".git" / "info" / "exclude"
+        exclude_before = exclude.read_bytes()
+        source_before = snapshot(self.source_home)
+        plan = prepare_project_home_migration(
+            self.source_home,
+            self._resolution(self.project),
+            self.backup,
+            self.ownership,
+        )
+        with patch(
+            "krcn_core.project_home_portability.apply_portable_restore",
+            side_effect=RuntimeError("sentetik restore kesintisi"),
+        ):
+            with self.assertRaisesRegex(RuntimeError, "restore kesintisi"):
+                apply_project_home_migration(plan, self._authorizations(plan))
+        self.assertTrue(self.backup.is_file())
+        self.assertEqual(source_before, snapshot(self.source_home))
+        self.assertFalse((self.project / ".krcn").exists())
+        self.assertEqual(exclude_before, exclude.read_bytes())
 
     def test_all_clients_receive_the_same_migration_plan(self) -> None:
         service = KrcnApplicationService(REPO_ROOT, self.store)

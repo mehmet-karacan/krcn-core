@@ -195,6 +195,8 @@ def _collect_entries(
             raise PortableBackupError(f"symbolic link blocks portable backup: {relative}")
         if not path.is_file():
             continue
+        if PurePosixPath(relative).parts[0] == "locks":
+            continue
         if _is_secret_path(relative):
             excluded_secret_count += 1
             continue

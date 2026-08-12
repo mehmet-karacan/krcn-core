@@ -81,11 +81,12 @@
     "docs/progress/PHASE-8-PROJECT-HOME-RESOLUTION.md",
     "docs/progress/PHASE-8-PROJECT-HOME-INITIALIZATION.md",
     "docs/progress/PHASE-8-PROJECT-HOME-CLIENT-INTEGRATION.md",
-    "docs/progress/PHASE-8-PROJECT-HOME-PORTABILITY.md"
+    "docs/progress/PHASE-8-PROJECT-HOME-PORTABILITY.md",
+    "docs/progress/PHASE-8-DATA-INTEGRITY.md"
   ],
   "next_actions": [
-    "fix deployment state detection for interrupted outcomes",
-    "add cross-process record locking and memory staleness enforcement"
+    "unify skill adapter worker verifier and secret-provider registration",
+    "run one real read-only integration through policy capability and secret-reference gates"
   ],
   "baseline_commit": "2ab1cb1",
   "approval_gates": {

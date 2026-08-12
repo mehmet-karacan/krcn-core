@@ -25,6 +25,7 @@ External project directories are intentionally outside this guarantee. If a path
 - Any path that resolves outside the user home is recorded as an external dependency, not archived content.
 - A source directory may not be nested inside the KRCN user home.
 - Rebinding changes only a user-owned locator record after exact-plan approval.
+- Cross-process record lock files are ephemeral runtime coordination data and are excluded from portable backups.
 
 ## Recovery outcome
 
@@ -37,4 +38,3 @@ Moving an existing repository-local `.krcn` directory to a canonical user home i
 ## Compatibility and clients
 
 Windows and macOS may choose different default physical user-home paths, but they use the same logical layout and manifest format. CLI, SDK, MCP, plugins, Codex, Claude, and other clients resolve the same user home and use the same application service gates.
-
