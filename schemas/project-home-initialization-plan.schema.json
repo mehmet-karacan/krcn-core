@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:project-home-initialization-plan:1",
+  "title": "KRCN Core project-home initialization plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "resolution",
+    "home_id",
+    "already_initialized",
+    "source_copy",
+    "local_data_in_git",
+    "tracked_gitignore_changed",
+    "git_exclusion",
+    "effect_plans"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/project-home-initialization-plan.schema.json"
+    },
+    "schema_version": { "const": 1 },
+    "plan_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "resolution": { "$ref": "project-home-resolution.schema.json" },
+    "home_id": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "already_initialized": { "type": "boolean" },
+    "source_copy": { "const": false },
+    "local_data_in_git": { "const": false },
+    "tracked_gitignore_changed": { "const": false },
+    "git_exclusion": {
+      "type": ["object", "null"]
+    },
+    "effect_plans": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "mutation-plan.schema.json" }
+    }
+  }
+}

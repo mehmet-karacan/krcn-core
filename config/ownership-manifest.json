@@ -51,7 +51,9 @@
         ".krcn/knowledge/**",
         ".krcn/memory/**",
         ".krcn/policies/**",
-        ".krcn/source-bindings/**"
+        ".krcn/source-bindings/**",
+        ".krcn/project-home.json",
+        ".krcn/local-data/**"
       ]
     },
     {

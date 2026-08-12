@@ -11,6 +11,7 @@ from .user_home import KRCN_HOME_ENV
 
 
 PROJECT_HOME_DIRECTORY = ".krcn"
+PROJECT_HOME_MANIFEST = "project-home.json"
 RESOLUTION_SOURCES = {
     "explicit",
     "environment",
@@ -95,6 +96,10 @@ def _resolution(
         raise ProjectHomeError("project-home resolution source is invalid")
     target = _absolute_path(data_root, "KRCN project home", must_exist=False)
     project_local = _is_within(target, project_root)
+    if project_local and target.name != PROJECT_HOME_DIRECTORY:
+        raise ProjectHomeError(
+            "a project-local KRCN home must use the .krcn directory name"
+        )
     status = (
         "choice-required"
         if requires_user_choice
@@ -108,6 +113,15 @@ def _resolution(
     if not project_local:
         warnings.append("custom-home-outside-project")
     choices = CHOICES if requires_user_choice else ()
+    requires_initialization = not target.exists()
+    if target.is_dir():
+        marker = target / PROJECT_HOME_MANIFEST
+        if marker.is_file():
+            requires_initialization = False
+        elif not any(target.iterdir()):
+            requires_initialization = True
+        elif source not in {"explicit", "environment"}:
+            requires_initialization = True
     return ProjectHomeResolution(
         project_root=project_root,
         path=target,
@@ -115,7 +129,7 @@ def _resolution(
         status=status,
         target_kind="project-local" if project_local else "custom",
         requires_user_choice=requires_user_choice,
-        requires_initialization=not target.exists(),
+        requires_initialization=requires_initialization,
         git_check_required=project_local,
         choices=choices,
         warnings=tuple(warnings),
@@ -177,3 +191,33 @@ def select_project_home_parent(
         source="user-selected",
         requires_user_choice=False,
     )
+
+
+def choose_project_home(
+    proposal: ProjectHomeResolution,
+    choice: str,
+    *,
+    selected_parent: Path | None = None,
+) -> ProjectHomeResolution | None:
+    """Apply one user choice to a non-mutating project-home proposal."""
+
+    if not proposal.requires_user_choice or proposal.source != "project-default":
+        raise ProjectHomeError("project-home resolution is not awaiting a choice")
+    if choice == "cancel":
+        if selected_parent is not None:
+            raise ProjectHomeError("cancel may not include a selected parent")
+        return None
+    if choice == "use-default":
+        if selected_parent is not None:
+            raise ProjectHomeError("default choice may not include a selected parent")
+        return _resolution(
+            proposal.project_root,
+            proposal.path,
+            source="project-default",
+            requires_user_choice=False,
+        )
+    if choice == "choose-parent":
+        if selected_parent is None:
+            raise ProjectHomeError("alternate choice requires a selected parent")
+        return select_project_home_parent(proposal.project_root, selected_parent)
+    raise ProjectHomeError("project-home choice is invalid")

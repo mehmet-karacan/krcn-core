@@ -11,6 +11,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from krcn_core.project_home import (  # noqa: E402
     ProjectHomeError,
+    choose_project_home,
     resolve_project_home,
     select_project_home_parent,
 )
@@ -90,6 +91,28 @@ class ProjectHomeResolutionTests(unittest.TestCase):
             self.assertIn("custom-home-outside-project", result.warnings)
             self.assertFalse(result.path.exists())
 
+    def test_default_choice_can_be_accepted_or_cancelled(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            proposal = resolve_project_home(project, environ={})
+            selected = choose_project_home(proposal, "use-default")
+            self.assertIsNotNone(selected)
+            assert selected is not None
+            self.assertFalse(selected.requires_user_choice)
+            self.assertEqual((project / ".krcn").resolve(), selected.path)
+            self.assertIsNone(choose_project_home(proposal, "cancel"))
+
+    def test_alternate_choice_requires_an_existing_parent(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            proposal = resolve_project_home(project, environ={})
+            with self.assertRaisesRegex(ProjectHomeError, "selected parent must exist"):
+                choose_project_home(
+                    proposal,
+                    "choose-parent",
+                    selected_parent=project / "missing",
+                )
+
     def test_public_summary_redacts_path_until_local_disclosure(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
@@ -111,6 +134,22 @@ class ProjectHomeResolutionTests(unittest.TestCase):
             result = resolve_project_home(
                 project,
                 explicit_data_root=home,
+                environ={},
+            )
+            self.assertEqual("selected-existing", result.status)
+            self.assertTrue(result.requires_initialization)
+
+    def test_existing_explicit_legacy_home_remains_compatible(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            project = root / "project"
+            legacy = root / "legacy-home"
+            project.mkdir()
+            legacy.mkdir()
+            (legacy / "projects").mkdir()
+            result = resolve_project_home(
+                project,
+                explicit_data_root=legacy,
                 environ={},
             )
             self.assertEqual("selected-existing", result.status)

@@ -2,7 +2,7 @@
 
 ## Status
 
-This is the accepted Phase 8 target contract. Until the Phase 8 resolver and initialization steps are implemented, the Phase 6 user-home resolver remains the executable behavior.
+This is the accepted Phase 8 target contract. The shared resolver and exact-plan initialization boundary are implemented. Project-learning and client integration remain pending, so existing Phase 6 entrypoints continue to use their compatible user-home behavior until the integration step is complete.
 
 ## Purpose
 

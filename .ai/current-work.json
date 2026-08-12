@@ -78,11 +78,12 @@
     "docs/progress/PHASE-7-LARGE-PROJECT-DISCOVERY-FIX.md",
     "docs/progress/PHASE-8-KICKOFF.md",
     "docs/progress/PHASE-8-RESEARCH-EVALUATION.md",
-    "docs/progress/PHASE-8-PROJECT-HOME-RESOLUTION.md"
+    "docs/progress/PHASE-8-PROJECT-HOME-RESOLUTION.md",
+    "docs/progress/PHASE-8-PROJECT-HOME-INITIALIZATION.md"
   ],
   "next_actions": [
-    "prepare exact-plan project-home initialization",
-    "implement fail-closed Git tracking and local exclusion checks"
+    "integrate project-home selection with project.learn",
+    "expose the shared location choice through client-neutral application services"
   ],
   "baseline_commit": "2ab1cb1",
   "approval_gates": {

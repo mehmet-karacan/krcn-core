@@ -4,6 +4,7 @@
   "maximum_text_file_bytes": 2000000,
   "blocked_globs": [
     "**/.git/**",
+    "**/.krcn/**",
     "**/.idea/**",
     "**/.vscode/**",
     "**/node_modules/**",

@@ -49,6 +49,8 @@
     "project_learning_boundary": "docs/specifications/PROJECT-LEARNING-BOUNDARY.md",
     "project_local_home_boundary": "docs/specifications/PROJECT-LOCAL-HOME.md",
     "project_home_resolution_schema": "schemas/project-home-resolution.schema.json",
+    "project_home_manifest_schema": "schemas/project-home-manifest.schema.json",
+    "project_home_initialization_plan_schema": "schemas/project-home-initialization-plan.schema.json",
     "project_learning_intent_schema": "schemas/project-learning-intent.schema.json",
     "project_metadata_inference_schema": "schemas/project-metadata-inference.schema.json",
     "project_learning_plan_schema": "schemas/project-learning-plan.schema.json",
