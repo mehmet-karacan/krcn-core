@@ -2,7 +2,7 @@
 
 ## Durum
 
-Codex, Claude Code ve OpenCode için ortak `client.bootstrap` operasyonu geliştirildi.
+Codex, Claude Code ve OpenCode için ortak `client.bootstrap` operasyonu geliştirildi, gerçek kullanıcı ortamına uygulandı ve doğrulandı.
 
 ## Mimari sonuç
 
@@ -22,15 +22,22 @@ Codex, Claude Code ve OpenCode için ortak `client.bootstrap` operasyonu gelişt
 
 ## Yerel mevcut durum
 
-- Codex kullanıcı yönerge dosyası mevcut ve boştur.
-- Codex global override dosyası bulunmamaktadır.
-- Claude Code kullanıcı yönerge dosyası henüz bulunmamaktadır.
-- İlk incelemede OpenCode kullanıcı yönerge dosyası mevcuttu ve korunması gereken kullanıcı içeriği taşıyordu.
+- Kullanıcı, ilk incelemede görülen OpenCode dosyasını kendisinin sildiğini doğruladı.
+- Boş Codex kullanıcı yönerge dosyası yazma öncesinde yedeklendi.
+- Eksik Claude Code ve OpenCode kullanıcı yönerge dosyaları oluşturuldu.
+- Üç istemci dosyasında da yalnızca aynı yönetilen KRCN başlangıç bloğu bulunur.
+- Her dosyada bir başlangıç ve bir bitiş işareti bulunduğu doğrulandı.
+- Üç dosyanın içerik hash değerlerinin aynı olduğu doğrulandı.
+- Kurulum ikinci kez planlandığında değişiklik ve etki üretmedi.
 
-Bu durumlar yalnızca yerel dry-run planında kullanılacak, Git'e kullanıcı dosyası veya fiziksel yol yazılmayacaktır.
+Kullanıcı dosyaları, yedekler ve fiziksel yollar Git'e eklenmedi.
 
-Uygulama öncesindeki ikinci salt okunur incelemede OpenCode dosyası aynı konumda bulunamadı. KRCN bu dosyayı değiştirmemiştir ve henüz hiçbir istemci bootstrap yazması yapılmamıştır. Güvenilir bir yerel kopya bulunamadığı için gerçek apply adımı durduruldu. Mevcut içerik korunmuş gibi varsayılmayacak ve kullanıcının kararı olmadan boş içerikten yeni OpenCode dosyası oluşturulmayacaktır.
+## Uçtan uca doğrulama
 
-## Sonraki adım
+- Global `krcn` komutu proje kökünden çalıştırıldı.
+- Proje çalışma dizininden doğru kayıtla eşleşti.
+- Ortak KRCN home içindeki kaynak durumu yüklendi.
+- Kaynak durumunda 1.752 dosya ile Java ve Node.js teknolojileri görüldü.
+- Proje kaynakları yerinde ve salt okunur bağlı kaldı.
 
-Kod ve sözleşme commit edilip uzak CI doğrulanacaktır. Gerçek kullanıcı dosyası uygulaması, kaybolan OpenCode dosyasının geri getirilmesi veya boş durumdan yeniden oluşturulması için kullanıcı kararı alındıktan sonra yeni bir exact planla yapılacaktır.
+Yeni Codex, Claude Code veya OpenCode oturumları kullanıcı düzeyindeki bu başlangıç talimatını yükler. İstemci önce `krcn project current` veya `krcn project resume` ile ortak bağlamı çözümler; eşleşme yoksa normal çalışmaya devam eder.
