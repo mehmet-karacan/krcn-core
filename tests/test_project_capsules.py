@@ -200,16 +200,24 @@ class ProjectCapsuleTests(unittest.TestCase):
         )
         self.assertFalse((self.home / "projects" / "sample.json").exists())
         self.assertEqual(
-            self.home
-            / "projects"
-            / "sample"
-            / "derived"
-            / "retrieval"
-            / "source-code-v1.sqlite",
+            (
+                self.home
+                / "projects"
+                / "sample"
+                / "derived"
+                / "retrieval"
+                / "source-code-v1.sqlite"
+            ).resolve(),
             source_code_index_path(self.home, "sample"),
         )
         self.assertEqual(
-            self.home / "global" / "derived" / "retrieval" / "hybrid-v1.sqlite",
+            (
+                self.home
+                / "global"
+                / "derived"
+                / "retrieval"
+                / "hybrid-v1.sqlite"
+            ).resolve(),
             hybrid_index_path(self.home),
         )
         migrated = LocalWorkspaceStore(self.home, self.ownership)
