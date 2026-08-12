@@ -1,0 +1,41 @@
+{
+  "schema_ref": "schemas/phase-15-baseline.schema.json",
+  "schema_version": 1,
+  "baseline_id": "phase-15-unified-retrieval",
+  "phase_id": "phase-15",
+  "status": "ready",
+  "completed_steps": 8,
+  "capabilities": [
+    "deterministic-intent-classification",
+    "authoritative-work-first",
+    "project-scoped-domain-composition",
+    "explicit-multi-project-scope",
+    "stale-index-fail-closed",
+    "explainable-evidence-ranking",
+    "bounded-context-candidates",
+    "client-neutral-retrieval-service"
+  ],
+  "safe_operations": [
+    "retrieval.unified"
+  ],
+  "guarantees": {
+    "semantic_overrides_exact": false,
+    "implicit_remote_provider_call": false,
+    "stale_index_used": false,
+    "physical_paths_disclosed": false,
+    "default_multi_project_scope": false,
+    "authoritative_work_first": true,
+    "token_budget_enforced": true,
+    "domain_failures_reported": true
+  },
+  "verification": {
+    "intent-classification": "passed",
+    "authoritative-work-without-vector": "passed",
+    "explicit-project-scope": "passed",
+    "stale-index-rejection": "passed",
+    "provider-authorization": "passed",
+    "evidence-ranking": "passed",
+    "budget-enforcement": "passed",
+    "client-service-parity": "passed"
+  }
+}

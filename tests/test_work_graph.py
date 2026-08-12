@@ -224,6 +224,59 @@ class WorkGraphTests(unittest.TestCase):
         self.assertIn("\n  \"payload\": {\n", text)
         self.assertEqual("task-json", json.loads(text)["record_id"])
 
+    def test_unified_status_retrieval_uses_authoritative_work_without_vector_index(self) -> None:
+        self.apply_item(self.item("task-unified"))
+        response = self.service.execute(ServiceRequest(
+            client_kind="codex",
+            operation="retrieval.unified",
+            arguments={
+                "query": {
+                    "schema_ref": "schemas/unified-retrieval-query.schema.json",
+                    "schema_version": 1,
+                    "query_id": "resume-query",
+                    "text": "Nerede kaldık?",
+                    "project_ids": ["sample"],
+                    "scope": "project",
+                    "intent": "auto",
+                    "result_limit": 12,
+                    "token_budget": 1024,
+                }
+            },
+        ))
+        result = response.data["result"]
+        self.assertEqual("status", result["intent"])
+        self.assertEqual("task-unified", result["hits"][0]["hit_id"])
+        self.assertEqual("work", result["hits"][0]["domain"])
+        self.assertEqual(0, result["hits"][0]["evidence_tier"])
+        self.assertEqual("current", response.data["domain_status"]["sample:work"])
+        self.assertEqual(
+            "unavailable",
+            response.data["domain_status"]["sample:knowledge"],
+        )
+        serialized = json.dumps(response.as_dict(), ensure_ascii=False)
+        self.assertNotIn(str(self.home), serialized)
+        self.assertFalse(result["remote_call_performed"])
+
+    def test_unified_retrieval_requires_explicit_multi_project_scope(self) -> None:
+        with self.assertRaisesRegex(ValueError, "multi-project"):
+            self.service.execute(ServiceRequest(
+                client_kind="plugin",
+                operation="retrieval.unified",
+                arguments={
+                    "query": {
+                        "schema_ref": "schemas/unified-retrieval-query.schema.json",
+                        "schema_version": 1,
+                        "query_id": "unsafe-scope",
+                        "text": "Durum nedir?",
+                        "project_ids": ["sample", "another"],
+                        "scope": "project",
+                        "intent": "status",
+                        "result_limit": 12,
+                        "token_budget": 1024,
+                    }
+                },
+            ))
+
 
 if __name__ == "__main__":
     unittest.main()

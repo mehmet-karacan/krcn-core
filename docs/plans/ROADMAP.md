@@ -23,7 +23,7 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
 - Faz 12 tamamlandı. Work Graph ve görev ilişkileri hazır.
 - Faz 13 tamamlandı. Ajan kuyruğu ve çalışma zamanı hazır.
 - Faz 14 tamamlandı. Satır verisi toplamayan Oracle metadata RAG hazır.
-- Faz 15 bekliyor. Birleşik RAG ve üretim sağlamlaştırması yapılacak.
+- Faz 15 tamamlandı. Kanıt öncelikli birleşik RAG ve proje kapsamlı retrieval hazır.
 - Faz 16 bekliyor. Gerçek projeler ve görev mirası entegre edilecek.
 
 ## Temel kullanım modeli

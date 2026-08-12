@@ -1,0 +1,312 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:unified-retrieval-result:1",
+  "title": "KRCN Core unified retrieval result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "query_id",
+    "query_digest",
+    "intent",
+    "scope",
+    "project_ids",
+    "candidate_count",
+    "hit_count",
+    "excluded_by_budget",
+    "budget",
+    "source_batch_digest",
+    "result_digest",
+    "hits",
+    "context_candidates",
+    "remote_call_performed",
+    "semantic_can_override_exact",
+    "paths_disclosed"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/unified-retrieval-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "query_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "query_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "intent": {
+      "enum": [
+        "status",
+        "code",
+        "oracle",
+        "knowledge",
+        "broad"
+      ]
+    },
+    "scope": {
+      "enum": [
+        "project",
+        "multi-project"
+      ]
+    },
+    "project_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "candidate_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "hit_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "excluded_by_budget": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "unit",
+        "limit",
+        "used",
+        "remaining",
+        "result_limit"
+      ],
+      "properties": {
+        "unit": {
+          "const": "tokens"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "used": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "remaining": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "result_limit": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "source_batch_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "result_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "hits": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/hit"
+      }
+    },
+    "context_candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/context_candidate"
+      }
+    },
+    "remote_call_performed": {
+      "const": false
+    },
+    "semantic_can_override_exact": {
+      "const": false
+    },
+    "paths_disclosed": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "hit": {
+      "type": "object",
+      "required": [
+        "project_id",
+        "domain",
+        "hit_id",
+        "logical_ref",
+        "title",
+        "content",
+        "authority",
+        "authority_rank",
+        "revision",
+        "digest",
+        "evidence_refs",
+        "retrieval_mode",
+        "source_score",
+        "source_score_breakdown",
+        "unified_score",
+        "unified_score_breakdown",
+        "evidence_tier",
+        "token_count",
+        "index_digest"
+      ],
+      "properties": {
+        "project_id": {
+          "type": "string"
+        },
+        "domain": {
+          "enum": [
+            "work",
+            "code",
+            "oracle",
+            "knowledge"
+          ]
+        },
+        "hit_id": {
+          "type": "string"
+        },
+        "logical_ref": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "content": {
+          "type": "string"
+        },
+        "authority": {
+          "type": "string"
+        },
+        "authority_rank": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "revision": {
+          "type": "string"
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "retrieval_mode": {
+          "enum": [
+            "exact",
+            "graph",
+            "dependency",
+            "fts",
+            "hybrid",
+            "semantic"
+          ]
+        },
+        "source_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "source_score_breakdown": {
+          "type": "object"
+        },
+        "unified_score": {
+          "type": "number"
+        },
+        "unified_score_breakdown": {
+          "type": "object"
+        },
+        "evidence_tier": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "token_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "index_digest": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "context_candidate": {
+      "type": "object",
+      "required": [
+        "candidate_id",
+        "project_id",
+        "domain",
+        "source_ref",
+        "revision",
+        "digest",
+        "authority",
+        "evidence_refs",
+        "content",
+        "token_count",
+        "priority",
+        "selection_reason"
+      ],
+      "properties": {
+        "candidate_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "project_id": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string"
+        },
+        "source_ref": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "authority": {
+          "type": "string"
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "content": {
+          "type": "string"
+        },
+        "token_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "selection_reason": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

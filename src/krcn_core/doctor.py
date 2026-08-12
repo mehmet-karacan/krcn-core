@@ -518,4 +518,21 @@ def run_doctor(
             "Phase 14 Oracle metadata RAG baseline is complete",
         )
     )
+    phase_fifteen = load_json(repo_root / ".ai" / "phase-15-baseline.json")
+    phase_fifteen_errors = []
+    if phase_fifteen.get("status") != "ready":
+        phase_fifteen_errors.append("Phase 15 baseline state")
+    if phase_fifteen.get("completed_steps") != 8:
+        phase_fifteen_errors.append("Phase 15 completed steps")
+    if not (
+        repo_root / "docs" / "progress" / "PHASE-15-COMPLETION.md"
+    ).is_file():
+        phase_fifteen_errors.append("Phase 15 completion evidence")
+    checks.append(
+        _check(
+            "phase-fifteen-baseline",
+            phase_fifteen_errors,
+            "Phase 15 unified retrieval baseline is complete",
+        )
+    )
     return tuple(checks)

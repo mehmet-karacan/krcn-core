@@ -1141,6 +1141,7 @@ def search_oracle_metadata(
     return {
         "project_id": project,
         "query_digest": hashlib.sha256(query.encode("utf-8")).hexdigest(),
+        "catalog_digest": metadata.get("catalog_digest"),
         "index_digest": metadata.get("index_digest"),
         "hit_count": min(len(hits), limit),
         "hits": hits[:limit],

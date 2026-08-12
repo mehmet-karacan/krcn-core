@@ -247,3 +247,9 @@ Bağlantı değeri komut satırına yazılmaz. Örneğin `secret://database/repo
 `collect` ve `refresh` yalnız açıkça kayıtlı metadata transport, owner ve object-type allowlist ile `select-compatible` veya `batch-open` modlarından birini kabul eder. SQL metni kabul etmez ve uygulama satırı okumaz. İlk çağrı kesin kullanıcı verisi planını döndürür. Apply aynı plan kimliği ve açık onay gerektirir. Batch modu ayrıca etkin `execute` ve `database-metadata` politikası ile session onayı gerektirir.
 
 `index`, yetkili proje JSON kayıtlarından yerel Oracle SQLite projeksiyonunu üretir. `search` ve `dependencies` salt okunurdur; revision, digest, object identity ve provenance kanıtı döndürür.
+
+## Birleşik retrieval
+
+`krcn retrieval unified --request-file <json>` Work Graph, bilgi kataloğu, kaynak kod ve Oracle metadata kanıtlarını tek proje kapsamlı sonuçta birleştirir. JSON dosyasındaki `query`, `schemas/unified-retrieval-query.schema.json` sözleşmesine uyar.
+
+`auto` niyeti Türkçe ve İngilizce sorguyu deterministik olarak sınıflandırır. `Nerede kaldık?` gibi durum sorguları önce authoritative Work Graph kayıtlarını kullanır. Birden fazla proje ancak açık `multi-project` kapsamı ve proje listesiyle aranabilir. Eksik veya stale domain sonucu response içindeki `domain_status` ve `next_actions` alanlarında bildirilir.

@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:unified-retrieval-policy:1",
+  "title": "KRCN Core unified retrieval policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "policy_revision",
+    "default_scope",
+    "maximum_projects",
+    "maximum_hits",
+    "default_hits",
+    "minimum_token_budget",
+    "maximum_token_budget",
+    "exact_first_intents",
+    "domain_priority",
+    "authority_weights",
+    "remote_provider_implicit",
+    "stale_index_allowed",
+    "semantic_can_override_exact",
+    "physical_paths_disclosed"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/unified-retrieval-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "policy_revision": {
+      "const": 1
+    },
+    "default_scope": {
+      "const": "project"
+    },
+    "maximum_projects": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50
+    },
+    "maximum_hits": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100
+    },
+    "default_hits": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100
+    },
+    "minimum_token_budget": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "maximum_token_budget": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "exact_first_intents": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "domain_priority": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "work",
+          "knowledge",
+          "code",
+          "oracle"
+        ]
+      }
+    },
+    "authority_weights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authoritative",
+        "verified-source",
+        "derived"
+      ],
+      "properties": {
+        "authoritative": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "verified-source": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "derived": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "remote_provider_implicit": {
+      "const": false
+    },
+    "stale_index_allowed": {
+      "const": false
+    },
+    "semantic_can_override_exact": {
+      "const": false
+    },
+    "physical_paths_disclosed": {
+      "const": false
+    }
+  }
+}

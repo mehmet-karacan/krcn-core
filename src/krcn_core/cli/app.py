@@ -256,6 +256,16 @@ def build_parser() -> argparse.ArgumentParser:
             help=f"Read Oracle metadata {operation} from a JSON request",
         )
         _add_phase_four_options(command)
+    retrieval = subparsers.add_parser(
+        "retrieval",
+        help="Use evidence-first retrieval across registered project domains",
+    )
+    retrieval_commands = retrieval.add_subparsers(dest="retrieval_command")
+    unified = retrieval_commands.add_parser(
+        "unified",
+        help="Run one project-scoped unified retrieval request",
+    )
+    _add_phase_four_options(unified)
     installation = subparsers.add_parser(
         "installation",
         help="Inspect or verify a local KRCN Core installation",
@@ -950,6 +960,9 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
     }:
         operation = f"database.oracle.{args.oracle_command}"
         arguments = _load_phase_four_arguments(args.request_file)
+    elif args.command == "retrieval" and args.retrieval_command == "unified":
+        operation = "retrieval.unified"
+        arguments = _load_phase_four_arguments(args.request_file)
     else:
         raise ApplicationServiceError("Phase 4 service command is required")
     return ServiceRequest(
@@ -1155,7 +1168,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command in {"installation", "release", "deployment"}:
         return _run_core_service_command(args)
 
-    if args.command in {"knowledge", "context-package", "memory", "work", "runtime", "oracle"}:
+    if args.command in {
+        "knowledge",
+        "context-package",
+        "memory",
+        "work",
+        "runtime",
+        "oracle",
+        "retrieval",
+    }:
         return _run_phase_four_service_command(args)
 
     if args.command == "orchestrator":

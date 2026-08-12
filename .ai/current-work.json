@@ -1,11 +1,11 @@
 {
   "schema_ref": "schemas/current-work.schema.json",
   "schema_version": 1,
-  "phase_id": "phase-14",
-  "workstream_id": "oracle-metadata-rag",
+  "phase_id": "phase-15",
+  "workstream_id": "unified-retrieval",
   "status": "completed",
-  "goal": "Collect version and retrieve Oracle schema metadata without reading application rows or weakening user policies",
-  "plan_ref": "docs/plans/PLAN-016-ORACLE-METADATA-RAG.md",
+  "goal": "Compose project evidence through deterministic authoritative-first retrieval without implicit provider use",
+  "plan_ref": "docs/plans/PLAN-017-BIRLESIK-RAG-VE-SAGLAMLASTIRMA.md",
   "progress_refs": [
     "docs/progress/PHASE-1-FOUNDATION.md",
     "docs/progress/PHASE-1-PACKAGE-1.md",
@@ -94,14 +94,15 @@
     "docs/progress/PHASE-11-COMPLETION.md",
     "docs/progress/PHASE-12-COMPLETION.md",
     "docs/progress/PHASE-13-COMPLETION.md",
-    "docs/progress/PHASE-14-COMPLETION.md"
+    "docs/progress/PHASE-14-COMPLETION.md",
+    "docs/progress/PHASE-15-COMPLETION.md"
   ],
   "next_actions": [
-    "build unified retrieval across source code Work Graph and Oracle metadata",
-    "answer resume questions with exact evidence before semantic ranking",
-    "harden index freshness quality budgets and portable context packages"
+    "prepare exact integration plans for the six approved external projects",
+    "classify active and historical work from the read-only mk-hub source",
+    "request explicit approval before applying user-data integration plans"
   ],
-  "baseline_commit": "d6b169b",
+  "baseline_commit": "6cc2866",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

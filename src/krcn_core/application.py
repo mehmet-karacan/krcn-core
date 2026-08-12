@@ -44,6 +44,15 @@ from .hybrid_retrieval import (
     prepare_hybrid_index,
     retrieve_hybrid,
 )
+from .unified_retrieval import (
+    INTENT_DOMAINS,
+    batch_from_hybrid,
+    batch_from_oracle,
+    batch_from_source_code,
+    batch_from_work_graph,
+    create_unified_request,
+    retrieve_unified,
+)
 from .intent_routing import project_learning_route
 from .installation import (
     inspect_installation,
@@ -249,6 +258,7 @@ OPERATIONS = {
     "database.oracle.index",
     "database.oracle.search",
     "database.oracle.dependencies",
+    "retrieval.unified",
 } | ORCHESTRATION_OPERATIONS
 
 
@@ -541,6 +551,7 @@ class KrcnApplicationService:
             "database.oracle.index": self._oracle_index,
             "database.oracle.search": self._oracle_search,
             "database.oracle.dependencies": self._oracle_dependencies,
+            "retrieval.unified": self._retrieve_unified,
         }
         status, data = handlers[request.operation](request)
         return ServiceResponse(
@@ -581,6 +592,207 @@ class KrcnApplicationService:
         if request.apply:
             raise ApplicationServiceError("work history cannot be applied")
         return "ok", {"result": query_work_history(self._store, request.arguments)}
+
+    def _retrieve_unified(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        """Compose current project evidence through one read-only retrieval service."""
+
+        _check_arguments(request.arguments, required={"query"})
+        if request.apply:
+            raise ApplicationServiceError("unified retrieval is read-only")
+        payload = _object_argument(request.arguments, "query")
+        expected = {
+            "schema_ref",
+            "schema_version",
+            "query_id",
+            "text",
+            "project_ids",
+            "scope",
+            "intent",
+            "result_limit",
+            "token_budget",
+        }
+        if set(payload) != expected:
+            raise ApplicationServiceError("unified retrieval query fields are invalid")
+        if (
+            payload.get("schema_ref")
+            != "schemas/unified-retrieval-query.schema.json"
+            or payload.get("schema_version") != 1
+        ):
+            raise ApplicationServiceError("unified retrieval query schema is invalid")
+        project_ids = payload.get("project_ids")
+        if not isinstance(project_ids, list) or not project_ids:
+            raise ApplicationServiceError("unified retrieval projects are required")
+        policy = load_json(self._repo_root / "config" / "unified-retrieval.json")
+        if len(project_ids) > int(policy["maximum_projects"]):
+            raise ApplicationServiceError("unified retrieval project limit exceeded")
+        result_limit = payload.get("result_limit")
+        token_budget = payload.get("token_budget")
+        if (
+            not isinstance(result_limit, int)
+            or isinstance(result_limit, bool)
+            or result_limit > int(policy["maximum_hits"])
+            or not isinstance(token_budget, int)
+            or isinstance(token_budget, bool)
+            or token_budget < int(policy["minimum_token_budget"])
+            or token_budget > int(policy["maximum_token_budget"])
+        ):
+            raise ApplicationServiceError("unified retrieval budget is invalid")
+        try:
+            unified_request = create_unified_request(
+                query_id=str(payload.get("query_id", "")),
+                text=str(payload.get("text", "")),
+                current_project_id=str(project_ids[0]),
+                project_ids=tuple(str(item) for item in project_ids),
+                scope=str(payload.get("scope", "")),
+                intent=str(payload.get("intent", "")),
+                result_limit=result_limit,
+                token_budget=token_budget,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+
+        batches = []
+        domain_status: dict[str, str] = {}
+        allowed_domains = set(INTENT_DOMAINS[unified_request.intent])
+        per_domain_limit = min(result_limit, 100)
+        for project_id in unified_request.project_ids:
+            if "work" in allowed_domains:
+                key = f"{project_id}:work"
+                try:
+                    work_arguments: dict[str, object] = {
+                        "project_id": project_id,
+                        "limit": per_domain_limit,
+                    }
+                    if unified_request.intent != "status":
+                        work_arguments["text"] = unified_request.text
+                    batch = batch_from_work_graph(
+                        query_work_graph(self._store, work_arguments)
+                    )
+                    batches.append(batch)
+                    domain_status[key] = "current" if batch.candidates else "empty"
+                except ValueError:
+                    domain_status[key] = "unavailable"
+
+            if "code" in allowed_domains:
+                key = f"{project_id}:code"
+                try:
+                    binding, source_root, state = self._registered_project_source(project_id)
+                    authorization = self._source_code_adapter_authorization(
+                        binding,
+                        "retrieve",
+                        request.approval_id,
+                    )
+                    code_query = parse_source_code_query(
+                        {
+                            "schema_ref": "schemas/source-code-query.schema.json",
+                            "schema_version": 1,
+                            "query_id": unified_request.query_id,
+                            "project_id": project_id,
+                            "text": unified_request.text,
+                            "languages": [],
+                            "path_prefix": None,
+                            "include_content": True,
+                            "limit": per_domain_limit,
+                        }
+                    )
+                    batch = batch_from_source_code(
+                        retrieve_source_code(
+                            self._repo_root,
+                            self._store.data_root,
+                            binding,
+                            source_root,
+                            state.root_digest,
+                            code_query,
+                            authorization,
+                        )
+                    )
+                    batches.append(batch)
+                    domain_status[key] = "current" if batch.candidates else "empty"
+                except ValueError as exc:
+                    domain_status[key] = (
+                        "blocked-stale" if "stale" in str(exc).casefold() else "unavailable"
+                    )
+
+            if "oracle" in allowed_domains:
+                key = f"{project_id}:oracle"
+                try:
+                    oracle_plan = prepare_oracle_index(self._store.data_root, project_id)
+                    oracle_result = search_oracle_metadata(
+                        self._store.data_root,
+                        project_id,
+                        unified_request.text,
+                        limit=per_domain_limit,
+                    )
+                    indexed_catalog_digest = str(
+                        oracle_result.get("catalog_digest", "")
+                    )
+                    batch = batch_from_oracle(
+                        oracle_result,
+                        current_catalog_digest=oracle_plan.catalog_digest,
+                        indexed_catalog_digest=indexed_catalog_digest,
+                    )
+                    batches.append(batch)
+                    domain_status[key] = "current" if batch.candidates else "empty"
+                except ValueError as exc:
+                    domain_status[key] = (
+                        "blocked-stale" if "stale" in str(exc).casefold() else "unavailable"
+                    )
+
+        if "knowledge" in allowed_domains:
+            project_id = unified_request.project_ids[0]
+            key = f"{project_id}:knowledge"
+            try:
+                catalog = self._information_catalog()
+                hybrid_query = parse_hybrid_query(
+                    {
+                        "schema_ref": "schemas/hybrid-retrieval-query.schema.json",
+                        "schema_version": 1,
+                        "query_id": unified_request.query_id,
+                        "text": unified_request.text,
+                        "seed_record_ids": [],
+                        "include_unavailable": False,
+                        "limit": per_domain_limit,
+                    }
+                )
+                batch = batch_from_hybrid(
+                    retrieve_hybrid(
+                        self._store.data_root,
+                        catalog,
+                        self._information_relations(),
+                        hybrid_query,
+                    ),
+                    project_id,
+                )
+                batches.append(batch)
+                domain_status[key] = "current" if batch.candidates else "empty"
+            except ValueError as exc:
+                domain_status[key] = (
+                    "blocked-stale" if "stale" in str(exc).casefold() else "unavailable"
+                )
+
+        try:
+            result = retrieve_unified(unified_request, batches)
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        next_actions = set()
+        for key, state in domain_status.items():
+            project_id, domain = key.split(":", 1)
+            if state == "blocked-stale":
+                next_actions.add(f"project.integrate:{project_id}")
+            elif state == "unavailable" and domain == "knowledge":
+                next_actions.add("knowledge.index")
+            elif state == "unavailable" and domain == "code":
+                next_actions.add(f"project.integrate:{project_id}")
+            elif state == "unavailable" and domain == "oracle":
+                next_actions.add(f"database.oracle.index:{project_id}")
+        return "ok", {
+            "result": result.as_dict(),
+            "domain_status": dict(sorted(domain_status.items())),
+            "next_actions": sorted(next_actions),
+        }
 
     def _runtime_queue_action(
         self,

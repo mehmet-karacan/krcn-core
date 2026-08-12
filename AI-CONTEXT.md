@@ -66,13 +66,17 @@ Project workers, verifiers, and delegated agents use the shared runtime queue. A
 
 Oracle schema objects, package specifications, package bodies, grants, structure, and dependency evidence use the dedicated project database domain. The workflow never reads application rows or accepts free SQL. `select-only` and `execute deny` user policies remain authoritative. Batch metadata calls need explicit execute permission and session approval. Read `docs/specifications/ORACLE-METADATA-RAG.md` before collecting, refreshing, indexing, or transferring Oracle metadata.
 
+## Unified retrieval
+
+Use `retrieval.unified` for a project-scoped question that can require Work Graph, knowledge, source-code, and Oracle metadata evidence. Status and resume questions use authoritative Work Graph records first. Semantic scores cannot override exact evidence. Missing or stale indexes are reported per domain and are never used silently. Multi-project retrieval requires an explicit project list and `multi-project` scope. The service does not initiate remote provider calls.
+
 ## Client compatibility
 
 - Codex uses `AGENTS.md` as its repository instruction entrypoint.
 - Claude Code uses `CLAUDE.md`, which imports the shared instruction and context files.
 - Other AI clients and plugins use this file or `.ai/repository-context.json`.
 - MCP, SDK, plugin, IDE, and automation adapters use the transport-neutral services in `src/krcn_core/application.py` for supported actions.
-- The CLI exposes the same services through `krcn ask`, `krcn project`, `krcn portability`, `krcn knowledge`, `krcn context-package`, and `krcn memory`; it does not define separate product rules.
+- The CLI exposes the same services through `krcn ask`, `krcn project`, `krcn portability`, `krcn knowledge`, `krcn retrieval`, `krcn context-package`, and `krcn memory`; it does not define separate product rules.
 - Every action-capable client creates its service through `create_application_service`. Without an explicit data root, this resolves `KRCN_HOME` and then the platform default. A client must not invent a repository-local user-data path.
 - Future adapters must expose the same canonical context and application contracts instead of maintaining a separate copy or bypassing their safety gates.
 

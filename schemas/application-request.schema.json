@@ -79,6 +79,7 @@
         "database.oracle.index",
         "database.oracle.search",
         "database.oracle.dependencies",
+        "retrieval.unified",
         "orchestrator.intent",
         "orchestrator.plan",
         "orchestrator.authorize",

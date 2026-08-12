@@ -1,0 +1,29 @@
+{
+  "schema_ref": "schemas/unified-retrieval-policy.schema.json",
+  "schema_version": 1,
+  "policy_revision": 1,
+  "default_scope": "project",
+  "maximum_projects": 8,
+  "maximum_hits": 50,
+  "default_hits": 12,
+  "minimum_token_budget": 256,
+  "maximum_token_budget": 32000,
+  "exact_first_intents": [
+    "status"
+  ],
+  "domain_priority": [
+    "work",
+    "knowledge",
+    "code",
+    "oracle"
+  ],
+  "authority_weights": {
+    "authoritative": 1.0,
+    "verified-source": 0.85,
+    "derived": 0.6
+  },
+  "remote_provider_implicit": false,
+  "stale_index_allowed": false,
+  "semantic_can_override_exact": false,
+  "physical_paths_disclosed": false
+}

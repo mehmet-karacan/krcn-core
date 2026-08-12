@@ -93,6 +93,14 @@ The machine-readable route is `config/intent-routing.json`. Client adapters must
 - The index stores vectors and source metadata without persisted source text or a physical source root. A stale digest must stop retrieval and route back through `project.integrate`.
 - Do not send source chunks to a remote embedding provider unless the exact provider request, disclosure, and session approval are present.
 
+## Unified retrieval
+
+- Use `retrieval.unified` or `krcn retrieval unified` when a request needs evidence from Work Graph, knowledge, source code, or Oracle metadata together.
+- Route `Nerede kaldık?`, status, resume, task, and history questions to authoritative Work Graph evidence before any semantic result.
+- The default scope is one project. Multiple projects require an explicit `multi-project` request and an explicit project list.
+- Never use a stale index silently. Report unavailable or blocked domains and preserve the safe results from current domains.
+- Semantic similarity cannot override exact or authoritative evidence, and the unified service never starts a remote provider call implicitly.
+
 ## Project capsules
 
 - Layout v2 groups project-scoped KRCN records under `.krcn/projects/<project-id>`.
@@ -126,7 +134,7 @@ The machine-readable route is `config/intent-routing.json`. Client adapters must
 - Codex reads this `AGENTS.md` directly.
 - Claude Code reads `CLAUDE.md`, which imports this file and `AI-CONTEXT.md`.
 - Other AI clients and plugins start with `AI-CONTEXT.md` or `.ai/repository-context.json`.
-- Action-capable clients use `src/krcn_core/application.py`. The `krcn ask`, `krcn project`, `krcn portability`, `krcn installation`, `krcn release`, `krcn deployment`, `krcn knowledge`, `krcn context-package`, and `krcn memory` commands are thin CLI adapters over the same service used by SDK, MCP, plugins, Codex, Claude, and other clients.
+- Action-capable clients use `src/krcn_core/application.py`. The `krcn ask`, `krcn project`, `krcn portability`, `krcn installation`, `krcn release`, `krcn deployment`, `krcn knowledge`, `krcn retrieval`, `krcn context-package`, and `krcn memory` commands are thin CLI adapters over the same service used by SDK, MCP, plugins, Codex, Claude, and other clients.
 - Client requests and responses follow `schemas/application-request.schema.json` and `schemas/application-response.schema.json`.
 - Client adapters must remain thin. Product rules, ownership boundaries, and current work state must not be duplicated in provider-specific files.
 - No client adapter may bypass or reinterpret the shared capability, policy, dry-run, exact-plan, approval, or ownership gates.
