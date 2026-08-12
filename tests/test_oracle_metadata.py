@@ -360,8 +360,15 @@ class OracleMetadataTests(unittest.TestCase):
 
         index_path = oracle_index_path(self.data_root, "sample-project")
         self.assertEqual(
-            self.data_root / "projects" / "sample-project" / "derived" / "retrieval" / "oracle-metadata-v1.sqlite",
-            index_path,
+            (
+                self.data_root
+                / "projects"
+                / "sample-project"
+                / "derived"
+                / "retrieval"
+                / "oracle-metadata-v1.sqlite"
+            ).resolve(),
+            index_path.resolve(),
         )
         connection = sqlite3.connect(index_path)
         try:
