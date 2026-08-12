@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="diagram-title diagram-description">
+  <title id="diagram-title">KRCN Core mimari genel görünümü</title>
+  <desc id="diagram-description">Kullanıcı hedefinin istemciler üzerinden KRCN Core'a ulaştığını, proje kaynaklarının yerinde ve salt okunur kaldığını, dış sistemlere yalnız onaylı erişim yapıldığını ve proje verilerinin KRCN_HOME içindeki sahiplik sınıflarına yerleştirildiğini gösterir.</desc>
+
+  <style>
+    :root {
+      color-scheme: light dark;
+      --paper: #f5f5f5;
+      --paper-2: #ececec;
+      --node: #ffffff;
+      --ink: #2d3142;
+      --muted: #4f5d75;
+      --soft: #7a8399;
+      --rule: #d8d9de;
+      --accent: #eb6c36;
+      --accent-tint: #fceee8;
+      --link: #2e5aa8;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #2d3142;
+        --paper-2: #393e53;
+        --node: #34394d;
+        --ink: #f5f5f5;
+        --muted: #bfc0c0;
+        --soft: #9aa3b6;
+        --rule: #555b70;
+        --accent: #f08a59;
+        --accent-tint: #473c40;
+        --link: #6a95d8;
+      }
+    }
+
+    .paper { fill: var(--paper); }
+    .zone { fill: var(--paper-2); fill-opacity: 0.46; stroke: var(--rule); stroke-width: 1; stroke-dasharray: 6 4; }
+    .node { fill: var(--node); stroke: var(--rule); stroke-width: 1; }
+    .input-node { fill: var(--paper-2); stroke: var(--soft); stroke-width: 1; }
+    .external-node { fill: var(--paper); stroke: var(--soft); stroke-width: 1; stroke-dasharray: 5 4; }
+    .focal-node { fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.5; }
+    .chip { fill: var(--paper); stroke: var(--accent); stroke-opacity: 0.38; stroke-width: 0.8; }
+    .flow { fill: none; stroke: var(--muted); stroke-width: 1.4; marker-end: url(#arrow); }
+    .external-flow { fill: none; stroke: var(--link); stroke-width: 1.2; stroke-dasharray: 5 4; marker-end: url(#arrow-link); }
+    .title { fill: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 28px; font-weight: 400; }
+    .subtitle { fill: var(--muted); font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 13px; }
+    .node-title { fill: var(--ink); font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 15px; font-weight: 600; }
+    .node-copy { fill: var(--muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 10px; }
+    .eyebrow { fill: var(--soft); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 8px; font-weight: 600; letter-spacing: 1.4px; }
+    .focal-eyebrow { fill: var(--accent); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 8px; font-weight: 600; letter-spacing: 1.4px; }
+    .chip-label { fill: var(--ink); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 8px; font-weight: 500; letter-spacing: 0.5px; }
+    .arrow-label { fill: var(--soft); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 8px; letter-spacing: 0.8px; }
+    .zone-label { fill: var(--soft); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 8px; font-weight: 600; letter-spacing: 1.5px; }
+  </style>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 8 4 L 0 8 Z" fill="var(--muted)"/>
+    </marker>
+    <marker id="arrow-link" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 8 4 L 0 8 Z" fill="var(--link)"/>
+    </marker>
+  </defs>
+
+  <rect class="paper" x="0" y="0" width="1200" height="760"/>
+
+  <text class="title" x="40" y="44">KRCN Core mimarisi</text>
+  <text class="subtitle" x="40" y="68">Ortak çekirdek, açık yetki sınırları ve yerinde kalan proje kaynakları.</text>
+
+  <rect class="zone" x="32" y="488" width="1136" height="224" rx="8"/>
+
+  <path class="flow" d="M 600 160 V 196"/>
+  <path class="flow" d="M 600 272 V 324"/>
+  <path class="external-flow" d="M 256 380 H 376"/>
+  <path class="external-flow" d="M 824 380 H 944"/>
+  <path class="flow" d="M 480 436 V 464 Q 480 472 472 472 H 224 Q 216 472 216 480 V 540"/>
+  <path class="flow" d="M 600 436 V 540"/>
+  <path class="flow" d="M 720 436 V 464 Q 720 472 728 472 H 976 Q 984 472 984 480 V 540"/>
+
+  <rect class="paper" x="52" y="484" width="216" height="16" rx="3"/>
+  <text class="zone-label" x="60" y="496">YEREL KRCN_HOME / PROJE KAPSÜLÜ</text>
+
+  <rect class="paper" x="272" y="364" width="88" height="20" rx="3"/>
+  <text class="arrow-label" x="316" y="377" text-anchor="middle">YERİNDE OKU</text>
+  <rect class="paper" x="840" y="364" width="88" height="20" rx="3"/>
+  <text class="arrow-label" x="884" y="377" text-anchor="middle">YALNIZ ONAYLI</text>
+
+  <rect class="input-node" x="400" y="96" width="400" height="64" rx="6"/>
+  <text class="eyebrow" x="420" y="116">KULLANICI HEDEFİ</text>
+  <text class="node-title" x="420" y="138">Doğal dilde hedef</text>
+  <text class="node-copy" x="780" y="138" text-anchor="end">learn • integrate • resume • change</text>
+
+  <rect class="node" x="328" y="196" width="544" height="76" rx="6"/>
+  <text class="eyebrow" x="348" y="218">İSTEMCİ ADAPTÖRLERİ</text>
+  <text class="node-title" x="348" y="244">CLI • Codex • Claude Code • OpenCode • MCP • plugins</text>
+  <text class="node-copy" x="852" y="260" text-anchor="end">one application contract</text>
+
+  <rect class="external-node" x="32" y="328" width="224" height="104" rx="6"/>
+  <text class="eyebrow" x="52" y="352">DIŞ KAYNAK / SALT OKUNUR</text>
+  <text class="node-title" x="52" y="380">Proje kaynakları</text>
+  <text class="node-copy" x="52" y="402">yerinde okunur</text>
+  <text class="node-copy" x="52" y="418">KRCN içine kopyalanmaz</text>
+
+  <rect class="focal-node" x="376" y="324" width="448" height="112" rx="6"/>
+  <text class="focal-eyebrow" x="396" y="348">SÜRÜMLÜ ÇEKİRDEK / GIT</text>
+  <text class="node-title" x="396" y="376">KRCN Core</text>
+  <text class="node-copy" x="804" y="376" text-anchor="end">shared application service</text>
+  <rect class="chip" x="396" y="392" width="116" height="24" rx="4"/>
+  <text class="chip-label" x="454" y="407" text-anchor="middle">POLİTİKA KAPILARI</text>
+  <rect class="chip" x="520" y="392" width="136" height="24" rx="4"/>
+  <text class="chip-label" x="588" y="407" text-anchor="middle">ORKESTRASYON</text>
+  <rect class="chip" x="664" y="392" width="140" height="24" rx="4"/>
+  <text class="chip-label" x="734" y="407" text-anchor="middle">GÜVENLİ GÜNCELLEME</text>
+
+  <rect class="external-node" x="944" y="328" width="224" height="104" rx="6"/>
+  <text class="eyebrow" x="964" y="352">ONAY SINIRI</text>
+  <text class="node-title" x="964" y="380">Sağlayıcılar ve veritabanları</text>
+  <text class="node-copy" x="964" y="402">adapter • policy</text>
+  <text class="node-copy" x="964" y="418">açık kullanıcı onayı</text>
+
+  <rect class="node" x="56" y="540" width="320" height="132" rx="6"/>
+  <text class="eyebrow" x="76" y="564">KULLANICI VERİSİ</text>
+  <text class="node-title" x="76" y="592">Proje kapsülü</text>
+  <text class="node-copy" x="76" y="616">binding • policy • memory</text>
+  <text class="node-copy" x="76" y="636">work items • Oracle metadata</text>
+  <text class="node-copy" x="76" y="656">sözleşmeyle taşınabilir</text>
+
+  <rect class="node" x="440" y="540" width="320" height="132" rx="6"/>
+  <text class="eyebrow" x="460" y="564">YETKİ + RUNTIME</text>
+  <text class="node-title" x="460" y="592">İş ve ajan runtime alanı</text>
+  <text class="node-copy" x="460" y="616">Work Graph • event history</text>
+  <text class="node-copy" x="460" y="636">queue • lease • checkpoint</text>
+  <text class="node-copy" x="460" y="656">worker + bağımsız verifier</text>
+
+  <rect class="node" x="824" y="540" width="320" height="132" rx="6"/>
+  <text class="eyebrow" x="844" y="564">BİLGİ + DERIVED</text>
+  <text class="node-title" x="844" y="592">Retrieval ve indeksler</text>
+  <text class="node-copy" x="844" y="616">knowledge • source-code index</text>
+  <text class="node-copy" x="844" y="636">hybrid • unified retrieval</text>
+  <text class="node-copy" x="844" y="656">derived alan yeniden üretilebilir</text>
+</svg>

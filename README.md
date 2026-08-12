@@ -16,56 +16,19 @@ Bu ayrım sayesinde çekirdek her güncellendiğinde kullanıcının projeleri, 
 
 ## Mimari genel görünüm
 
-İstek bir istemciden girer, tek bir ortak servisten geçer, policy ve onay kapısından süzülür; sonuç yalnızca kendi sahiplik sınıfına ait alana yazılır.
+İstek yukarıdan aşağı ilerler: istemciler aynı application service sözleşmesini kullanır, KRCN Core policy ve onay sınırlarını uygular, sonuç yalnızca doğru sahiplik alanına yazılır. Proje kaynakları kendi dizinlerinde kalır; dış sağlayıcı ve veritabanı erişimleri ise adapter, policy ve açık kullanıcı onayı olmadan çalışmaz.
 
-```mermaid
-flowchart LR
-    classDef client fill:#e8eefc,stroke:#3b5bdb,color:#1a1a2e
-    classDef service fill:#e6f4ea,stroke:#2f9e44,color:#1a1a2e
-    classDef gate fill:#fff4e6,stroke:#e8590c,color:#1a1a2e
-    classDef home fill:#f3ecfb,stroke:#7048e8,color:#1a1a2e
-    classDef external fill:#f1f3f5,stroke:#868e96,color:#1a1a2e,stroke-dasharray: 4 3
+![KRCN Core mimari genel görünümü](docs/diagrams/krcn-core-architecture.svg)
 
-    goal(["Kullanici hedefi"]):::client --> entry["CLI / Codex / Claude Code / MCP / plugin"]:::client
-    entry --> svc
-
-    subgraph core["KRCN Core - Git ile surumlenir"]
-        direction TB
-        svc["Application Service"]:::service
-        gate{{"Policy - Capability<br/>Dry-run - Approval"}}:::gate
-        engine["Context - Knowledge<br/>Memory - Orchestrator"]:::service
-        merge["Merge - Migration<br/>Verify - Rollback"]:::service
-        svc --> gate
-        gate --> engine
-        gate --> merge
-    end
-
-    subgraph home["KRCN_HOME - kullanici veri koku"]
-        direction TB
-        proj[("Project capsules<br/>Binding / Knowledge")]:::home
-        data[("Talep / Defect / Gorev<br/>Karar / Policy")]:::home
-        state[("Runtime / Checkpoint<br/>Derived / Database metadata")]:::home
-    end
-
-    subgraph ext["Yerinde kullanilan dis kaynaklar"]
-        direction TB
-        src[("Proje dizinleri")]:::external
-        db[("Veritabani ve entegrasyonlar")]:::external
-    end
-
-    gate -. "onayli kayit" .-> proj
-    engine --> data
-    engine --> state
-    src -. "salt okunur" .-> proj
-    db -. "adapter uzerinden" .-> proj
-```
+Bu görünümde turuncu çerçeveli tek odak, Git ile sürümlenen KRCN Core'dur. Alt bölüm kullanıcıya ait yerel `KRCN_HOME` sınırını, kesikli dış düğümler ise KRCN tarafından sahiplenilmeyen kaynakları gösterir.
 
 | Katman | Sorumluluk |
 | --- | --- |
 | **İstemci** | CLI, Codex, Claude Code, MCP sunucusu veya bir plugin. Doğal dili tipli bir isteğe çevirir; ürün kuralı tanımlamaz. |
-| **Application Service** | Tüm istemcilerin çağırdığı tek, transport-bağımsız servis katmanı. |
+| **KRCN Core / Application Service** | Tüm istemcilerin çağırdığı tek, transport-bağımsız servis katmanı; ürün kurallarının ve güvenlik sınırlarının kanonik sahibidir. |
 | **Policy / Capability / Approval kapısı** | Her yan etkiyi dry-run ve exact-plan olarak görünür kılar, gerekiyorsa kullanıcı onayı ister; hiçbir istemci bu kapıyı atlayamaz. |
-| **Context / Knowledge / Memory / Orchestrator** | Bilgiyi getirir, görev planlar, işi bir worker'a yürütür, sonucu bağımsız bir verifier ile doğrular. |
+| **Project Capsule / Work Graph / Retrieval** | Proje bağlamını ve kullanıcı kararlarını korur, yetkili görev durumunu Work Graph'tan okur, bilgiyi exact, hibrit, semantik ve kaynak kod indekslerinden getirir. |
+| **Agent Runtime / Orchestrator** | Görevi planlar, işi uygun worker'a yürütür, lease ve checkpoint durumunu korur, sonucu bağımsız bir verifier ile doğrular. |
 | **Merge / Migration / Verify / Rollback** | Core güncellemelerini kullanıcı verisine dokunmadan uygular; başarısız doğrulamada geri alır. |
 
 ### Veri sahipliği haritası
