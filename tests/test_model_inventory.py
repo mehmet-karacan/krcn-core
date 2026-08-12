@@ -176,7 +176,9 @@ class ModelInventoryTests(unittest.TestCase):
         (root / "layout.json").write_bytes(user_home_layout_bytes())
         plan = prepare_model_inventory(self.store, self.ownership, [text_model()])
         self.assertEqual(
-            root / "global" / "models" / "qwen35-27b.json",
+            (root / "global" / "models" / "qwen35-27b.json").resolve(
+                strict=False
+            ),
             plan.effect_plans[0].target,
         )
         with self.assertRaisesRegex(LocalStoreError, "global-only"):
