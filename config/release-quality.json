@@ -12,7 +12,8 @@
     "portability.backup",
     "portability.restore",
     "portability.migrate-repo-local",
-    "portability.merge-project-home"
+    "portability.merge-project-home",
+    "client.bootstrap"
   ],
   "required_package_modules": [
     "krcn_core/user_home.py",
@@ -20,7 +21,8 @@
     "krcn_core/portable_backup.py",
     "krcn_core/portable_restore.py",
     "krcn_core/repo_local_migration.py",
-    "krcn_core/project_home_merge.py"
+    "krcn_core/project_home_merge.py",
+    "krcn_core/client_bootstrap.py"
   ],
   "required_gates": [
     "repository-verify",

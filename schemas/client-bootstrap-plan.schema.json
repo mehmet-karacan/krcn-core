@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:client-bootstrap-plan:1",
+  "title": "KRCN Core user-level client bootstrap plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "client_count",
+    "change_count",
+    "paths_disclosed",
+    "existing_content_overwritten",
+    "managed_block_only",
+    "entries",
+    "effect_plans",
+    "rollback"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/client-bootstrap-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "client_count": {
+      "const": 3
+    },
+    "change_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "paths_disclosed": {
+      "const": false
+    },
+    "existing_content_overwritten": {
+      "const": false
+    },
+    "managed_block_only": {
+      "const": true
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object"
+      }
+    },
+    "effect_plans": {
+      "type": "array"
+    },
+    "rollback": {
+      "type": "object"
+    }
+  }
+}

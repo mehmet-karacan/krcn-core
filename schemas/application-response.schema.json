@@ -30,6 +30,7 @@
         "project.inspect",
         "project.resolve-current",
         "project.resume",
+        "client.bootstrap",
         "project.learn",
         "project.home.resolve",
         "project.home.initialize",

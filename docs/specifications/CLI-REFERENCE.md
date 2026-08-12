@@ -87,6 +87,17 @@ The source and target backups are written and verified before any target record 
 
 `project current` resolves a registered project from the current directory. `project resume` adds the persisted source, information, and active-work summary. Use `--project <project-id-or-name>` for an explicit selection or `--request "<user-request>"` when the request names a project while the client is running elsewhere. Both commands are read-only and never disclose a physical source locator.
 
+## AI client bootstrap
+
+Inspect and install the user-level KRCN discovery block for Codex, Claude Code, and OpenCode:
+
+```bash
+krcn client bootstrap
+krcn client bootstrap --apply --expected-plan <plan-id> --approval-id <approval-id>
+```
+
+The first command is read-only. Apply backs up every existing client instruction file into the active ignored KRCN local-data area, preserves content outside the managed KRCN markers, and rolls back already changed client files if a later write fails.
+
 ## Knowledge, context, and memory
 
 Revision-aware knowledge catalog and the Phase 4 shared services:

@@ -48,6 +48,7 @@ from .context_builder import (
     context_candidate_from_entry,
     parse_context_build_request,
 )
+from .client_bootstrap import apply_client_bootstrap, prepare_client_bootstrap
 from .memory_gate import (
     apply_memory_lifecycle,
     apply_memory_persistence,
@@ -146,6 +147,7 @@ OPERATIONS = {
     "project.inspect",
     "project.resolve-current",
     "project.resume",
+    "client.bootstrap",
     "project.learn",
     "project.home.resolve",
     "project.home.initialize",
@@ -377,6 +379,7 @@ class KrcnApplicationService:
             "project.inspect": self._inspect_project,
             "project.resolve-current": self._resolve_current_project,
             "project.resume": self._resume_project,
+            "client.bootstrap": self._bootstrap_clients,
             "project.learn": self._learn_project,
             "project.home.resolve": self._resolve_project_home,
             "project.home.initialize": self._initialize_project_home,
@@ -749,6 +752,28 @@ class KrcnApplicationService:
         if match is None:
             return "ok", {**unmatched_project_context(), "resume": None}
         return "ok", build_project_resume_summary(self._store, match)
+
+    def _bootstrap_clients(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required=set())
+        plan = prepare_client_bootstrap(
+            Path.home(),
+            self._store.data_root,
+            self._ownership,
+        )
+        if not request.apply:
+            status = "planned" if plan.effect_plans else "ok"
+            return status, {"plan": plan.public_summary(), "applied": False}
+        authorizations = self._authorize_effect_plans(
+            request,
+            plan.plan_id,
+            plan.effect_plans,
+            "client bootstrap",
+        )
+        result = apply_client_bootstrap(plan, authorizations)
+        return "applied", {"plan": plan.public_summary(), **result.public_summary()}
 
     def _onboard_project(
         self,

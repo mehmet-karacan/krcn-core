@@ -386,6 +386,16 @@ def build_parser() -> argparse.ArgumentParser:
     project_merge.add_argument("--target-home", type=Path, required=True)
     project_merge.add_argument("--backup-directory", type=Path, required=True)
     _add_service_options(project_merge, mutation=True)
+    client = subparsers.add_parser(
+        "client",
+        help="Manage user-level AI client bootstrap guidance",
+    )
+    client_commands = client.add_subparsers(dest="client_command")
+    client_bootstrap = client_commands.add_parser(
+        "bootstrap",
+        help="Plan or install managed KRCN guidance for supported AI clients",
+    )
+    _add_service_options(client_bootstrap, mutation=True)
     return parser
 
 
@@ -908,6 +918,28 @@ def _run_portability_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_client_command(args: argparse.Namespace) -> int:
+    try:
+        if args.client_command != "bootstrap":
+            raise ApplicationServiceError("client command is required")
+        repo_root = args.repo.resolve() if args.repo else discover_repo_root()
+        data_root = resolve_user_home(args.data_root).path
+        response = create_application_service(repo_root, data_root).execute(
+            ServiceRequest(
+                client_kind="cli",
+                operation="client.bootstrap",
+                arguments={},
+                apply=args.apply,
+                expected_plan_id=args.expected_plan,
+                approval_id=args.approval_id,
+            )
+        )
+    except (ApplicationServiceError, OSError, ValueError) as exc:
+        _print_error(exc)
+        return 2
+    return _print_service_response(response, args.format)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -959,6 +991,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "portability":
         return _run_portability_command(args)
+
+    if args.command == "client":
+        return _run_client_command(args)
 
     if args.command != "catalog":
         parser.print_help()

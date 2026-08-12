@@ -30,6 +30,7 @@ REQUIRED_CANONICAL_KEYS = {
     "rescan_plan_schema",
     "project_home_merge_plan_schema",
     "project_context_result_schema",
+    "client_bootstrap_plan_schema",
     "application_request_schema",
     "application_response_schema",
     "phase_baseline_schema",

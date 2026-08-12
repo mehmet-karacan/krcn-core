@@ -15,6 +15,7 @@ REQUIRED_PORTABILITY_OPERATIONS = {
     "portability.restore",
     "portability.migrate-repo-local",
     "portability.merge-project-home",
+    "client.bootstrap",
 }
 REQUIRED_PACKAGE_MODULES = {
     "krcn_core/user_home.py",
@@ -23,6 +24,7 @@ REQUIRED_PACKAGE_MODULES = {
     "krcn_core/portable_restore.py",
     "krcn_core/repo_local_migration.py",
     "krcn_core/project_home_merge.py",
+    "krcn_core/client_bootstrap.py",
 }
 
 
