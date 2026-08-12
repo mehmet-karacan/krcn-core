@@ -6,6 +6,7 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Mapping
 
@@ -76,6 +77,19 @@ from .memory_gate import (
     prepare_memory_persistence,
 )
 from .model_routing import load_model_routing_policy, resolve_model_route
+from .model_inventory import (
+    apply_model_inventory,
+    list_model_inventory,
+    parse_model_inventory_record,
+    prepare_model_inventory,
+)
+from .model_health import (
+    ModelHealthProbe,
+    list_model_health,
+    load_model_health_policy,
+    persist_model_health_observation,
+    prepare_model_health_action,
+)
 from .merge_engine import execute_deployment
 from .merge_plan import prepare_merge_plan
 from .migrations import MigrationHandlerRegistry
@@ -152,7 +166,11 @@ from .project_capsule_portability import (
 )
 from .portable_backup import apply_portable_backup, prepare_portable_backup
 from .portable_restore import apply_portable_restore, prepare_portable_restore
-from .provider_gate import ProviderApproval, load_provider_gate_policy
+from .provider_gate import (
+    ProviderApproval,
+    authorize_provider_request,
+    load_provider_gate_policy,
+)
 from .rescan import apply_rescan, prepare_rescan
 from .release import validate_release_bundle
 from .repo_local_migration import (
@@ -212,6 +230,10 @@ OPERATIONS = {
     "project.resume",
     "client.bootstrap",
     "model.resolve",
+    "model.inventory",
+    "model.list",
+    "model.health",
+    "model.health-list",
     "project.learn",
     "project.integrate",
     "project.index-source-code",
@@ -433,6 +455,7 @@ class KrcnApplicationService:
         orchestration_verifier_handlers: VerifierHandlerRegistry | None = None,
         sqlite_runtime: SqliteReferenceRuntime | None = None,
         oracle_metadata_transports: Mapping[str, OracleMetadataTransport] | None = None,
+        model_health_probes: Mapping[str, ModelHealthProbe] | None = None,
     ) -> None:
         self._repo_root = repo_root.resolve()
         self._store = store
@@ -473,6 +496,15 @@ class KrcnApplicationService:
         ):
             raise ApplicationServiceError("Oracle metadata transports are invalid")
         self._oracle_metadata_transports = transports
+        health_probes = dict(model_health_probes or {})
+        if any(
+            not isinstance(provider_ref, str)
+            or not IDENTIFIER.fullmatch(provider_ref)
+            or not callable(getattr(probe, "probe", None))
+            for provider_ref, probe in health_probes.items()
+        ):
+            raise ApplicationServiceError("model health probes are invalid")
+        self._model_health_probes = health_probes
         self._orchestration = OrchestrationApplicationService(
             self._repo_root,
             self._store,
@@ -506,6 +538,10 @@ class KrcnApplicationService:
             "project.resume": self._resume_project,
             "client.bootstrap": self._bootstrap_clients,
             "model.resolve": self._resolve_model,
+            "model.inventory": self._model_inventory,
+            "model.list": self._list_models,
+            "model.health": self._model_health,
+            "model.health-list": self._list_model_health,
             "project.learn": self._learn_project,
             "project.integrate": self._integrate_project,
             "project.index-source-code": self._index_source_code,
@@ -1525,6 +1561,172 @@ class KrcnApplicationService:
             authorized_refs=tuple(refs),
         )
         return "ok", {"selection": selection.as_dict()}
+
+    def _model_inventory(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"models"})
+        entries = request.arguments.get("models")
+        if not isinstance(entries, list):
+            raise ApplicationServiceError("models must be a list")
+        plan = prepare_model_inventory(
+            self._store,
+            self._ownership,
+            entries,
+        )
+        if not request.apply:
+            return (
+                "planned" if plan.effect_plans else "ok",
+                {
+                    "plan": plan.public_summary(),
+                    "no_op": not plan.effect_plans,
+                    "applied": False,
+                },
+            )
+        authorizations = self._authorize_effect_plans(
+            request,
+            plan.plan_id,
+            tuple(item.mutation for item in plan.effect_plans),
+            "model inventory",
+        )
+        applied = apply_model_inventory(self._store, plan, authorizations)
+        return "applied", {
+            "plan": plan.public_summary(),
+            "applied_records": list(applied),
+            "applied": True,
+        }
+
+    def _list_models(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required=set())
+        if request.apply:
+            raise ApplicationServiceError("model list is read-only")
+        models = list_model_inventory(self._store)
+        health_by_model = {
+            str(item["model_ref"]): item
+            for item in list_model_health(
+                self._repo_root,
+                self._store,
+                now=datetime.now(timezone.utc),
+            )
+        }
+        summaries = [
+            {
+                **model,
+                "health_state": (
+                    health_by_model.get(
+                        str(model["model_ref"]),
+                        {"effective_state": "candidate"},
+                    )["effective_state"]
+                    if model["enabled"]
+                    else "disabled"
+                ),
+            }
+            for model in models
+        ]
+        return "ok", {
+            "model_count": len(summaries),
+            "models": summaries,
+            "credential_values_included": False,
+            "endpoints_included": False,
+        }
+
+    def _model_health(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={
+                "model_ref",
+                "endpoint",
+                "retention_assumptions",
+                "session_id",
+            },
+            optional={"force_retest"},
+        )
+        model_ref = _identifier_argument(request.arguments, "model_ref")
+        endpoint = _string_argument(request.arguments, "endpoint")
+        retention = _string_argument(request.arguments, "retention_assumptions")
+        session_id = _string_argument(request.arguments, "session_id")
+        force_retest = request.arguments.get("force_retest", False)
+        if not isinstance(force_retest, bool):
+            raise ApplicationServiceError("force_retest must be boolean")
+        now = datetime.now(timezone.utc)
+        plan = prepare_model_health_action(
+            self._repo_root,
+            self._store,
+            model_ref,
+            endpoint=endpoint,
+            retention_assumptions=retention,
+            session_id=session_id,
+            now=now,
+            force_retest=force_retest,
+        )
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        if request.expected_plan_id != plan.plan_id:
+            raise ApplicationServiceError(
+                "model health apply requires the exact plan id"
+            )
+        approval = ProviderApproval(
+            plan.provider_request.request_id,
+            plan.provider_request.session_id,
+            request.approval_id or "",
+            bool(request.approval_id),
+        )
+        try:
+            authorization = authorize_provider_request(
+                load_provider_gate_policy(self._repo_root),
+                plan.provider_request,
+                approval=approval,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        inventory = self._store.read("model-inventory", model_ref)
+        if inventory is None:
+            raise ApplicationServiceError("model inventory record was not found")
+        model = parse_model_inventory_record(inventory.payload)
+        probe = self._model_health_probes.get(str(model["provider_ref"]))
+        if probe is None:
+            raise ApplicationServiceError(
+                "model health probe adapter is unavailable for this provider"
+            )
+        observation = probe.probe(model, load_model_health_policy(self._repo_root), authorization)
+        result = persist_model_health_observation(
+            self._store,
+            model,
+            load_model_health_policy(self._repo_root),
+            observation,
+            checked_at=datetime.now(timezone.utc),
+        )
+        return "applied", {
+            "plan": plan.public_summary(),
+            "health": result,
+            "applied": True,
+        }
+
+    def _list_model_health(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required=set())
+        if request.apply:
+            raise ApplicationServiceError("model health list is read-only")
+        records = list_model_health(
+            self._repo_root,
+            self._store,
+            now=datetime.now(timezone.utc),
+        )
+        return "ok", {
+            "health_count": len(records),
+            "health": list(records),
+            "credential_values_included": False,
+            "response_content_included": False,
+        }
 
     def _onboard_project(
         self,

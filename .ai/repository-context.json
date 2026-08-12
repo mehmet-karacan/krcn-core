@@ -183,6 +183,11 @@
     "model_routing_policy_schema": "schemas/model-routing-policy.schema.json",
     "model_route_selection_schema": "schemas/model-route-selection.schema.json",
     "model_routing_boundary": "docs/specifications/MODEL-ROUTING.md",
+    "model_inventory_schema": "schemas/model-inventory-record.schema.json",
+    "model_health_policy": "config/model-health-policy.json",
+    "model_health_policy_schema": "schemas/model-health-policy.schema.json",
+    "model_health_record_schema": "schemas/model-health-record.schema.json",
+    "model_inventory_health_boundary": "docs/specifications/MODEL-INVENTORY-HEALTH.md",
     "remote_embedding_providers": "docs/specifications/REMOTE-EMBEDDING-PROVIDERS.md",
     "import_policy": "config/import-policy.json"
   },

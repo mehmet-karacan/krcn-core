@@ -1,0 +1,30 @@
+{
+  "schema_ref": "schemas/model-health-policy.schema.json",
+  "schema_version": 1,
+  "policy_revision": 1,
+  "probe_suite_id": "synthetic-model-health-v1",
+  "probe_suite_revision": 1,
+  "prompt_id": "exact-health-token",
+  "expected_response": "KRCN_HEALTH_OK",
+  "timeout_seconds": 30,
+  "maximum_latency_ms": 120000,
+  "quarantine_failure_threshold": 2,
+  "cooldown_seconds": 3600,
+  "failure_categories": [
+    "authentication",
+    "mismatch",
+    "parse",
+    "protocol",
+    "provider-error",
+    "timeout",
+    "unavailable"
+  ],
+  "invariants": {
+    "synthetic_input_only": true,
+    "project_content_included": false,
+    "credential_values_included": false,
+    "response_content_persisted": false,
+    "health_grants_authority": false,
+    "remote_probe_requires_provider_approval": true
+  }
+}

@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:model-inventory-record:1",
+  "title": "KRCN Core credential-free model inventory record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "model_ref",
+    "provider_ref",
+    "model_id",
+    "display_name",
+    "modalities",
+    "supported_workloads",
+    "client_refs",
+    "remote",
+    "enabled",
+    "credential_handling",
+    "revision",
+    "inventory_digest",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/model-inventory-record.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "model_ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "provider_ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "model_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$",
+      "maxLength": 300
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "modalities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "audio",
+          "embedding",
+          "text",
+          "vision"
+        ]
+      }
+    },
+    "supported_workloads": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "analysis",
+          "audio-transcription",
+          "architecture",
+          "code-review",
+          "database-analysis",
+          "discovery",
+          "embedding",
+          "general",
+          "implementation",
+          "performance-analysis",
+          "planning",
+          "reranking",
+          "security-review",
+          "verification",
+          "vision-analysis"
+        ]
+      }
+    },
+    "client_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "remote": {
+      "type": "boolean"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "credential_handling": {
+      "enum": [
+        "client-managed",
+        "none"
+      ]
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "inventory_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "credential_values_included",
+        "endpoint_included",
+        "grants_authority"
+      ],
+      "properties": {
+        "credential_values_included": {
+          "const": false
+        },
+        "endpoint_included": {
+          "const": false
+        },
+        "grants_authority": {
+          "const": false
+        }
+      }
+    }
+  }
+}

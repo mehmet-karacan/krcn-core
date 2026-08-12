@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:model-health-record:1",
+  "title": "KRCN Core sanitized model health record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "model_ref",
+    "inventory_digest",
+    "health_revision",
+    "probe_suite_id",
+    "probe_suite_revision",
+    "policy_digest",
+    "checked_at",
+    "status",
+    "available",
+    "protocol_valid",
+    "response_parseable",
+    "response_matches",
+    "latency_ms",
+    "failure_category",
+    "consecutive_failures",
+    "quarantine_until",
+    "probe_digest",
+    "result_digest",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/model-health-record.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "model_ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "inventory_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "health_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "probe_suite_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "probe_suite_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "policy_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "enum": [
+        "health-failed",
+        "health-passed",
+        "quarantined"
+      ]
+    },
+    "available": {
+      "type": "boolean"
+    },
+    "protocol_valid": {
+      "type": "boolean"
+    },
+    "response_parseable": {
+      "type": "boolean"
+    },
+    "response_matches": {
+      "type": "boolean"
+    },
+    "latency_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 300000
+    },
+    "failure_category": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        null,
+        "authentication",
+        "mismatch",
+        "parse",
+        "protocol",
+        "provider-error",
+        "timeout",
+        "unavailable"
+      ]
+    },
+    "consecutive_failures": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "quarantine_until": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "probe_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "result_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "synthetic_input_only",
+        "project_content_included",
+        "credential_values_included",
+        "response_content_included",
+        "grants_authority"
+      ],
+      "properties": {
+        "synthetic_input_only": {
+          "const": true
+        },
+        "project_content_included": {
+          "const": false
+        },
+        "credential_values_included": {
+          "const": false
+        },
+        "response_content_included": {
+          "const": false
+        },
+        "grants_authority": {
+          "const": false
+        }
+      }
+    }
+  }
+}

@@ -116,7 +116,10 @@ COLLECTIONS = {
         "runtime/orchestration-handoffs",
         "runtime",
     ),
+    "model-inventory": ("model_ref", "models", "user-data"),
+    "model-health": ("model_ref", "derived/model-health", "derived"),
 }
+GLOBAL_ONLY_COLLECTIONS = {"model-inventory", "model-health"}
 INFORMATION_COLLECTIONS = {
     "authoritative-sources": "authoritative-source",
     "knowledge": "knowledge",
@@ -213,6 +216,20 @@ def _validate_record_identity(
     if record_type == "project-integrations":
         parse_project_integration_state(payload)
         return None
+    if record_type == "model-inventory":
+        from .model_inventory import parse_model_inventory_record
+
+        try:
+            return int(parse_model_inventory_record(payload)["revision"])
+        except ValueError as exc:
+            raise LocalStoreError(str(exc)) from exc
+    if record_type == "model-health":
+        from .model_health import parse_model_health_record
+
+        try:
+            return int(parse_model_health_record(payload)["health_revision"])
+        except ValueError as exc:
+            raise LocalStoreError(str(exc)) from exc
     if record_type == "information-relations":
         try:
             relation = parse_information_relation(payload)
@@ -323,7 +340,10 @@ class LocalWorkspaceStore:
         record_type: str,
         record_id: str,
     ) -> tuple[Path, ...]:
-        if record_type not in PROJECT_COLLECTION_PATHS:
+        if (
+            record_type not in PROJECT_COLLECTION_PATHS
+            or record_type in GLOBAL_ONLY_COLLECTIONS
+        ):
             return ()
         projects_root = self._data_root / "projects"
         if not projects_root.is_dir() or projects_root.is_symlink():
@@ -489,6 +509,10 @@ class LocalWorkspaceStore:
         if self.layout_version < 2:
             return self._legacy_target(record_type, record_id), None
         inferred = self._infer_project_id(record_type, record_id, payload)
+        if record_type in GLOBAL_ONLY_COLLECTIONS:
+            if project_id is not None or inferred is not None:
+                raise LocalStoreError("record type is global-only")
+            inferred = None
         if project_id is not None:
             if not IDENTIFIER.fullmatch(project_id):
                 raise LocalStoreError("project id must be portable")
@@ -646,7 +670,7 @@ class LocalWorkspaceStore:
                     raise LocalStoreError("global record collection must be regular")
                 record_ids.update(path.stem for path in global_directory.glob("*.json"))
             projects_root = self._data_root / "projects"
-            if projects_root.exists():
+            if projects_root.exists() and record_type not in GLOBAL_ONLY_COLLECTIONS:
                 if projects_root.is_symlink() or not projects_root.is_dir():
                     raise LocalStoreError("project capsule root must be regular")
                 for project_root in sorted(projects_root.iterdir()):

@@ -4,6 +4,19 @@
 
 Devam ediyor.
 
+## İlerleme
+
+- [x] 1. Proje yetkinlik profili
+- [x] 2. Model envanteri ve sağlık kontrolü
+- [ ] 3. Proje özel mikro benchmark
+- [ ] 4. Uzmanlık bazlı model puanlama ve atama
+- [ ] 5. Delegated work unit sözleşmesi
+- [ ] 6. Orchestrator ve kalıcı runtime köprüsü
+- [ ] 7. Ana ajan coordinator politikası ve istemci adaptörleri
+- [ ] 8. `gpu-fusion` pilotu ve kabul testleri
+- [ ] 9. Altı gerçek proje entegrasyonu
+- [ ] 10. Geçmiş ve aktif görev aktarımı
+
 ## Amaç
 
 KRCN Core'u proje özel yetkinlik, model yeterliliği ve zorunlu alt ajan orkestrasyonu ile olgunlaştırmak, bu mimariyi `gpu-fusion` üzerinde doğrulamak, ardından altı gerçek projeyi kaynakları kopyalamadan entegre etmek ve yüksek güvenli görev mirasını ilgili proje kapsüllerine aktarmak.

@@ -128,6 +128,28 @@ krcn client bootstrap --apply --expected-plan <plan-id> --approval-id <approval-
 
 The first command is read-only. Apply backs up every existing client instruction file into the active ignored KRCN local-data area, preserves content outside the managed KRCN markers, and rolls back already changed client files if a later write fails.
 
+## Model inventory and health
+
+Plan and apply a credential-free global model inventory, then inspect candidate state:
+
+```bash
+krcn model inventory --input <inventory.json>
+krcn model inventory --input <inventory.json> --apply --expected-plan <plan-id> --approval-id <approval-id>
+krcn model list
+```
+
+Inventory is user data. It contains portable model and provider references, modalities, workload declarations, and client references. It contains no credential or endpoint value and grants no authority.
+
+Plan one synthetic remote health probe, apply the exact approved action, and list sanitized results:
+
+```bash
+krcn model health <model-ref> --endpoint <endpoint> --retention-assumptions <text> --session-id <session-id>
+krcn model health <model-ref> --endpoint <endpoint> --retention-assumptions <text> --session-id <session-id> --apply --expected-plan <plan-id> --approval-id <approval-id>
+krcn model health-list
+```
+
+Planning performs no provider call and reads no credential. Apply resolves the client-managed credential, requires session-bound provider approval, sends synthetic input only, and persists no prompt, response, endpoint, or credential value. See `docs/specifications/MODEL-INVENTORY-HEALTH.md`.
+
 ## Work Graph
 
 Prepare a JSON request containing the project and work item fields, inspect the exact plan, then apply the same plan with approval:

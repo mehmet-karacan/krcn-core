@@ -27,6 +27,8 @@ from krcn_core.project_home import (
     discover_initialized_project_home,
 )
 from krcn_core.project_learning_intent import parse_project_learning_intent
+from krcn_core.model_health import OpenAICompatibleModelHealthProbe
+from krcn_core.secret_provider import OpenCodeSecretProvider
 from krcn_core.repository_context import main as context_main
 from krcn_core.user_home import resolve_user_home
 
@@ -556,6 +558,44 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="CANDIDATE",
     )
     _add_service_options(model_resolve)
+    model_inventory = model_commands.add_parser(
+        "inventory",
+        help="Plan or apply a credential-free global model inventory",
+    )
+    model_inventory.add_argument("--input", type=Path, required=True)
+    _add_service_options(model_inventory, mutation=True)
+    model_list = model_commands.add_parser(
+        "list",
+        help="List registered models without credentials or endpoints",
+    )
+    _add_service_options(model_list)
+    model_health = model_commands.add_parser(
+        "health",
+        help="Run one approved synthetic model health probe",
+    )
+    model_health.add_argument("model_ref")
+    model_health.add_argument("--endpoint", required=True)
+    model_health.add_argument(
+        "--retention-assumptions",
+        required=True,
+    )
+    model_health.add_argument("--session-id", required=True)
+    model_health.add_argument(
+        "--opencode-config",
+        type=Path,
+        default=Path.home() / ".config" / "opencode" / "opencode.json",
+    )
+    model_health.add_argument(
+        "--credential-reference",
+        default="opencode://litellm/api-key",
+    )
+    model_health.add_argument("--force-retest", action="store_true")
+    _add_service_options(model_health, mutation=True)
+    model_health_list = model_commands.add_parser(
+        "health-list",
+        help="List sanitized model health and quarantine states",
+    )
+    _add_service_options(model_health_list)
     return parser
 
 
@@ -1165,34 +1205,75 @@ def _run_client_command(args: argparse.Namespace) -> int:
 
 def _run_model_command(args: argparse.Namespace) -> int:
     try:
-        if args.model_command != "resolve":
-            raise ApplicationServiceError("model command is required")
-        bindings = {}
-        for value in args.bind:
-            candidate, separator, model_id = value.partition("=")
-            if not separator or not candidate or not model_id or candidate in bindings:
-                raise ApplicationServiceError(
-                    "each model binding must be unique CANDIDATE=MODEL"
-                )
-            bindings[candidate] = model_id
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
         data_root = resolve_user_home(args.data_root).path
-        arguments = {
-            "available_bindings": bindings,
-            "authorized_refs": args.authorize,
-        }
-        if args.role is not None:
-            arguments["role"] = args.role
+        service_options = {}
+        if args.model_command == "resolve":
+            bindings = {}
+            for value in args.bind:
+                candidate, separator, model_id = value.partition("=")
+                if not separator or not candidate or not model_id or candidate in bindings:
+                    raise ApplicationServiceError(
+                        "each model binding must be unique CANDIDATE=MODEL"
+                    )
+                bindings[candidate] = model_id
+            arguments = {
+                "available_bindings": bindings,
+                "authorized_refs": args.authorize,
+            }
+            if args.role is not None:
+                arguments["role"] = args.role
+            else:
+                arguments["workload"] = args.workload
+            operation = "model.resolve"
+        elif args.model_command == "inventory":
+            payload = json.loads(args.input.read_text(encoding="utf-8-sig"))
+            if not isinstance(payload, dict) or set(payload) != {"models"}:
+                raise ApplicationServiceError(
+                    "model inventory input must contain only models"
+                )
+            arguments = payload
+            operation = "model.inventory"
+        elif args.model_command == "list":
+            arguments = {}
+            operation = "model.list"
+        elif args.model_command == "health":
+            if args.apply:
+                secret_provider = OpenCodeSecretProvider(args.opencode_config.resolve())
+                service_options["model_health_probes"] = {
+                    "litellm": OpenAICompatibleModelHealthProbe(
+                        secret_provider.resolve,
+                        args.credential_reference,
+                    )
+                }
+            arguments = {
+                "model_ref": args.model_ref,
+                "endpoint": args.endpoint,
+                "retention_assumptions": args.retention_assumptions,
+                "session_id": args.session_id,
+                "force_retest": args.force_retest,
+            }
+            operation = "model.health"
+        elif args.model_command == "health-list":
+            arguments = {}
+            operation = "model.health-list"
         else:
-            arguments["workload"] = args.workload
-        response = create_application_service(repo_root, data_root).execute(
+            raise ApplicationServiceError("model command is required")
+        response = create_application_service(
+            repo_root,
+            data_root,
+            **service_options,
+        ).execute(
             ServiceRequest(
                 client_kind="cli",
-                operation="model.resolve",
+                operation=operation,
                 arguments=arguments,
+                apply=getattr(args, "apply", False),
+                expected_plan_id=getattr(args, "expected_plan", None),
+                approval_id=getattr(args, "approval_id", None),
             )
         )
-    except (ApplicationServiceError, OSError, ValueError) as exc:
+    except (ApplicationServiceError, OSError, ValueError, json.JSONDecodeError) as exc:
         _print_error(exc)
         return 2
     return _print_service_response(response, args.format)

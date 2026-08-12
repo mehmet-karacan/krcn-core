@@ -65,6 +65,7 @@
         ".krcn/decisions/**",
         ".krcn/knowledge/**",
         ".krcn/memory/**",
+        ".krcn/models/**",
         ".krcn/policies/**",
         ".krcn/source-bindings/**",
         ".krcn/project-home.json",
@@ -81,7 +82,8 @@
         ".krcn/global/policies/**",
         ".krcn/global/work/**",
         ".krcn/global/database/**",
-        ".krcn/global/local-data/**"
+        ".krcn/global/local-data/**",
+        ".krcn/global/models/**"
       ]
     },
     {
