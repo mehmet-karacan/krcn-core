@@ -36,6 +36,8 @@
         "model.list",
         "model.health",
         "model.health-list",
+        "model.benchmark-suite",
+        "model.benchmark-list",
         "project.learn",
         "project.integrate",
         "project.index-source-code",

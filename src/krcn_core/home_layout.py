@@ -42,6 +42,7 @@ PROJECT_COLLECTION_PATHS = {
     "orchestration-handoffs": "runtime/orchestration-handoffs",
     "model-inventory": "models",
     "model-health": "derived/model-health",
+    "model-benchmark-suites": "derived/model-benchmark-suites",
 }
 
 GLOBAL_COLLECTION_PATHS = {

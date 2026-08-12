@@ -77,6 +77,11 @@ from .memory_gate import (
     prepare_memory_persistence,
 )
 from .model_routing import load_model_routing_policy, resolve_model_route
+from .model_benchmark import (
+    apply_project_benchmark_suite,
+    list_project_benchmark_suites,
+    prepare_project_benchmark_suite,
+)
 from .model_inventory import (
     apply_model_inventory,
     list_model_inventory,
@@ -234,6 +239,8 @@ OPERATIONS = {
     "model.list",
     "model.health",
     "model.health-list",
+    "model.benchmark-suite",
+    "model.benchmark-list",
     "project.learn",
     "project.integrate",
     "project.index-source-code",
@@ -542,6 +549,8 @@ class KrcnApplicationService:
             "model.list": self._list_models,
             "model.health": self._model_health,
             "model.health-list": self._list_model_health,
+            "model.benchmark-suite": self._model_benchmark_suite,
+            "model.benchmark-list": self._list_model_benchmarks,
             "project.learn": self._learn_project,
             "project.integrate": self._integrate_project,
             "project.index-source-code": self._index_source_code,
@@ -1726,6 +1735,73 @@ class KrcnApplicationService:
             "health": list(records),
             "credential_values_included": False,
             "response_content_included": False,
+        }
+
+    def _model_benchmark_suite(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"project_id"})
+        project_id = _identifier_argument(request.arguments, "project_id")
+        plan = prepare_project_benchmark_suite(
+            self._repo_root,
+            self._store,
+            project_id,
+        )
+        if not request.apply:
+            return (
+                "ok" if plan.effect_plan is None else "planned",
+                {
+                    "plan": plan.public_summary(),
+                    "no_op": plan.effect_plan is None,
+                    "applied": False,
+                },
+            )
+        if request.expected_plan_id != plan.plan_id:
+            raise ApplicationServiceError(
+                "model benchmark apply requires the exact plan id"
+            )
+        authorization = None
+        if plan.effect_plan is not None:
+            authorization = self._authorize_record_plans(
+                request,
+                plan.plan_id,
+                (plan.effect_plan,),
+            )[plan.effect_plan.mutation.plan_id]
+        suite = apply_project_benchmark_suite(
+            self._store,
+            plan,
+            authorization,
+        )
+        return "applied", {
+            "plan": plan.public_summary(),
+            "suite_id": suite["suite_id"],
+            "suite_revision": suite["suite_revision"],
+            "suite_digest": suite["suite_digest"],
+            "applied": plan.effect_plan is not None,
+        }
+
+    def _list_model_benchmarks(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required=set(), optional={"project_id"})
+        if request.apply:
+            raise ApplicationServiceError("model benchmark list is read-only")
+        project_id = request.arguments.get("project_id")
+        if project_id is not None:
+            project_id = _identifier_argument(request.arguments, "project_id")
+        suites = list_project_benchmark_suites(
+            self._repo_root,
+            self._store,
+            project_id=project_id,
+        )
+        return "ok", {
+            "suite_count": len(suites),
+            "suites": list(suites),
+            "source_content_included": False,
+            "paths_disclosed": False,
+            "remote_call_performed": False,
         }
 
     def _onboard_project(

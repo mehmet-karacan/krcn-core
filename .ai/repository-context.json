@@ -188,6 +188,10 @@
     "model_health_policy_schema": "schemas/model-health-policy.schema.json",
     "model_health_record_schema": "schemas/model-health-record.schema.json",
     "model_inventory_health_boundary": "docs/specifications/MODEL-INVENTORY-HEALTH.md",
+    "model_benchmark_policy": "config/model-benchmark-policy.json",
+    "model_benchmark_policy_schema": "schemas/model-benchmark-policy.schema.json",
+    "model_benchmark_suite_schema": "schemas/model-benchmark-suite.schema.json",
+    "project_model_benchmark_boundary": "docs/specifications/PROJECT-MODEL-BENCHMARK-SUITES.md",
     "remote_embedding_providers": "docs/specifications/REMOTE-EMBEDDING-PROVIDERS.md",
     "import_policy": "config/import-policy.json"
   },

@@ -83,6 +83,17 @@ class RepositoryContextTests(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertTrue(resolve_repo_reference(REPO_ROOT, canonical[key]).is_file())
 
+    def test_project_model_benchmark_contract_is_canonical(self) -> None:
+        canonical = resolve_repository_context(REPO_ROOT).manifest["canonical"]
+        for key in (
+            "model_benchmark_policy",
+            "model_benchmark_policy_schema",
+            "model_benchmark_suite_schema",
+            "project_model_benchmark_boundary",
+        ):
+            with self.subTest(key=key):
+                self.assertTrue(resolve_repo_reference(REPO_ROOT, canonical[key]).is_file())
+
     def test_current_work_references_exist(self) -> None:
         resolved = resolve_repository_context(REPO_ROOT)
         current = resolved.current_work

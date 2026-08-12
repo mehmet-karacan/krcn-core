@@ -1,0 +1,114 @@
+{
+  "schema_ref": "schemas/model-benchmark-policy.schema.json",
+  "schema_version": 1,
+  "policy_revision": 1,
+  "suite_builder_id": "project-micro-benchmark-v1",
+  "suite_builder_revision": 1,
+  "maximum_cases": 32,
+  "maximum_context_refs_per_case": 64,
+  "score_weights": {
+    "quality": 80,
+    "reliability": 10,
+    "latency": 10
+  },
+  "templates": [
+    {
+      "workload_kind": "analysis",
+      "template_id": "profile-analysis-v1",
+      "required_output_sections": [
+        "answer",
+        "evidence",
+        "risks"
+      ]
+    },
+    {
+      "workload_kind": "architecture",
+      "template_id": "profile-architecture-v1",
+      "required_output_sections": [
+        "constraints",
+        "design",
+        "tradeoffs"
+      ]
+    },
+    {
+      "workload_kind": "implementation",
+      "template_id": "synthetic-implementation-v1",
+      "required_output_sections": [
+        "change",
+        "tests",
+        "compatibility"
+      ]
+    },
+    {
+      "workload_kind": "verification",
+      "template_id": "synthetic-verification-v1",
+      "required_output_sections": [
+        "findings",
+        "evidence",
+        "verdict"
+      ]
+    },
+    {
+      "workload_kind": "code-review",
+      "template_id": "profile-code-review-v1",
+      "required_output_sections": [
+        "findings",
+        "severity",
+        "evidence"
+      ]
+    },
+    {
+      "workload_kind": "database-analysis",
+      "template_id": "local-database-analysis-v1",
+      "required_output_sections": [
+        "dependencies",
+        "safety",
+        "evidence"
+      ]
+    },
+    {
+      "workload_kind": "security-review",
+      "template_id": "synthetic-security-review-v1",
+      "required_output_sections": [
+        "findings",
+        "threats",
+        "mitigations"
+      ]
+    },
+    {
+      "workload_kind": "performance-analysis",
+      "template_id": "synthetic-performance-analysis-v1",
+      "required_output_sections": [
+        "bottlenecks",
+        "evidence",
+        "measurements"
+      ]
+    },
+    {
+      "workload_kind": "embedding",
+      "template_id": "profile-retrieval-evaluation-v1",
+      "required_output_sections": [
+        "ranking",
+        "metrics",
+        "evidence"
+      ]
+    },
+    {
+      "workload_kind": "reranking",
+      "template_id": "profile-reranking-evaluation-v1",
+      "required_output_sections": [
+        "ranking",
+        "metrics",
+        "evidence"
+      ]
+    }
+  ],
+  "invariants": {
+    "source_content_included": false,
+    "prompt_content_included": false,
+    "secret_values_included": false,
+    "absolute_paths_included": false,
+    "remote_call_performed": false,
+    "grants_authority": false
+  }
+}

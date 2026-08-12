@@ -596,6 +596,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="List sanitized model health and quarantine states",
     )
     _add_service_options(model_health_list)
+    model_benchmark_suite = model_commands.add_parser(
+        "benchmark-suite",
+        help="Plan or build one project-specific safe micro benchmark suite",
+    )
+    model_benchmark_suite.add_argument("project_id")
+    _add_service_options(model_benchmark_suite, mutation=True)
+    model_benchmark_list = model_commands.add_parser(
+        "benchmark-list",
+        help="List project micro benchmark suite summaries",
+    )
+    model_benchmark_list.add_argument("--project")
+    _add_service_options(model_benchmark_list)
     return parser
 
 
@@ -1257,6 +1269,14 @@ def _run_model_command(args: argparse.Namespace) -> int:
         elif args.model_command == "health-list":
             arguments = {}
             operation = "model.health-list"
+        elif args.model_command == "benchmark-suite":
+            arguments = {"project_id": args.project_id}
+            operation = "model.benchmark-suite"
+        elif args.model_command == "benchmark-list":
+            arguments = {}
+            if args.project is not None:
+                arguments["project_id"] = args.project
+            operation = "model.benchmark-list"
         else:
             raise ApplicationServiceError("model command is required")
         response = create_application_service(

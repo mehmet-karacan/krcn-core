@@ -150,6 +150,17 @@ krcn model health-list
 
 Planning performs no provider call and reads no credential. Apply resolves the client-managed credential, requires session-bound provider approval, sends synthetic input only, and persists no prompt, response, endpoint, or credential value. See `docs/specifications/MODEL-INVENTORY-HEALTH.md`.
 
+Build a source-content-free project micro benchmark suite and list its current or stale state:
+
+```bash
+krcn model benchmark-suite <project-id>
+krcn model benchmark-suite <project-id> --apply --expected-plan <plan-id>
+krcn model benchmark-list
+krcn model benchmark-list --project <project-id>
+```
+
+Suite building requires a complete current project capability profile. It performs no provider call and stores no source or prompt text. Database cases remain local-only. See `docs/specifications/PROJECT-MODEL-BENCHMARK-SUITES.md`.
+
 ## Work Graph
 
 Prepare a JSON request containing the project and work item fields, inspect the exact plan, then apply the same plan with approval:

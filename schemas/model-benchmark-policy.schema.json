@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:model-benchmark-policy:1",
+  "title": "KRCN Core project micro benchmark policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "policy_revision",
+    "suite_builder_id",
+    "suite_builder_revision",
+    "maximum_cases",
+    "maximum_context_refs_per_case",
+    "score_weights",
+    "templates",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/model-benchmark-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "policy_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "suite_builder_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "suite_builder_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "maximum_cases": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100
+    },
+    "maximum_context_refs_per_case": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 500
+    },
+    "score_weights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "quality",
+        "reliability",
+        "latency"
+      ],
+      "properties": {
+        "quality": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "reliability": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "latency": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "templates": {
+      "type": "array",
+      "minItems": 10,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "workload_kind",
+          "template_id",
+          "required_output_sections"
+        ],
+        "properties": {
+          "workload_kind": {
+            "enum": [
+              "analysis",
+              "architecture",
+              "implementation",
+              "verification",
+              "code-review",
+              "database-analysis",
+              "security-review",
+              "performance-analysis",
+              "embedding",
+              "reranking"
+            ]
+          },
+          "template_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "required_output_sections": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            }
+          }
+        }
+      }
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_content_included",
+        "prompt_content_included",
+        "secret_values_included",
+        "absolute_paths_included",
+        "remote_call_performed",
+        "grants_authority"
+      ],
+      "properties": {
+        "source_content_included": {
+          "const": false
+        },
+        "prompt_content_included": {
+          "const": false
+        },
+        "secret_values_included": {
+          "const": false
+        },
+        "absolute_paths_included": {
+          "const": false
+        },
+        "remote_call_performed": {
+          "const": false
+        },
+        "grants_authority": {
+          "const": false
+        }
+      }
+    }
+  }
+}

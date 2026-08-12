@@ -8,7 +8,7 @@ Devam ediyor.
 
 - [x] 1. Proje yetkinlik profili
 - [x] 2. Model envanteri ve sağlık kontrolü
-- [ ] 3. Proje özel mikro benchmark
+- [x] 3. Proje özel mikro benchmark
 - [ ] 4. Uzmanlık bazlı model puanlama ve atama
 - [ ] 5. Delegated work unit sözleşmesi
 - [ ] 6. Orchestrator ve kalıcı runtime köprüsü

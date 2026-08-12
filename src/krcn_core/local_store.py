@@ -118,6 +118,11 @@ COLLECTIONS = {
     ),
     "model-inventory": ("model_ref", "models", "user-data"),
     "model-health": ("model_ref", "derived/model-health", "derived"),
+    "model-benchmark-suites": (
+        "suite_id",
+        "derived/model-benchmark-suites",
+        "derived",
+    ),
 }
 GLOBAL_ONLY_COLLECTIONS = {"model-inventory", "model-health"}
 INFORMATION_COLLECTIONS = {
@@ -228,6 +233,13 @@ def _validate_record_identity(
 
         try:
             return int(parse_model_health_record(payload)["health_revision"])
+        except ValueError as exc:
+            raise LocalStoreError(str(exc)) from exc
+    if record_type == "model-benchmark-suites":
+        from .model_benchmark import parse_model_benchmark_suite
+
+        try:
+            return int(parse_model_benchmark_suite(payload)["suite_revision"])
         except ValueError as exc:
             raise LocalStoreError(str(exc)) from exc
     if record_type == "information-relations":

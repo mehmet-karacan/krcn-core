@@ -1,0 +1,301 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:model-benchmark-suite:1",
+  "title": "KRCN Core project micro benchmark suite",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "suite_id",
+    "suite_revision",
+    "project_id",
+    "profile_digest",
+    "capability_digest",
+    "source_digest",
+    "builder",
+    "cases",
+    "case_count",
+    "remote_eligible_case_count",
+    "local_only_case_count",
+    "suite_digest",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/model-benchmark-suite.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "suite_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "suite_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "profile_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "capability_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "source_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "builder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "builder_id",
+        "builder_revision",
+        "policy_revision",
+        "policy_digest"
+      ],
+      "properties": {
+        "builder_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "builder_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policy_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policy_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/case"
+      }
+    },
+    "case_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "remote_eligible_case_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "local_only_case_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "suite_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_content_included",
+        "prompt_content_included",
+        "secret_values_included",
+        "absolute_paths_included",
+        "remote_call_performed",
+        "grants_authority"
+      ],
+      "properties": {
+        "source_content_included": {
+          "const": false
+        },
+        "prompt_content_included": {
+          "const": false
+        },
+        "secret_values_included": {
+          "const": false
+        },
+        "absolute_paths_included": {
+          "const": false
+        },
+        "remote_call_performed": {
+          "const": false
+        },
+        "grants_authority": {
+          "const": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "identifierList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "evidenceList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^evidence-[a-f0-9]{64}$"
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "workload_id",
+        "workload_kind",
+        "workload_digest",
+        "template_id",
+        "fixture_policy",
+        "remote_eligible",
+        "trust_role",
+        "specialization_profile_id",
+        "context",
+        "fixture_descriptor",
+        "required_output_sections",
+        "rubric",
+        "case_digest"
+      ],
+      "properties": {
+        "case_id": {
+          "type": "string",
+          "pattern": "^case-[a-f0-9]{64}$"
+        },
+        "workload_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "workload_kind": {
+          "$ref": "#/$defs/identifier"
+        },
+        "workload_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "template_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "fixture_policy": {
+          "enum": [
+            "synthetic-only",
+            "sanitized-derived",
+            "local-only"
+          ]
+        },
+        "remote_eligible": {
+          "type": "boolean"
+        },
+        "trust_role": {
+          "$ref": "#/$defs/identifier"
+        },
+        "specialization_profile_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "context": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "capability_refs",
+            "module_refs",
+            "evidence_refs"
+          ],
+          "properties": {
+            "capability_refs": {
+              "$ref": "#/$defs/identifierList"
+            },
+            "module_refs": {
+              "$ref": "#/$defs/identifierList"
+            },
+            "evidence_refs": {
+              "$ref": "#/$defs/evidenceList"
+            }
+          }
+        },
+        "fixture_descriptor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "technology_refs",
+            "framework_refs",
+            "database_refs",
+            "testing_refs",
+            "quality_refs"
+          ],
+          "properties": {
+            "technology_refs": {
+              "$ref": "#/$defs/identifierList"
+            },
+            "framework_refs": {
+              "$ref": "#/$defs/identifierList"
+            },
+            "database_refs": {
+              "$ref": "#/$defs/identifierList"
+            },
+            "testing_refs": {
+              "$ref": "#/$defs/identifierList"
+            },
+            "quality_refs": {
+              "$ref": "#/$defs/identifierList"
+            }
+          }
+        },
+        "required_output_sections": {
+          "$ref": "#/$defs/identifierList"
+        },
+        "rubric": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "quality_weight",
+            "reliability_weight",
+            "latency_weight",
+            "dimension_refs",
+            "evaluation_traits"
+          ],
+          "properties": {
+            "quality_weight": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "reliability_weight": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "latency_weight": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "dimension_refs": {
+              "$ref": "#/$defs/identifierList"
+            },
+            "evaluation_traits": {
+              "$ref": "#/$defs/identifierList"
+            }
+          }
+        },
+        "case_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    }
+  }
+}

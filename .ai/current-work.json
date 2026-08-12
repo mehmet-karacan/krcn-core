@@ -1,7 +1,7 @@
 {
   "schema_ref": "schemas/current-work.schema.json",
   "schema_version": 1,
-  "phase_id": "phase-17",
+  "phase_id": "phase-18",
   "workstream_id": "project-aware-agent-orchestration",
   "status": "active",
   "goal": "Qualify models per project and workload, enforce evidence-bound subagent orchestration, pilot gpu-fusion, then integrate six real projects and migrate high-confidence historical work",
@@ -98,14 +98,16 @@
     "docs/progress/PHASE-15-COMPLETION.md",
     "docs/progress/PHASE-16-READ-ONLY-AUDIT.md",
     "docs/progress/PHASE-16-PROJECT-CAPABILITY-PROFILE.md",
-    "docs/progress/PHASE-17-MODEL-INVENTORY-HEALTH.md"
+    "docs/progress/PHASE-17-MODEL-INVENTORY-HEALTH.md",
+    "docs/progress/PHASE-18-PROJECT-MICRO-BENCHMARK.md"
   ],
   "next_actions": [
-    "build project-specific workload benchmarks and model assignments",
+    "run project benchmark suites and persist workload scorecards",
+    "select project-specific primary and fallback model assignments",
     "enforce coordinator delegation through the runtime queue",
     "pilot the complete architecture on gpu-fusion before integrating six external projects"
   ],
-  "baseline_commit": "ae9e291",
+  "baseline_commit": "37d1496",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,
