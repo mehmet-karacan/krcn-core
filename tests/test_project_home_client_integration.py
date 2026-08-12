@@ -78,7 +78,10 @@ class ProjectHomeClientIntegrationTests(unittest.TestCase):
             ["use-default", "choose-parent", "cancel"],
             resolution["choices"],
         )
-        self.assertEqual(str(self.project / ".krcn"), resolution["target_path"])
+        self.assertEqual(
+            (self.project / ".krcn").resolve(),
+            Path(resolution["target_path"]).resolve(),
+        )
         self.assertFalse((self.project / ".krcn").exists())
 
     def test_cancel_is_non_mutating_for_every_client(self) -> None:
@@ -109,8 +112,8 @@ class ProjectHomeClientIntegrationTests(unittest.TestCase):
         proposal = json.loads(output)
         self.assertEqual("choice-required", proposal["status"])
         self.assertEqual(
-            str(self.project / ".krcn"),
-            proposal["data"]["resolution"]["target_path"],
+            (self.project / ".krcn").resolve(),
+            Path(proposal["data"]["resolution"]["target_path"]).resolve(),
         )
         self.assertFalse((self.project / ".krcn").exists())
 
@@ -178,7 +181,10 @@ class ProjectHomeClientIntegrationTests(unittest.TestCase):
         )
         self.assertEqual("planned", dry_run.status)
         target = dry_run.data["plan"]["resolution"]["target_path"]
-        self.assertEqual(str(selected_parent / ".krcn"), target)
+        self.assertEqual(
+            (selected_parent / ".krcn").resolve(),
+            Path(target).resolve(),
+        )
         applied = self.service.execute(
             ServiceRequest(
                 "plugin",

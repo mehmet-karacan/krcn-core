@@ -60,6 +60,13 @@ At the start of each task:
 
 Before starting work, inspect repository state, relevant manifests, and existing data. Extract a short goal and acceptance criteria. Proceed with read-only inspection; obtain explicit approval before irreversible operations or operations that affect user data. At completion, report changed files, verification results, and preserved data areas in Turkish.
 
+## Git and CI priority
+
+- After every push, inspect the required remote checks for the pushed commit.
+- If Git, push, or CI reports an error, pause planned development and resolve that error first.
+- Reproduce and verify the fix locally when possible, then commit, push, and monitor the replacement checks until the current commit is green.
+- Do not treat historical failed runs as an active failure after a newer commit has passed all required checks.
+
 ## Natural-language project learning
 
 When the user provides one existing absolute project directory, or combines that directory with phrases such as `projeyi öğren`, `tanı`, `tanıt`, `entegre et`, `learn`, `register`, or `onboard`:
