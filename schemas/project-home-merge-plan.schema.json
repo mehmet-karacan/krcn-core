@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:project-home-merge-plan:1",
+  "title": "KRCN Core project-home merge plan summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "source_backup_id",
+    "target_backup_id",
+    "merge_entry_count",
+    "identical_entry_count",
+    "skipped_entry_count",
+    "source_excluded_secret_count",
+    "target_excluded_secret_count",
+    "source_preserved",
+    "target_existing_content_preserved",
+    "project_manifest_included",
+    "runtime_included",
+    "derived_included",
+    "local_data_included",
+    "secret_values_included",
+    "paths_disclosed",
+    "entries",
+    "effect_plans",
+    "rollback"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/project-home-merge-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "source_backup_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "target_backup_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "merge_entry_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "identical_entry_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "skipped_entry_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_excluded_secret_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "target_excluded_secret_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_preserved": {
+      "const": true
+    },
+    "target_existing_content_preserved": {
+      "const": true
+    },
+    "project_manifest_included": {
+      "const": false
+    },
+    "runtime_included": {
+      "const": false
+    },
+    "derived_included": {
+      "const": false
+    },
+    "local_data_included": {
+      "const": false
+    },
+    "secret_values_included": {
+      "const": false
+    },
+    "paths_disclosed": {
+      "const": false
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "effect_plans": {
+      "type": "array",
+      "minItems": 2
+    },
+    "rollback": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

@@ -365,6 +365,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     project_restore.add_argument("--home-parent", type=Path)
     _add_service_options(project_restore, mutation=True)
+    project_merge = portability_commands.add_parser(
+        "merge-project-home",
+        help="Merge project records into an existing shared user home",
+    )
+    project_merge.add_argument("--source-home", type=Path, required=True)
+    project_merge.add_argument("--target-home", type=Path, required=True)
+    project_merge.add_argument("--backup-directory", type=Path, required=True)
+    _add_service_options(project_merge, mutation=True)
     return parser
 
 
@@ -809,10 +817,19 @@ def _run_portability_command(args: argparse.Namespace) -> int:
             "migrate-repo-local",
             "migrate-project-home",
             "restore-project-home",
+            "merge-project-home",
         }:
             raise ApplicationServiceError("portability command is required")
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
-        data_root = resolve_user_home(args.data_root).path
+        if args.portability_command == "merge-project-home":
+            target_home = args.target_home.resolve()
+            if args.data_root is not None and args.data_root.resolve() != target_home:
+                raise ApplicationServiceError(
+                    "--data-root must match --target-home for project-home merge"
+                )
+            data_root = target_home
+        else:
+            data_root = resolve_user_home(args.data_root).path
         operation = f"portability.{args.portability_command}"
         if args.portability_command == "backup":
             arguments = {"archive_path": str(args.output.resolve())}
@@ -829,7 +846,7 @@ def _run_portability_command(args: argparse.Namespace) -> int:
             }
             if args.home_parent is not None:
                 arguments["selected_parent"] = str(args.home_parent.resolve())
-        else:
+        elif args.portability_command == "restore-project-home":
             arguments = {
                 "archive_path": str(args.input.resolve()),
                 "project_root": str(args.project.resolve()),
@@ -837,6 +854,12 @@ def _run_portability_command(args: argparse.Namespace) -> int:
             }
             if args.home_parent is not None:
                 arguments["selected_parent"] = str(args.home_parent.resolve())
+        else:
+            arguments = {
+                "source_home": str(args.source_home.resolve()),
+                "target_home": str(args.target_home.resolve()),
+                "backup_directory": str(args.backup_directory.resolve()),
+            }
         request = ServiceRequest(
             client_kind="cli",
             operation=operation,

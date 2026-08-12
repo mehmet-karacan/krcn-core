@@ -72,6 +72,15 @@ python tools/krcn.py portability restore-project-home --input "<backup-file>" --
 
 Both commands produce a dry-run plan first. Apply requires the exact returned plan identity and an explicit approval identity. A migration writes the backup before the target and never deletes the original home.
 
+Merge selected records from a project-scoped home into an existing shared home without overwriting either side:
+
+```bash
+python tools/krcn.py portability merge-project-home --source-home "<project-home>" --target-home "<shared-home>" --backup-directory "<new-backup-directory>"
+python tools/krcn.py portability merge-project-home --source-home "<project-home>" --target-home "<shared-home>" --backup-directory "<new-backup-directory>" --apply --expected-plan <plan-id> --approval-id <approval-id>
+```
+
+The source and target backups are written and verified before any target record is added. Existing target content is preserved. Derived state must be rebuilt with `project rescan` after the merge.
+
 `onboard` and `rescan` also produce a plan only by default. Applying the plan requires the plan identity from the prior dry-run, and an explicit approval identity when the plan includes a user-data change.
 
 ## Knowledge, context, and memory

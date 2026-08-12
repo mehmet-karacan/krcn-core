@@ -11,14 +11,16 @@
     "project.rebind",
     "portability.backup",
     "portability.restore",
-    "portability.migrate-repo-local"
+    "portability.migrate-repo-local",
+    "portability.merge-project-home"
   ],
   "required_package_modules": [
     "krcn_core/user_home.py",
     "krcn_core/source_rebind.py",
     "krcn_core/portable_backup.py",
     "krcn_core/portable_restore.py",
-    "krcn_core/repo_local_migration.py"
+    "krcn_core/repo_local_migration.py",
+    "krcn_core/project_home_merge.py"
   ],
   "required_gates": [
     "repository-verify",

@@ -55,6 +55,7 @@
     "project_home_manifest_schema": "schemas/project-home-manifest.schema.json",
     "project_home_initialization_plan_schema": "schemas/project-home-initialization-plan.schema.json",
     "project_home_migration_plan_schema": "schemas/project-home-migration-plan.schema.json",
+    "project_home_merge_plan_schema": "schemas/project-home-merge-plan.schema.json",
     "project_learning_intent_schema": "schemas/project-learning-intent.schema.json",
     "project_metadata_inference_schema": "schemas/project-metadata-inference.schema.json",
     "project_learning_plan_schema": "schemas/project-learning-plan.schema.json",

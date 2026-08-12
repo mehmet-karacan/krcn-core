@@ -59,7 +59,8 @@
         "portability.restore",
         "portability.migrate-repo-local",
         "portability.migrate-project-home",
-        "portability.restore-project-home"
+        "portability.restore-project-home",
+        "portability.merge-project-home"
       ]
     },
     "status": {

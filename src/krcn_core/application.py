@@ -93,6 +93,10 @@ from .project_home_portability import (
     prepare_project_home_migration,
     prepare_project_home_restore,
 )
+from .project_home_merge import (
+    apply_project_home_merge,
+    prepare_project_home_merge,
+)
 from .portable_backup import apply_portable_backup, prepare_portable_backup
 from .portable_restore import apply_portable_restore, prepare_portable_restore
 from .provider_gate import ProviderApproval, load_provider_gate_policy
@@ -147,6 +151,7 @@ OPERATIONS = {
     "portability.migrate-repo-local",
     "portability.migrate-project-home",
     "portability.restore-project-home",
+    "portability.merge-project-home",
     "knowledge.catalog",
     "knowledge.search-exact",
     "knowledge.search-dependencies",
@@ -375,6 +380,7 @@ class KrcnApplicationService:
             "portability.migrate-repo-local": self._migrate_repo_local,
             "portability.migrate-project-home": self._migrate_project_home,
             "portability.restore-project-home": self._restore_project_home,
+            "portability.merge-project-home": self._merge_project_home,
             "knowledge.catalog": self._knowledge_catalog,
             "knowledge.search-exact": self._search_exact,
             "knowledge.search-dependencies": self._search_dependencies,
@@ -1242,6 +1248,36 @@ class KrcnApplicationService:
         )
         result = apply_project_home_restore(plan, authorizations)
         return "applied", {"plan": plan.public_summary(), **result}
+
+    def _merge_project_home(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"source_home", "target_home", "backup_directory"},
+        )
+        target_home = self._absolute_path_argument(request.arguments, "target_home")
+        if target_home != self._store.data_root.resolve():
+            raise ApplicationServiceError(
+                "project-home merge target must equal the active KRCN data root"
+            )
+        plan = prepare_project_home_merge(
+            self._absolute_path_argument(request.arguments, "source_home"),
+            target_home,
+            self._absolute_path_argument(request.arguments, "backup_directory"),
+            self._ownership,
+        )
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        authorizations = self._authorize_effect_plans(
+            request,
+            plan.plan_id,
+            plan.effect_plans,
+            "project-home merge",
+        )
+        result = apply_project_home_merge(plan, authorizations)
+        return "applied", {"plan": plan.public_summary(), **result.public_summary()}
 
     @staticmethod
     def _authorize_effect_plans(
