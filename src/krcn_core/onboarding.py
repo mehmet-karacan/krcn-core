@@ -11,6 +11,7 @@ from typing import Mapping
 
 from .local_store import LocalWorkspaceStore, RecordWritePlan, StoredRecord
 from .mutation_gate import MutationAuthorization
+from .project_home_initialization import validate_initialized_project_home
 from .source_identity import SourceIdentityError, assert_external_source
 
 
@@ -95,9 +96,16 @@ def _validate_request(request: OnboardingRequest, store: LocalWorkspaceStore) ->
     source_root = request.source_root.resolve()
     if not source_root.is_dir():
         raise OnboardingError("source root must be an existing directory")
+    project_local_home = store.data_root.resolve(strict=False) == source_root / ".krcn"
     try:
-        assert_external_source(source_root, store.data_root)
-    except SourceIdentityError as exc:
+        if project_local_home:
+            validate_initialized_project_home(store.data_root)
+        assert_external_source(
+            source_root,
+            store.data_root,
+            allow_project_local_home=project_local_home,
+        )
+    except (SourceIdentityError, ValueError) as exc:
         raise OnboardingError(str(exc)) from exc
     return source_root
 

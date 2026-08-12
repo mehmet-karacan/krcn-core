@@ -18,8 +18,11 @@
         "project.list",
         "project.inspect",
         "project.learn",
+        "project.home.resolve",
+        "project.home.initialize",
         "project.onboard",
         "project.rescan",
+        "project.rebind",
         "knowledge.catalog",
         "knowledge.search-exact",
         "knowledge.search-dependencies",
@@ -36,10 +39,13 @@
         "orchestrator.execute",
         "orchestrator.verify",
         "orchestrator.status",
-        "orchestrator.resume"
+        "orchestrator.resume",
+        "portability.backup",
+        "portability.restore",
+        "portability.migrate-repo-local"
       ]
     },
-    "status": { "enum": ["ok", "planned", "applied"] },
+    "status": { "enum": ["ok", "planned", "applied", "choice-required", "cancelled"] },
     "data": { "type": "object", "additionalProperties": true }
   }
 }

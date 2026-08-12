@@ -33,7 +33,7 @@ python tools/krcn.py catalog
 
 ## Project learning
 
-Introducing a new project only requires its directory. The service infers the project name and technical identifiers itself, inspects the source read-only, and shows an exact plan without copying files. Persisting the result requires the same plan identity and one explicit approval identity.
+Introducing a new project only requires its directory. The service infers the project name and technical identifiers itself, inspects the source read-only, and shows an exact plan without copying files. On first use, the CLI first proposes `<source-directory>/.krcn` and writes nothing until the user selects a location. Location initialization and project learning are separate exact-plan mutations.
 
 ```bash
 python tools/krcn.py project learn "<source-directory>"
@@ -43,6 +43,22 @@ python tools/krcn.py project inspect <project-id>
 python tools/krcn.py project onboard --workspace-id <workspace-id> --project-id <project-id> --binding-id <binding-id> --name <project-name> --source <source-directory>
 python tools/krcn.py project rescan <project-id>
 ```
+
+Accept the proposed project-local home, inspect its exact plan, and then apply that same plan:
+
+```bash
+python tools/krcn.py project learn "<source-directory>" --home-choice use-default
+python tools/krcn.py project learn "<source-directory>" --home-choice use-default --apply --expected-plan <plan-id> --approval-id <approval-id>
+```
+
+Choose another existing parent directory or cancel without writing state:
+
+```bash
+python tools/krcn.py project learn "<source-directory>" --home-choice choose-parent --home-parent "<parent-directory>"
+python tools/krcn.py project learn "<source-directory>" --home-choice cancel
+```
+
+An explicit `--data-root` or `KRCN_HOME` continues to select an existing compatible home. Project-local `.krcn` content is excluded from source discovery and Git. Git ignore is not backup, so portable backup and restore remain required for machine recovery.
 
 `onboard` and `rescan` also produce a plan only by default. Applying the plan requires the plan identity from the prior dry-run, and an explicit approval identity when the plan includes a user-data change.
 

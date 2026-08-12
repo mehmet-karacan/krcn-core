@@ -2,7 +2,7 @@
 
 ## Status
 
-This is the accepted Phase 8 target contract. The shared resolver and exact-plan initialization boundary are implemented. Project-learning and client integration remain pending, so existing Phase 6 entrypoints continue to use their compatible user-home behavior until the integration step is complete.
+This is the accepted Phase 8 target contract. The shared resolver, exact-plan initialization boundary, project-learning integration, and client-neutral application operations are implemented. Existing explicit Phase 6 data roots remain compatible.
 
 ## Purpose
 

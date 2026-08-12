@@ -18,6 +18,8 @@
         "project.list",
         "project.inspect",
         "project.learn",
+        "project.home.resolve",
+        "project.home.initialize",
         "project.onboard",
         "project.rescan",
         "project.rebind",

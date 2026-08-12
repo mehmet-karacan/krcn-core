@@ -177,6 +177,24 @@ def resolve_project_home(
     )
 
 
+def discover_initialized_project_home(
+    start: Path,
+) -> ProjectHomeResolution | None:
+    """Find the nearest initialized project-local home without writing state."""
+
+    candidate = _absolute_path(start, "project-home search root", must_exist=True)
+    for directory in (candidate, *candidate.parents):
+        marker = directory / PROJECT_HOME_DIRECTORY / PROJECT_HOME_MANIFEST
+        if marker.is_file() and not marker.is_symlink():
+            return _resolution(
+                directory,
+                directory / PROJECT_HOME_DIRECTORY,
+                source="remembered",
+                requires_user_choice=False,
+            )
+    return None
+
+
 def select_project_home_parent(
     project_root: Path,
     selected_parent: Path,

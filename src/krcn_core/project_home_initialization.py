@@ -181,6 +181,22 @@ def _parse_manifest(content: bytes) -> str:
     return home_id
 
 
+def validate_initialized_project_home(home: Path) -> str:
+    """Validate one existing project-home marker without changing local state."""
+
+    candidate = home.resolve(strict=False)
+    if not candidate.is_dir() or candidate.is_symlink():
+        raise ProjectHomeInitializationError(
+            "project-home target must be a regular directory"
+        )
+    marker = candidate / MANIFEST_NAME
+    if not marker.is_file() or marker.is_symlink():
+        raise ProjectHomeInitializationError(
+            "project-home manifest must be a regular file"
+        )
+    return _parse_manifest(marker.read_bytes())
+
+
 def _git(
     root: Path,
     *arguments: str,

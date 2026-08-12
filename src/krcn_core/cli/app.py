@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -11,9 +12,17 @@ from pathlib import Path
 from krcn_core.application import (
     ApplicationServiceError,
     ServiceRequest,
+    ServiceResponse,
     create_application_service,
 )
 from krcn_core.doctor import run_doctor
+from krcn_core.intent_routing import project_learning_route
+from krcn_core.project_home import (
+    PROJECT_HOME_DIRECTORY,
+    PROJECT_HOME_MANIFEST,
+    discover_initialized_project_home,
+)
+from krcn_core.project_learning_intent import parse_project_learning_intent
 from krcn_core.repository_context import main as context_main
 from krcn_core.user_home import resolve_user_home
 
@@ -60,6 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
     ask.add_argument("request")
     ask.add_argument("--source", type=Path)
     _add_service_options(ask, mutation=True)
+    _add_project_home_choice_options(ask)
     project = subparsers.add_parser(
         "project",
         help="Manage local project registrations through shared services",
@@ -82,6 +92,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     project_learn.add_argument("source", type=Path)
     _add_service_options(project_learn, mutation=True)
+    _add_project_home_choice_options(project_learn)
     project_onboard = project_commands.add_parser(
         "onboard",
         help="Plan or apply read-only local project onboarding",
@@ -264,6 +275,14 @@ def _add_service_options(
         parser.add_argument("--approval-id")
 
 
+def _add_project_home_choice_options(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--home-choice",
+        choices=("use-default", "choose-parent", "cancel"),
+    )
+    parser.add_argument("--home-parent", type=Path)
+
+
 def _add_installation_options(
     parser: argparse.ArgumentParser,
     *,
@@ -357,18 +376,9 @@ def _project_service_request(args: argparse.Namespace) -> ServiceRequest:
     )
 
 
-def _run_project_command(args: argparse.Namespace) -> int:
-    try:
-        repo_root = args.repo.resolve() if args.repo else discover_repo_root()
-        data_root = resolve_user_home(args.data_root).path
-        response = create_application_service(repo_root, data_root).execute(
-            _project_service_request(args)
-        )
-    except (ApplicationServiceError, OSError, ValueError) as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        return 2
+def _print_service_response(response: ServiceResponse, output_format: str) -> int:
     payload = response.as_dict()
-    if args.format == "json":
+    if output_format == "json":
         print(json.dumps(payload, ensure_ascii=False, indent=2))
     else:
         print(f"{response.status}\t{response.operation}")
@@ -376,10 +386,122 @@ def _run_project_command(args: argparse.Namespace) -> int:
     return 0
 
 
+def _active_project_data_root(explicit_data_root: Path | None) -> Path:
+    if explicit_data_root is not None or os.environ.get("KRCN_HOME"):
+        return resolve_user_home(explicit_data_root).path
+    discovered = discover_initialized_project_home(Path.cwd())
+    if discovered is not None:
+        return discovered.path
+    return resolve_user_home(None).path
+
+
+def _project_learning_home(
+    args: argparse.Namespace,
+    repo_root: Path,
+    source_root: Path,
+) -> tuple[Path | None, ServiceResponse | None]:
+    if args.data_root is not None or os.environ.get("KRCN_HOME"):
+        if args.home_choice is not None or args.home_parent is not None:
+            raise ApplicationServiceError(
+                "project-home choice cannot be combined with data-root or KRCN_HOME"
+            )
+        return resolve_user_home(args.data_root).path, None
+
+    marker = source_root / PROJECT_HOME_DIRECTORY / PROJECT_HOME_MANIFEST
+    if marker.is_file() and not marker.is_symlink():
+        if args.home_parent is not None or args.home_choice not in {None, "use-default"}:
+            raise ApplicationServiceError(
+                "initialized project home only accepts the use-default choice"
+            )
+        check = create_application_service(repo_root).execute(
+            ServiceRequest(
+                client_kind="cli",
+                operation="project.home.initialize",
+                arguments={
+                    "project_root": str(source_root),
+                    "choice": "use-default",
+                },
+                apply=args.apply,
+                expected_plan_id=args.expected_plan,
+                approval_id=args.approval_id,
+            )
+        )
+        effects = check.data["plan"]["effect_plans"]
+        if args.home_choice is not None or effects:
+            return None, check
+        return marker.parent.resolve(), None
+
+    if args.home_choice is None:
+        if args.home_parent is not None:
+            raise ApplicationServiceError(
+                "home-parent requires the choose-parent choice"
+            )
+        if args.apply or args.expected_plan or args.approval_id:
+            raise ApplicationServiceError(
+                "select a project-home choice before requesting apply"
+            )
+        operation = "project.home.resolve"
+        arguments: dict[str, object] = {"project_root": str(source_root)}
+        apply = False
+    else:
+        operation = "project.home.initialize"
+        arguments = {
+            "project_root": str(source_root),
+            "choice": args.home_choice,
+        }
+        if args.home_parent is not None:
+            arguments["selected_parent"] = str(args.home_parent.resolve())
+        apply = args.apply
+
+    request = ServiceRequest(
+        client_kind="cli",
+        operation=operation,
+        arguments=arguments,
+        apply=apply,
+        expected_plan_id=args.expected_plan,
+        approval_id=args.approval_id,
+    )
+    response = create_application_service(repo_root).execute(request)
+    return None, response
+
+
+def _run_project_command(args: argparse.Namespace) -> int:
+    try:
+        repo_root = args.repo.resolve() if args.repo else discover_repo_root()
+        if args.project_command == "learn":
+            data_root, bootstrap = _project_learning_home(
+                args,
+                repo_root,
+                args.source.resolve(),
+            )
+            if bootstrap is not None:
+                return _print_service_response(bootstrap, args.format)
+        else:
+            data_root = _active_project_data_root(args.data_root)
+        response = create_application_service(repo_root, data_root).execute(
+            _project_service_request(args)
+        )
+    except (ApplicationServiceError, OSError, ValueError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+    return _print_service_response(response, args.format)
+
+
 def _run_ask_command(args: argparse.Namespace) -> int:
     try:
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
-        data_root = resolve_user_home(args.data_root).path
+        source_root = parse_project_learning_intent(
+            args.request,
+            source_root=args.source.resolve() if args.source is not None else None,
+            intent_terms=project_learning_route(repo_root).terms,
+        ).source_root
+        data_root, bootstrap = _project_learning_home(
+            args,
+            repo_root,
+            source_root,
+        )
+        if bootstrap is not None:
+            return _print_service_response(bootstrap, args.format)
         arguments: dict[str, object] = {"request_text": args.request}
         if args.source is not None:
             arguments["source_root"] = str(args.source.resolve())
@@ -395,12 +517,7 @@ def _run_ask_command(args: argparse.Namespace) -> int:
     except (ApplicationServiceError, OSError, ValueError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 2
-    if args.format == "json":
-        print(json.dumps(response.as_dict(), ensure_ascii=False, indent=2))
-    else:
-        print(f"{response.status}\t{response.operation}")
-        print(json.dumps(response.data, ensure_ascii=False, indent=2))
-    return 0
+    return _print_service_response(response, args.format)
 
 
 def _core_service_request(args: argparse.Namespace) -> ServiceRequest:

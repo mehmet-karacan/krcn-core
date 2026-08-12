@@ -106,8 +106,13 @@ def identities_match(expected: SourceIdentity, candidate: SourceIdentity) -> boo
     return expected == candidate
 
 
-def assert_external_source(source_root: Path, user_home: Path) -> tuple[Path, Path]:
-    """Prove that a source and KRCN user home are separate directory trees."""
+def assert_external_source(
+    source_root: Path,
+    user_home: Path,
+    *,
+    allow_project_local_home: bool = False,
+) -> tuple[Path, Path]:
+    """Prove source separation, allowing only an approved project-local home."""
 
     source = source_root.resolve(strict=False)
     home = user_home.resolve(strict=False)
@@ -122,5 +127,8 @@ def assert_external_source(source_root: Path, user_home: Path) -> tuple[Path, Pa
     except ValueError:
         pass
     else:
-        raise SourceIdentityError("KRCN user home may not be inside external source")
+        if not allow_project_local_home or home != source / ".krcn":
+            raise SourceIdentityError(
+                "KRCN user home may not be inside external source"
+            )
     return source, home

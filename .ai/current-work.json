@@ -79,11 +79,12 @@
     "docs/progress/PHASE-8-KICKOFF.md",
     "docs/progress/PHASE-8-RESEARCH-EVALUATION.md",
     "docs/progress/PHASE-8-PROJECT-HOME-RESOLUTION.md",
-    "docs/progress/PHASE-8-PROJECT-HOME-INITIALIZATION.md"
+    "docs/progress/PHASE-8-PROJECT-HOME-INITIALIZATION.md",
+    "docs/progress/PHASE-8-PROJECT-HOME-CLIENT-INTEGRATION.md"
   ],
   "next_actions": [
-    "integrate project-home selection with project.learn",
-    "expose the shared location choice through client-neutral application services"
+    "add exact backup-backed migration into a selected project home",
+    "verify project-home restore and clean-machine recovery"
   ],
   "baseline_commit": "2ab1cb1",
   "approval_gates": {

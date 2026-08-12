@@ -74,6 +74,11 @@ from .orchestration_worker import WorkerHandlerRegistry
 from .policies import load_user_policies
 from .project_learning import apply_project_learning, prepare_project_learning
 from .project_learning_intent import parse_project_learning_intent
+from .project_home import choose_project_home, resolve_project_home
+from .project_home_initialization import (
+    apply_project_home_initialization,
+    prepare_project_home_initialization,
+)
 from .portable_backup import apply_portable_backup, prepare_portable_backup
 from .portable_restore import apply_portable_restore, prepare_portable_restore
 from .provider_gate import ProviderApproval, load_provider_gate_policy
@@ -116,6 +121,8 @@ OPERATIONS = {
     "project.list",
     "project.inspect",
     "project.learn",
+    "project.home.resolve",
+    "project.home.initialize",
     "project.onboard",
     "project.rescan",
     "project.rebind",
@@ -335,6 +342,8 @@ class KrcnApplicationService:
             "project.list": self._list_projects,
             "project.inspect": self._inspect_project,
             "project.learn": self._learn_project,
+            "project.home.resolve": self._resolve_project_home,
+            "project.home.initialize": self._initialize_project_home,
             "project.onboard": self._onboard_project,
             "project.rescan": self._rescan_project,
             "project.rebind": self._rebind_project,
@@ -741,6 +750,112 @@ class KrcnApplicationService:
         )
         return "applied", {
             "plan": plan.public_summary(),
+            **result.public_summary(),
+            "applied": True,
+        }
+
+    def _project_home_resolution(
+        self,
+        arguments: Mapping[str, object],
+    ):
+        _check_arguments(
+            arguments,
+            required={"project_root"},
+            optional={"choice", "selected_parent", "explicit_data_root"},
+        )
+        project_root = self._absolute_path_argument(arguments, "project_root")
+        explicit = None
+        if "explicit_data_root" in arguments:
+            explicit = self._absolute_path_argument(arguments, "explicit_data_root")
+        resolution = resolve_project_home(
+            project_root,
+            explicit_data_root=explicit,
+            environ={},
+        )
+        choice = arguments.get("choice")
+        if choice is not None:
+            if not isinstance(choice, str):
+                raise ApplicationServiceError("project-home choice must be a string")
+            selected_parent = None
+            if "selected_parent" in arguments:
+                selected_parent = self._absolute_path_argument(
+                    arguments,
+                    "selected_parent",
+                )
+            resolution = choose_project_home(
+                resolution,
+                choice,
+                selected_parent=selected_parent,
+            )
+        elif "selected_parent" in arguments:
+            raise ApplicationServiceError(
+                "selected_parent requires the choose-parent choice"
+            )
+        return resolution
+
+    def _resolve_project_home(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        if request.apply:
+            raise ApplicationServiceError("project-home resolution is read-only")
+        resolution = self._project_home_resolution(request.arguments)
+        if resolution is None:
+            return "cancelled", {"cancelled": True}
+        status = "choice-required" if resolution.requires_user_choice else "ok"
+        return status, {
+            "resolution": resolution.as_dict(disclose_path=True),
+            "cancelled": False,
+        }
+
+    def _initialize_project_home(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        resolution = self._project_home_resolution(request.arguments)
+        if resolution is None:
+            if request.apply:
+                raise ApplicationServiceError("cancelled choice cannot be applied")
+            return "cancelled", {"cancelled": True, "applied": False}
+        try:
+            plan = prepare_project_home_initialization(resolution, self._ownership)
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        summary = plan.public_summary(disclose_path=True)
+        if not request.apply:
+            return "planned", {"plan": summary, "applied": False}
+        if request.expected_plan_id != plan.plan_id:
+            raise ApplicationServiceError(
+                "apply requires the exact plan id returned by a prior dry-run"
+            )
+        if plan.effect_plans and request.approval_id is None:
+            raise ApplicationServiceError(
+                "project-home initialization requires approval id"
+            )
+        authorizations = {}
+        for mutation in plan.effect_plans:
+            approval = None
+            if mutation.approval_required:
+                approval = ApprovalEvidence(
+                    plan_id=mutation.plan_id,
+                    approval_id=request.approval_id or "",
+                    approved=True,
+                )
+            authorizations[mutation.plan_id] = authorize_mutation(
+                mutation,
+                dry_run=DryRunEvidence(mutation.plan_id, verified=True),
+                approval=approval,
+            )
+        try:
+            result = apply_project_home_initialization(
+                plan,
+                authorizations,
+                self._ownership,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "applied", {
+            "plan": summary,
             **result.public_summary(),
             "applied": True,
         }
