@@ -518,6 +518,44 @@ def build_parser() -> argparse.ArgumentParser:
         help="Plan or install managed KRCN guidance for supported AI clients",
     )
     _add_service_options(client_bootstrap, mutation=True)
+    model = subparsers.add_parser(
+        "model",
+        help="Resolve client-neutral model profiles without granting authority",
+    )
+    model_commands = model.add_subparsers(dest="model_command")
+    model_resolve = model_commands.add_parser(
+        "resolve",
+        help="Resolve one role or workload to an available model or safe fallback",
+    )
+    selector = model_resolve.add_mutually_exclusive_group(required=True)
+    selector.add_argument(
+        "--role",
+        choices=("planner", "worker", "verifier"),
+    )
+    selector.add_argument(
+        "--workload",
+        choices=(
+            "general",
+            "planning",
+            "implementation",
+            "verification",
+            "discovery",
+            "embedding",
+        ),
+    )
+    model_resolve.add_argument(
+        "--bind",
+        action="append",
+        default=[],
+        metavar="CANDIDATE=MODEL",
+    )
+    model_resolve.add_argument(
+        "--authorize",
+        action="append",
+        default=[],
+        metavar="CANDIDATE",
+    )
+    _add_service_options(model_resolve)
     return parser
 
 
@@ -1125,6 +1163,41 @@ def _run_client_command(args: argparse.Namespace) -> int:
     return _print_service_response(response, args.format)
 
 
+def _run_model_command(args: argparse.Namespace) -> int:
+    try:
+        if args.model_command != "resolve":
+            raise ApplicationServiceError("model command is required")
+        bindings = {}
+        for value in args.bind:
+            candidate, separator, model_id = value.partition("=")
+            if not separator or not candidate or not model_id or candidate in bindings:
+                raise ApplicationServiceError(
+                    "each model binding must be unique CANDIDATE=MODEL"
+                )
+            bindings[candidate] = model_id
+        repo_root = args.repo.resolve() if args.repo else discover_repo_root()
+        data_root = resolve_user_home(args.data_root).path
+        arguments = {
+            "available_bindings": bindings,
+            "authorized_refs": args.authorize,
+        }
+        if args.role is not None:
+            arguments["role"] = args.role
+        else:
+            arguments["workload"] = args.workload
+        response = create_application_service(repo_root, data_root).execute(
+            ServiceRequest(
+                client_kind="cli",
+                operation="model.resolve",
+                arguments=arguments,
+            )
+        )
+    except (ApplicationServiceError, OSError, ValueError) as exc:
+        _print_error(exc)
+        return 2
+    return _print_service_response(response, args.format)
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -1187,6 +1260,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.command == "client":
         return _run_client_command(args)
+
+    if args.command == "model":
+        return _run_model_command(args)
 
     if args.command != "catalog":
         parser.print_help()

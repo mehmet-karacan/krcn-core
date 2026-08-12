@@ -14,7 +14,7 @@ Physical target paths are local implementation details and never appear in publi
 
 ## Managed block
 
-KRCN owns only the content between `KRCN-CORE:BEGIN` and `KRCN-CORE:END` markers. Existing content before and after that block is preserved byte for byte. A subsequent installation replaces only the managed block. Duplicate, partial, or malformed markers stop planning.
+KRCN owns only the content between `KRCN-CORE:BEGIN` and `KRCN-CORE:END` markers. If no managed block exists, the original file remains an exact byte prefix and the KRCN block is appended at the end. Existing content before and after a managed block is preserved byte for byte. A subsequent installation replaces only the managed block. Duplicate, partial, or malformed markers stop planning.
 
 The guidance tells a client to:
 
@@ -24,6 +24,7 @@ The guidance tells a client to:
 4. Use an explicit registered project selection when the user names another project.
 5. Treat returned context as information rather than mutation authority.
 6. Keep project source in place and preserve KRCN policy and approval gates.
+7. Resolve a model profile before delegation when the client supports model selection. A client that cannot select models keeps its current default. Embedding provider approval remains a separate gate.
 
 Product rules remain in KRCN Core. Client files do not duplicate matching, policy, ownership, or orchestration logic.
 
@@ -42,3 +43,5 @@ If one target write fails, previously changed client files are restored to their
 ## Precedence note
 
 Global guidance does not replace closer repository instructions. A client combines or prioritizes its project guidance according to its own documented behavior. KRCN's global block only provides discovery and safe routing; repository-specific rules remain authoritative within their scope.
+
+Project integration never writes `AGENTS.md`, `CLAUDE.md`, or another client instruction file in the external source tree. A future project-local bootstrap must remain a separate exact-plan operation and may replace only a KRCN managed block.

@@ -70,6 +70,10 @@ REQUIRED_CANONICAL_KEYS = {
     "provider_policy",
     "embedding_model_catalog",
     "embedding_model_catalog_schema",
+    "model_routing_policy",
+    "model_routing_policy_schema",
+    "model_route_selection_schema",
+    "model_routing_boundary",
     "remote_embedding_providers",
     "import_policy",
 }

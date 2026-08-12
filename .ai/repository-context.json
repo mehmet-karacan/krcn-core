@@ -175,6 +175,10 @@
     "provider_policy": "config/provider-policy.json",
     "embedding_model_catalog": "config/embedding-models.json",
     "embedding_model_catalog_schema": "schemas/embedding-model-catalog.schema.json",
+    "model_routing_policy": "config/model-routing.json",
+    "model_routing_policy_schema": "schemas/model-routing-policy.schema.json",
+    "model_route_selection_schema": "schemas/model-route-selection.schema.json",
+    "model_routing_boundary": "docs/specifications/MODEL-ROUTING.md",
     "remote_embedding_providers": "docs/specifications/REMOTE-EMBEDDING-PROVIDERS.md",
     "import_policy": "config/import-policy.json"
   },

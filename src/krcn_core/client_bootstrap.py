@@ -35,6 +35,7 @@ BOOTSTRAP_BODY = """<!-- KRCN-CORE:BEGIN -->
 - Treat KRCN context as information, not permission to mutate. Preserve registered policies and approval gates.
 - Read registered project sources in place. Never copy project source files into KRCN Core or `KRCN_HOME`.
 - Product rules remain in the repository identified by `KRCN_CORE_HOME`; do not duplicate or reinterpret them in client-specific files.
+- Before delegating work or choosing a model, use `krcn model resolve` with a role or workload. Prefer the first supported client slot; if the client cannot select models, keep its current default. Embedding routes retain their separate provider approval gate.
 <!-- KRCN-CORE:END -->"""
 
 
@@ -80,7 +81,13 @@ def _render_managed_content(original: bytes) -> bytes:
         end = text.index(END_MARKER, begin) + len(END_MARKER)
         rendered = text[:begin] + block + text[end:]
     elif text:
-        rendered = text.rstrip("\r\n") + newline * 2 + block + newline
+        if text.endswith(newline * 2):
+            separator = ""
+        elif text.endswith(newline):
+            separator = newline
+        else:
+            separator = newline * 2
+        rendered = text + separator + block + newline
     else:
         rendered = block + newline
     return rendered.encode("utf-8")

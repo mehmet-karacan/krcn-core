@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:model-routing-policy:1",
+  "title": "KRCN Core client-neutral model routing policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "revision",
+    "default_profile_id",
+    "role_defaults",
+    "candidates",
+    "profiles",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/model-routing-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "default_profile_id": {
+      "$ref": "#/$defs/id"
+    },
+    "role_defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "planner",
+        "worker",
+        "verifier"
+      ],
+      "properties": {
+        "planner": {
+          "$ref": "#/$defs/id"
+        },
+        "worker": {
+          "$ref": "#/$defs/id"
+        },
+        "verifier": {
+          "$ref": "#/$defs/id"
+        }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "candidate_ref",
+          "kind",
+          "model_profile_id",
+          "remote",
+          "requires_authorization"
+        ],
+        "properties": {
+          "candidate_ref": {
+            "$ref": "#/$defs/id"
+          },
+          "kind": {
+            "enum": [
+              "client-slot",
+              "embedding-profile",
+              "offline"
+            ]
+          },
+          "model_profile_id": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/id"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "remote": {
+            "type": "boolean"
+          },
+          "requires_authorization": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "profiles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "profile_id",
+          "workload",
+          "preferred_refs",
+          "fallback_ref"
+        ],
+        "properties": {
+          "profile_id": {
+            "$ref": "#/$defs/id"
+          },
+          "workload": {
+            "enum": [
+              "general",
+              "planning",
+              "implementation",
+              "verification",
+              "discovery",
+              "embedding"
+            ]
+          },
+          "preferred_refs": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/$defs/id"
+            }
+          },
+          "fallback_ref": {
+            "$ref": "#/$defs/id"
+          }
+        }
+      }
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_selection_grants_authority",
+        "client_default_is_valid_fallback",
+        "remote_embedding_requires_authorization",
+        "provider_call_during_resolution"
+      ],
+      "properties": {
+        "model_selection_grants_authority": {
+          "const": false
+        },
+        "client_default_is_valid_fallback": {
+          "const": true
+        },
+        "remote_embedding_requires_authorization": {
+          "const": true
+        },
+        "provider_call_during_resolution": {
+          "const": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    }
+  }
+}

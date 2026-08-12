@@ -75,6 +75,7 @@ from .memory_gate import (
     prepare_memory_lifecycle,
     prepare_memory_persistence,
 )
+from .model_routing import load_model_routing_policy, resolve_model_route
 from .merge_engine import execute_deployment
 from .merge_plan import prepare_merge_plan
 from .migrations import MigrationHandlerRegistry
@@ -210,6 +211,7 @@ OPERATIONS = {
     "project.resolve-current",
     "project.resume",
     "client.bootstrap",
+    "model.resolve",
     "project.learn",
     "project.integrate",
     "project.index-source-code",
@@ -503,6 +505,7 @@ class KrcnApplicationService:
             "project.resolve-current": self._resolve_current_project,
             "project.resume": self._resume_project,
             "client.bootstrap": self._bootstrap_clients,
+            "model.resolve": self._resolve_model,
             "project.learn": self._learn_project,
             "project.integrate": self._integrate_project,
             "project.index-source-code": self._index_source_code,
@@ -1487,6 +1490,41 @@ class KrcnApplicationService:
         )
         result = apply_client_bootstrap(plan, authorizations)
         return "applied", {"plan": plan.public_summary(), **result.public_summary()}
+
+    def _resolve_model(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required=set(),
+            optional={"workload", "role", "available_bindings", "authorized_refs"},
+        )
+        if request.apply:
+            raise ApplicationServiceError("model resolution is read-only")
+        workload = request.arguments.get("workload")
+        role = request.arguments.get("role")
+        if workload is not None and not isinstance(workload, str):
+            raise ApplicationServiceError("workload must be a string")
+        if role is not None and not isinstance(role, str):
+            raise ApplicationServiceError("role must be a string")
+        bindings = request.arguments.get("available_bindings", {})
+        if not isinstance(bindings, dict) or any(
+            not isinstance(key, str) or not isinstance(value, str)
+            for key, value in bindings.items()
+        ):
+            raise ApplicationServiceError("available_bindings must be a string map")
+        refs = request.arguments.get("authorized_refs", [])
+        if not isinstance(refs, list) or any(not isinstance(item, str) for item in refs):
+            raise ApplicationServiceError("authorized_refs must be a string list")
+        selection = resolve_model_route(
+            load_model_routing_policy(self._repo_root),
+            workload=workload,
+            role=role,
+            available_bindings=bindings,
+            authorized_refs=tuple(refs),
+        )
+        return "ok", {"selection": selection.as_dict()}
 
     def _onboard_project(
         self,

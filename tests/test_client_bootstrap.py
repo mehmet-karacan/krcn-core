@@ -84,7 +84,11 @@ class ClientBootstrapTests(unittest.TestCase):
             content = target.read_text(encoding="utf-8")
             self.assertEqual(1, content.count(BEGIN_MARKER))
             self.assertEqual(1, content.count(END_MARKER))
-        self.assertTrue(self.opencode.read_bytes().startswith(self.opencode_original.rstrip()))
+        self.assertTrue(self.opencode.read_bytes().startswith(self.opencode_original))
+        self.assertIn(
+            "krcn model resolve",
+            self.codex.read_text(encoding="utf-8"),
+        )
         for entry in plan.entries:
             if entry.existed:
                 assert entry.backup_path is not None
@@ -115,6 +119,18 @@ class ClientBootstrapTests(unittest.TestCase):
         self.assertTrue(rendered.startswith("# Personal\n\n"))
         self.assertTrue(rendered.endswith("\n\n# Keep\n"))
         self.assertNotIn("old rule", rendered)
+
+    def test_new_managed_block_preserves_existing_bytes_exactly(self) -> None:
+        original = b"# Personal rules\r\n\r\n\r\n"
+        self.codex.write_bytes(original)
+        plan = prepare_client_bootstrap(
+            self.profile,
+            self.data_root,
+            self.ownership,
+        )
+        codex_entry = next(entry for entry in plan.entries if entry.client_id == "codex")
+        self.assertTrue(codex_entry.rendered.startswith(original))
+        self.assertEqual(original, codex_entry.rendered[: len(original)])
 
     def test_malformed_marker_fails_before_writes(self) -> None:
         self.codex.write_text(f"{BEGIN_MARKER}\nmissing end\n", encoding="utf-8")

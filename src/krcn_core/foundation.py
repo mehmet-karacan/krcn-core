@@ -318,6 +318,12 @@ def validate_foundation(repo_root: Path) -> list[str]:
         load_embedding_model_catalog(repo_root)
     except (ImportError, ValueError) as exc:
         errors.append(f"embedding model catalog is invalid: {exc}")
+    try:
+        from .model_routing import load_model_routing_policy
+
+        load_model_routing_policy(repo_root)
+    except (ImportError, ValueError) as exc:
+        errors.append(f"model routing policy is invalid: {exc}")
     return errors
 
 

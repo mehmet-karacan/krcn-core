@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:model-route-selection:1",
+  "title": "KRCN Core resolved model route",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "profile_id",
+    "workload",
+    "selected_ref",
+    "selected_model_id",
+    "selection_basis",
+    "preferred_refs",
+    "skipped_unauthorized_refs",
+    "policy_digest",
+    "model_selection_grants_authority",
+    "provider_call_performed"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/model-route-selection.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "profile_id": {
+      "$ref": "#/$defs/id"
+    },
+    "workload": {
+      "enum": [
+        "general",
+        "planning",
+        "implementation",
+        "verification",
+        "discovery",
+        "embedding"
+      ]
+    },
+    "selected_ref": {
+      "$ref": "#/$defs/id"
+    },
+    "selected_model_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "selection_basis": {
+      "enum": [
+        "authorized-remote-binding",
+        "client-binding",
+        "client-default",
+        "offline-fallback"
+      ]
+    },
+    "preferred_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "skipped_unauthorized_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "policy_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "model_selection_grants_authority": {
+      "const": false
+    },
+    "provider_call_performed": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    }
+  }
+}

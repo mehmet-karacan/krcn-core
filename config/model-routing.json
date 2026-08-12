@@ -1,0 +1,125 @@
+{
+  "schema_ref": "schemas/model-routing-policy.schema.json",
+  "schema_version": 1,
+  "revision": 1,
+  "default_profile_id": "general-balanced",
+  "role_defaults": {
+    "planner": "planning-high",
+    "worker": "implementation-balanced",
+    "verifier": "verification-high"
+  },
+  "candidates": [
+    {
+      "candidate_ref": "client-high-reasoning",
+      "kind": "client-slot",
+      "model_profile_id": null,
+      "remote": false,
+      "requires_authorization": false
+    },
+    {
+      "candidate_ref": "client-coding-balanced",
+      "kind": "client-slot",
+      "model_profile_id": null,
+      "remote": false,
+      "requires_authorization": false
+    },
+    {
+      "candidate_ref": "client-fast",
+      "kind": "client-slot",
+      "model_profile_id": null,
+      "remote": false,
+      "requires_authorization": false
+    },
+    {
+      "candidate_ref": "client-default",
+      "kind": "client-slot",
+      "model_profile_id": null,
+      "remote": false,
+      "requires_authorization": false
+    },
+    {
+      "candidate_ref": "qwen3-embedding-0-6b",
+      "kind": "embedding-profile",
+      "model_profile_id": "qwen3-embedding-0-6b",
+      "remote": true,
+      "requires_authorization": true
+    },
+    {
+      "candidate_ref": "bge-m3",
+      "kind": "embedding-profile",
+      "model_profile_id": "bge-m3",
+      "remote": true,
+      "requires_authorization": true
+    },
+    {
+      "candidate_ref": "deterministic-hashing",
+      "kind": "offline",
+      "model_profile_id": null,
+      "remote": false,
+      "requires_authorization": false
+    }
+  ],
+  "profiles": [
+    {
+      "profile_id": "general-balanced",
+      "workload": "general",
+      "preferred_refs": [
+        "client-coding-balanced",
+        "client-default"
+      ],
+      "fallback_ref": "client-default"
+    },
+    {
+      "profile_id": "planning-high",
+      "workload": "planning",
+      "preferred_refs": [
+        "client-high-reasoning",
+        "client-default"
+      ],
+      "fallback_ref": "client-default"
+    },
+    {
+      "profile_id": "implementation-balanced",
+      "workload": "implementation",
+      "preferred_refs": [
+        "client-coding-balanced",
+        "client-default"
+      ],
+      "fallback_ref": "client-default"
+    },
+    {
+      "profile_id": "verification-high",
+      "workload": "verification",
+      "preferred_refs": [
+        "client-high-reasoning",
+        "client-default"
+      ],
+      "fallback_ref": "client-default"
+    },
+    {
+      "profile_id": "discovery-fast",
+      "workload": "discovery",
+      "preferred_refs": [
+        "client-fast",
+        "client-default"
+      ],
+      "fallback_ref": "client-default"
+    },
+    {
+      "profile_id": "embedding-multilingual",
+      "workload": "embedding",
+      "preferred_refs": [
+        "qwen3-embedding-0-6b",
+        "bge-m3",
+        "deterministic-hashing"
+      ],
+      "fallback_ref": "deterministic-hashing"
+    }
+  ],
+  "invariants": {
+    "model_selection_grants_authority": false,
+    "client_default_is_valid_fallback": true,
+    "remote_embedding_requires_authorization": true,
+    "provider_call_during_resolution": false
+  }
+}
