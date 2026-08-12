@@ -21,7 +21,7 @@ Terminali entegre etmek istediğin projenin kök dizininde aç. Codex, Claude Co
 Bu projeyi öğren ve KRCN Core ile entegre et.
 ```
 
-İstemci `entegre et` niyetini tam `project.integrate` yaşam döngüsüne yönlendirir. Proje kaydı, salt okunur tarama, bilgi çıkarma, rol ve skill seçimi, hibrit vektör indeksi ile doğrulama aynı planda tamamlanır. Yalnız bir dizin gerekiyorsa CLI ile de başlayabilirsin:
+İstemci `entegre et` niyetini tam `project.integrate` yaşam döngüsüne yönlendirir. Proje kaydı, salt okunur tarama, bilgi çıkarma, rol ve skill seçimi, bilgi vektör indeksi, kaynak kod RAG indeksi ve doğrulama aynı planda tamamlanır. Yalnız bir dizin gerekiyorsa CLI ile de başlayabilirsin:
 
 ```bash
 krcn project integrate --source <proje-dizini> --scan-mode manual
@@ -34,6 +34,14 @@ krcn project integrate --project <proje-id> --scan-mode automatic
 ```
 
 Manuel kip her zaman tarar. Otomatik kip, varsayılan 24 saat dolduğunda veya zorunlu bir entegrasyon aşaması eksik olduğunda tarar. Tam ve güncel proje no-op olur. Sonuç hangi kipin ve nedenin kullanıldığını açıkça gösterir.
+
+Kaynak kodla ilgili bir soru için proje dosyalarını baştan sona dolaşmak yerine indeksi sorgula:
+
+```bash
+krcn project search-code <proje-id> "kullanıcı silme işlemi nerede yapılıyor"
+```
+
+Sonuç göreli dosya yolu, satır aralığı, semboller ve puanlarla birlikte gerçek dosyadan doğrulanmış kod parçasını döndürür. Ham kod SQLite içinde saklanmaz. Ayrı bakım gerektiğinde `krcn project index-code <proje-id>` exact planını kullanabilirsin.
 
 ## 2. Yerel çalışma alanını seç
 
@@ -54,7 +62,7 @@ Repository ve aktif yerel alan kontrollerini çalıştır:
 krcn doctor --repo <krcn-core-dizini> --data-root <proje-kökü>/.krcn
 ```
 
-Doctor; ortak bağlamı, sahiplik kurallarını, secret taramasını, SQLite FTS5 desteğini, coverage baseline'ını ve varsa yerel hibrit indeks bütünlüğünü kontrol eder.
+Doctor; ortak bağlamı, sahiplik kurallarını, secret taramasını, SQLite FTS5 desteğini, coverage baseline'ını, bilgi indeksini ve proje kaynak kod indekslerinin no-copy bütünlüğünü kontrol eder.
 
 ## 4. Bilgi indeksini doğrula veya ayrı olarak oluştur
 

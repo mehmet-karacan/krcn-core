@@ -33,6 +33,8 @@
         "client.bootstrap",
         "project.learn",
         "project.integrate",
+        "project.index-source-code",
+        "project.search-source-code",
         "project.home.resolve",
         "project.home.initialize",
         "project.onboard",

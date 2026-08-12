@@ -82,7 +82,14 @@ When the user provides one existing absolute project directory, or combines that
 
 The machine-readable route is `config/intent-routing.json`. Client adapters must not maintain their own phrase list or identity inference rules.
 
-`entegre et` and `integrate` use the complete `project.integrate` lifecycle instead of stopping after registration and discovery. The lifecycle detects missing stages for an existing project, records whether a scan is manual or automatic, performs a manual scan for an explicit integration request, performs an automatic scan when the configured freshness interval has expired, extracts evidence-bound project knowledge, selects registered roles and skills, rebuilds the local hybrid vector index when required, and verifies the result. Automatic checks may prepare a plan, but they never bypass user-data or provider approval gates.
+`entegre et` and `integrate` use the complete `project.integrate` lifecycle instead of stopping after registration and discovery. The lifecycle detects missing stages for an existing project, records whether a scan is manual or automatic, performs a manual scan for an explicit integration request, performs an automatic scan when the configured freshness interval has expired, extracts evidence-bound project knowledge, selects registered roles and skills, rebuilds both the knowledge index and the project source-code index when required, and verifies the result. Automatic checks may prepare a plan, but they never bypass user-data or provider approval gates.
+
+## Source-code retrieval
+
+- Use `project.search-source-code` or `krcn project search-code` before a broad source-tree scan when a registered project has a current source-code index.
+- Treat hits as candidate evidence. Read returned content from the registered source binding in place and retain the relative path and line range in any implementation reasoning.
+- The index stores vectors and source metadata without persisted source text or a physical source root. A stale digest must stop retrieval and route back through `project.integrate`.
+- Do not send source chunks to a remote embedding provider unless the exact provider request, disclosure, and session approval are present.
 
 ## Development record structure
 

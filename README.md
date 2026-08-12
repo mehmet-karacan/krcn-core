@@ -44,7 +44,7 @@ flowchart LR
         direction TB
         proj[("Workspace / Project<br/>Binding")]:::home
         data[("Belge / Talep<br/>Karar / Policy")]:::home
-        state[("Runtime / Checkpoint<br/>Derived state")]:::home
+        state[("Runtime / Checkpoint<br/>Derived state / Code vectors")]:::home
     end
 
     subgraph ext["Yerinde kullanilan dis kaynaklar"]
@@ -90,7 +90,7 @@ Core güncellemeleri de aynı disiplinle ilerler: incele, `dry-run` göster, yed
 
 ## Geliştirme durumu
 
-Faz 0 - Faz 8 tamamlandı: revision-aware bilgi kataloğu, bütçeli context paketleri, onay kontrollü Memory Gate, capability-bound orchestrator, proje bazlı taşınabilir kullanıcı evi, doğal dille proje öğrenme, salt okunur entegrasyon ve yerel hibrit RAG dahil olmak üzere platformun uçtan uca baseline akışı çalışır durumda. Yerel referans kaynaklarındaki kullanıcı verileri repository içine alınmamıştır. Faz detayları için `docs/plans/ROADMAP.md`.
+Faz 0 - Faz 10 tamamlandı. Proje kaynaklarını kopyalamayan, ham kodu SQLite içinde saklamayan ve sonuçları gerçek dosyadan doğrulayarak okuyan artımlı kaynak kod RAG indeksi hazırdır. Yerel referans kaynaklarındaki kullanıcı verileri repository içine alınmamıştır. Faz detayları için `docs/plans/ROADMAP.md`.
 
 İlk proje entegrasyonu, yerel çalışma alanı, doctor ve hibrit bilgi araması için `docs/guides/HIZLI-BASLANGIC.md` belgesini kullanabilirsin.
 

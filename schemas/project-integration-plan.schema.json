@@ -16,6 +16,7 @@
     "capability_profile",
     "knowledge",
     "vector_index",
+    "source_code_index",
     "record_plans",
     "source_access",
     "source_copy",
@@ -72,6 +73,20 @@
     "vector_index": {
       "type": "object",
       "additionalProperties": true
+    },
+    "source_code_index": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "status",
+        "profile_id",
+        "mode",
+        "source_content_persisted",
+        "source_copy",
+        "remote_profile_order",
+        "remote_provider_requires_session_approval",
+        "plan"
+      ]
     },
     "record_plans": {
       "type": "array",

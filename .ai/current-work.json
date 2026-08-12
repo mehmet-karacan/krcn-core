@@ -1,11 +1,11 @@
 {
   "schema_ref": "schemas/current-work.schema.json",
   "schema_version": 1,
-  "phase_id": "phase-9",
-  "workstream_id": "continuous-project-integration",
+  "phase_id": "phase-10",
+  "workstream_id": "source-code-rag-index",
   "status": "completed",
-  "goal": "Make one integrate request complete, refresh, and verify every project integration stage without copying project sources",
-  "plan_ref": "docs/plans/PLAN-011-SUREKLI-PROJE-ENTEGRASYONU.md",
+  "goal": "Build a contentless incremental source-code RAG index that reads verified chunks from registered projects in place",
+  "plan_ref": "docs/plans/PLAN-012-KAYNAK-KOD-RAG-INDEKSI.md",
   "progress_refs": [
     "docs/progress/PHASE-1-FOUNDATION.md",
     "docs/progress/PHASE-1-PACKAGE-1.md",
@@ -89,14 +89,15 @@
     "docs/progress/PHASE-8-COMPLETION.md",
     "docs/progress/JSON-BELGE-BICIMI.md",
     "docs/progress/EMBEDDING-MODEL-ENTEGRASYONU.md",
-    "docs/progress/PHASE-9-COMPLETION.md"
+    "docs/progress/PHASE-9-COMPLETION.md",
+    "docs/progress/PHASE-10-COMPLETION.md"
   ],
   "next_actions": [
-    "keep the Phase 9 integration baseline in maintenance mode",
-    "use automatic freshness checks before project work",
-    "require explicit approval for future remote project embedding"
+    "keep source-code index policy and schemas backward compatible",
+    "refresh registered project indexes through project.integrate",
+    "evaluate remote embedding profiles only through explicit provider approval"
   ],
-  "baseline_commit": "4c01c2e",
+  "baseline_commit": "d6e5f46",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:source-code-result:1",
+  "title": "KRCN Core source code retrieval result",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "query_id",
+    "project_id",
+    "query_digest",
+    "index_digest",
+    "source_digest",
+    "embedding_profile_id",
+    "candidate_count",
+    "hit_count",
+    "hits",
+    "source_content_persisted",
+    "source_read_in_place",
+    "remote"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/source-code-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "query_id": {
+      "type": "string"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "query_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "index_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "source_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "embedding_profile_id": {
+      "type": "string"
+    },
+    "candidate_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "hit_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "hits": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "source_content_persisted": {
+      "const": false
+    },
+    "source_read_in_place": {
+      "type": "boolean"
+    },
+    "remote": {
+      "const": false
+    }
+  }
+}

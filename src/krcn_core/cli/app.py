@@ -179,6 +179,24 @@ def build_parser() -> argparse.ArgumentParser:
         default="manual",
     )
     _add_service_options(project_integrate, mutation=True)
+    project_index_code = project_commands.add_parser(
+        "index-code",
+        help="Plan or build the contentless source-code vector index",
+    )
+    project_index_code.add_argument("project_id")
+    _add_service_options(project_index_code, mutation=True)
+    project_search_code = project_commands.add_parser(
+        "search-code",
+        help="Search indexed project code and read verified hits in place",
+    )
+    project_search_code.add_argument("project_id")
+    project_search_code.add_argument("query")
+    project_search_code.add_argument("--language", action="append", default=[])
+    project_search_code.add_argument("--path-prefix")
+    project_search_code.add_argument("--limit", type=int, default=10)
+    project_search_code.add_argument("--metadata-only", action="store_true")
+    _add_service_options(project_search_code)
+    project_search_code.add_argument("--approval-id")
     project_onboard = project_commands.add_parser(
         "onboard",
         help="Plan or apply read-only local project onboarding",
@@ -517,6 +535,24 @@ def _project_service_request(args: argparse.Namespace) -> ServiceRequest:
             arguments["source_root"] = str(args.source.resolve())
         else:
             arguments["project_id"] = args.project
+    elif args.project_command == "index-code":
+        operation = "project.index-source-code"
+        arguments = {"project_id": args.project_id}
+    elif args.project_command == "search-code":
+        operation = "project.search-source-code"
+        arguments = {
+            "query": {
+                "schema_ref": "schemas/source-code-query.schema.json",
+                "schema_version": 1,
+                "query_id": "cli-source-code-query",
+                "project_id": args.project_id,
+                "text": args.query,
+                "languages": args.language,
+                "path_prefix": args.path_prefix,
+                "include_content": not args.metadata_only,
+                "limit": args.limit,
+            }
+        }
     elif args.project_command == "onboard":
         operation = "project.onboard"
         arguments = {

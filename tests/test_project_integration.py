@@ -104,6 +104,7 @@ class CompleteProjectIntegrationTests(unittest.TestCase):
         self.assertTrue(summary["scan"]["performed_during_plan"])
         self.assertIn("registration", summary["missing_stages"])
         self.assertIn("vector-index", summary["missing_stages"])
+        self.assertIn("source-code-index", summary["missing_stages"])
         self.assertEqual(
             ["qwen3-embedding-0-6b", "bge-m3"],
             summary["vector_index"]["remote_profile_order"],
@@ -111,6 +112,9 @@ class CompleteProjectIntegrationTests(unittest.TestCase):
         self.assertEqual(
             "deterministic-hashing",
             summary["vector_index"]["profile_id"],
+        )
+        self.assertFalse(
+            summary["source_code_index"]["source_content_persisted"]
         )
         applied = self._apply(plan)
         self.assertEqual("applied", applied.status)

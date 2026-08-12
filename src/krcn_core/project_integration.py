@@ -48,6 +48,13 @@ from .project_learning import prepare_project_learning
 from .project_learning_intent import parse_project_learning_intent
 from .project_metadata import portable_slug
 from .source_bindings import SourceBinding, parse_source_binding
+from .source_code_index import (
+    LOCAL_SOURCE_CODE_ADAPTER,
+    SourceCodeIndexPlan,
+    apply_source_code_index,
+    prepare_source_code_index,
+    source_code_index_is_current,
+)
 from .source_state import SourceState, parse_source_state
 
 
@@ -57,6 +64,7 @@ BASE_SKILL_REFS = (
     "project-discovery-skill",
     "project-knowledge-extraction-skill",
     "hybrid-retrieval-skill",
+    "source-code-rag-skill",
 )
 TECHNOLOGY_SKILLS = {
     ".NET": "dotnet-project-skill",
@@ -67,6 +75,7 @@ TECHNOLOGY_SKILLS = {
     "Rust": "rust-project-skill",
 }
 KNOWLEDGE_SUFFIXES = ("overview", "structure", "workflows", "capabilities")
+SOURCE_CODE_STAGE_ID = "source-code-index"
 
 
 class ProjectIntegrationError(ValueError):
@@ -104,23 +113,25 @@ class ProjectIntegrationPlan:
     future_catalog: InformationCatalog
     index_plan: HybridIndexPlan | None
     index_was_current: bool
+    source_code_index_plan: SourceCodeIndexPlan | None
+    source_code_index_was_current: bool
     offline_embedding_profile_id: str
     remote_embedding_profile_order: tuple[str, ...]
 
     @property
     def no_op(self) -> bool:
-        return not self.record_plans and self.index_plan is None
+        return (
+            not self.record_plans
+            and self.index_plan is None
+            and self.source_code_index_plan is None
+        )
 
     def public_summary(self) -> dict[str, object]:
         stages = {
             stage: (
-                "current"
-                if stage not in self.missing_stages and self.no_op
-                else "planned"
-                if stage in self.missing_stages or not self.no_op
-                else "complete"
+                "planned" if stage in self.missing_stages else "current"
             )
-            for stage in STAGE_IDS
+            for stage in (*STAGE_IDS, SOURCE_CODE_STAGE_ID)
         }
         return {
             "schema_ref": "schemas/project-integration-plan.schema.json",
@@ -167,6 +178,25 @@ class ProjectIntegrationPlan:
                 "remote_provider_requires_session_approval": True,
                 "plan": self.index_plan.public_summary() if self.index_plan else None,
             },
+            "source_code_index": {
+                "status": (
+                    "current"
+                    if self.source_code_index_plan is None
+                    and self.source_code_index_was_current
+                    else "planned"
+                ),
+                "profile_id": self.offline_embedding_profile_id,
+                "mode": "contentless-sqlite-fts-deterministic-vector",
+                "source_content_persisted": False,
+                "source_copy": False,
+                "remote_profile_order": list(self.remote_embedding_profile_order),
+                "remote_provider_requires_session_approval": True,
+                "plan": (
+                    self.source_code_index_plan.public_summary()
+                    if self.source_code_index_plan
+                    else None
+                ),
+            },
             "record_plans": [item.public_summary() for item in self.record_plans],
             "source_access": "read-only",
             "source_copy": False,
@@ -180,6 +210,7 @@ class ProjectIntegrationResult:
     plan_id: str
     records: tuple[StoredRecord, ...]
     index_result: Mapping[str, object] | None
+    source_code_index_result: Mapping[str, object] | None
     last_successful_scan_at: str | None
 
     def public_summary(self) -> dict[str, object]:
@@ -187,6 +218,11 @@ class ProjectIntegrationResult:
             "plan_id": self.plan_id,
             "records": [item.public_summary() for item in self.records],
             "index": dict(self.index_result) if self.index_result else None,
+            "source_code_index": (
+                dict(self.source_code_index_result)
+                if self.source_code_index_result
+                else None
+            ),
             "last_successful_scan_at": self.last_successful_scan_at,
             "source_copy": False,
             "remote_provider_used": False,
@@ -943,7 +979,38 @@ def prepare_project_integration(
         index_plan = prepare_hybrid_index(store.data_root, future_catalog, OwnershipResolver.from_repository(repo_root))
     if not index_was_current and "vector-index" not in missing_stages:
         missing_stages.append("vector-index")
-    if base_plans or index_plan is not None:
+    source_code_index_was_current = source_code_index_is_current(
+        repo_root,
+        store.data_root,
+        project_id,
+        binding.binding_id,
+        discovery.root_digest,
+    )
+    source_code_index_plan = None
+    if not source_code_index_was_current:
+        source_code_request = prepare_adapter_operation(
+            LOCAL_SOURCE_CODE_ADAPTER,
+            binding,
+            "index",
+            load_user_policies(store.data_root / "policies"),
+        )
+        source_code_authorization = authorize_adapter_operation(
+            source_code_request,
+            None,
+        )
+        source_code_index_plan = prepare_source_code_index(
+            repo_root,
+            store.data_root,
+            project_id,
+            binding,
+            source_root,
+            discovery,
+            OwnershipResolver.from_repository(repo_root),
+            source_code_authorization,
+        )
+        if SOURCE_CODE_STAGE_ID not in missing_stages:
+            missing_stages.append(SOURCE_CODE_STAGE_ID)
+    if base_plans or index_plan is not None or source_code_index_plan is not None:
         if "verification" not in missing_stages:
             missing_stages.append("verification")
 
@@ -956,6 +1023,9 @@ def prepare_project_integration(
         "missing_stages": missing_stages,
         "record_plan_ids": [item.mutation.plan_id for item in base_plans],
         "index_plan_id": index_plan.plan_id if index_plan else None,
+        "source_code_index_plan_id": (
+            source_code_index_plan.plan_id if source_code_index_plan else None
+        ),
         "knowledge_digest": knowledge_digest,
     }
     plan_id = hashlib.sha256(
@@ -984,6 +1054,8 @@ def prepare_project_integration(
         future_catalog=future_catalog,
         index_plan=index_plan,
         index_was_current=index_was_current,
+        source_code_index_plan=source_code_index_plan,
+        source_code_index_was_current=source_code_index_was_current,
         offline_embedding_profile_id=policy.offline_embedding_profile_id,
         remote_embedding_profile_order=remote_embedding_profile_order,
     )
@@ -995,6 +1067,7 @@ def apply_project_integration(
     plan: ProjectIntegrationPlan,
     record_authorizations: Mapping[str, MutationAuthorization],
     index_authorization: MutationAuthorization | None,
+    source_code_index_authorization: MutationAuthorization | None,
 ) -> ProjectIntegrationResult:
     """Apply the exact stages and verify that the complete lifecycle is usable."""
 
@@ -1056,12 +1129,32 @@ def apply_project_integration(
         )
     if not hybrid_index_is_current(store.data_root, catalog):
         raise ProjectIntegrationError("project vector index verification failed")
+    source_code_index_result = None
+    if plan.source_code_index_plan is not None:
+        if source_code_index_authorization is None:
+            raise ProjectIntegrationError(
+                "source code index authorization is missing"
+            )
+        source_code_index_result = apply_source_code_index(
+            store.data_root,
+            plan.source_code_index_plan,
+            source_code_index_authorization,
+        )
+    if not source_code_index_is_current(
+        repo_root,
+        store.data_root,
+        plan.project_id,
+        plan.binding.binding_id,
+        plan.discovery.root_digest,
+    ):
+        raise ProjectIntegrationError("project source code index verification failed")
     if store.read("project-integrations", plan.project_id) is None:
         raise ProjectIntegrationError("project integration state verification failed")
     return ProjectIntegrationResult(
         plan_id=plan.plan_id,
         records=records,
         index_result=index_result,
+        source_code_index_result=source_code_index_result,
         last_successful_scan_at=_iso_from_mtime(
             store.record_mtime_ns("project-integrations", plan.project_id)
         ),

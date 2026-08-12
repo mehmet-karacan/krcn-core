@@ -110,6 +110,45 @@ def _runtime_home(data_root: Path) -> list[str]:
                 errors.append("hybrid index cannot be inspected")
             finally:
                 connection.close()
+    source_code_directory = (
+        root / "derived" / "retrieval" / "source-code-v1"
+    )
+    if source_code_directory.exists():
+        if source_code_directory.is_symlink() or not source_code_directory.is_dir():
+            errors.append("source code index directory is unsafe")
+        else:
+            for source_code_index in source_code_directory.glob("*.sqlite"):
+                if source_code_index.is_symlink() or not source_code_index.is_file():
+                    errors.append("source code index path is unsafe")
+                    continue
+                connection = sqlite3.connect(source_code_index)
+                try:
+                    integrity = connection.execute(
+                        "PRAGMA integrity_check"
+                    ).fetchone()[0]
+                    metadata = dict(
+                        connection.execute(
+                            "SELECT key, value FROM metadata"
+                        ).fetchall()
+                    )
+                    chunk_columns = {
+                        row[1]
+                        for row in connection.execute(
+                            "PRAGMA table_info(chunks)"
+                        ).fetchall()
+                    }
+                    if (
+                        integrity != "ok"
+                        or metadata.get("index_revision") != "1"
+                        or metadata.get("source_content_persisted") != "false"
+                        or metadata.get("remote_provider_used") != "false"
+                        or {"content", "text"}.intersection(chunk_columns)
+                    ):
+                        errors.append("source code index integrity or boundary")
+                except sqlite3.Error:
+                    errors.append("source code index cannot be inspected")
+                finally:
+                    connection.close()
     return errors
 
 
@@ -339,6 +378,23 @@ def run_doctor(
             "phase-nine-baseline",
             phase_nine_errors,
             "Phase 9 continuous project integration baseline is complete",
+        )
+    )
+    phase_ten = load_json(repo_root / ".ai" / "phase-10-baseline.json")
+    phase_ten_errors = []
+    if phase_ten.get("status") != "ready":
+        phase_ten_errors.append("Phase 10 baseline state")
+    if phase_ten.get("completed_steps") != 10:
+        phase_ten_errors.append("Phase 10 completed steps")
+    if not (
+        repo_root / "docs" / "progress" / "PHASE-10-COMPLETION.md"
+    ).is_file():
+        phase_ten_errors.append("Phase 10 completion evidence")
+    checks.append(
+        _check(
+            "phase-ten-baseline",
+            phase_ten_errors,
+            "Phase 10 source-code RAG index baseline is complete",
         )
     )
     return tuple(checks)

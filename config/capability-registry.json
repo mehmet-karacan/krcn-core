@@ -1,7 +1,7 @@
 {
   "schema_ref": "schemas/capability-registry.schema.json",
   "schema_version": 1,
-  "revision": 4,
+  "revision": 5,
   "records": [
     {
       "record_id": "planner-agent",
@@ -415,6 +415,31 @@
       "approval_triggers": [],
       "status": "active",
       "record_digest": "4009bacf4185ba03ce91ed13544f31fad68ae0e8b5eb490da6aae947293225e7"
+    },
+    {
+      "record_id": "source-code-rag-skill",
+      "kind": "skill",
+      "role": null,
+      "revision": 1,
+      "capabilities": [
+        "source-code.index",
+        "source-code.retrieve"
+      ],
+      "side_effects": [
+        "read",
+        "write"
+      ],
+      "read_ownership": [
+        "derived",
+        "unmanaged"
+      ],
+      "write_ownership": [
+        "derived"
+      ],
+      "provider_mode": "local",
+      "approval_triggers": [],
+      "status": "active",
+      "record_digest": "a6daaf0e329529200b6c49b6df4f53d975dbc31aec9f3d9b8caf648b3567f626"
     },
     {
       "record_id": "java-project-skill",

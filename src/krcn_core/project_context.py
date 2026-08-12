@@ -12,7 +12,9 @@ from .information_records import parse_information_record, record_is_stale
 from .local_store import LocalWorkspaceStore, StoredRecord
 from .orchestration_state import parse_orchestration_handoff
 from .project_integration_state import parse_project_integration_state
+from .source_code_index import source_code_index_summary
 from .source_bindings import SourceBinding, parse_source_binding
+from .source_state import parse_source_state
 
 
 ACTIVE_TASK_STATUSES = {
@@ -342,6 +344,7 @@ def _integration_summary(
 def build_project_resume_summary(
     store: LocalWorkspaceStore,
     match: ProjectContextMatch,
+    repo_root: Path | None = None,
 ) -> dict[str, object]:
     """Build a compact, path-redacted summary for another client to resume work."""
 
@@ -350,6 +353,21 @@ def build_project_resume_summary(
     information = _information_summary(store, match.project.record_id, binding_ids)
     work = _work_summary(store, match.project.record_id, binding_ids)
     integration = _integration_summary(store, match.project.record_id)
+    source_code_index: dict[str, object] = {
+        "status": "unknown",
+        "project_id": match.project.record_id,
+        "paths_disclosed": False,
+    }
+    if repo_root is not None and match.bindings:
+        state_record = store.read("source-states", match.bindings[0].binding_id)
+        state = parse_source_state(state_record.payload) if state_record else None
+        source_code_index = source_code_index_summary(
+            repo_root,
+            store.data_root,
+            match.project.record_id,
+            binding_id=match.bindings[0].binding_id,
+            source_digest=state.root_digest if state else None,
+        )
     states = context["source_states"]
     assert isinstance(states, list)
     indexed_files = sum(int(state["file_count"]) for state in states)
@@ -362,6 +380,8 @@ def build_project_resume_summary(
         next_actions.append("complete-project-integration")
     elif integration["automatic_scan_due"]:
         next_actions.append("refresh-project-integration")
+    if source_code_index["status"] not in {"current", "unknown"}:
+        next_actions.append("rebuild-source-code-index")
     if work["active_task_count"] == 0:
         next_actions.append("no-active-task-start-from-user-request")
     return {
@@ -372,6 +392,7 @@ def build_project_resume_summary(
             "indexed_source_file_count": indexed_files,
             "information": information,
             "integration": integration,
+            "source_code_index": source_code_index,
             "work": work,
             "next_actions": next_actions,
         },

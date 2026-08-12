@@ -1,0 +1,31 @@
+{
+  "schema_ref": "schemas/adapter.schema.json",
+  "adapter_id": "local-source-code",
+  "version": "1.0.0",
+  "source_kinds": [
+    "project"
+  ],
+  "resource_type": "source",
+  "operations": [
+    {
+      "operation_id": "index",
+      "required_capabilities": [
+        "read",
+        "metadata"
+      ],
+      "default_effect": "allow",
+      "mutation_effect": false,
+      "network_effect": false
+    },
+    {
+      "operation_id": "retrieve",
+      "required_capabilities": [
+        "read",
+        "metadata"
+      ],
+      "default_effect": "allow",
+      "mutation_effect": false,
+      "network_effect": false
+    }
+  ]
+}

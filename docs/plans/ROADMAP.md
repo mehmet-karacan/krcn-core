@@ -18,6 +18,7 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
 - Faz 7 tamamlandı.
 - Faz 8 tamamlandı. Proje bazlı KRCN_HOME ve üretim olgunlaştırma baseline'ı hazır.
 - Faz 9 tamamlandı. Sürekli ve eksik aşama onaran proje entegrasyonu hazır.
+- Faz 10 tamamlandı. İçeriksiz ve artımlı kaynak kod RAG indeksi hazır.
 
 ## Temel kullanım modeli
 
@@ -140,6 +141,19 @@ Tamamlanma ölçütü: Proje bazlı veya özel konumda çalışan KRCN verisi Gi
 - Kaynak değiştiğinde bilgi kayıtlarını ve yeniden üretilebilir hibrit indeksi güncelle.
 
 Tamamlanma ölçütü: Kullanıcı yalnız proje dizinini verip `entegre et` dediğinde sistem bütün entegrasyon aşamalarını tek exact planda hazırlamalı; kayıtlı projelerde eksikleri onarmalı ve normal proje çalışması öncesinde güncelliği otomatik denetleyebilmelidir.
+
+## Faz 10 - Kaynak kod RAG indeksi
+
+- Desteklenen kaynak ve yapılandırma dosyalarını salt okunur binding üzerinden seç.
+- Dosyaları göreli yol ve kesin satır aralığı taşıyan parçalara ayır.
+- Ham kaynak metni veya fiziksel proje yolunu saklamadan vektör ve güvenli sembol metadatası üret.
+- Değişmeyen dosya parçalarını yeniden kullan, değişenleri güncelle ve silinenleri çıkar.
+- Her proje için ayrı, atomik ve yeniden üretilebilir SQLite indeks oluştur.
+- Arama sonuçlarını gerçek proje dosyasından hash doğrulamalı ve anlık olarak oku.
+- Kaynak kod indeksini `project.integrate`, resume, CLI ve istemci başlangıç bağlamına bağla.
+- Uzak embedding kullanımını ayrı provider planı ve session onayının arkasında tut.
+
+Tamamlanma ölçütü: `entegre et` isteği tam kaynak kod indeksini de hazırlamalı; arama sınıf, metot, sembol ve kod parçası seviyesinde göreli yol ve satır kanıtı döndürmeli; proje kaynakları KRCN alanına kopyalanmamalı ve artımlı güncelleme gerçek projede doğrulanmalıdır.
 
 ## Değişmez kabul ölçütleri
 

@@ -75,6 +75,24 @@ class AdapterGateTests(unittest.TestCase):
         self.assertFalse(operation.mutation_effect)
         self.assertFalse(operation.network_effect)
 
+    def test_local_source_code_adapter_is_read_only_and_offline(self) -> None:
+        payload = json.loads(
+            (
+                REPO_ROOT
+                / ".ai"
+                / "registry"
+                / "adapters"
+                / "local-source-code.json"
+            ).read_text(encoding="utf-8")
+        )
+        adapter = parse_adapter_descriptor(payload)
+        self.assertEqual("local-source-code", adapter.adapter_id)
+        self.assertEqual({"index", "retrieve"}, {
+            item.operation_id for item in adapter.operations
+        })
+        self.assertTrue(all(not item.mutation_effect for item in adapter.operations))
+        self.assertTrue(all(not item.network_effect for item in adapter.operations))
+
     def test_missing_capability_blocks_request(self) -> None:
         with self.assertRaisesRegex(AdapterGateError, "metadata"):
             prepare_adapter_operation(

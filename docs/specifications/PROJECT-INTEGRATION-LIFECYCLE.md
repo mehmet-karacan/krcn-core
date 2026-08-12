@@ -6,7 +6,7 @@
 
 ## Required stages
 
-The lifecycle covers registration, read-only discovery, evidence-bound knowledge extraction, capability-profile selection, local hybrid vector indexing, and verification. An existing registration never suppresses a missing later stage.
+The lifecycle covers registration, read-only discovery, evidence-bound knowledge extraction, capability-profile selection, local knowledge-vector indexing, contentless source-code indexing, and verification. An existing registration never suppresses a missing later stage.
 
 ## Scan modes
 
@@ -27,6 +27,8 @@ Planner, read-only worker, verifier, and technology-relevant skill records must 
 ## Vector index
 
 The default integration path builds the existing SQLite FTS and deterministic-vector index from approved KRCN information records. The offline profile is `deterministic-hashing`. Qwen3 and BGE-M3 remain the reviewed remote order, but real project content is not sent to either model without a separate provider request and session approval.
+
+The project source-code index is stored separately per project. It persists relative paths, ranges, hashes, safe symbols, and vectors without source text or the physical source root. Unchanged files reuse their verified chunks. Changed files are reprocessed and deleted files disappear through atomic replacement. Retrieval may read a selected chunk from the registered source in place after verifying the file and chunk hashes.
 
 ## Recovery
 

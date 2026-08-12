@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:source-code-index-plan:1",
+  "title": "KRCN Core source code index plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "project_id",
+    "source_digest",
+    "policy_digest",
+    "index_digest",
+    "embedding_profile_id",
+    "vector_dimensions",
+    "selected_file_count",
+    "processed_file_count",
+    "reused_file_count",
+    "removed_file_count",
+    "chunk_count",
+    "skipped",
+    "mutation",
+    "incremental",
+    "source_access",
+    "source_copy",
+    "source_content_persisted",
+    "remote_provider_used"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/source-code-index-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "source_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "policy_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "index_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "embedding_profile_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "vector_dimensions": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "selected_file_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "processed_file_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reused_file_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "removed_file_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "chunk_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "skipped": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "mutation": {
+      "$ref": "mutation-plan.schema.json"
+    },
+    "incremental": {
+      "const": true
+    },
+    "source_access": {
+      "const": "read-only"
+    },
+    "source_copy": {
+      "const": false
+    },
+    "source_content_persisted": {
+      "const": false
+    },
+    "remote_provider_used": {
+      "const": false
+    }
+  }
+}

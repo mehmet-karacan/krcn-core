@@ -15,6 +15,7 @@ from .adapter_gate import (
     prepare_adapter_operation,
 )
 from .discovery import (
+    DiscoveryResult,
     LOCAL_DISCOVERY_ADAPTER,
     discover_local_source,
     load_discovery_policy,
@@ -123,6 +124,16 @@ from .rollback import (
     prepare_rollback_plan,
 )
 from .source_bindings import SourceBinding, parse_source_binding
+from .source_code_index import (
+    LOCAL_SOURCE_CODE_ADAPTER,
+    apply_source_code_index,
+    parse_source_code_query,
+    prepare_source_code_index,
+    retrieve_source_code,
+    source_code_index_is_current,
+    source_code_index_summary,
+)
+from .source_state import parse_source_state
 from .source_rebind import (
     apply_source_rebind,
     candidate_binding,
@@ -154,6 +165,8 @@ OPERATIONS = {
     "client.bootstrap",
     "project.learn",
     "project.integrate",
+    "project.index-source-code",
+    "project.search-source-code",
     "project.home.resolve",
     "project.home.initialize",
     "project.onboard",
@@ -387,6 +400,8 @@ class KrcnApplicationService:
             "client.bootstrap": self._bootstrap_clients,
             "project.learn": self._learn_project,
             "project.integrate": self._integrate_project,
+            "project.index-source-code": self._index_source_code,
+            "project.search-source-code": self._search_source_code,
             "project.home.resolve": self._resolve_project_home,
             "project.home.initialize": self._initialize_project_home,
             "project.onboard": self._onboard_project,
@@ -757,7 +772,11 @@ class KrcnApplicationService:
         match = self._project_context_match(request)
         if match is None:
             return "ok", {**unmatched_project_context(), "resume": None}
-        return "ok", build_project_resume_summary(self._store, match)
+        return "ok", build_project_resume_summary(
+            self._store,
+            match,
+            self._repo_root,
+        )
 
     def _bootstrap_clients(
         self,
@@ -934,6 +953,15 @@ class KrcnApplicationService:
                     verified=True,
                 ),
             )
+        source_code_index_authorization = None
+        if plan.source_code_index_plan is not None:
+            source_code_index_authorization = authorize_mutation(
+                plan.source_code_index_plan.mutation,
+                dry_run=DryRunEvidence(
+                    plan.source_code_index_plan.mutation.plan_id,
+                    verified=True,
+                ),
+            )
         try:
             result = apply_project_integration(
                 self._repo_root,
@@ -941,6 +969,7 @@ class KrcnApplicationService:
                 plan,
                 record_authorizations,
                 index_authorization,
+                source_code_index_authorization,
             )
         except ValueError as exc:
             raise ApplicationServiceError(str(exc)) from exc
@@ -950,6 +979,171 @@ class KrcnApplicationService:
             "applied": True,
             "no_op": False,
         }
+
+    def _registered_project_source(self, project_id: str):
+        project = self._store.read("projects", project_id)
+        if project is None:
+            raise ApplicationServiceError("project is not registered")
+        source_refs = project.payload.get("source_refs")
+        if not isinstance(source_refs, list) or len(source_refs) != 1:
+            raise ApplicationServiceError(
+                "source code operations require one project source"
+            )
+        binding_record = self._store.read("source-bindings", str(source_refs[0]))
+        if binding_record is None:
+            raise ApplicationServiceError("project source binding is missing")
+        binding = parse_source_binding(binding_record.payload)
+        state_record = self._store.read("source-states", binding.binding_id)
+        if state_record is None:
+            raise ApplicationServiceError(
+                "project source state is missing; integrate the project first"
+            )
+        state = parse_source_state(state_record.payload)
+        source_root = Path(binding.locator.value)
+        if not source_root.is_absolute():
+            raise ApplicationServiceError("project source locator is invalid")
+        return binding, source_root.resolve(), state
+
+    def _source_code_adapter_authorization(
+        self,
+        binding: SourceBinding,
+        operation: str,
+        approval_id: str | None,
+    ):
+        adapter_request = prepare_adapter_operation(
+            LOCAL_SOURCE_CODE_ADAPTER,
+            binding,
+            operation,
+            load_user_policies(self._store.data_root / "policies"),
+        )
+        approval = None
+        if approval_id is not None:
+            approval = AdapterApproval(
+                adapter_request.request_id,
+                approval_id,
+                True,
+            )
+        return authorize_adapter_operation(adapter_request, approval)
+
+    def _index_source_code(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"project_id"})
+        project_id = _identifier_argument(request.arguments, "project_id")
+        binding, source_root, state = self._registered_project_source(project_id)
+        summary = source_code_index_summary(
+            self._repo_root,
+            self._store.data_root,
+            project_id,
+            binding_id=binding.binding_id,
+            source_digest=state.root_digest,
+        )
+        if source_code_index_is_current(
+            self._repo_root,
+            self._store.data_root,
+            project_id,
+            binding.binding_id,
+            state.root_digest,
+        ):
+            if request.apply or request.expected_plan_id is not None:
+                raise ApplicationServiceError(
+                    "current source code index has no changes to apply"
+                )
+            return "ok", {"index": summary, "applied": False, "no_op": True}
+        authorization = self._source_code_adapter_authorization(
+            binding,
+            "index",
+            request.approval_id,
+        )
+        discovery = DiscoveryResult(
+            binding.binding_id,
+            binding.source_id,
+            binding.revision,
+            state.root_digest,
+            state.files,
+            state.technologies,
+            {
+                "blocked": 0,
+                "symlink": 0,
+                "too_large": 0,
+                "unstable": 0,
+                "unreadable": 0,
+            },
+        )
+        try:
+            plan = prepare_source_code_index(
+                self._repo_root,
+                self._store.data_root,
+                project_id,
+                binding,
+                source_root,
+                discovery,
+                self._ownership,
+                authorization,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        if not request.apply:
+            return "planned", {
+                "plan": plan.public_summary(),
+                "applied": False,
+                "no_op": False,
+            }
+        if request.expected_plan_id != plan.plan_id:
+            raise ApplicationServiceError(
+                "apply requires the exact source code index plan id"
+            )
+        mutation_authorization = authorize_mutation(
+            plan.mutation,
+            dry_run=DryRunEvidence(plan.mutation.plan_id, verified=True),
+        )
+        try:
+            result = apply_source_code_index(
+                self._store.data_root,
+                plan,
+                mutation_authorization,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "applied", {
+            "plan": plan.public_summary(),
+            "result": result,
+            "applied": True,
+            "no_op": False,
+        }
+
+    def _search_source_code(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"query"})
+        if request.apply:
+            raise ApplicationServiceError("read operation cannot be applied")
+        try:
+            query = parse_source_code_query(
+                _object_argument(request.arguments, "query")
+            )
+            binding, source_root, state = self._registered_project_source(
+                query.project_id
+            )
+            authorization = self._source_code_adapter_authorization(
+                binding,
+                "retrieve",
+                request.approval_id,
+            )
+            result = retrieve_source_code(
+                self._repo_root,
+                self._store.data_root,
+                binding,
+                source_root,
+                state.root_digest,
+                query,
+                authorization,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {"result": result}
 
     def _project_home_resolution(
         self,

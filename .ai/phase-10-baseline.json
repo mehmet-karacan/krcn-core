@@ -1,0 +1,57 @@
+{
+  "schema_ref": "schemas/phase-10-baseline.schema.json",
+  "schema_version": 1,
+  "baseline_id": "phase-10-source-code-rag-index",
+  "phase_id": "phase-10",
+  "status": "ready",
+  "completed_steps": 10,
+  "capabilities": [
+    "contentless-project-code-index",
+    "read-only-source-chunking",
+    "relative-path-line-evidence",
+    "deterministic-local-code-vectors",
+    "incremental-file-reuse",
+    "removed-file-pruning",
+    "verified-in-place-source-retrieval",
+    "project-integration-lifecycle",
+    "cross-client-cli-search",
+    "stale-index-fail-closed"
+  ],
+  "safe_operations": [
+    "project.integrate",
+    "project.index-source-code",
+    "project.search-source-code",
+    "project.resolve-current",
+    "project.resume"
+  ],
+  "guarantees": {
+    "external_source_copied": false,
+    "external_source_mutated": false,
+    "source_content_persisted": false,
+    "physical_source_root_persisted": false,
+    "remote_provider_implicit": false,
+    "exact_plan_required": true,
+    "incremental_refresh": true,
+    "stale_index_fails_closed": true,
+    "derived_index_integrity_verified": true,
+    "client_parity": true
+  },
+  "verification": {
+    "foundation": "passed",
+    "hermetic_tests": "passed",
+    "contentless_storage": "passed",
+    "incremental_refresh": "passed",
+    "removed_file_pruning": "passed",
+    "tampered_index_rejection": "passed",
+    "stale_source_rejection": "passed",
+    "real_gpu_fusion_index": "passed",
+    "real_gpu_fusion_search": "passed",
+    "source_preservation": "passed"
+  },
+  "maintenance": {
+    "status": "ready",
+    "freshness_hours": 24,
+    "offline_embedding_profile": "deterministic-hashing",
+    "vector_dimensions": 192
+  }
+}

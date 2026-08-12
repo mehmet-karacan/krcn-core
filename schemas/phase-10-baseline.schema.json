@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:phase-10-baseline:1",
+  "title": "KRCN Core completed Phase 10 baseline",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "baseline_id",
+    "phase_id",
+    "status",
+    "completed_steps",
+    "capabilities",
+    "safe_operations",
+    "guarantees",
+    "verification",
+    "maintenance"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/phase-10-baseline.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "baseline_id": {
+      "const": "phase-10-source-code-rag-index"
+    },
+    "phase_id": {
+      "const": "phase-10"
+    },
+    "status": {
+      "const": "ready"
+    },
+    "completed_steps": {
+      "const": 10
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "safe_operations": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "guarantees": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "external_source_copied",
+        "external_source_mutated",
+        "source_content_persisted",
+        "physical_source_root_persisted",
+        "remote_provider_implicit",
+        "exact_plan_required",
+        "incremental_refresh",
+        "stale_index_fails_closed",
+        "derived_index_integrity_verified",
+        "client_parity"
+      ],
+      "properties": {
+        "external_source_copied": {
+          "const": false
+        },
+        "external_source_mutated": {
+          "const": false
+        },
+        "source_content_persisted": {
+          "const": false
+        },
+        "physical_source_root_persisted": {
+          "const": false
+        },
+        "remote_provider_implicit": {
+          "const": false
+        },
+        "exact_plan_required": {
+          "const": true
+        },
+        "incremental_refresh": {
+          "const": true
+        },
+        "stale_index_fails_closed": {
+          "const": true
+        },
+        "derived_index_integrity_verified": {
+          "const": true
+        },
+        "client_parity": {
+          "const": true
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": {
+        "const": "passed"
+      }
+    },
+    "maintenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "freshness_hours",
+        "offline_embedding_profile",
+        "vector_dimensions"
+      ],
+      "properties": {
+        "status": {
+          "const": "ready"
+        },
+        "freshness_hours": {
+          "const": 24
+        },
+        "offline_embedding_profile": {
+          "const": "deterministic-hashing"
+        },
+        "vector_dimensions": {
+          "const": 192
+        }
+      }
+    }
+  }
+}

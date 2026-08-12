@@ -30,6 +30,7 @@ BOOTSTRAP_BODY = """<!-- KRCN-CORE:BEGIN -->
 - When the user asks where work stopped, run `krcn project resume --format json` before answering.
 - When the user explicitly names another registered project, run `krcn project resume --project \"<project-id-or-name>\" --format json`.
 - If KRCN returns `matched: true`, use its project, source-state, information, policy, and work summary as durable context.
+- For source implementation questions in a matched project, run `krcn project search-code "<project-id>" "<question>" --format json` before a broad source-tree scan. Use the relative paths, line ranges, and verified in-place content as candidate evidence.
 - If KRCN returns `matched: false`, continue normally. Route learn, register, or introduce requests through `krcn project learn`. Route integrate requests through `krcn project integrate --source "<project-directory>" --scan-mode manual`. Preserve both exact-plan approval flows.
 - Treat KRCN context as information, not permission to mutate. Preserve registered policies and approval gates.
 - Read registered project sources in place. Never copy project source files into KRCN Core or `KRCN_HOME`.
