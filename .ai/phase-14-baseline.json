@@ -1,0 +1,52 @@
+{
+  "schema_ref": "schemas/phase-14-baseline.schema.json",
+  "schema_version": 1,
+  "baseline_id": "phase-14-oracle-metadata-rag",
+  "phase_id": "phase-14",
+  "status": "ready",
+  "completed_steps": 9,
+  "capabilities": [
+    "oracle-domain-records",
+    "select-compatible-metadata",
+    "explicit-batch-execute-gate",
+    "incremental-object-revisions",
+    "package-spec-body-separation",
+    "dependency-provenance",
+    "structural-metadata-chunking",
+    "project-scoped-oracle-index",
+    "secret-safe-portability"
+  ],
+  "safe_operations": [
+    "database.oracle.inspect",
+    "database.oracle.collect",
+    "database.oracle.refresh",
+    "database.oracle.status",
+    "database.oracle.index",
+    "database.oracle.search",
+    "database.oracle.dependencies"
+  ],
+  "guarantees": {
+    "row_data_collected": false,
+    "free_sql_allowed": false,
+    "select_only_overridden": false,
+    "execute_deny_overridden": false,
+    "raw_database_link_ddl_persisted": false,
+    "connection_secret_persisted": false,
+    "partial_snapshot_retires_objects": false,
+    "unchanged_object_revectorized": false,
+    "authoritative_state_is_sqlite": false,
+    "project_scoped_index": true
+  },
+  "verification": {
+    "fixed-template-policy": "passed",
+    "batch-execute-gate": "passed",
+    "package-spec-body-revisions": "passed",
+    "incremental-reuse": "passed",
+    "partial-snapshot-preservation": "passed",
+    "database-link-redaction": "passed",
+    "dependency-provenance": "passed",
+    "structural-chunking": "passed",
+    "sqlite-integrity": "passed",
+    "capsule-portability": "passed"
+  }
+}

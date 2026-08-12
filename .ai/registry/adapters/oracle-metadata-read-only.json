@@ -1,0 +1,53 @@
+{
+  "schema_ref": "schemas/adapter.schema.json",
+  "adapter_id": "oracle-metadata-read-only",
+  "version": "1.0.0",
+  "source_kinds": [
+    "database",
+    "integration"
+  ],
+  "resource_type": "database-metadata",
+  "operations": [
+    {
+      "operation_id": "inventory",
+      "required_capabilities": [
+        "read",
+        "metadata"
+      ],
+      "default_effect": "deny",
+      "mutation_effect": false,
+      "network_effect": true
+    },
+    {
+      "operation_id": "fetch-ddl",
+      "required_capabilities": [
+        "read",
+        "metadata"
+      ],
+      "default_effect": "deny",
+      "mutation_effect": false,
+      "network_effect": true
+    },
+    {
+      "operation_id": "fetch-dependencies",
+      "required_capabilities": [
+        "read",
+        "metadata"
+      ],
+      "default_effect": "deny",
+      "mutation_effect": false,
+      "network_effect": true
+    },
+    {
+      "operation_id": "batch-open",
+      "required_capabilities": [
+        "read",
+        "metadata",
+        "execute"
+      ],
+      "default_effect": "deny",
+      "mutation_effect": false,
+      "network_effect": true
+    }
+  ]
+}

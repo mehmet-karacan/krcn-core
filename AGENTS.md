@@ -102,6 +102,15 @@ The machine-readable route is `config/intent-routing.json`. Client adapters must
 - An imported capsule has unbound external source dependencies until an exact source rebind is approved and verified.
 - Use the shared portability application operations for layout migration, capsule export, and capsule import. Do not move capsule files manually.
 
+## Oracle metadata
+
+- Treat Oracle schema metadata as project-owned database records, not as generic knowledge text.
+- Never collect application table rows or accept free SQL through the metadata workflow.
+- A `select-only` policy permits only registered select-compatible dictionary and `DBMS_METADATA.GET_*` templates.
+- Batch `DBMS_METADATA.OPEN` workflows require explicit execute permission and separate session approval. Never weaken an existing `execute deny` rule.
+- Keep package specification and package body as separate revisions, preserve dependency provenance, and redact database link credentials before persistence or indexing.
+- Treat the project Oracle SQLite index as rebuildable. Authoritative state remains in versioned JSON records.
+
 ## Development record structure
 
 - `docs/architecture/`: English technical architecture.

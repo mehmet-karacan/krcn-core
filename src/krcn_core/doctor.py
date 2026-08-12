@@ -501,4 +501,21 @@ def run_doctor(
             "Phase 13 agent runtime queue baseline is complete",
         )
     )
+    phase_fourteen = load_json(repo_root / ".ai" / "phase-14-baseline.json")
+    phase_fourteen_errors = []
+    if phase_fourteen.get("status") != "ready":
+        phase_fourteen_errors.append("Phase 14 baseline state")
+    if phase_fourteen.get("completed_steps") != 9:
+        phase_fourteen_errors.append("Phase 14 completed steps")
+    if not (
+        repo_root / "docs" / "progress" / "PHASE-14-COMPLETION.md"
+    ).is_file():
+        phase_fourteen_errors.append("Phase 14 completion evidence")
+    checks.append(
+        _check(
+            "phase-fourteen-baseline",
+            phase_fourteen_errors,
+            "Phase 14 Oracle metadata RAG baseline is complete",
+        )
+    )
     return tuple(checks)

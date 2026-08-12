@@ -239,6 +239,23 @@ def build_parser() -> argparse.ArgumentParser:
     integration_select.add_argument("--statement", required=True)
     integration_select.add_argument("--maximum-rows", type=int, default=1_000)
     _add_service_options(integration_select)
+    oracle = subparsers.add_parser(
+        "oracle",
+        help="Use project-scoped Oracle schema metadata without reading rows",
+    )
+    oracle_commands = oracle.add_subparsers(dest="oracle_command")
+    for operation in ("collect", "refresh", "index"):
+        command = oracle_commands.add_parser(
+            operation,
+            help=f"Plan or apply Oracle metadata {operation}",
+        )
+        _add_phase_four_options(command, mutation=True)
+    for operation in ("inspect", "status", "search", "dependencies"):
+        command = oracle_commands.add_parser(
+            operation,
+            help=f"Read Oracle metadata {operation} from a JSON request",
+        )
+        _add_phase_four_options(command)
     installation = subparsers.add_parser(
         "installation",
         help="Inspect or verify a local KRCN Core installation",
@@ -927,6 +944,12 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
     }:
         operation = f"runtime.queue.{args.runtime_command}"
         arguments = _load_phase_four_arguments(args.request_file)
+    elif args.command == "oracle" and args.oracle_command in {
+        "inspect", "collect", "refresh", "status", "index", "search",
+        "dependencies",
+    }:
+        operation = f"database.oracle.{args.oracle_command}"
+        arguments = _load_phase_four_arguments(args.request_file)
     else:
         raise ApplicationServiceError("Phase 4 service command is required")
     return ServiceRequest(
@@ -1132,7 +1155,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command in {"installation", "release", "deployment"}:
         return _run_core_service_command(args)
 
-    if args.command in {"knowledge", "context-package", "memory", "work", "runtime"}:
+    if args.command in {"knowledge", "context-package", "memory", "work", "runtime", "oracle"}:
         return _run_phase_four_service_command(args)
 
     if args.command == "orchestrator":

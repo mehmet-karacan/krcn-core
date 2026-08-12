@@ -239,3 +239,11 @@ Bağlantı değeri komut satırına yazılmaz. Örneğin `secret://database/repo
 `krcn knowledge index` önce yeniden üretilebilir SQLite indeks planını gösterir. `--apply --expected-plan <plan-id>` aynı planı `derived` alana uygular. Bu işlem kullanıcı verisini değiştirmez ve harici proje dosyalarını kopyalamaz.
 
 `krcn knowledge hybrid --request-file <json>` exact, FTS, yerel vektör, dependency, authority ve availability sinyallerini ortak sıralamada çalıştırır. JSON dosyasındaki `query`, `schemas/hybrid-retrieval-query.schema.json` sözleşmesine uyar. Arama yapılmadan önce indeksin güncel katalog için oluşturulmuş olması gerekir.
+
+## Oracle metadata
+
+`krcn oracle inspect`, `collect`, `refresh`, `status`, `index`, `search` ve `dependencies` proje bazlı Oracle metadata servisini kullanır. İstek gövdeleri JSON belgesidir; CLI, SDK, MCP, plugin ve AI istemcileri aynı application service sözleşmesini paylaşır.
+
+`collect` ve `refresh` yalnız açıkça kayıtlı metadata transport, owner ve object-type allowlist ile `select-compatible` veya `batch-open` modlarından birini kabul eder. SQL metni kabul etmez ve uygulama satırı okumaz. İlk çağrı kesin kullanıcı verisi planını döndürür. Apply aynı plan kimliği ve açık onay gerektirir. Batch modu ayrıca etkin `execute` ve `database-metadata` politikası ile session onayı gerektirir.
+
+`index`, yetkili proje JSON kayıtlarından yerel Oracle SQLite projeksiyonunu üretir. `search` ve `dependencies` salt okunurdur; revision, digest, object identity ve provenance kanıtı döndürür.

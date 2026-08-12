@@ -27,6 +27,7 @@ from .discovery import (
     load_discovery_policy,
 )
 from .deployment import authorize_deployment_plan, prepare_deployment_plan
+from .database_policy import require_oracle_metadata_template
 from .dependency_retrieval import (
     parse_dependency_query,
     parse_information_relation,
@@ -87,6 +88,21 @@ from .orchestration_service import (
 )
 from .orchestration_verifier import VerifierHandlerRegistry
 from .orchestration_worker import WorkerHandlerRegistry
+from .oracle_metadata import (
+    OracleApplyAuthorization,
+    OracleCollectionPolicy,
+    OracleIndexAuthorization,
+    OracleMetadataTransport,
+    OracleReadAuthorization,
+    apply_oracle_index,
+    apply_oracle_plan,
+    collect_oracle_snapshot,
+    oracle_index_path,
+    prepare_oracle_apply,
+    prepare_oracle_index,
+    retrieve_oracle_dependencies,
+    search_oracle_metadata,
+)
 from .policies import load_user_policies
 from .project_learning import apply_project_learning, prepare_project_learning
 from .project_integration import (
@@ -226,6 +242,13 @@ OPERATIONS = {
     "runtime.queue.recover",
     "runtime.queue.reconcile",
     "runtime.queue.status",
+    "database.oracle.inspect",
+    "database.oracle.collect",
+    "database.oracle.refresh",
+    "database.oracle.status",
+    "database.oracle.index",
+    "database.oracle.search",
+    "database.oracle.dependencies",
 } | ORCHESTRATION_OPERATIONS
 
 
@@ -354,6 +377,23 @@ def _object_argument(arguments: Mapping[str, object], name: str) -> dict[str, ob
     return dict(value)
 
 
+def _string_tuple_argument(
+    arguments: Mapping[str, object],
+    name: str,
+) -> tuple[str, ...]:
+    value = arguments.get(name)
+    if (
+        not isinstance(value, list)
+        or not value
+        or any(not isinstance(item, str) or not item.strip() for item in value)
+    ):
+        raise ApplicationServiceError(f"{name} must be a non-empty string list")
+    result = tuple(item.strip() for item in value)
+    if len(set(result)) != len(result):
+        raise ApplicationServiceError(f"{name} must contain unique values")
+    return result
+
+
 def _nonnegative_integer_argument(
     arguments: Mapping[str, object],
     name: str,
@@ -380,6 +420,7 @@ class KrcnApplicationService:
         orchestration_worker_handlers: WorkerHandlerRegistry | None = None,
         orchestration_verifier_handlers: VerifierHandlerRegistry | None = None,
         sqlite_runtime: SqliteReferenceRuntime | None = None,
+        oracle_metadata_transports: Mapping[str, OracleMetadataTransport] | None = None,
     ) -> None:
         self._repo_root = repo_root.resolve()
         self._store = store
@@ -402,6 +443,24 @@ class KrcnApplicationService:
             raise ApplicationServiceError("semantic remote scorers are invalid")
         self._semantic_remote_scorers = scorers
         self._sqlite_runtime = sqlite_runtime
+        transports = dict(oracle_metadata_transports or {})
+        if any(
+            not isinstance(integration_id, str)
+            or not IDENTIFIER.fullmatch(integration_id)
+            or any(
+                not callable(getattr(transport, method, None))
+                for method in (
+                    "inventory",
+                    "fetch_ddl_select",
+                    "fetch_ddl_batch",
+                    "fetch_structured_metadata",
+                    "fetch_dependencies",
+                )
+            )
+            for integration_id, transport in transports.items()
+        ):
+            raise ApplicationServiceError("Oracle metadata transports are invalid")
+        self._oracle_metadata_transports = transports
         self._orchestration = OrchestrationApplicationService(
             self._repo_root,
             self._store,
@@ -475,6 +534,13 @@ class KrcnApplicationService:
             "runtime.queue.recover": self._runtime_queue_action,
             "runtime.queue.reconcile": self._runtime_queue_action,
             "runtime.queue.status": self._runtime_queue_status,
+            "database.oracle.inspect": self._oracle_inspect,
+            "database.oracle.collect": self._oracle_collect,
+            "database.oracle.refresh": self._oracle_collect,
+            "database.oracle.status": self._oracle_status,
+            "database.oracle.index": self._oracle_index,
+            "database.oracle.search": self._oracle_search,
+            "database.oracle.dependencies": self._oracle_dependencies,
         }
         status, data = handlers[request.operation](request)
         return ServiceResponse(
@@ -561,6 +627,288 @@ class KrcnApplicationService:
             load_scheduler_policy(self._repo_root),
         )
         return "ok", {"result": queue.status()}
+
+    def _oracle_project_binding(
+        self,
+        project_id: str,
+        integration_id: str,
+        binding_id: str,
+    ) -> SourceBinding:
+        if self._store.read("projects", project_id) is None:
+            raise ApplicationServiceError("Oracle metadata project is not registered")
+        if self._store.read("integrations", integration_id) is None:
+            raise ApplicationServiceError("Oracle metadata integration is not registered")
+        record = self._store.read("source-bindings", binding_id)
+        if record is None:
+            raise ApplicationServiceError("Oracle metadata binding is not registered")
+        binding = parse_source_binding(record.payload)
+        if (
+            binding.source_kind not in {"database", "integration"}
+            or binding.source_id != integration_id
+            or binding.default_access != "read-only"
+            or "write" in binding.capabilities
+            or not {"read", "metadata"}.issubset(binding.capabilities)
+        ):
+            raise ApplicationServiceError(
+                "Oracle metadata requires a read-only metadata binding"
+            )
+        return binding
+
+    def _oracle_inspect(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"project_id", "integration_id", "binding_id", "mode"},
+        )
+        if request.apply:
+            raise ApplicationServiceError("Oracle metadata inspect is read-only")
+        project_id = _identifier_argument(request.arguments, "project_id")
+        integration_id = _identifier_argument(request.arguments, "integration_id")
+        binding_id = _identifier_argument(request.arguments, "binding_id")
+        binding = self._oracle_project_binding(project_id, integration_id, binding_id)
+        mode = _string_argument(request.arguments, "mode")
+        if mode not in {"select-compatible", "batch-open"}:
+            raise ApplicationServiceError("Oracle metadata collection mode is invalid")
+        template_id = "fetch-ddl" if mode == "select-compatible" else "batch-open"
+        bind_values = (
+            {
+                "object_type": "TABLE",
+                "object_name": "POLICY_PROBE",
+                "owner": "POLICY_PROBE",
+            }
+            if template_id == "fetch-ddl"
+            else {"object_type": "TABLE"}
+        )
+        try:
+            authorization = require_oracle_metadata_template(
+                template_id,
+                bind_values,
+                load_user_policies(self._store.data_root / "policies"),
+                integration_id=integration_id,
+                session_approved=request.approval_id is not None,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {
+            "result": {
+                "project_id": project_id,
+                "integration_id": integration_id,
+                "binding_id": binding.binding_id,
+                "binding_revision": binding.revision,
+                "collection_mode": mode,
+                "policy_permitted": authorization.permitted,
+                "row_data_collected": False,
+                "free_sql_allowed": False,
+                "network_connection_opened": False,
+            }
+        }
+
+    def _oracle_collect(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={
+                "project_id",
+                "integration_id",
+                "binding_id",
+                "owners",
+                "object_types",
+                "mode",
+                "complete",
+            },
+        )
+        project_id = _identifier_argument(request.arguments, "project_id")
+        integration_id = _identifier_argument(request.arguments, "integration_id")
+        binding_id = _identifier_argument(request.arguments, "binding_id")
+        binding = self._oracle_project_binding(project_id, integration_id, binding_id)
+        transport = self._oracle_metadata_transports.get(integration_id)
+        if transport is None:
+            raise ApplicationServiceError(
+                "Oracle metadata transport must be explicitly registered"
+            )
+        if request.approval_id is None:
+            raise ApplicationServiceError(
+                "Oracle metadata collection requires network session approval"
+            )
+        mode = _string_argument(request.arguments, "mode")
+        complete = request.arguments.get("complete")
+        if not isinstance(complete, bool):
+            raise ApplicationServiceError("complete must be boolean")
+        policy = OracleCollectionPolicy(
+            _string_tuple_argument(request.arguments, "owners"),
+            _string_tuple_argument(request.arguments, "object_types"),
+            mode,
+        )
+        if mode == "batch-open" and "execute" not in binding.capabilities:
+            raise ApplicationServiceError(
+                "Oracle batch metadata requires execute binding capability"
+            )
+        configured = load_json(self._repo_root / "config" / "oracle-metadata.json")
+        allowed_types = configured.get("allowed_object_types")
+        if (
+            not isinstance(allowed_types, list)
+            or not set(policy.object_types).issubset(set(allowed_types))
+            or configured.get("row_data_allowed") is not False
+            or configured.get("free_sql_allowed") is not False
+        ):
+            raise ApplicationServiceError(
+                "Oracle metadata request exceeds the versioned policy"
+            )
+        template_id = "fetch-ddl" if mode == "select-compatible" else "batch-open"
+        bind_values = (
+            {
+                "object_type": policy.object_types[0],
+                "object_name": "POLICY_PROBE",
+                "owner": policy.owners[0],
+            }
+            if template_id == "fetch-ddl"
+            else {"object_type": policy.object_types[0]}
+        )
+        policies = load_user_policies(self._store.data_root / "policies")
+        require_oracle_metadata_template(
+            template_id,
+            bind_values,
+            policies,
+            integration_id=integration_id,
+            session_approved=request.approval_id is not None,
+        )
+        snapshot = collect_oracle_snapshot(
+            project_id,
+            integration_id,
+            transport,
+            policy,
+            OracleReadAuthorization(
+                binding.binding_id,
+                binding.revision,
+                "metadata-select" if mode == "select-compatible" else "metadata-batch-open",
+                True,
+            ),
+            complete=complete,
+            data_root=self._store.data_root,
+        )
+        plan = prepare_oracle_apply(self._store.data_root, snapshot)
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        if request.expected_plan_id != plan.plan_id or request.approval_id is None:
+            raise ApplicationServiceError(
+                "Oracle metadata apply requires the exact plan and approval id"
+            )
+        result = apply_oracle_plan(
+            plan,
+            OracleApplyAuthorization(plan.plan_id, request.approval_id, True),
+        )
+        return "applied", {"plan": plan.public_summary(), "result": result, "applied": True}
+
+    def _oracle_status(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"project_id"})
+        if request.apply:
+            raise ApplicationServiceError("Oracle metadata status is read-only")
+        project_id = _identifier_argument(request.arguments, "project_id")
+        project_root = self._store.data_root / "projects" / project_id
+        oracle_root = project_root / "database" / "oracle"
+        counts = {
+            name: len(tuple((oracle_root / name).glob("*.json")))
+            if (oracle_root / name).is_dir()
+            else 0
+            for name in ("snapshots", "objects", "revisions", "dependencies", "reports")
+        }
+        index_path = oracle_index_path(self._store.data_root, project_id)
+        return "ok", {
+            "result": {
+                "project_id": project_id,
+                "records": counts,
+                "index_available": index_path.is_file() and not index_path.is_symlink(),
+                "row_data_collected": False,
+            }
+        }
+
+    def _oracle_index(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"project_id"})
+        project_id = _identifier_argument(request.arguments, "project_id")
+        plan = prepare_oracle_index(self._store.data_root, project_id)
+        summary = {
+            "plan_id": plan.plan_id,
+            "project_id": plan.project_id,
+            "index_digest": plan.index_digest,
+            "chunk_count": len(plan.chunks),
+            "processed_chunk_count": plan.processed_chunk_count,
+            "reused_chunk_count": plan.reused_chunk_count,
+            "removed_chunk_count": plan.removed_chunk_count,
+            "row_data_collected": False,
+        }
+        if not request.apply:
+            return "planned", {"plan": summary, "applied": False}
+        if request.expected_plan_id != plan.plan_id:
+            raise ApplicationServiceError("Oracle index apply requires the exact plan")
+        result = apply_oracle_index(
+            self._store.data_root,
+            plan,
+            OracleIndexAuthorization(plan.plan_id),
+        )
+        return "applied", {"plan": summary, "result": result, "applied": True}
+
+    def _oracle_search(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"project_id", "text"},
+            optional={"owner", "object_type", "limit"},
+        )
+        if request.apply:
+            raise ApplicationServiceError("Oracle metadata search is read-only")
+        limit = request.arguments.get("limit", 10)
+        if not isinstance(limit, int) or isinstance(limit, bool):
+            raise ApplicationServiceError("limit must be an integer")
+        owner = request.arguments.get("owner")
+        object_type = request.arguments.get("object_type")
+        if owner is not None and not isinstance(owner, str):
+            raise ApplicationServiceError("owner must be a string")
+        if object_type is not None and not isinstance(object_type, str):
+            raise ApplicationServiceError("object_type must be a string")
+        result = search_oracle_metadata(
+            self._store.data_root,
+            _identifier_argument(request.arguments, "project_id"),
+            _string_argument(request.arguments, "text"),
+            owner=owner,
+            object_type=object_type,
+            limit=limit,
+        )
+        return "ok", {"result": result}
+
+    def _oracle_dependencies(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"project_id", "object_id"},
+            optional={"direction", "max_depth"},
+        )
+        if request.apply:
+            raise ApplicationServiceError("Oracle dependencies are read-only")
+        max_depth = request.arguments.get("max_depth", 3)
+        if not isinstance(max_depth, int) or isinstance(max_depth, bool):
+            raise ApplicationServiceError("max_depth must be an integer")
+        result = retrieve_oracle_dependencies(
+            self._store.data_root,
+            _identifier_argument(request.arguments, "project_id"),
+            _string_argument(request.arguments, "object_id"),
+            direction=str(request.arguments.get("direction", "outbound")),
+            max_depth=max_depth,
+        )
+        return "ok", {"result": result}
 
     @staticmethod
     def _absolute_path_argument(

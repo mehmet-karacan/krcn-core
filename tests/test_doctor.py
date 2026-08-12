@@ -42,6 +42,7 @@ class DoctorTests(unittest.TestCase):
                 "phase-eleven-baseline",
                 "phase-twelve-baseline",
                 "phase-thirteen-baseline",
+                "phase-fourteen-baseline",
             },
             {item.check_id for item in checks},
         )

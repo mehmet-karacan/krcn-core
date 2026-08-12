@@ -12,6 +12,7 @@ from krcn_core.database_policy import (  # noqa: E402
     DatabaseStatementError,
     classify_database_statement,
     require_database_statement,
+    require_oracle_metadata_template,
 )
 from krcn_core.policies import parse_user_policy  # noqa: E402
 
@@ -113,6 +114,79 @@ class DatabasePolicyTests(unittest.TestCase):
                 [],
                 integration_id="reporting-database",
             )
+
+    def test_select_policy_permits_only_registered_oracle_select_templates(self) -> None:
+        authorization = require_oracle_metadata_template(
+            "fetch-ddl",
+            {
+                "object_type": "PACKAGE_SPEC",
+                "object_name": "REPORTING_API",
+                "owner": "APP",
+            },
+            [select_only_policy()],
+            integration_id="reporting-database",
+        )
+        self.assertTrue(authorization.permitted)
+        with self.assertRaises(DatabaseStatementError):
+            require_oracle_metadata_template(
+                "free-sql",
+                {},
+                [select_only_policy()],
+                integration_id="reporting-database",
+            )
+
+    def test_select_policy_cannot_authorize_oracle_batch_open(self) -> None:
+        with self.assertRaises(DatabaseStatementError):
+            require_oracle_metadata_template(
+                "batch-open",
+                {"object_type": "PACKAGE_SPEC"},
+                [select_only_policy()],
+                integration_id="reporting-database",
+                session_approved=True,
+            )
+
+    def test_batch_open_requires_execute_metadata_and_session_approval(self) -> None:
+        batch_policy = parse_user_policy(
+            {
+                "schema_version": 1,
+                "policy_id": "oracle-batch-metadata",
+                "scope": {"kind": "integration", "ref": "reporting-database"},
+                "revision": 1,
+                "rules": [
+                    {
+                        "rule_id": "allow-execute",
+                        "resource_type": "database",
+                        "operations": ["execute"],
+                        "effect": "allow",
+                        "provenance": {"kind": "explicit-user"},
+                        "active": True,
+                    },
+                    {
+                        "rule_id": "allow-batch-metadata",
+                        "resource_type": "database-metadata",
+                        "operations": ["batch-open"],
+                        "effect": "allow",
+                        "provenance": {"kind": "explicit-user"},
+                        "active": True,
+                    },
+                ],
+            }
+        )
+        with self.assertRaises(DatabaseStatementError):
+            require_oracle_metadata_template(
+                "batch-open",
+                {"object_type": "PACKAGE_SPEC"},
+                [batch_policy],
+                integration_id="reporting-database",
+            )
+        authorization = require_oracle_metadata_template(
+            "batch-open",
+            {"object_type": "PACKAGE_SPEC"},
+            [batch_policy],
+            integration_id="reporting-database",
+            session_approved=True,
+        )
+        self.assertTrue(authorization.permitted)
 
 
 if __name__ == "__main__":

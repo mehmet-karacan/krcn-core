@@ -256,6 +256,29 @@ class ProjectCapsuleTests(unittest.TestCase):
 
     def test_thin_export_sanitizes_binding_and_imports_into_existing_home(self) -> None:
         self.migrate()
+        oracle_object = (
+            self.home
+            / "projects"
+            / "sample"
+            / "database"
+            / "oracle"
+            / "objects"
+            / "ora-sample.json"
+        )
+        oracle_object.parent.mkdir(parents=True)
+        oracle_object.write_text(
+            json.dumps({"schema_version": 1, "object_id": "ora-sample"}),
+            encoding="utf-8",
+        )
+        oracle_index = (
+            self.home
+            / "projects"
+            / "sample"
+            / "derived"
+            / "retrieval"
+            / "oracle-metadata-v1.sqlite"
+        )
+        create_sqlite(oracle_index, "oracle-metadata")
         archive = self.root / "sample-thin.krcn-project"
         export_plan = prepare_project_capsule_export(
             self.home,
@@ -274,6 +297,14 @@ class ProjectCapsuleTests(unittest.TestCase):
             names = set(exported.namelist())
             self.assertNotIn(
                 "payload/derived/retrieval/source-code-v1.sqlite",
+                names,
+            )
+            self.assertNotIn(
+                "payload/derived/retrieval/oracle-metadata-v1.sqlite",
+                names,
+            )
+            self.assertIn(
+                "payload/database/oracle/objects/ora-sample.json",
                 names,
             )
             binding = json.loads(
@@ -306,6 +337,15 @@ class ProjectCapsuleTests(unittest.TestCase):
 
     def test_ready_export_includes_verified_project_derived_index(self) -> None:
         self.migrate()
+        oracle_index = (
+            self.home
+            / "projects"
+            / "sample"
+            / "derived"
+            / "retrieval"
+            / "oracle-metadata-v1.sqlite"
+        )
+        create_sqlite(oracle_index, "oracle-metadata")
         queue = (
             self.home
             / "projects"
@@ -358,6 +398,10 @@ class ProjectCapsuleTests(unittest.TestCase):
         with zipfile.ZipFile(archive) as exported:
             self.assertIn(
                 "payload/derived/retrieval/source-code-v1.sqlite",
+                exported.namelist(),
+            )
+            self.assertIn(
+                "payload/derived/retrieval/oracle-metadata-v1.sqlite",
                 exported.namelist(),
             )
             self.assertNotIn(

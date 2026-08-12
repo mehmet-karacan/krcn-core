@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:phase-14-baseline:1",
+  "title": "KRCN Core completed Phase 14 baseline",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "baseline_id",
+    "phase_id",
+    "status",
+    "completed_steps",
+    "capabilities",
+    "safe_operations",
+    "guarantees",
+    "verification"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/phase-14-baseline.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "baseline_id": {
+      "const": "phase-14-oracle-metadata-rag"
+    },
+    "phase_id": {
+      "const": "phase-14"
+    },
+    "status": {
+      "const": "ready"
+    },
+    "completed_steps": {
+      "const": 9
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "safe_operations": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "guarantees": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "boolean"
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": {
+        "const": "passed"
+      }
+    }
+  }
+}

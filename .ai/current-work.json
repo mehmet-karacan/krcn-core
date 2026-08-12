@@ -1,11 +1,11 @@
 {
   "schema_ref": "schemas/current-work.schema.json",
   "schema_version": 1,
-  "phase_id": "phase-13",
-  "workstream_id": "agent-runtime-queue",
+  "phase_id": "phase-14",
+  "workstream_id": "oracle-metadata-rag",
   "status": "completed",
-  "goal": "Coordinate project workers and delegated agents with atomic queue ownership leases fencing and safe recovery",
-  "plan_ref": "docs/plans/PLAN-015-AJAN-KUYRUGU-VE-CALISMA-ZAMANI.md",
+  "goal": "Collect version and retrieve Oracle schema metadata without reading application rows or weakening user policies",
+  "plan_ref": "docs/plans/PLAN-016-ORACLE-METADATA-RAG.md",
   "progress_refs": [
     "docs/progress/PHASE-1-FOUNDATION.md",
     "docs/progress/PHASE-1-PACKAGE-1.md",
@@ -93,14 +93,15 @@
     "docs/progress/PHASE-10-COMPLETION.md",
     "docs/progress/PHASE-11-COMPLETION.md",
     "docs/progress/PHASE-12-COMPLETION.md",
-    "docs/progress/PHASE-13-COMPLETION.md"
+    "docs/progress/PHASE-13-COMPLETION.md",
+    "docs/progress/PHASE-14-COMPLETION.md"
   ],
   "next_actions": [
-    "build Oracle metadata collection without reading application rows",
-    "preserve select-only and execute-deny user policies",
-    "index package specs bodies schema objects and dependency evidence"
+    "build unified retrieval across source code Work Graph and Oracle metadata",
+    "answer resume questions with exact evidence before semantic ranking",
+    "harden index freshness quality budgets and portable context packages"
   ],
-  "baseline_commit": "d57bdec",
+  "baseline_commit": "d6b169b",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

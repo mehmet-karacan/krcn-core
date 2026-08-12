@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:oracle-metadata-plan:1",
+  "title": "KRCN Core exact Oracle metadata persistence plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "project_id",
+    "snapshot_id",
+    "write_count",
+    "new_revision_count",
+    "unchanged_object_count",
+    "retired_object_count",
+    "row_data_collected",
+    "source_sql_accepted",
+    "effects"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/oracle-metadata-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^ors-[a-f0-9]{40}$"
+    },
+    "write_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "new_revision_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "unchanged_object_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "retired_object_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "row_data_collected": {
+      "const": false
+    },
+    "source_sql_accepted": {
+      "const": false
+    },
+    "effects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "operation",
+          "target_ref",
+          "expected_before",
+          "content_digest"
+        ],
+        "properties": {
+          "operation": {
+            "enum": [
+              "create",
+              "update"
+            ]
+          },
+          "target_ref": {
+            "type": "string",
+            "pattern": "^\\.krcn/projects/[a-z][a-z0-9-]*/database/oracle/"
+          },
+          "expected_before": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "content_digest": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      }
+    }
+  }
+}

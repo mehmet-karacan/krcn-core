@@ -2,7 +2,7 @@
 
 ## Durum
 
-Bekliyor.
+Tamamlandı.
 
 ## Amaç
 
@@ -29,7 +29,7 @@ Veri satırları kapsam dışıdır. Aşağıdaki nesne ve bilgiler kapsam için
 
 ## Toplama ilkesi
 
-Canonical metadata kaynağı Oracle `DBMS_METADATA` API ailesidir. İlk tam alım nesne türü bazında `OPEN`, `SET_FILTER`, `ADD_TRANSFORM`, `FETCH_CLOB` ve `CLOSE` akışıyla yapılır. Bilinen tek nesnenin yenilenmesinde uygun `GET_DDL` veya ilgili `GET_*` çağrısı kullanılabilir.
+Canonical metadata kaynağı Oracle `DBMS_METADATA` API ailesidir. Varsayılan `select-compatible` mod, sabit dictionary sorguları ile `SELECT DBMS_METADATA.GET_DDL`, `GET_DEPENDENT_DDL` ve `GET_GRANTED_DDL` şablonlarını kullanır. `OPEN`, `SET_FILTER`, `ADD_TRANSFORM`, `FETCH_CLOB` ve `CLOSE` akışı yalnız açık `execute` yetkisi ve ayrı session onayıyla kullanılabilir. Kullanıcının `select-only` veya `execute deny` kuralı batch toplama için genişletilemez.
 
 Bağımlılık grafiği yalnızca DDL metin tahminine dayanmaz. Erişilebildiğinde Oracle dependency görünümleri ve mevcut PL/Scope kayıtları kesin kanıt olarak kullanılır. KRCN, metadata toplamak için veritabanı nesnesi oluşturmaz, derleme yapmaz ve session dışı kalıcı ayar değiştirmez.
 

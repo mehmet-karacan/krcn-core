@@ -71,6 +71,31 @@ COLLECTIONS = {
     "memory": ("record_id", "memory", "user-data"),
     "work-items": ("work_item_id", "work-items", "user-data"),
     "work-events": ("work_event_id", "work-events", "user-data"),
+    "oracle-metadata-snapshots": (
+        "snapshot_id",
+        "database/oracle/snapshots",
+        "user-data",
+    ),
+    "oracle-schema-objects": (
+        "object_id",
+        "database/oracle/objects",
+        "user-data",
+    ),
+    "oracle-object-revisions": (
+        "revision_id",
+        "database/oracle/revisions",
+        "user-data",
+    ),
+    "oracle-dependencies": (
+        "dependency_id",
+        "database/oracle/dependencies",
+        "user-data",
+    ),
+    "oracle-collection-reports": (
+        "report_id",
+        "database/oracle/reports",
+        "user-data",
+    ),
     "orchestration-states": (
         "state_id",
         "runtime/orchestration-states",

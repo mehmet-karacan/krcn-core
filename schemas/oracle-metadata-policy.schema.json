@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:oracle-metadata-policy:1",
+  "title": "KRCN Core Oracle metadata policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "policy_revision",
+    "default_collection_mode",
+    "allowed_object_types",
+    "allowed_inventory_views",
+    "allowed_metadata_functions",
+    "batch_open_requires_explicit_execute",
+    "free_sql_allowed",
+    "row_data_allowed",
+    "raw_database_link_ddl_persisted",
+    "partial_snapshot_retires_missing_objects",
+    "offline_embedding_profile_id",
+    "vector_dimensions",
+    "maximum_object_bytes",
+    "maximum_chunks"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/oracle-metadata-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "policy_revision": {
+      "const": 1
+    },
+    "default_collection_mode": {
+      "const": "select-compatible"
+    },
+    "allowed_object_types": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z][A-Z_]*$"
+      }
+    },
+    "allowed_inventory_views": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^ALL_[A-Z_]+$"
+      }
+    },
+    "allowed_metadata_functions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "GET_DDL",
+          "GET_DEPENDENT_DDL",
+          "GET_GRANTED_DDL"
+        ]
+      }
+    },
+    "batch_open_requires_explicit_execute": {
+      "const": true
+    },
+    "free_sql_allowed": {
+      "const": false
+    },
+    "row_data_allowed": {
+      "const": false
+    },
+    "raw_database_link_ddl_persisted": {
+      "const": false
+    },
+    "partial_snapshot_retires_missing_objects": {
+      "const": false
+    },
+    "offline_embedding_profile_id": {
+      "const": "deterministic-hashing"
+    },
+    "vector_dimensions": {
+      "const": 192
+    },
+    "maximum_object_bytes": {
+      "type": "integer",
+      "minimum": 1000
+    },
+    "maximum_chunks": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

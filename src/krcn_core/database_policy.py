@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Sequence
+from typing import Mapping, Sequence
 
 from .policies import PolicyDecision, UserPolicy, evaluate_policies
 
@@ -41,6 +41,68 @@ class DatabaseStatementAuthorization:
     @property
     def permitted(self) -> bool:
         return self.classification == "select" and self.decision.permitted
+
+
+@dataclass(frozen=True)
+class OracleMetadataTemplate:
+    template_id: str
+    statement: str
+    bind_names: tuple[str, ...]
+    collection_mode: str
+
+
+@dataclass(frozen=True)
+class OracleMetadataAuthorization:
+    template: OracleMetadataTemplate
+    statement_decision: PolicyDecision
+    metadata_decision: PolicyDecision | None
+    session_approved: bool
+
+    @property
+    def permitted(self) -> bool:
+        if not self.statement_decision.permitted:
+            return False
+        if self.template.collection_mode == "select-compatible":
+            return True
+        return bool(
+            self.session_approved
+            and self.metadata_decision is not None
+            and self.metadata_decision.permitted
+        )
+
+
+ORACLE_METADATA_TEMPLATES: Mapping[str, OracleMetadataTemplate] = {
+    "inventory-objects": OracleMetadataTemplate(
+        "inventory-objects",
+        "SELECT OWNER, OBJECT_NAME, OBJECT_TYPE, SUBOBJECT_NAME, OBJECT_ID, STATUS, LAST_DDL_TIME, TIMESTAMP, GENERATED, EDITION_NAME FROM ALL_OBJECTS WHERE OWNER = :owner",
+        ("owner",),
+        "select-compatible",
+    ),
+    "fetch-ddl": OracleMetadataTemplate(
+        "fetch-ddl",
+        "SELECT DBMS_METADATA.GET_DDL(:object_type, :object_name, :owner) FROM DUAL",
+        ("object_type", "object_name", "owner"),
+        "select-compatible",
+    ),
+    "fetch-dependent-ddl": OracleMetadataTemplate(
+        "fetch-dependent-ddl",
+        "SELECT DBMS_METADATA.GET_DEPENDENT_DDL(:object_type, :base_object_name, :owner) FROM DUAL",
+        ("object_type", "base_object_name", "owner"),
+        "select-compatible",
+    ),
+    "fetch-granted-ddl": OracleMetadataTemplate(
+        "fetch-granted-ddl",
+        "SELECT DBMS_METADATA.GET_GRANTED_DDL(:object_type, :grantee) FROM DUAL",
+        ("object_type", "grantee"),
+        "select-compatible",
+    ),
+    "batch-open": OracleMetadataTemplate(
+        "batch-open",
+        "BEGIN DBMS_METADATA.OPEN(:object_type)",
+        ("object_type",),
+        "batch-open",
+    ),
+}
 
 
 def _lex_sql(statement: str) -> list[str]:
@@ -217,5 +279,62 @@ def require_database_statement(
     if not authorization.permitted:
         raise DatabaseStatementError(
             "database statement is not permitted by the effective user policy"
+        )
+    return authorization
+
+
+def require_oracle_metadata_template(
+    template_id: str,
+    bind_values: Mapping[str, object],
+    policies: Sequence[UserPolicy],
+    *,
+    integration_id: str,
+    session_approved: bool = False,
+) -> OracleMetadataAuthorization:
+    """Authorize one fixed Oracle metadata template without accepting free SQL."""
+
+    template = ORACLE_METADATA_TEMPLATES.get(template_id)
+    if template is None:
+        raise DatabaseStatementError("Oracle metadata template is not registered")
+    if set(bind_values) != set(template.bind_names):
+        raise DatabaseStatementError("Oracle metadata bind values do not match")
+    if any(
+        not isinstance(value, str) or not value.strip() or "\x00" in value
+        for value in bind_values.values()
+    ):
+        raise DatabaseStatementError("Oracle metadata bind value is invalid")
+    if template.collection_mode == "select-compatible":
+        statement = require_database_statement(
+            template.statement,
+            policies,
+            integration_id=integration_id,
+        )
+        return OracleMetadataAuthorization(
+            template,
+            statement.decision,
+            None,
+            bool(session_approved),
+        )
+    statement_decision = evaluate_policies(
+        policies,
+        resource_type="database",
+        operation="execute",
+        scope_refs={"integration": integration_id},
+    )
+    metadata_decision = evaluate_policies(
+        policies,
+        resource_type="database-metadata",
+        operation="batch-open",
+        scope_refs={"integration": integration_id},
+    )
+    authorization = OracleMetadataAuthorization(
+        template,
+        statement_decision,
+        metadata_decision,
+        bool(session_approved),
+    )
+    if not authorization.permitted:
+        raise DatabaseStatementError(
+            "Oracle batch metadata requires execute, metadata, and session approval"
         )
     return authorization
