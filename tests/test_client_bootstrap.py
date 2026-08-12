@@ -160,7 +160,7 @@ class ClientBootstrapTests(unittest.TestCase):
         real_atomic_write = client_bootstrap._atomic_write
 
         def fail_on_claude(path: Path, content: bytes) -> None:
-            if path == self.claude:
+            if path.name == "CLAUDE.md":
                 raise OSError("synthetic client write interruption")
             real_atomic_write(path, content)
 
