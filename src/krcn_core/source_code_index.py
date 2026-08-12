@@ -1154,6 +1154,7 @@ def source_code_index_summary(
     project_id: str,
     *,
     binding_id: str | None = None,
+    binding_revision: int | None = None,
     source_digest: str | None = None,
 ) -> dict[str, object]:
     """Inspect one source-code index without disclosing its physical path."""
@@ -1205,6 +1206,10 @@ def source_code_index_summary(
         and metadata.get("file_count") == str(files)
         and metadata.get("chunk_count") == str(chunks)
         and (binding_id is None or metadata.get("binding_id") == binding_id)
+        and (
+            binding_revision is None
+            or metadata.get("binding_revision") == str(binding_revision)
+        )
         and (source_digest is None or metadata.get("source_digest") == source_digest)
     )
     try:
@@ -1234,6 +1239,8 @@ def source_code_index_is_current(
     project_id: str,
     binding_id: str,
     source_digest: str,
+    *,
+    binding_revision: int,
 ) -> bool:
     return (
         source_code_index_summary(
@@ -1241,6 +1248,7 @@ def source_code_index_is_current(
             data_root,
             project_id,
             binding_id=binding_id,
+            binding_revision=binding_revision,
             source_digest=source_digest,
         )["status"]
         == "current"

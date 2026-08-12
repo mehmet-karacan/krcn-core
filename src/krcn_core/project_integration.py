@@ -1089,6 +1089,7 @@ def prepare_project_integration(
         project_id,
         binding.binding_id,
         discovery.root_digest,
+        binding_revision=binding.revision,
     )
     source_code_index_plan = None
     if not source_code_index_was_current:
@@ -1261,6 +1262,7 @@ def apply_project_integration(
         plan.project_id,
         plan.binding.binding_id,
         plan.discovery.root_digest,
+        binding_revision=plan.binding.revision,
     ):
         raise ProjectIntegrationError("project source code index verification failed")
     if store.read("project-integrations", plan.project_id) is None:

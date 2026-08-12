@@ -2041,6 +2041,7 @@ class KrcnApplicationService:
             self._store.data_root,
             project_id,
             binding_id=binding.binding_id,
+            binding_revision=binding.revision,
             source_digest=state.root_digest,
         )
         if source_code_index_is_current(
@@ -2049,6 +2050,7 @@ class KrcnApplicationService:
             project_id,
             binding.binding_id,
             state.root_digest,
+            binding_revision=binding.revision,
         ):
             if request.apply or request.expected_plan_id is not None:
                 raise ApplicationServiceError(

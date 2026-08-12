@@ -492,6 +492,7 @@ def build_project_resume_summary(
             store.data_root,
             match.project.record_id,
             binding_id=match.bindings[0].binding_id,
+            binding_revision=match.bindings[0].revision,
             source_digest=state.root_digest if state else None,
         )
     states = context["source_states"]

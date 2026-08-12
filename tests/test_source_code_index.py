@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import sqlite3
 import sys
 import tempfile
@@ -260,6 +261,64 @@ public class UserService {
         self.assertEqual("ok", response.status)
         self.assertTrue(response.data["no_op"])
         self.assertEqual("current", response.data["index"]["status"])
+
+    def test_rebind_with_same_content_rebuilds_stale_binding_revision(self) -> None:
+        self._integrate()
+        rebound_source = self.root / "rebound-code"
+        shutil.copytree(self.source, rebound_source)
+        rebind_plan = self.service.execute(
+            ServiceRequest(
+                "codex",
+                "project.rebind",
+                {
+                    "project_id": "sample-code",
+                    "candidate_root": str(rebound_source),
+                },
+            )
+        )
+        rebound = self.service.execute(
+            ServiceRequest(
+                "codex",
+                "project.rebind",
+                {
+                    "project_id": "sample-code",
+                    "candidate_root": str(rebound_source),
+                },
+                apply=True,
+                expected_plan_id=rebind_plan.data["plan"]["plan_id"],
+                approval_id="source-rebind-approval",
+            )
+        )
+        self.assertEqual("applied", rebound.status)
+
+        with self.assertRaisesRegex(ApplicationServiceError, "stale"):
+            self._query("deleteAccount", path_prefix="src")
+
+        index_plan = self.service.execute(
+            ServiceRequest(
+                "sdk",
+                "project.index-source-code",
+                {"project_id": "sample-code"},
+            )
+        )
+        self.assertEqual("planned", index_plan.status)
+        self.assertFalse(index_plan.data["no_op"])
+        self.assertEqual(0, index_plan.data["plan"]["processed_file_count"])
+        self.assertEqual(3, index_plan.data["plan"]["reused_file_count"])
+
+        rebuilt = self.service.execute(
+            ServiceRequest(
+                "sdk",
+                "project.index-source-code",
+                {"project_id": "sample-code"},
+                apply=True,
+                expected_plan_id=index_plan.data["plan"]["plan_id"],
+            )
+        )
+        self.assertEqual("applied", rebuilt.status)
+        result = self._query("deleteAccount", path_prefix="src")
+        self.assertEqual("ok", result.status)
+        self.assertGreater(result.data["result"]["hit_count"], 0)
 
     def test_tampered_vector_invalidates_summary_and_search(self) -> None:
         self._integrate()

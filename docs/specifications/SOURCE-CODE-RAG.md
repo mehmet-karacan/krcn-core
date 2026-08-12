@@ -12,6 +12,8 @@ A chunk is bound to the project ID, relative path, exact file digest, character 
 
 An unchanged file may reuse its previously verified chunk rows when the policy digest, embedding profile, file size, and file digest still match. Changed and new files are read and reprocessed. Files absent from the current discovery state are omitted from the replacement database. The complete replacement is staged, verified with SQLite integrity checks, and installed atomically.
 
+An index is current only when its project ID, binding ID, binding revision, source digest, policy digest, embedding profile, dimensions, file inventory, and chunk inventory match the active project source state. A source rebind therefore makes the previous index stale even when every source file digest is unchanged. The rebuild may reuse verified chunks, but it must publish new metadata bound to the current binding revision before retrieval is allowed.
+
 ## Sensitive and generated source boundary
 
 Shared import policy excludes dependency trees, generated output, build output, vendor bundles, legacy AI backups, archives, binaries, dumps, logs, local environment files, and secret-key files before indexing. The source index also scans supported text in memory for configured secret, credential, machine-locator, personal-path, and network-address detector classes. A matching file is skipped as `sensitive_content`; matched values are not returned, logged, persisted, or embedded.
