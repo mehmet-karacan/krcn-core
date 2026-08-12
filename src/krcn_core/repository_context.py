@@ -29,6 +29,7 @@ REQUIRED_CANONICAL_KEYS = {
     "source_state_schema",
     "rescan_plan_schema",
     "project_home_merge_plan_schema",
+    "project_context_result_schema",
     "application_request_schema",
     "application_response_schema",
     "phase_baseline_schema",

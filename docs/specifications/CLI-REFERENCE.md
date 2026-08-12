@@ -43,6 +43,8 @@ python tools/krcn.py project learn "<source-directory>"
 python tools/krcn.py ask "<source-directory> projesini öğren"
 python tools/krcn.py project list
 python tools/krcn.py project inspect <project-id>
+python tools/krcn.py project current
+python tools/krcn.py project resume --request "<user-request>"
 python tools/krcn.py project onboard --workspace-id <workspace-id> --project-id <project-id> --binding-id <binding-id> --name <project-name> --source <source-directory>
 python tools/krcn.py project rescan <project-id>
 ```
@@ -82,6 +84,8 @@ python tools/krcn.py portability merge-project-home --source-home "<project-home
 The source and target backups are written and verified before any target record is added. Existing target content is preserved. Derived state must be rebuilt with `project rescan` after the merge.
 
 `onboard` and `rescan` also produce a plan only by default. Applying the plan requires the plan identity from the prior dry-run, and an explicit approval identity when the plan includes a user-data change.
+
+`project current` resolves a registered project from the current directory. `project resume` adds the persisted source, information, and active-work summary. Use `--project <project-id-or-name>` for an explicit selection or `--request "<user-request>"` when the request names a project while the client is running elsewhere. Both commands are read-only and never disclose a physical source locator.
 
 ## Knowledge, context, and memory
 

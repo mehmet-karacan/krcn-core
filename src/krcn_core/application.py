@@ -82,6 +82,11 @@ from .orchestration_worker import WorkerHandlerRegistry
 from .policies import load_user_policies
 from .project_learning import apply_project_learning, prepare_project_learning
 from .project_learning_intent import parse_project_learning_intent
+from .project_context import (
+    build_project_resume_summary,
+    resolve_current_project,
+    unmatched_project_context,
+)
 from .project_home import choose_project_home, resolve_project_home
 from .project_home_initialization import (
     apply_project_home_initialization,
@@ -139,6 +144,8 @@ OPERATIONS = {
     "deployment.rollback",
     "project.list",
     "project.inspect",
+    "project.resolve-current",
+    "project.resume",
     "project.learn",
     "project.home.resolve",
     "project.home.initialize",
@@ -368,6 +375,8 @@ class KrcnApplicationService:
             "deployment.rollback": self._rollback_deployment,
             "project.list": self._list_projects,
             "project.inspect": self._inspect_project,
+            "project.resolve-current": self._resolve_current_project,
+            "project.resume": self._resume_project,
             "project.learn": self._learn_project,
             "project.home.resolve": self._resolve_project_home,
             "project.home.initialize": self._initialize_project_home,
@@ -694,6 +703,52 @@ class KrcnApplicationService:
             "source_bindings": bindings,
             "source_states": source_states,
         }
+
+    def _project_context_match(self, request: ServiceRequest):
+        _check_arguments(
+            request.arguments,
+            required={"working_directory"},
+            optional={"project_ref", "request_text"},
+        )
+        if request.apply:
+            raise ApplicationServiceError("read operation cannot be applied")
+        project_ref = (
+            _string_argument(request.arguments, "project_ref")
+            if "project_ref" in request.arguments
+            else None
+        )
+        request_text = (
+            _text_argument(request.arguments, "request_text")
+            if "request_text" in request.arguments
+            else None
+        )
+        return resolve_current_project(
+            self._store,
+            working_directory=self._absolute_path_argument(
+                request.arguments,
+                "working_directory",
+            ),
+            project_ref=project_ref,
+            request_text=request_text,
+        )
+
+    def _resolve_current_project(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        match = self._project_context_match(request)
+        if match is None:
+            return "ok", unmatched_project_context()
+        return "ok", match.public_summary(self._store)
+
+    def _resume_project(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        match = self._project_context_match(request)
+        if match is None:
+            return "ok", {**unmatched_project_context(), "resume": None}
+        return "ok", build_project_resume_summary(self._store, match)
 
     def _onboard_project(
         self,

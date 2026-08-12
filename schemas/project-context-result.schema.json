@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:project-context-result:1",
+  "title": "KRCN Core current project context",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "matched",
+    "selection_basis",
+    "project",
+    "source_bindings",
+    "source_states",
+    "paths_disclosed"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/project-context-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "matched": {
+      "type": "boolean"
+    },
+    "selection_basis": {
+      "enum": [
+        "none",
+        "explicit-project",
+        "request-mention",
+        "working-directory"
+      ]
+    },
+    "project": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "source_bindings": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "source_states": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "paths_disclosed": {
+      "const": false
+    },
+    "resume": {
+      "type": [
+        "object",
+        "null"
+      ]
+    }
+  }
+}

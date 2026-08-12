@@ -141,6 +141,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     project_inspect.add_argument("project_id")
     _add_service_options(project_inspect)
+    for command_name in ("current", "resume"):
+        project_context = project_commands.add_parser(
+            command_name,
+            help=(
+                "Resolve the registered project for the current task"
+                if command_name == "current"
+                else "Return the safe cross-client project resume summary"
+            ),
+        )
+        project_context.add_argument("--directory", type=Path)
+        project_context.add_argument("--project")
+        project_context.add_argument("--request")
+        _add_service_options(project_context)
     project_learn = project_commands.add_parser(
         "learn",
         help="Learn a local project from only its directory",
@@ -448,6 +461,21 @@ def _project_service_request(args: argparse.Namespace) -> ServiceRequest:
     elif args.project_command == "inspect":
         operation = "project.inspect"
         arguments = {"project_id": args.project_id}
+    elif args.project_command in {"current", "resume"}:
+        operation = (
+            "project.resolve-current"
+            if args.project_command == "current"
+            else "project.resume"
+        )
+        arguments = {
+            "working_directory": str(
+                (args.directory if args.directory is not None else Path.cwd()).resolve()
+            )
+        }
+        if args.project is not None:
+            arguments["project_ref"] = args.project
+        if args.request is not None:
+            arguments["request_text"] = args.request
     elif args.project_command == "learn":
         operation = "project.learn"
         arguments = {

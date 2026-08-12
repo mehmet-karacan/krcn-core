@@ -84,6 +84,7 @@
         "project_home_manifest_schema",
         "project_home_initialization_plan_schema",
         "project_home_merge_plan_schema",
+        "project_context_result_schema",
         "orchestration_boundary",
         "orchestration_boundary_schema",
         "task_intent_schema",
@@ -229,6 +230,9 @@
           "$ref": "#/$defs/repoPath"
         },
         "project_home_merge_plan_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "project_context_result_schema": {
           "$ref": "#/$defs/repoPath"
         },
         "orchestration_boundary": {

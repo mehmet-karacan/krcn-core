@@ -28,6 +28,8 @@
         "deployment.rollback",
         "project.list",
         "project.inspect",
+        "project.resolve-current",
+        "project.resume",
         "project.learn",
         "project.home.resolve",
         "project.home.initialize",
