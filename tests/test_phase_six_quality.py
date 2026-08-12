@@ -32,12 +32,14 @@ class PhaseSixQualityTests(unittest.TestCase):
         self.assertIn("release-quality", checks)
         self.assertTrue(checks["release-quality"].passed)
 
-    def test_ci_matrix_covers_windows_macos_and_offline_wheel(self) -> None:
+    def test_ci_matrix_covers_linux_windows_macos_and_offline_wheel(self) -> None:
         workflow = (
             REPO_ROOT / ".github" / "workflows" / "quality.yml"
         ).read_text(encoding="utf-8")
         self.assertIn("windows-latest", workflow)
         self.assertIn("macos-latest", workflow)
+        self.assertIn("ubuntu-latest", workflow)
+        self.assertIn("measure_coverage.py", workflow)
         self.assertIn("python tools/verify_wheel.py", workflow)
         self.assertIn("python tools/run_tests.py", workflow)
         self.assertIn("python tools/krcn.py doctor", workflow)

@@ -1,7 +1,7 @@
 {
   "schema_ref": "schemas/release-quality.schema.json",
   "schema_version": 1,
-  "supported_platforms": ["windows", "macos"],
+  "supported_platforms": ["linux", "windows", "macos"],
   "user_home_layout_version": 1,
   "required_operations": [
     "project.rebind",
@@ -19,6 +19,7 @@
   "required_gates": [
     "repository-verify",
     "full-tests",
+    "coverage-baseline",
     "doctor",
     "offline-wheel-install",
     "portable-backup-restore",

@@ -42,6 +42,7 @@
         "orchestrator.execute",
         "orchestrator.verify",
         "orchestrator.status",
+        "orchestrator.timeline",
         "orchestrator.resume",
         "portability.backup",
         "portability.restore",

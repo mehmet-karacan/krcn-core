@@ -224,6 +224,20 @@ class OrchestrationServiceTests(unittest.TestCase):
         )
         self.assertEqual("completed", resumed.data["resume"]["status"])
         self.assertEqual(authorization_id, verified.data["state"]["authorization_id"])
+        status = self.service.execute(
+            ServiceRequest(
+                "cli",
+                "orchestrator.status",
+                {"context": self.context},
+            )
+        )
+        timeline = status.data["timeline"]
+        self.assertEqual(
+            ["task-initialized", "worker-started", "worker-completed", "task-verified"],
+            [item["event_type"] for item in timeline["events"]],
+        )
+        self.assertFalse(timeline["payload_disclosed"])
+        self.assertNotIn("synthetic-select", json.dumps(timeline))
 
     def test_intent_service_does_not_retain_raw_request(self) -> None:
         request = "Veritabanında delete istemiyorum, sadece select kullan."

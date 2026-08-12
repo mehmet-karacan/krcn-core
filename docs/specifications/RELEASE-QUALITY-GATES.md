@@ -22,3 +22,4 @@ The wheel must include the user-home resolver, source rebind, portable backup, p
 
 Core release manifests still contain only managed core payload. User data, portable backups, source locators, external project files, runtime state, derived state, and secrets do not enter a core release bundle.
 
+The required CI matrix covers Linux, Windows, and macOS. The full suite, repository scan, doctor, and offline wheel validation run without downloading product dependencies. A separate Linux job measures dependency-free line coverage with Python monitoring events and enforces the versioned 60 percent starting threshold in `.ai/coverage-baseline.json`.

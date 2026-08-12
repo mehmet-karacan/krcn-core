@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.11", "3.13"]
     runs-on: ${{ matrix.os }}
     steps:
@@ -29,3 +29,13 @@ jobs:
         run: python tools/krcn.py doctor
       - name: Verify offline wheel
         run: python tools/verify_wheel.py
+
+  coverage-baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Measure dependency-free line coverage
+        run: python tools/measure_coverage.py --minimum 60 --summary-only

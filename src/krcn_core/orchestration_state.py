@@ -673,6 +673,78 @@ class OrchestrationStateStore:
         self._put("orchestration-handoffs", record_id, handoff.as_dict())
         return handoff
 
+    def _event_chain(
+        self,
+        state: OrchestrationState,
+    ) -> tuple[OrchestrationEvent, ...]:
+        events = []
+        for record in self._store.list_records("orchestration-events"):
+            event = parse_orchestration_event(record.payload)
+            if event.task_id == state.task_id and event.state_revision <= state.revision:
+                events.append(event)
+        by_digest = {event.event_digest: event for event in events}
+        chain = []
+        digest: str | None = state.event_head_digest
+        while digest is not None:
+            event = by_digest.get(digest)
+            if event is None:
+                raise OrchestrationStateError("orchestration event chain is incomplete")
+            chain.append(event)
+            digest = event.prior_event_digest
+        ordered = tuple(reversed(chain))
+        if (
+            len(ordered) != state.revision
+            or [item.sequence for item in ordered]
+            != list(range(1, state.revision + 1))
+        ):
+            raise OrchestrationStateError("orchestration event chain is invalid")
+        return ordered
+
+    def timeline(self, task_id: str) -> dict[str, object]:
+        """Return a digest-verified, readable sequence without payload disclosure."""
+
+        stored = self._store.read("orchestration-states", task_id)
+        if stored is None:
+            raise OrchestrationStateError("orchestration state was not found")
+        state = parse_orchestration_state(stored.payload)
+        labels = {
+            "task-initialized": "Task state was initialized",
+            "worker-started": "Worker execution started",
+            "worker-completed": "Worker execution completed",
+            "worker-failed": "Worker execution failed",
+            "task-verified": "Task verification completed",
+            "verification-failed": "Task verification failed",
+        }
+        events = self._event_chain(state)
+        identity = {
+            "task_id": state.task_id,
+            "status": state.status,
+            "state_revision": state.revision,
+            "event_head_digest": state.event_head_digest,
+            "events": [
+                {
+                    "sequence": event.sequence,
+                    "event_type": event.event_type,
+                    "label": labels.get(
+                        event.event_type,
+                        event.event_type.replace("-", " ").capitalize(),
+                    ),
+                    "from_status": event.from_status,
+                    "to_status": event.to_status,
+                    "state_revision": event.state_revision,
+                    "event_digest": event.event_digest,
+                }
+                for event in events
+            ],
+        }
+        return {
+            "schema_ref": "schemas/orchestration-timeline.schema.json",
+            "schema_version": 1,
+            **identity,
+            "timeline_digest": hashlib.sha256(canonical_json(identity)).hexdigest(),
+            "payload_disclosed": False,
+        }
+
     def resume(
         self,
         task_id: str,
@@ -688,22 +760,7 @@ class OrchestrationStateStore:
         if state.authorization_id is not None:
             if authorization is None or authorization.authorization_id != state.authorization_id:
                 raise OrchestrationStateError("resume requires matching task authorization")
-        events = []
-        for record in self._store.list_records("orchestration-events"):
-            event = parse_orchestration_event(record.payload)
-            if event.task_id == task_id and event.state_revision <= state.revision:
-                events.append(event)
-        by_digest = {event.event_digest: event for event in events}
-        chain = []
-        digest: str | None = state.event_head_digest
-        while digest is not None:
-            event = by_digest.get(digest)
-            if event is None:
-                raise OrchestrationStateError("orchestration event chain is incomplete")
-            chain.append(event)
-            digest = event.prior_event_digest
-        if len(chain) != state.revision or [item.sequence for item in reversed(chain)] != list(range(1, state.revision + 1)):
-            raise OrchestrationStateError("orchestration event chain is invalid")
+        chain = self._event_chain(state)
         executions = []
         for record in self._store.list_records("orchestration-checkpoints"):
             _, execution = parse_orchestration_checkpoint(record.payload)

@@ -84,11 +84,12 @@
     "docs/progress/PHASE-8-PROJECT-HOME-PORTABILITY.md",
     "docs/progress/PHASE-8-DATA-INTEGRITY.md",
     "docs/progress/PHASE-8-RUNTIME-INTEGRATION.md",
-    "docs/progress/PHASE-8-HYBRID-RETRIEVAL.md"
+    "docs/progress/PHASE-8-HYBRID-RETRIEVAL.md",
+    "docs/progress/PHASE-8-QUALITY-OBSERVABILITY-UX.md"
   ],
   "next_actions": [
-    "add Linux CI and a versioned coverage baseline",
-    "add runtime doctor checks readable orchestration timeline and end-to-end quickstart"
+    "run the complete Phase 8 clean-clone portability policy and client-parity matrix",
+    "publish the Phase 8 baseline and completion record after every gate passes"
   ],
   "baseline_commit": "2ab1cb1",
   "approval_gates": {

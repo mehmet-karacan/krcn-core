@@ -203,6 +203,14 @@ class HybridRetrievalTests(unittest.TestCase):
         self.assertGreater(first.hits[0].score_breakdown["vector"], 0)
         self.assertFalse(first.as_dict()["remote"])
 
+    def test_fts_control_characters_are_tokenized_instead_of_interpreted(self) -> None:
+        self._build()
+        query = hybrid_query('database" OR * NEAR ( read')
+        first = retrieve_hybrid(self.home, self.catalog, (), query)
+        second = retrieve_hybrid(self.home, self.catalog, (), query)
+        self.assertEqual(first.as_dict(), second.as_dict())
+        self.assertEqual("database-read-rule", first.hits[0].entry.record.record_id)
+
     def test_dependency_signal_can_recall_related_material(self) -> None:
         self._build()
         result = retrieve_hybrid(

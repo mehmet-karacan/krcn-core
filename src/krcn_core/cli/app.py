@@ -39,6 +39,25 @@ def discover_repo_root(start: Path | None = None) -> Path:
     raise ValueError("repository context manifest was not found")
 
 
+def _print_error(exc: Exception) -> None:
+    message = str(exc)
+    normalized = message.casefold()
+    if "hybrid index" in normalized:
+        guidance = "Build or rebuild it with `krcn knowledge index` and the returned exact plan id."
+    elif "secret" in normalized:
+        guidance = "Configure the referenced value in the active local secret provider, then retry."
+    elif "approval" in normalized or "exact plan" in normalized:
+        guidance = "Run the command without `--apply`, review its plan, then apply that exact plan with the requested approval."
+    elif "not found" in normalized or "was not found" in normalized:
+        guidance = "Check the active project home and inspect the registered project or task identifiers."
+    elif "choice" in normalized or "project-home" in normalized:
+        guidance = "Choose the default project `.krcn` home or provide an explicit local parent directory."
+    else:
+        guidance = "Run `krcn doctor` for local health checks and review the command help."
+    print(f"ERROR: {message}", file=sys.stderr)
+    print(f"NEXT: {guidance}", file=sys.stderr)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="krcn", description="KRCN Core CLI")
     subparsers = parser.add_subparsers(dest="command")
@@ -61,6 +80,7 @@ def build_parser() -> argparse.ArgumentParser:
             help="Run offline repository health checks",
         )
         doctor.add_argument("--repo", type=Path)
+        doctor.add_argument("--data-root", type=Path)
         doctor.add_argument("--format", choices=("text", "json"), default="text")
     ask = subparsers.add_parser(
         "ask",
@@ -247,6 +267,7 @@ def build_parser() -> argparse.ArgumentParser:
         "execute",
         "verify",
         "status",
+        "timeline",
         "resume",
     ):
         command = orchestrator_commands.add_parser(
@@ -533,7 +554,7 @@ def _run_project_command(args: argparse.Namespace) -> int:
             _project_service_request(args)
         )
     except (ApplicationServiceError, OSError, ValueError) as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
+        _print_error(exc)
         return 2
     return _print_service_response(response, args.format)
 
@@ -566,7 +587,7 @@ def _run_ask_command(args: argparse.Namespace) -> int:
         )
         response = create_application_service(repo_root, data_root).execute(request)
     except (ApplicationServiceError, OSError, ValueError) as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
+        _print_error(exc)
         return 2
     return _print_service_response(response, args.format)
 
@@ -590,7 +611,7 @@ def _run_integration_command(args: argparse.Namespace) -> int:
             )
         )
     except (ApplicationServiceError, OSError, ValueError) as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
+        _print_error(exc)
         return 2
     return _print_service_response(response, args.format)
 
@@ -640,7 +661,7 @@ def _run_core_service_command(args: argparse.Namespace) -> int:
             _core_service_request(args)
         )
     except (ApplicationServiceError, OSError, ValueError) as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
+        _print_error(exc)
         return 2
     payload = response.as_dict()
     if args.format == "json":
@@ -709,7 +730,7 @@ def _run_phase_four_service_command(args: argparse.Namespace) -> int:
             _phase_four_service_request(args)
         )
     except (ApplicationServiceError, OSError, ValueError) as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
+        _print_error(exc)
         return 2
     payload = response.as_dict()
     if args.format == "json":
@@ -735,7 +756,7 @@ def _run_orchestrator_command(args: argparse.Namespace) -> int:
         )
         response = create_application_service(repo_root, data_root).execute(request)
     except (ApplicationServiceError, OSError, ValueError) as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
+        _print_error(exc)
         return 2
     if args.format == "json":
         print(json.dumps(response.as_dict(), ensure_ascii=False, indent=2))
@@ -791,7 +812,7 @@ def _run_portability_command(args: argparse.Namespace) -> int:
         )
         response = create_application_service(repo_root, data_root).execute(request)
     except (ApplicationServiceError, OSError, ValueError) as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
+        _print_error(exc)
         return 2
     if args.format == "json":
         print(json.dumps(response.as_dict(), ensure_ascii=False, indent=2))
@@ -808,7 +829,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         try:
             repo_root = args.repo.resolve() if args.repo else discover_repo_root()
         except ValueError as exc:
-            print(f"ERROR: {exc}", file=sys.stderr)
+            _print_error(exc)
             return 2
         context_args = ["--repo", str(repo_root), "--format", args.format]
         if args.validate_only:
@@ -819,9 +840,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         try:
             repo_root = args.repo.resolve() if args.repo else discover_repo_root()
         except ValueError as exc:
-            print(f"ERROR: {exc}", file=sys.stderr)
+            _print_error(exc)
             return 2
-        checks = run_doctor(repo_root)
+        checks = run_doctor(repo_root, args.data_root)
         if args.format == "json":
             print(json.dumps([item.as_dict() for item in checks], indent=2))
         else:

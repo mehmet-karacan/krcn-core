@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -48,7 +49,74 @@ def _tracked_local_data(repo_root: Path) -> list[str]:
     return [line for line in result.stdout.splitlines() if line.strip()]
 
 
-def run_doctor(repo_root: Path) -> tuple[DoctorCheck, ...]:
+def _sqlite_features() -> list[str]:
+    connection = sqlite3.connect(":memory:")
+    try:
+        connection.execute("CREATE VIRTUAL TABLE sample_fts USING fts5(content)")
+        connection.execute("PRAGMA query_only = ON")
+        if connection.execute("PRAGMA query_only").fetchone()[0] != 1:
+            return ["SQLite query_only is unavailable"]
+    except sqlite3.Error as exc:
+        return [f"SQLite runtime feature is unavailable: {exc}"]
+    finally:
+        connection.close()
+    return []
+
+
+def _coverage_baseline(repo_root: Path) -> list[str]:
+    try:
+        baseline = load_json(repo_root / ".ai" / "coverage-baseline.json")
+    except ValueError as exc:
+        return [str(exc)]
+    errors = []
+    if baseline.get("method") != "python-monitoring-line-events":
+        errors.append("coverage method")
+    measured = baseline.get("line_coverage_percent")
+    minimum = baseline.get("minimum_line_coverage_percent")
+    if (
+        not isinstance(measured, (int, float))
+        or not isinstance(minimum, (int, float))
+        or measured < minimum
+    ):
+        errors.append("coverage threshold")
+    if not (repo_root / "tools" / "measure_coverage.py").is_file():
+        errors.append("coverage tool")
+    return errors
+
+
+def _runtime_home(data_root: Path) -> list[str]:
+    root = data_root.resolve()
+    if not root.is_dir() or root.is_symlink():
+        return ["runtime home is unavailable or unsafe"]
+    errors = []
+    for name in ("secrets", "derived", "runtime", "locks"):
+        candidate = root / name
+        if candidate.is_symlink():
+            errors.append(f"runtime home {name} path is a symbolic link")
+    index = root / "derived" / "retrieval" / "hybrid-v1.sqlite"
+    if index.exists():
+        if index.is_symlink() or not index.is_file():
+            errors.append("hybrid index path is unsafe")
+        else:
+            connection = sqlite3.connect(index)
+            try:
+                integrity = connection.execute("PRAGMA integrity_check").fetchone()[0]
+                metadata = dict(
+                    connection.execute("SELECT key, value FROM metadata").fetchall()
+                )
+                if integrity != "ok" or metadata.get("index_revision") != "1":
+                    errors.append("hybrid index integrity or revision")
+            except sqlite3.Error:
+                errors.append("hybrid index cannot be inspected")
+            finally:
+                connection.close()
+    return errors
+
+
+def run_doctor(
+    repo_root: Path,
+    data_root: Path | None = None,
+) -> tuple[DoctorCheck, ...]:
     """Run offline and non-mutating repository health checks."""
 
     repo_root = repo_root.resolve()
@@ -104,6 +172,28 @@ def run_doctor(repo_root: Path) -> tuple[DoctorCheck, ...]:
             "cross-platform release and portability quality gates are valid",
         )
     )
+    checks.append(
+        _check(
+            "sqlite-runtime",
+            _sqlite_features(),
+            "SQLite read-only and FTS5 features are available",
+        )
+    )
+    checks.append(
+        _check(
+            "coverage-baseline",
+            _coverage_baseline(repo_root),
+            "versioned line coverage remains above its baseline threshold",
+        )
+    )
+    if data_root is not None:
+        checks.append(
+            _check(
+                "runtime-home",
+                _runtime_home(data_root),
+                "local runtime home and derived index are healthy",
+            )
+        )
     cli_baseline = load_json(repo_root / ".ai" / "cli-baseline.json")
     phase_errors = []
     if cli_baseline.get("status") != "ready":

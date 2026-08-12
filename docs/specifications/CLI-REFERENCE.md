@@ -98,10 +98,13 @@ python tools/krcn.py orchestrator start --request-file <application-arguments.js
 python tools/krcn.py orchestrator execute --request-file <application-arguments.json> --apply --expected-plan <plan-id>
 python tools/krcn.py orchestrator verify --request-file <application-arguments.json> --apply --expected-plan <plan-id>
 python tools/krcn.py orchestrator status --request-file <application-arguments.json>
+python tools/krcn.py orchestrator timeline --request-file <application-arguments.json>
 python tools/krcn.py orchestrator resume --request-file <application-arguments.json>
 ```
 
 Worker and verifier handlers must be registered explicitly before use; client selection alone grants no extra authority.
+
+`status` includes the current resume summary and a readable event timeline. `timeline` returns only the digest-verified event sequence. Neither operation returns worker input, handler output, secret values, or physical source locations.
 
 ## Installation, release, and rollback
 

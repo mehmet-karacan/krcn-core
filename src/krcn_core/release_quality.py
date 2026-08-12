@@ -8,7 +8,7 @@ from .application import OPERATIONS
 from .foundation import load_json
 
 
-REQUIRED_PLATFORMS = {"windows", "macos"}
+REQUIRED_PLATFORMS = {"linux", "windows", "macos"}
 REQUIRED_PORTABILITY_OPERATIONS = {
     "project.rebind",
     "portability.backup",
@@ -36,7 +36,7 @@ def validate_release_quality(payload: object) -> list[str]:
         errors.append("release quality schema version is invalid")
     platforms = payload.get("supported_platforms")
     if not isinstance(platforms, list) or set(platforms) != REQUIRED_PLATFORMS:
-        errors.append("release quality platforms must include Windows and macOS")
+        errors.append("release quality platforms must include Linux, Windows, and macOS")
     if payload.get("user_home_layout_version") != 1:
         errors.append("release quality user-home layout version is invalid")
     operations = payload.get("required_operations")
@@ -51,6 +51,7 @@ def validate_release_quality(payload: object) -> list[str]:
     expected_gates = {
         "repository-verify",
         "full-tests",
+        "coverage-baseline",
         "doctor",
         "offline-wheel-install",
         "portable-backup-restore",
@@ -90,4 +91,3 @@ def validate_release_quality_repository(repo_root: Path) -> list[str]:
     if not specification.is_file():
         errors.append("release quality specification is missing")
     return errors
-

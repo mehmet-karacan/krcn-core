@@ -47,6 +47,7 @@
         "orchestrator.execute",
         "orchestrator.verify",
         "orchestrator.status",
+        "orchestrator.timeline",
         "orchestrator.resume"
       ]
     },

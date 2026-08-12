@@ -43,6 +43,7 @@ ORCHESTRATION_OPERATIONS = {
     "orchestrator.execute",
     "orchestrator.verify",
     "orchestrator.status",
+    "orchestrator.timeline",
     "orchestrator.resume",
 }
 
@@ -330,11 +331,22 @@ class OrchestrationApplicationService:
             state = self._states.initialize(plan, authorization.session_id, authorization)
             handoff = self._states.save_handoff(state, plan)
             return "applied", {"state": state.as_dict(), "handoff": handoff.as_dict()}
-        if operation in {"orchestrator.status", "orchestrator.resume"}:
+        if operation in {
+            "orchestrator.status",
+            "orchestrator.timeline",
+            "orchestrator.resume",
+        }:
             if apply:
-                raise OrchestrationServiceError("resume and status are read operations")
+                raise OrchestrationServiceError(
+                    "resume, status, and timeline are read operations"
+                )
+            if operation == "orchestrator.timeline":
+                return "ok", {"timeline": self._states.timeline(plan.task_id)}
             resumed = self._states.resume(plan.task_id, plan, authorization)
-            return "ok", {"resume": resumed.public_summary()}
+            data = {"resume": resumed.public_summary()}
+            if operation == "orchestrator.status":
+                data["timeline"] = self._states.timeline(plan.task_id)
+            return "ok", data
         if operation == "orchestrator.execute":
             self._require_apply_plan(apply, expected_plan_id, plan.plan_id)
             step_id = _string(arguments, "step_id")

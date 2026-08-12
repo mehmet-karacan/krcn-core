@@ -8,7 +8,7 @@
   "properties": {
     "schema_ref": { "const": "schemas/release-quality.schema.json" },
     "schema_version": { "const": 1 },
-    "supported_platforms": { "type": "array", "uniqueItems": true, "items": { "enum": ["windows", "macos"] } },
+    "supported_platforms": { "type": "array", "uniqueItems": true, "items": { "enum": ["linux", "windows", "macos"] } },
     "user_home_layout_version": { "const": 1 },
     "required_operations": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
     "required_package_modules": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },

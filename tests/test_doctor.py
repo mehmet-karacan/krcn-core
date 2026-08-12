@@ -27,6 +27,8 @@ class DoctorTests(unittest.TestCase):
                 "offline-provider",
                 "tracked-local-data",
                 "release-quality",
+                "sqlite-runtime",
+                "coverage-baseline",
                 "phase-one-baseline",
                 "phase-two-baseline",
                 "phase-three-baseline",
@@ -38,6 +40,14 @@ class DoctorTests(unittest.TestCase):
             {item.check_id for item in checks},
         )
         self.assertTrue(all(item.passed for item in checks))
+
+    def test_runtime_home_health_is_checked_only_when_requested(self) -> None:
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            checks = run_doctor(REPO_ROOT, Path(directory))
+        runtime = next(item for item in checks if item.check_id == "runtime-home")
+        self.assertTrue(runtime.passed)
 
     def test_doctor_json_output_is_machine_readable(self) -> None:
         output = io.StringIO()
