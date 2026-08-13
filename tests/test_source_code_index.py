@@ -158,6 +158,41 @@ public class UserService {
         self.assertNotIn("application.properties", indexed_paths)
         self.assertEqual("false", metadata["source_content_persisted"])
 
+    def test_plsql_package_sources_under_coverage_are_indexed(self) -> None:
+        coverage = self.source / "framework" / "source" / "core" / "coverage"
+        coverage.mkdir(parents=True)
+        (coverage / "ut_coverage.pks").write_text(
+            "create or replace package ut_coverage as procedure run; end;\n",
+            encoding="utf-8",
+        )
+        (coverage / "ut_coverage.pkb").write_text(
+            "create or replace package body ut_coverage as procedure run is begin null; end; end;\n",
+            encoding="utf-8",
+        )
+        report = self.source / "coverage" / "lcov-report"
+        report.mkdir(parents=True)
+        (report / "index.html").write_text("generated report\n", encoding="utf-8")
+
+        applied = self._integrate()
+        self.assertEqual(5, applied.data["source_code_index"]["file_count"])
+        index = source_code_index_path(self.data_root, "sample-code")
+        connection = sqlite3.connect(index)
+        try:
+            indexed = dict(
+                connection.execute("SELECT relative_path, language FROM files")
+            )
+        finally:
+            connection.close()
+        self.assertEqual(
+            "plsql",
+            indexed["framework/source/core/coverage/ut_coverage.pks"],
+        )
+        self.assertEqual(
+            "plsql",
+            indexed["framework/source/core/coverage/ut_coverage.pkb"],
+        )
+        self.assertNotIn("coverage/lcov-report/index.html", indexed)
+
     def test_search_returns_verified_relative_path_lines_and_live_content(self) -> None:
         self._integrate()
         response = self._query("deleteAccount", path_prefix="src")

@@ -6,6 +6,7 @@ import fnmatch
 import hashlib
 import json
 import os
+import stat
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Mapping
@@ -23,6 +24,7 @@ TECHNOLOGY_MARKERS = {
     "pom.xml": "Java",
     "pyproject.toml": "Python",
 }
+PLSQL_SUFFIXES = {".pkb", ".pks", ".plb", ".pls", ".tpb", ".tps"}
 CONFIGURATION_NAMES = {
     "cargo.toml",
     "go.mod",
@@ -136,7 +138,22 @@ def _technology_for(relative_path: str) -> str | None:
         return TECHNOLOGY_MARKERS[name]
     if path.suffix.lower() in {".csproj", ".sln"}:
         return ".NET"
+    if path.suffix.lower() in PLSQL_SUFFIXES:
+        return "PL/SQL"
     return None
+
+
+def _is_link_like(entry: os.DirEntry[str]) -> bool:
+    """Reject symbolic links and Windows directory junctions."""
+
+    if entry.is_symlink():
+        return True
+    try:
+        attributes = getattr(entry.stat(follow_symlinks=False), "st_file_attributes", 0)
+    except OSError:
+        return False
+    reparse_point = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0)
+    return bool(reparse_point and attributes & reparse_point)
 
 
 def _stable_hash(path: Path) -> tuple[int, str] | None:
@@ -218,7 +235,7 @@ def discover_local_source(
             entry_path = Path(entry.path)
             relative_path = entry_path.relative_to(root).as_posix()
             try:
-                if entry.is_symlink():
+                if _is_link_like(entry):
                     skipped["symlink"] += 1
                     continue
                 if _is_blocked(relative_path, blocked_globs):

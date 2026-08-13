@@ -78,6 +78,7 @@ TECHNOLOGY_SKILLS = {
     "Go": "go-project-skill",
     "Java": "java-project-skill",
     "Node.js": "nodejs-project-skill",
+    "PL/SQL": "plsql-project-skill",
     "Python": "python-project-skill",
     "Rust": "rust-project-skill",
 }
@@ -481,6 +482,12 @@ def _workflow_names(discovery: DiscoveryResult) -> tuple[str, ...]:
     return tuple(sorted(workflows))
 
 
+def _knowledge_keywords(*values: str) -> list[str]:
+    """Return stable, non-empty knowledge keywords without duplicates."""
+
+    return list(dict.fromkeys(value for value in values if value))
+
+
 def _knowledge_contents(
     project_id: str,
     project_name: str,
@@ -519,19 +526,23 @@ def _knowledge_contents(
                 f"Technologies: {technologies}. Source files: {kinds['source']}; "
                 f"documents: {kinds['document']}; configuration files: {kinds['configuration']}."
             ),
-            "keywords": [project_id, "project", "overview", *discovery.technologies],
+            "keywords": _knowledge_keywords(
+                project_id, "project", "overview", *discovery.technologies
+            ),
             "aliases": [project_name, f"{project_name} overview"],
         },
         "structure": {
             "title": f"{project_name} module and file structure",
             "text": f"Discovered modules: {module_names}. Common file extensions: {common_extensions}.",
-            "keywords": [project_id, "modules", "structure"],
+            "keywords": _knowledge_keywords(project_id, "modules", "structure"),
             "aliases": [f"{project_name} modules", f"{project_name} structure"],
         },
         "workflows": {
             "title": f"{project_name} build and verification workflows",
             "text": f"Detected workflow markers: {workflow_text}.",
-            "keywords": [project_id, "build", "test", "workflow", *workflows],
+            "keywords": _knowledge_keywords(
+                project_id, "build", "test", "workflow", *workflows
+            ),
             "aliases": [f"{project_name} build", f"{project_name} tests"],
         },
         "capabilities": {
@@ -544,14 +555,14 @@ def _knowledge_contents(
                 + ", ".join(workload_ids)
                 + ". Selection grants no additional authority."
             ),
-            "keywords": [
+            "keywords": _knowledge_keywords(
                 project_id,
                 "roles",
                 "skills",
                 "capabilities",
                 *capability_ids,
                 *workload_ids,
-            ],
+            ),
             "aliases": [f"{project_name} skills", f"{project_name} roles"],
             "profile": dict(capability_profile),
         },

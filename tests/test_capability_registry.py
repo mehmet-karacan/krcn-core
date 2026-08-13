@@ -30,7 +30,7 @@ class CapabilityRegistryTests(unittest.TestCase):
         self.registry = load_capability_registry(REPO_ROOT)
 
     def test_registry_is_revision_aware_and_covers_every_kind(self) -> None:
-        self.assertEqual(5, self.registry.revision)
+        self.assertEqual(6, self.registry.revision)
         self.assertEqual(
             {"adapter", "agent", "model", "secret-provider", "skill", "tool"},
             {item.kind for item in self.registry.records},
@@ -38,6 +38,11 @@ class CapabilityRegistryTests(unittest.TestCase):
         self.assertEqual(64, len(self.registry.registry_digest))
         for record in self.registry.records:
             self.assertEqual(64, len(record.record_digest))
+        plsql = next(
+            item for item in self.registry.records
+            if item.record_id == "plsql-project-skill"
+        )
+        self.assertEqual(("plsql.analyze",), plsql.capabilities)
 
     def test_selection_requires_explicit_records_and_grants_no_authority(self) -> None:
         selected = select_capability_records(

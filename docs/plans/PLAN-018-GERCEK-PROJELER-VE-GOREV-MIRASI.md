@@ -14,8 +14,8 @@ Devam ediyor.
 - [ ] 6. Orchestrator ve kalıcı runtime köprüsü
 - [ ] 7. Ana ajan coordinator politikası ve istemci adaptörleri
 - [ ] 8. `gpu-fusion` pilotu ve kabul testleri
-- [ ] 9. Altı gerçek proje entegrasyonu
-- [ ] 10. Geçmiş ve aktif görev aktarımı
+- [x] 9. Altı gerçek proje entegrasyonu
+- [x] 10. Geçmiş ve aktif görev aktarımı
 
 ## Amaç
 

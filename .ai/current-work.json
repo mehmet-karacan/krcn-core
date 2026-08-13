@@ -100,6 +100,7 @@
     "docs/progress/PHASE-16-PROJECT-CAPABILITY-PROFILE.md",
     "docs/progress/PHASE-17-MODEL-INVENTORY-HEALTH.md",
     "docs/progress/PHASE-18-PROJECT-MICRO-BENCHMARK.md",
+    "docs/progress/PHASE-18-REAL-PROJECT-INTEGRATION.md",
     "docs/progress/ILK-ENTEGRASYON-CLI-BASLANGICI.md",
     "docs/progress/KAYNAK-KOD-INDEKSI-REBIND-DUZELTMESI.md"
   ],
@@ -107,7 +108,7 @@
     "run project benchmark suites and persist workload scorecards",
     "select project-specific primary and fallback model assignments",
     "enforce coordinator delegation through the runtime queue",
-    "pilot the complete architecture on gpu-fusion before integrating six external projects"
+    "pilot the complete coordinator architecture on gpu-fusion"
   ],
   "baseline_commit": "37d1496",
   "approval_gates": {

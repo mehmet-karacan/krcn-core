@@ -497,7 +497,11 @@ def build_project_resume_summary(
         )
     states = context["source_states"]
     assert isinstance(states, list)
-    indexed_files = sum(int(state["file_count"]) for state in states)
+    indexed_files = (
+        int(source_code_index.get("file_count", 0))
+        if source_code_index.get("status") == "current"
+        else 0
+    )
     next_actions = []
     if not states:
         next_actions.append("rescan-project-source")

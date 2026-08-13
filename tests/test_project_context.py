@@ -233,6 +233,42 @@ class ProjectContextTests(unittest.TestCase):
             summaries.append(response.data)
         self.assertTrue(all(summary == summaries[0] for summary in summaries))
 
+    def test_resume_indexed_file_count_uses_the_retrieval_index(self) -> None:
+        (self.project_root / "README.md").write_text("Project notes.\n", encoding="utf-8")
+        (self.project_root / "artifact.bin").write_bytes(b"binary artifact")
+        service = KrcnApplicationService(REPO_ROOT, self.store)
+        arguments = {
+            "source_root": str(self.project_root),
+            "scan_mode": "manual",
+        }
+        planned = service.execute(
+            ServiceRequest("codex", "project.integrate", arguments)
+        )
+        service.execute(
+            ServiceRequest(
+                "codex",
+                "project.integrate",
+                arguments,
+                apply=True,
+                expected_plan_id=planned.data["plan"]["plan_id"],
+                approval_id="project-context-index-approval",
+            )
+        )
+        match = resolve_current_project(
+            self.store,
+            working_directory=self.project_root,
+        )
+        assert match is not None
+        summary = build_project_resume_summary(self.store, match, REPO_ROOT)
+        self.assertEqual(
+            summary["resume"]["source_code_index"]["file_count"],
+            summary["resume"]["indexed_source_file_count"],
+        )
+        self.assertLess(
+            summary["resume"]["indexed_source_file_count"],
+            summary["source_states"][0]["file_count"],
+        )
+
     def test_cli_current_uses_directory_argument(self) -> None:
         output = io.StringIO()
         with redirect_stdout(output):

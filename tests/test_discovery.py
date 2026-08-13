@@ -149,6 +149,37 @@ class ReadOnlyDiscoveryTests(unittest.TestCase):
         )
         self.assertGreaterEqual(result.skipped["blocked"], 5)
 
+    def test_plsql_coverage_source_is_not_confused_with_generated_reports(self) -> None:
+        source = self.root / "framework" / "source" / "core" / "coverage"
+        source.mkdir(parents=True)
+        (source / "ut_coverage.pks").write_text(
+            "create or replace package ut_coverage as end;\n",
+            encoding="utf-8",
+        )
+        report = self.root / "coverage" / "lcov-report"
+        report.mkdir(parents=True)
+        (report / "index.html").write_text("generated report\n", encoding="utf-8")
+        (self.root / "coverage" / "coverage-final.json").write_text(
+            "{}\n",
+            encoding="utf-8",
+        )
+
+        result = discover(binding_for(self.root), self.policy)
+        paths = {item.relative_path for item in result.files}
+        self.assertIn("framework/source/core/coverage/ut_coverage.pks", paths)
+        self.assertNotIn("coverage/lcov-report/index.html", paths)
+        self.assertNotIn("coverage/coverage-final.json", paths)
+        self.assertIn("PL/SQL", result.technologies)
+
+    def test_generic_sql_file_does_not_imply_plsql(self) -> None:
+        (self.root / "schema.sql").write_text(
+            "create table sample_table (id integer);\n",
+            encoding="utf-8",
+        )
+
+        result = discover(binding_for(self.root), self.policy)
+        self.assertNotIn("PL/SQL", result.technologies)
+
     def test_read_write_binding_is_rejected(self) -> None:
         binding = binding_for(
             self.root,

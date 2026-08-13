@@ -162,6 +162,36 @@ class CompleteProjectIntegrationTests(unittest.TestCase):
         self.assertTrue(hybrid_index_path(self.data_root).is_file())
         self.assertNotIn(str(self.source), json.dumps(applied.as_dict()))
 
+    def test_capability_keyword_matching_project_id_is_deduplicated(self) -> None:
+        source = self.root / "utplsql"
+        source.mkdir()
+        (source / "ut_example.pks").write_text(
+            "create or replace package ut_example as end ut_example;\n",
+            encoding="utf-8",
+        )
+        plan = self.service.execute(
+            ServiceRequest(
+                "codex",
+                "project.integrate",
+                {"source_root": str(source), "scan_mode": "manual"},
+            )
+        )
+        applied = self.service.execute(
+            ServiceRequest(
+                "codex",
+                "project.integrate",
+                {"source_root": str(source), "scan_mode": "manual"},
+                apply=True,
+                expected_plan_id=plan.data["plan"]["plan_id"],
+                approval_id="capability-keyword-deduplication",
+            )
+        )
+        self.assertEqual("applied", applied.status)
+        capability_record = self.store.read("knowledge", "utplsql-capabilities")
+        keywords = capability_record.payload["payload"]["keywords"]
+        self.assertEqual(len(keywords), len(set(keywords)))
+        self.assertEqual(1, keywords.count("utplsql"))
+
     def test_automatic_check_is_no_op_while_integration_is_fresh(self) -> None:
         self._apply(self._plan())
         response = self.service.execute(

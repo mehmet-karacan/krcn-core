@@ -1,7 +1,7 @@
 {
   "schema_ref": "schemas/capability-registry.schema.json",
   "schema_version": 1,
-  "revision": 5,
+  "revision": 6,
   "records": [
     {
       "record_id": "planner-agent",
@@ -500,6 +500,26 @@
       "approval_triggers": [],
       "status": "active",
       "record_digest": "9af05cd1cccc4ebd1cfee7e5b2e2e4a70e1690652b1f42518249696f90e10b96"
+    },
+    {
+      "record_id": "plsql-project-skill",
+      "kind": "skill",
+      "role": null,
+      "revision": 1,
+      "capabilities": [
+        "plsql.analyze"
+      ],
+      "side_effects": [
+        "read"
+      ],
+      "read_ownership": [
+        "unmanaged"
+      ],
+      "write_ownership": [],
+      "provider_mode": "none",
+      "approval_triggers": [],
+      "status": "active",
+      "record_digest": "23ca6d185ff0550d121d31b4bbf3154e2cb0aaf3f1bf9d0c661750e17f3f2e28"
     },
     {
       "record_id": "dotnet-project-skill",
