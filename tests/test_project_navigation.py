@@ -186,6 +186,61 @@ class ProjectNavigationTests(unittest.TestCase):
         self.assertEqual("project.list", payload["operation"])
         self.assertEqual(2, payload["data"]["project_count"])
 
+    def test_default_natural_navigation_uses_human_readable_tables(self) -> None:
+        listed_output = io.StringIO()
+        with redirect_stdout(listed_output):
+            listed_exit = cli_main([
+                "ask", "proje listesi",
+                "--repo", str(REPO_ROOT),
+                "--data-root", str(self.home),
+            ])
+        self.assertEqual(0, listed_exit)
+        listed = listed_output.getvalue()
+        self.assertIn("Proje", listed)
+        self.assertIn("Talep A/G", listed)
+        self.assertIn("Defect A/G", listed)
+        self.assertIn("Son düzenleme UTC", listed)
+        self.assertIn("gpu-fusion", listed)
+        self.assertFalse(listed.lstrip().startswith("{"))
+
+        selected_output = io.StringIO()
+        with redirect_stdout(selected_output):
+            selected_exit = cli_main([
+                "ask", "1",
+                "--repo", str(REPO_ROOT),
+                "--data-root", str(self.home),
+            ])
+        self.assertEqual(0, selected_exit)
+        selected = selected_output.getvalue()
+        self.assertIn("Proje: gpu-fusion", selected)
+        self.assertIn("Son işler:", selected)
+        self.assertIn("request-item-100", selected)
+
+    def test_direct_project_list_supports_table_and_keeps_json_default(self) -> None:
+        output = io.StringIO()
+        with redirect_stdout(output):
+            exit_code = cli_main([
+                "project", "list",
+                "--repo", str(REPO_ROOT),
+                "--data-root", str(self.home),
+                "--format", "text",
+            ])
+        self.assertEqual(0, exit_code)
+        self.assertIn("Talep A/G", output.getvalue())
+
+        json_output = io.StringIO()
+        with redirect_stdout(json_output):
+            json_exit = cli_main([
+                "project", "list",
+                "--repo", str(REPO_ROOT),
+                "--data-root", str(self.home),
+            ])
+        self.assertEqual(0, json_exit)
+        self.assertEqual(
+            "project.list",
+            json.loads(json_output.getvalue())["operation"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

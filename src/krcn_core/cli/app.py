@@ -138,6 +138,7 @@ def build_parser() -> argparse.ArgumentParser:
     ask.add_argument("request")
     ask.add_argument("--source", type=Path)
     _add_service_options(ask, mutation=True)
+    ask.set_defaults(format=None)
     _add_project_home_choice_options(ask)
     project = subparsers.add_parser(
         "project",
@@ -843,10 +844,204 @@ def _project_service_request(args: argparse.Namespace) -> ServiceRequest:
     )
 
 
-def _print_service_response(response: ServiceResponse, output_format: str) -> int:
+def _text_table(headers: list[str], rows: list[list[object]]) -> str:
+    values = [[str(value) for value in row] for row in rows]
+    widths = [len(header) for header in headers]
+    for row in values:
+        for index, value in enumerate(row):
+            widths[index] = max(widths[index], len(value))
+    lines = [
+        " | ".join(
+            header.ljust(widths[index])
+            for index, header in enumerate(headers)
+        ),
+        "-+-".join("-" * width for width in widths),
+    ]
+    lines.extend(
+        " | ".join(
+            value.ljust(widths[index])
+            for index, value in enumerate(row)
+        )
+        for row in values
+    )
+    return "\n".join(lines)
+
+
+def _display_status(value: object) -> str:
+    translations = {
+        "active": "aktif",
+        "archived": "arşiv",
+        "complete": "tamam",
+        "incomplete": "eksik",
+        "invalid": "geçersiz",
+        "not-integrated": "entegre değil",
+        "stale": "güncel değil",
+        "planned": "planlandı",
+        "blocked": "engelli",
+        "request": "talep",
+        "defect": "defect",
+        "task": "görev",
+        "subtask": "alt görev",
+        "decision": "karar",
+    }
+    text = str(value or "-")
+    return translations.get(text, text)
+
+
+def _display_timestamp(value: object) -> str:
+    text = str(value or "")
+    if len(text) >= 16 and "T" in text:
+        return text[:16].replace("T", " ")
+    return text or "-"
+
+
+def _shorten(value: object, limit: int) -> str:
+    text = str(value or "-")
+    if len(text) <= limit:
+        return text
+    suffix_length = min(12, limit // 3)
+    prefix_length = limit - suffix_length - 3
+    return text[:prefix_length] + "..." + text[-suffix_length:]
+
+
+def _work_count_pair(project: Mapping[str, object], group: str) -> str:
+    work_counts = project.get("work_counts")
+    if not isinstance(work_counts, dict):
+        return "0/0"
+    counts = work_counts.get(group)
+    if not isinstance(counts, dict):
+        return "0/0"
+    return f"{counts.get('active', 0)}/{counts.get('historical', 0)}"
+
+
+def _project_menu_text(data: Mapping[str, object]) -> str:
+    projects = data.get("projects")
+    if not isinstance(projects, list) or not projects:
+        return "Kayıtlı proje bulunamadı."
+    rows = []
+    for project in projects:
+        if not isinstance(project, dict):
+            continue
+        work_counts = project.get("work_counts")
+        total = work_counts.get("total", 0) if isinstance(work_counts, dict) else 0
+        rows.append([
+            project.get("position", "-"),
+            project.get("project_id", "-"),
+            _display_status(project.get("status")),
+            _display_status(project.get("integration_status")),
+            _work_count_pair(project, "requests"),
+            _work_count_pair(project, "defects"),
+            _work_count_pair(project, "tasks"),
+            total,
+            _display_timestamp(project.get("last_updated_at")),
+        ])
+    table = _text_table(
+        [
+            "No",
+            "Proje",
+            "Durum",
+            "Entegrasyon",
+            "Talep A/G",
+            "Defect A/G",
+            "Görev A/G",
+            "Toplam",
+            "Son düzenleme UTC",
+        ],
+        rows,
+    )
+    return (
+        f"{table}\n\n"
+        "A: Aktif, G: Geçmiş\n"
+        "Bir projeye girmek için sıra numarasını yazın. Örnek: 2"
+    )
+
+
+def _project_resume_text(data: Mapping[str, object]) -> str:
+    if not data.get("matched"):
+        lines = ["Proje bulunamadı."]
+        suggestions = data.get("suggested_projects")
+        if isinstance(suggestions, list) and suggestions:
+            suggestion_rows = [
+                [
+                    item.get("position", "-"),
+                    item.get("project_id", "-"),
+                    f"{float(item.get('similarity', 0)):.0%}",
+                ]
+                for item in suggestions
+                if isinstance(item, dict)
+            ]
+            lines.extend([
+                "",
+                "Benzer projeler:",
+                _text_table(
+                    ["No", "Proje", "Benzerlik"], suggestion_rows,
+                ),
+            ])
+        navigation = data.get("navigation")
+        if isinstance(navigation, dict):
+            lines.extend(["", "Kayıtlı projeler:", _project_menu_text(navigation)])
+        return "\n".join(lines)
+
+    project = data.get("project")
+    resume = data.get("resume")
+    if not isinstance(project, dict) or not isinstance(resume, dict):
+        return "Proje özeti kullanılamıyor."
+    work = resume.get("work")
+    if not isinstance(work, dict):
+        work = {}
+    summary = {
+        "work_counts": work.get("work_counts", {}),
+    }
+    lines = [
+        f"Proje: {project.get('project_id', '-')}",
+        (
+            "Talepler A/G: " + _work_count_pair(summary, "requests")
+            + " | Defectler A/G: " + _work_count_pair(summary, "defects")
+            + " | Görevler A/G: " + _work_count_pair(summary, "tasks")
+        ),
+    ]
+    items = work.get("items")
+    if isinstance(items, list) and items:
+        rows = []
+        project_id = str(project.get("project_id", ""))
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            identifier = str(item.get("work_item_id", "-"))
+            project_prefix = project_id + "-"
+            if identifier.startswith(project_prefix):
+                identifier = identifier[len(project_prefix):]
+            rows.append([
+                _display_status(item.get("work_type")),
+                _display_status(item.get("status")),
+                _shorten(identifier, 32),
+                _shorten(item.get("title", "-"), 36),
+                _display_timestamp(item.get("last_updated_at")),
+            ])
+        lines.extend([
+            "",
+            "Son işler:",
+            _text_table(
+                ["Tür", "Durum", "Kimlik", "Başlık", "Son düzenleme UTC"],
+                rows,
+            ),
+        ])
+    else:
+        lines.extend(["", "Bu projede kayıtlı iş bulunmuyor."])
+    return "\n".join(lines)
+
+
+def _print_service_response(
+    response: ServiceResponse,
+    output_format: str | None,
+) -> int:
     payload = response.as_dict()
     if output_format == "json":
         print(json.dumps(payload, ensure_ascii=False, indent=2))
+    elif response.operation == "project.list":
+        print(_project_menu_text(response.data))
+    elif response.operation == "project.resume":
+        print(_project_resume_text(response.data))
     else:
         print(f"{response.status}\t{response.operation}")
         print(json.dumps(response.data, ensure_ascii=False, indent=2))
@@ -982,6 +1177,8 @@ def _run_ask_command(args: argparse.Namespace) -> int:
                 },
             )
             return _print_service_response(response, args.format)
+        if args.format is None:
+            args.format = "json"
         try:
             document_intent = parse_work_document_intent(args.request)
         except WorkIntentError:

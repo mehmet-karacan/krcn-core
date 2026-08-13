@@ -18,6 +18,8 @@ Project Navigation, kayıtlı projeleri kullanıcıya numaralı ve salt okunur b
 
 Son güncelleme zamanı, doğrulanmış yerel proje, entegrasyon, kaynak durumu, Work Item ve Work Documents kayıtlarının en yeni dosya değişiklik zamanıdır. Fiziksel dosya yolu açıklanmaz.
 
+Doğal dilde `krcn ask "proje listesi"` komutu, listeyi varsayılan olarak tablo biçiminde gösterir. Tablo talep, defect ve görev sayılarını `aktif/geçmiş` biçiminde sunar. Doğrudan `krcn project list --format text` aynı tabloyu üretir. İstemciler ve otomasyonlar yapılandırılmış sonucu `--format json` seçeneğiyle alır.
+
 ## Seçim
 
 Projeler portable kimliğe göre sıralanır. Kullanıcı listeden `1` gibi bir numara seçtiğinde yalnız salt okunur `project resume` özeti açılır. Sonuç gerçek proje kimliğini taşır. Daha sonraki yazma işlemleri numarayı değil gerçek proje kimliğini, exact planı ve gerekli kullanıcı onayını kullanır.
