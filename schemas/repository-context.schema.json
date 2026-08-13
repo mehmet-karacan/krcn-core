@@ -78,6 +78,7 @@
         "phase_four_boundary",
         "phase_four_baseline",
         "phase_five_boundary",
+        "research_orchestration_boundary",
         "phase_five_baseline",
         "project_local_home_boundary",
         "project_home_resolution_schema",
@@ -220,6 +221,9 @@
           "$ref": "#/$defs/repoPath"
         },
         "phase_five_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "research_orchestration_boundary": {
           "$ref": "#/$defs/repoPath"
         },
         "phase_five_baseline": {

@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:research-result-import-request:1",
+  "title": "KRCN Core research result import request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "research_id",
+    "scope",
+    "role",
+    "provider",
+    "model",
+    "response_markdown",
+    "findings"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/research-result-import-request.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "research_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "scope": {
+      "enum": [
+        "project",
+        "global"
+      ]
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "role": {
+      "enum": [
+        "researcher",
+        "architecture-reviewer",
+        "critic",
+        "synthesizer",
+        "citation-verifier"
+      ]
+    },
+    "provider": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1
+    },
+    "client_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "execution_target": {
+      "type": "string",
+      "minLength": 1
+    },
+    "response_markdown": {
+      "type": "string",
+      "minLength": 1
+    },
+    "findings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sources",
+        "claims",
+        "conflicts"
+      ],
+      "properties": {
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "claims": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "scope": {
+            "const": "project"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "project_id"
+        ]
+      }
+    }
+  ]
+}

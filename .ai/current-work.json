@@ -101,11 +101,14 @@
     "docs/progress/PHASE-17-MODEL-INVENTORY-HEALTH.md",
     "docs/progress/PHASE-18-PROJECT-MICRO-BENCHMARK.md",
     "docs/progress/PHASE-18-REAL-PROJECT-INTEGRATION.md",
+    "docs/progress/PHASE-18-RESEARCH-ORCHESTRATION-V1A.md",
     "docs/progress/CODEX-DESKTOP-DELEGASYON-UYUMLULUGU.md",
     "docs/progress/ILK-ENTEGRASYON-CLI-BASLANGICI.md",
     "docs/progress/KAYNAK-KOD-INDEKSI-REBIND-DUZELTMESI.md"
   ],
   "next_actions": [
+    "pilot operator-mediated research on gpu-fusion with a real architecture request",
+    "add explicit OpenCode, Codex CLI, and Claude CLI research execution adapters",
     "run project benchmark suites and persist workload scorecards",
     "select project-specific primary and fallback model assignments",
     "enforce coordinator delegation through the runtime queue",

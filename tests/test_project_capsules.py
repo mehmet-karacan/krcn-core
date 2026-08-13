@@ -45,6 +45,13 @@ from krcn_core.project_capsule_portability import (  # noqa: E402
     prepare_project_capsule_import,
 )
 from krcn_core.source_code_index import source_code_index_path  # noqa: E402
+from krcn_core.research_orchestration import (  # noqa: E402
+    apply_research_result_import,
+    apply_research_run,
+    get_research_status,
+    prepare_research_result_import,
+    prepare_research_run,
+)
 
 
 def authorization(plan, approval_id: str = "test-approval") -> MutationAuthorization:
@@ -421,6 +428,153 @@ class ProjectCapsuleTests(unittest.TestCase):
                 exported.namelist(),
             )
         self.assertGreaterEqual(plan.excluded_runtime_count, 1)
+
+    def test_research_raw_is_excluded_while_reviewed_artifacts_are_scanned(self) -> None:
+        self.migrate()
+        research_root = (
+            self.home
+            / "projects"
+            / "sample"
+            / "local-data"
+            / "client-artifacts"
+            / "research"
+        )
+        research = research_root / "research-run-one"
+        raw = research / "raw"
+        raw.mkdir(parents=True)
+        (raw / "provider-response.md").write_text(
+            "untrusted provider response\n",
+            encoding="utf-8",
+        )
+        root_raw = research_root / "raw"
+        root_raw.mkdir()
+        (root_raw / "operator-import.md").write_text(
+            "untrusted operator import\n",
+            encoding="utf-8",
+        )
+        reviewed = {
+            "manifest.json": '{"status":"reviewed"}\n',
+            "findings.md": "portable reviewed findings\n",
+            "final.md": "portable reviewed synthesis\n",
+        }
+        for name, content in reviewed.items():
+            (research / name).write_text(content, encoding="utf-8")
+
+        archive = self.root / "sample-research-ready.krcn-project"
+        plan = prepare_project_capsule_export(
+            self.home,
+            "sample",
+            archive,
+            "ready",
+            self.ownership,
+        )
+        dependency = next(
+            item
+            for item in plan.external_dependencies
+            if item.get("dependency_type") == "project-local-research-raw"
+        )
+        self.assertEqual(2, dependency["artifact_count"])
+        apply_project_capsule_export(plan, authorization(plan.mutation))
+
+        with zipfile.ZipFile(archive) as exported:
+            names = set(exported.namelist())
+            prefix = (
+                "payload/local-data/client-artifacts/research/research-run-one/"
+            )
+            self.assertNotIn(
+                "payload/local-data/client-artifacts/research/raw/operator-import.md",
+                names,
+            )
+            self.assertNotIn(prefix + "raw/provider-response.md", names)
+            self.assertIn(prefix + "manifest.json", names)
+            self.assertIn(prefix + "findings.md", names)
+            self.assertIn(prefix + "final.md", names)
+
+    def test_research_restore_reports_excluded_raw_as_degraded_safe(self) -> None:
+        self.migrate()
+        store = LocalWorkspaceStore(self.home, self.ownership)
+        run_request = {
+            "schema_ref": "schemas/research-run-request.schema.json",
+            "schema_version": 1,
+            "research_id": "portable-research",
+            "scope": "project",
+            "project_id": "sample",
+            "objective": "Verify portable research state.",
+        }
+        run_plan = prepare_research_run(
+            REPO_ROOT, store, self.ownership, run_request,
+        )
+        apply_research_run(
+            run_plan,
+            authorizations(run_plan.effect_plans),
+            expected_plan_id=run_plan.plan_id,
+        )
+        import_request = {
+            "schema_ref": "schemas/research-result-import-request.schema.json",
+            "schema_version": 1,
+            "research_id": "portable-research",
+            "scope": "project",
+            "project_id": "sample",
+            "role": "researcher",
+            "provider": "manual",
+            "model": "declared-unverified",
+            "response_markdown": "# Portable response",
+            "findings": {"sources": [], "claims": [], "conflicts": []},
+        }
+        result_plan = prepare_research_result_import(
+            REPO_ROOT, store, self.ownership, import_request,
+        )
+        apply_research_result_import(
+            result_plan,
+            authorizations(result_plan.effect_plans),
+            expected_plan_id=result_plan.plan_id,
+        )
+        archive = self.root / "sample-research-portable.krcn-project"
+        export_plan = prepare_project_capsule_export(
+            self.home, "sample", archive, "ready", self.ownership,
+        )
+        apply_project_capsule_export(export_plan, authorization(export_plan.mutation))
+        with zipfile.ZipFile(archive) as exported:
+            manifest_name = (
+                "payload/local-data/client-artifacts/research/portable-research/"
+                "_krcn/manifest.json"
+            )
+            manifest = json.loads(exported.read(manifest_name))
+            response = manifest["responses"][0]
+            self.assertFalse(response["raw_available"])
+            self.assertEqual(
+                "excluded-local-research-raw",
+                response["raw_dependency"]["dependency_type"],
+            )
+            self.assertNotIn(
+                "payload/local-data/client-artifacts/research/portable-research/"
+                "raw/researcher-r1.md",
+                exported.namelist(),
+            )
+
+        target_home = self.root / "restored-home"
+        target_home.mkdir()
+        (target_home / "layout.json").write_bytes(user_home_layout_bytes())
+        restore_plan = prepare_project_capsule_import(
+            archive, target_home, self.ownership,
+        )
+        apply_project_capsule_import(
+            restore_plan,
+            authorizations(restore_plan.effect_plans),
+            self.ownership,
+        )
+        restored = LocalWorkspaceStore(target_home, self.ownership)
+        status = get_research_status(restored, {
+            "research_id": "portable-research",
+            "scope": "project",
+            "project_id": "sample",
+        })
+        self.assertEqual(1, status["response_count"])
+        self.assertFalse(status["responses"][0]["raw_available"])
+        self.assertEqual(
+            "excluded-local-research-raw",
+            status["responses"][0]["raw_dependency"]["dependency_type"],
+        )
 
     def test_application_service_exposes_exact_capsule_operations(self) -> None:
         backup = self.root / "service-layout-backup.zip"

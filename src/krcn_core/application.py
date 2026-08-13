@@ -185,6 +185,13 @@ from .provider_gate import (
     load_provider_gate_policy,
 )
 from .rescan import apply_rescan, prepare_rescan
+from .research_orchestration import (
+    apply_research_result_import,
+    apply_research_run,
+    get_research_status,
+    prepare_research_result_import,
+    prepare_research_run,
+)
 from .release import validate_release_bundle
 from .repo_local_migration import (
     apply_repo_local_migration,
@@ -305,6 +312,9 @@ OPERATIONS = {
     "work.search",
     "work.query",
     "work.history",
+    "research.prepare",
+    "research.import-response",
+    "research.status",
     "runtime.queue.enqueue",
     "runtime.queue.claim",
     "runtime.queue.heartbeat",
@@ -622,6 +632,9 @@ class KrcnApplicationService:
             "work.search": self._search_work,
             "work.query": self._query_work,
             "work.history": self._work_history,
+            "research.prepare": self._prepare_research,
+            "research.import-response": self._import_research_response,
+            "research.status": self._research_status,
             "runtime.queue.enqueue": self._runtime_queue_action,
             "runtime.queue.claim": self._runtime_queue_action,
             "runtime.queue.heartbeat": self._runtime_queue_action,
@@ -904,6 +917,106 @@ class KrcnApplicationService:
         if request.apply:
             raise ApplicationServiceError("work history cannot be applied")
         return "ok", {"result": query_work_history(self._store, request.arguments)}
+
+    def _prepare_research(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        try:
+            plan = prepare_research_run(
+                self._repo_root,
+                self._store,
+                self._ownership,
+                request.arguments,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        if not request.apply:
+            return "planned", {
+                "plan": plan.public_summary(),
+                "applied": False,
+                "no_op": plan.no_op,
+            }
+        authorizations = (
+            {}
+            if plan.no_op
+            else self._authorize_effect_plans(
+                request,
+                plan.plan_id,
+                plan.effect_plans,
+                "research preparation",
+            )
+        )
+        try:
+            result = apply_research_run(
+                plan,
+                authorizations,
+                expected_plan_id=request.expected_plan_id or "",
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "applied", {
+            "plan": plan.public_summary(),
+            "result": result,
+            "applied": True,
+            "no_op": plan.no_op,
+        }
+
+    def _import_research_response(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        try:
+            plan = prepare_research_result_import(
+                self._repo_root,
+                self._store,
+                self._ownership,
+                request.arguments,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        if not request.apply:
+            return "planned", {
+                "plan": plan.public_summary(),
+                "applied": False,
+                "no_op": plan.no_op,
+            }
+        authorizations = (
+            {}
+            if plan.no_op
+            else self._authorize_effect_plans(
+                request,
+                plan.plan_id,
+                plan.effect_plans,
+                "research response import",
+            )
+        )
+        try:
+            result = apply_research_result_import(
+                plan,
+                authorizations,
+                expected_plan_id=request.expected_plan_id or "",
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "applied", {
+            "plan": plan.public_summary(),
+            "result": result,
+            "applied": True,
+            "no_op": plan.no_op,
+        }
+
+    def _research_status(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        if request.apply:
+            raise ApplicationServiceError("research status is read-only")
+        try:
+            result = get_research_status(self._store, request.arguments)
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {"result": result}
 
     def _retrieve_unified(
         self,

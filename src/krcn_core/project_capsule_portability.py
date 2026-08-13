@@ -188,6 +188,47 @@ def _entry_ownership(relative: str) -> str:
     return "user-data"
 
 
+def _is_research_raw_path(relative: str) -> bool:
+    parts = PurePosixPath(relative).parts
+    prefix = ("local-data", "client-artifacts", "research")
+    return parts[: len(prefix)] == prefix and "raw" in parts[len(prefix) : -1]
+
+
+def _portable_research_manifest(relative: str, content: bytes) -> bytes:
+    parts = PurePosixPath(relative).parts
+    if (
+        len(parts) < 6
+        or parts[:3] != ("local-data", "client-artifacts", "research")
+        or parts[-2:] != ("_krcn", "manifest.json")
+    ):
+        return content
+    try:
+        payload = json.loads(content.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ProjectCapsulePortabilityError("research manifest is invalid") from exc
+    responses = payload.get("responses") if isinstance(payload, dict) else None
+    if not isinstance(responses, list) or any(not isinstance(item, dict) for item in responses):
+        raise ProjectCapsulePortabilityError("research manifest responses are invalid")
+    projected = dict(payload)
+    projected_responses = []
+    for item in responses:
+        entry = dict(item)
+        artifact_ref = entry.get("artifact_ref")
+        sha256 = entry.get("sha256")
+        if not isinstance(artifact_ref, str) or not isinstance(sha256, str):
+            raise ProjectCapsulePortabilityError("research raw dependency metadata is invalid")
+        entry["raw_available"] = False
+        entry["raw_dependency"] = {
+            "dependency_type": "excluded-local-research-raw",
+            "artifact_ref": artifact_ref,
+            "sha256": sha256,
+            "rebind_required": False,
+        }
+        projected_responses.append(entry)
+    projected["responses"] = projected_responses
+    return pretty_json_bytes(projected)
+
+
 def _collect_capsule_entries(
     capsule_root: Path,
     mode: str,
@@ -204,6 +245,7 @@ def _collect_capsule_entries(
     excluded_derived = 0
     excluded_runtime = 0
     excluded_work_documents = 0
+    excluded_research_raw = 0
     active_task_ids = set()
     state_root = capsule_root / "runtime" / "orchestration-states"
     if state_root.is_dir() and not state_root.is_symlink():
@@ -229,6 +271,9 @@ def _collect_capsule_entries(
             continue
         if relative.startswith("local-data/work-documents/"):
             excluded_work_documents += 1
+            continue
+        if _is_research_raw_path(relative):
+            excluded_research_raw += 1
             continue
         if _is_secret_path(relative):
             raise ProjectCapsulePortabilityError("secret path blocks capsule export")
@@ -261,7 +306,11 @@ def _collect_capsule_entries(
                 excluded_runtime += 1
                 continue
         sanitized, dependency = _sanitize_source_binding(content)
+        research_projected = _portable_research_manifest(relative, sanitized)
         transformed = dependency is not None
+        if research_projected != sanitized:
+            sanitized = research_projected
+            transformed = True
         if dependency is not None:
             dependencies.append(dependency)
         _assert_portable_content(relative, sanitized)
@@ -281,6 +330,13 @@ def _collect_capsule_entries(
             "dependency_type": "project-local-work-documents",
             "document_count": excluded_work_documents,
             "rebind_required": True,
+            "source_content_included": False,
+        })
+    if excluded_research_raw:
+        dependencies.append({
+            "dependency_type": "project-local-research-raw",
+            "artifact_count": excluded_research_raw,
+            "rebind_required": False,
             "source_content_included": False,
         })
     dependencies.sort(key=lambda item: str(item.get("binding_id")))

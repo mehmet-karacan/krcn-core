@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:research-result:1",
+  "title": "KRCN Core structured research result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "research_id",
+    "scope",
+    "project_id",
+    "role",
+    "revision",
+    "provider",
+    "model",
+    "client_id",
+    "execution_target",
+    "trust",
+    "verification",
+    "response_sha256",
+    "response_identity_sha256",
+    "findings_sha256",
+    "sources",
+    "claims",
+    "conflicts",
+    "supersedes_revision",
+    "same_raw_prior_revisions",
+    "knowledge_promoted"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/research-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "research_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "scope": {
+      "enum": [
+        "project",
+        "global"
+      ]
+    },
+    "project_id": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "role": {
+      "type": "string"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "provider": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1
+    },
+    "client_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "execution_target": {
+      "type": "string",
+      "minLength": 1
+    },
+    "trust": {
+      "const": "untrusted"
+    },
+    "verification": {
+      "const": "declared-unverified"
+    },
+    "response_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "response_identity_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "findings_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "supersedes_revision": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "same_raw_prior_revisions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 1
+      }
+    },
+    "knowledge_promoted": {
+      "const": false
+    }
+  }
+}

@@ -40,6 +40,7 @@ REQUIRED_CANONICAL_KEYS = {
     "phase_four_boundary",
     "phase_four_baseline",
     "phase_five_boundary",
+    "research_orchestration_boundary",
     "phase_five_baseline",
     "orchestration_boundary",
     "orchestration_boundary_schema",

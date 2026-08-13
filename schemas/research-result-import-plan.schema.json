@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:research-result-import-plan:1",
+  "title": "KRCN Core research result import exact plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "research_id",
+    "scope",
+    "project_id",
+    "role",
+    "revision",
+    "response_sha256",
+    "effect_plans",
+    "no_op",
+    "trust",
+    "operator_mediated",
+    "provider_calls_planned",
+    "knowledge_promoted"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/research-result-import-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "research_id": {
+      "$ref": "#/$defs/id"
+    },
+    "scope": {
+      "enum": [
+        "project",
+        "global"
+      ]
+    },
+    "project_id": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "role": {
+      "enum": [
+        "researcher",
+        "architecture-reviewer",
+        "critic",
+        "synthesizer",
+        "citation-verifier"
+      ]
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "response_sha256": {
+      "$ref": "#/$defs/digest"
+    },
+    "effect_plans": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "no_op": {
+      "type": "boolean"
+    },
+    "trust": {
+      "const": "untrusted"
+    },
+    "operator_mediated": {
+      "const": true
+    },
+    "provider_calls_planned": {
+      "const": 0
+    },
+    "knowledge_promoted": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

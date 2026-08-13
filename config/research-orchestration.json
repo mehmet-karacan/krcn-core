@@ -1,0 +1,29 @@
+{
+  "schema_ref": "schemas/research-orchestration-policy.schema.json",
+  "schema_version": 1,
+  "policy_revision": 1,
+  "execution_mode": "operator-mediated",
+  "roles": [
+    "researcher",
+    "architecture-reviewer",
+    "critic",
+    "synthesizer",
+    "citation-verifier"
+  ],
+  "providers": {
+    "codex-cli": "supported-external",
+    "claude-cli": "supported-external",
+    "opencode": "supported-external",
+    "gemini": "optional-manual"
+  },
+  "maximum_markdown_bytes": 2097152,
+  "invariants": {
+    "automatic_provider_call": false,
+    "provider_required": false,
+    "gemini_required": false,
+    "raw_results_trusted": false,
+    "knowledge_promotion_automatic": false,
+    "vector_index_created": false,
+    "graph_database_created": false
+  }
+}

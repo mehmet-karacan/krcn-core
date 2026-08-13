@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:research-run:1",
+  "title": "KRCN Core research run manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "research_id",
+    "scope",
+    "project_id",
+    "title",
+    "request_sha256",
+    "revision",
+    "status",
+    "roles",
+    "responses",
+    "operator_mediated",
+    "provider_execution",
+    "gemini",
+    "raw_results_trusted",
+    "knowledge_promoted",
+    "vector_index_created"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/research-run.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "research_id": {
+      "$ref": "#/$defs/id"
+    },
+    "scope": {
+      "enum": [
+        "project",
+        "global"
+      ]
+    },
+    "project_id": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "request_sha256": {
+      "$ref": "#/$defs/digest"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "status": {
+      "enum": [
+        "prepared",
+        "responses-imported",
+        "completed"
+      ]
+    },
+    "roles": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "responses": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/response"
+      }
+    },
+    "operator_mediated": {
+      "const": true
+    },
+    "provider_execution": {
+      "const": "external-manual"
+    },
+    "gemini": {
+      "const": "optional"
+    },
+    "raw_results_trusted": {
+      "const": false
+    },
+    "knowledge_promoted": {
+      "const": false
+    },
+    "vector_index_created": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "revision",
+        "provider",
+        "model",
+        "client_id",
+        "execution_target",
+        "trust",
+        "verification",
+        "sha256",
+        "response_identity_sha256",
+        "findings_sha256",
+        "artifact_ref",
+        "raw_available",
+        "raw_dependency",
+        "supersedes_revision",
+        "same_raw_prior_revisions"
+      ],
+      "properties": {
+        "role": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "client_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "execution_target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trust": {
+          "const": "untrusted"
+        },
+        "verification": {
+          "const": "declared-unverified"
+        },
+        "sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "response_identity_sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "findings_sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "artifact_ref": {
+          "type": "string",
+          "pattern": "^raw/[a-z][a-z0-9-]*-r[1-9][0-9]*[.]md$"
+        },
+        "raw_available": {
+          "type": "boolean"
+        },
+        "raw_dependency": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "dependency_type",
+                "artifact_ref",
+                "sha256",
+                "rebind_required"
+              ],
+              "properties": {
+                "dependency_type": {
+                  "const": "excluded-local-research-raw"
+                },
+                "artifact_ref": {
+                  "type": "string",
+                  "pattern": "^raw/[a-z][a-z0-9-]*-r[1-9][0-9]*[.]md$"
+                },
+                "sha256": {
+                  "$ref": "#/$defs/digest"
+                },
+                "rebind_required": {
+                  "const": false
+                }
+              }
+            }
+          ]
+        },
+        "supersedes_revision": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "same_raw_prior_revisions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  }
+}

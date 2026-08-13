@@ -421,6 +421,22 @@ def build_parser() -> argparse.ArgumentParser:
             help=f"Read authoritative work {operation} from a JSON request",
         )
         _add_phase_four_options(command)
+    research = subparsers.add_parser(
+        "research",
+        help="Prepare, import, and inspect project research artifacts",
+    )
+    research_commands = research.add_subparsers(dest="research_command")
+    for operation in ("prepare", "import-response"):
+        command = research_commands.add_parser(
+            operation,
+            help=f"Plan or apply research {operation} from a JSON request",
+        )
+        _add_phase_four_options(command, mutation=True)
+    research_status = research_commands.add_parser(
+        "status",
+        help="Read research status from a JSON request",
+    )
+    _add_phase_four_options(research_status)
     runtime = subparsers.add_parser(
         "runtime",
         help="Use the project-scoped agent queue and lease runtime",
@@ -1437,6 +1453,13 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
         else:
             operation = f"work.{args.work_command}"
             arguments = _load_phase_four_arguments(args.request_file)
+    elif args.command == "research" and args.research_command in {
+        "prepare",
+        "import-response",
+        "status",
+    }:
+        operation = f"research.{args.research_command}"
+        arguments = _load_phase_four_arguments(args.request_file)
     elif args.command == "runtime" and args.runtime_command in {
         "enqueue", "claim", "heartbeat", "complete", "fail", "recover",
         "reconcile", "status",
@@ -1784,6 +1807,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "context-package",
         "memory",
         "work",
+        "research",
         "runtime",
         "oracle",
         "retrieval",

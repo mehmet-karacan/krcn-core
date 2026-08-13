@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:research-orchestration-policy:1",
+  "title": "KRCN Core research orchestration policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "policy_revision",
+    "execution_mode",
+    "roles",
+    "providers",
+    "maximum_markdown_bytes",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/research-orchestration-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "policy_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "execution_mode": {
+      "const": "operator-mediated"
+    },
+    "roles": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "researcher",
+          "architecture-reviewer",
+          "critic",
+          "synthesizer",
+          "citation-verifier"
+        ]
+      }
+    },
+    "providers": {
+      "type": "object",
+      "additionalProperties": {
+        "enum": [
+          "supported-external",
+          "optional-manual"
+        ]
+      }
+    },
+    "maximum_markdown_bytes": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 10485760
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "automatic_provider_call",
+        "provider_required",
+        "gemini_required",
+        "raw_results_trusted",
+        "knowledge_promotion_automatic",
+        "vector_index_created",
+        "graph_database_created"
+      ],
+      "properties": {
+        "automatic_provider_call": {
+          "const": false
+        },
+        "provider_required": {
+          "const": false
+        },
+        "gemini_required": {
+          "const": false
+        },
+        "raw_results_trusted": {
+          "const": false
+        },
+        "knowledge_promotion_automatic": {
+          "const": false
+        },
+        "vector_index_created": {
+          "const": false
+        },
+        "graph_database_created": {
+          "const": false
+        }
+      }
+    }
+  }
+}

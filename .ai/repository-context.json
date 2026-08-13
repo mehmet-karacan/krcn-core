@@ -43,6 +43,7 @@
     "phase_four_boundary": "docs/specifications/PHASE-4-CONTEXT-KNOWLEDGE-MEMORY-BOUNDARY.md",
     "phase_four_baseline": ".ai/phase-4-baseline.json",
     "phase_five_boundary": "docs/specifications/PHASE-5-ORCHESTRATION-BOUNDARY.md",
+    "research_orchestration_boundary": "docs/specifications/RESEARCH-ORCHESTRATION.md",
     "phase_five_baseline": ".ai/phase-5-baseline.json",
     "phase_six_baseline": ".ai/phase-6-baseline.json",
     "phase_seven_baseline": ".ai/phase-7-baseline.json",

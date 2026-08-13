@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:research-run-request:1",
+  "title": "KRCN Core research run request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "research_id",
+    "scope"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/research-run-request.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "research_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "scope": {
+      "enum": [
+        "project",
+        "global"
+      ]
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": ".*\\S.*"
+    },
+    "question": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": ".*\\S.*"
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": ".*\\S.*"
+    },
+    "context": {
+      "type": "string"
+    },
+    "acceptance_criteria": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "scope": {
+            "const": "project"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "project_id"
+        ]
+      }
+    }
+  ],
+  "anyOf": [
+    {
+      "required": [
+        "question"
+      ]
+    },
+    {
+      "required": [
+        "objective"
+      ]
+    }
+  ]
+}
