@@ -162,6 +162,29 @@ class WorkDocumentTests(unittest.TestCase):
         semantic = self.home / "projects" / "gpu-fusion" / "derived" / "retrieval" / "work-semantic-v1.sqlite"
         self.assertTrue(semantic.is_file())
 
+        incoming = (
+            work_documents_root(self.home, "gpu-fusion")
+            / "defects" / "2026" / "512345" / "source" / "user"
+        )
+        incoming.mkdir(parents=True)
+        (incoming / "512345.txt").write_text(
+            "Yeni defect bilgisi", encoding="utf-8"
+        )
+        next_plan = service.execute(ServiceRequest(
+            "cli", "work.documents.process", {"project_id": "gpu-fusion"}
+        ))
+        self.assertEqual(1, next_plan.data["plan"]["incoming_document_count"])
+        self.assertEqual(1, next_plan.data["plan"]["changed_work_item_count"])
+        service.execute(ServiceRequest(
+            "cli", "work.documents.process", {"project_id": "gpu-fusion"},
+            apply=True,
+            expected_plan_id=next_plan.data["plan"]["plan_id"],
+            approval_id="test-approval",
+        ))
+        defect = self.store.read("work-items", "gpu-fusion-defect-item-512345")
+        self.assertIsNotNone(defect)
+        self.assertEqual("active", defect.payload["status"])
+
     def test_short_intent_and_capsule_exclusion(self) -> None:
         intent = parse_work_document_intent("gpu-fusion gelen işlerini işle")
         self.assertEqual("work.documents.process", intent.public_summary()["operation"])

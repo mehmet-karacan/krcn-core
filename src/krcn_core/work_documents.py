@@ -480,6 +480,45 @@ def _read_manifest(path: Path) -> Mapping[str, object]:
     return payload
 
 
+def _local_work_identity(
+    project_id: str,
+    reference: str,
+    known_ids: set[str],
+) -> tuple[str, tuple[str, ...]]:
+    parts = PurePosixPath(reference.removeprefix("work-documents/")).parts
+    if len(parts) < 4:
+        raise WorkDocumentError("incoming work document path is incomplete")
+    if parts[0] in {"requests", "defects"}:
+        work_type = "request" if parts[0] == "requests" else "defect"
+        external_id = parts[2]
+        if external_id.isdigit():
+            work_id = f"{project_id}-{work_type}-item-{external_id}"
+        else:
+            work_id = f"{project_id}-{work_type}-{_slug(external_id)}"
+        return work_type, (work_id,)
+    if parts[:2] == ("shared", "requests") and len(parts) >= 5:
+        identifiers = tuple(dict.fromkeys(NUMBER.findall(parts[3])))
+        if not identifiers:
+            raise WorkDocumentError("shared request path requires request identities")
+        return "request", tuple(
+            f"{project_id}-request-item-{external_id}"
+            for external_id in identifiers
+        )
+    if parts[0] == "tasks":
+        key = _slug(parts[2])
+        prefix = f"{project_id}-task-{key}"
+        matches = tuple(sorted(
+            value for value in known_ids
+            if value == prefix or value.startswith(prefix + "-variant-")
+        ))
+        if len(matches) > 1:
+            raise WorkDocumentError(
+                "incoming task document matches multiple preserved task variants"
+            )
+        return "task", matches or (prefix,)
+    raise WorkDocumentError("incoming document is outside the supported work layout")
+
+
 def prepare_work_document_processing(
     store: LocalWorkspaceStore,
     ownership: OwnershipResolver,
@@ -492,6 +531,10 @@ def prepare_work_document_processing(
         raise WorkDocumentError("work document manifest entries are invalid")
     files: list[WorkSourceEntry] = []
     by_work: dict[str, list[Mapping[str, object]]] = {}
+    work_types: dict[str, str] = {}
+    known_references: set[str] = set()
+    current_items, _ = _existing_work_maps(store, project_id)
+    known_ids = set(current_items)
     for raw in raw_entries:
         if not isinstance(raw, dict):
             raise WorkDocumentError("work document manifest entry is invalid")
@@ -500,6 +543,9 @@ def prepare_work_document_processing(
         size = raw.get("size_bytes")
         if not isinstance(reference, str) or not reference.startswith("work-documents/"):
             raise WorkDocumentError("work document reference is invalid")
+        if reference in known_references:
+            raise WorkDocumentError("work document manifest reference is duplicated")
+        known_references.add(reference)
         relative = reference.removeprefix("work-documents/")
         path = root / Path(*PurePosixPath(relative).parts)
         if not path.is_file() or path.is_symlink() or _file_digest(path) != digest:
@@ -508,6 +554,43 @@ def prepare_work_document_processing(
         for work_id in raw.get("work_item_ids", []):
             if isinstance(work_id, str):
                 by_work.setdefault(work_id, []).append(raw)
+                current = current_items.get(work_id)
+                if current is not None:
+                    work_types[work_id] = current.work_type
+    incoming_count = 0
+    for path in sorted(root.rglob("*"), key=lambda value: value.as_posix()):
+        if path.is_symlink():
+            raise WorkDocumentError("work documents may not contain symbolic links")
+        if not path.is_file() or "_krcn" in {
+            part.casefold() for part in path.relative_to(root).parts
+        }:
+            continue
+        reference = _logical_ref(root, path)
+        if reference in known_references:
+            continue
+        work_type, work_ids = _local_work_identity(
+            project_id, reference, known_ids,
+        )
+        digest = _file_digest(path)
+        policy, findings = _document_policy(
+            path, reference.removeprefix("work-documents/"),
+        )
+        raw = {
+            "target_ref": reference,
+            "sha256": digest,
+            "size_bytes": path.stat().st_size,
+            "source_id": "user",
+            "source_ref": reference,
+            "work_item_ids": list(work_ids),
+            "semantic_policy": policy,
+            "sensitivity_classes": list(findings),
+        }
+        known_references.add(reference)
+        files.append(WorkSourceEntry(reference, digest, path.stat().st_size))
+        incoming_count += 1
+        for work_id in work_ids:
+            by_work.setdefault(work_id, []).append(raw)
+            work_types[work_id] = work_type
     files.sort(key=lambda value: value.source_ref)
     inventory_identity = {
         "source_id": f"{project_id}-work-documents",
@@ -515,13 +598,10 @@ def prepare_work_document_processing(
         "entries": [value.as_dict() for value in files],
     }
     inventory = {**inventory_identity, "inventory_digest": _digest(inventory_identity)}
-    current_items, _ = _existing_work_maps(store, project_id)
     candidates = []
     for work_id, documents in sorted(by_work.items()):
         current = current_items.get(work_id)
-        if current is None:
-            continue
-        preserved = [
+        preserved = [] if current is None else [
             value.as_dict() for value in current.evidence
             if not value.reference.startswith("legacy-work/")
             and not value.reference.startswith("work-documents/")
@@ -540,19 +620,31 @@ def prepare_work_document_processing(
             key=lambda value: (str(value["evidence_type"]), str(value["reference"])),
         )
         source_ref = str(sorted(documents, key=lambda value: str(value["target_ref"]))[0]["target_ref"])
+        work_type = current.work_type if current is not None else work_types[work_id]
+        external_label = work_id.rsplit("-", 1)[-1]
         desired = {
-            "work_item_id": current.work_item_id,
-            "work_type": current.work_type,
-            "title": current.title,
-            "description": current.description,
-            "status": current.status,
-            "acceptance_criteria": list(current.acceptance_criteria),
-            "relations": [value.as_dict() for value in current.relations],
+            "work_item_id": work_id,
+            "work_type": work_type,
+            "title": (
+                current.title if current is not None
+                else f"{'Talep' if work_type == 'request' else 'Defect' if work_type == 'defect' else 'Görev'} {external_label}"
+            ),
+            "description": (
+                current.description if current is not None
+                else "Yerel iş belgelerinden oluşturuldu."
+            ),
+            "status": current.status if current is not None else "active",
+            "acceptance_criteria": [] if current is None else list(current.acceptance_criteria),
+            "relations": [] if current is None else [value.as_dict() for value in current.relations],
             "evidence": evidence,
             "source_ref": source_ref,
         }
-        current_evidence = [value.as_dict() for value in current.evidence]
-        if current_evidence == evidence and current.provenance.get("source_ref") == source_ref:
+        current_evidence = [] if current is None else [value.as_dict() for value in current.evidence]
+        if (
+            current is not None
+            and current_evidence == evidence
+            and current.provenance.get("source_ref") == source_ref
+        ):
             continue
         candidates.append(desired)
     summary = {
@@ -560,6 +652,7 @@ def prepare_work_document_processing(
         "document_count": len(files),
         "linked_work_item_count": len(by_work),
         "changed_work_item_count": len(candidates),
+        "incoming_document_count": incoming_count,
         "manifest_digest": manifest["manifest_digest"],
         "source_content_copied_to_work_graph": False,
         "semantic_index_automatic": True,

@@ -27,6 +27,8 @@ Work Documents, bir projeye ait talep, defect ve görev belgelerini proje kaynak
 4. Yerel semantik iş indeksini artımlı olarak yeniler.
 5. Ham belge içeriğini Work Graph veya vektör SQLite dosyasına kopyalamaz.
 
+Yeni bir iş için belge doğrudan uygun `requests`, `defects` veya `tasks` dizininin `source/user` altına bırakılabilir. Sonraki kısa işleme isteği yeni dosyayı bulur, kayıt yoksa proje kapsamında oluşturur, varsa yeni revizyon olarak bağlar. Kullanıcının uzun bir aktarım promptu yazması gerekmez.
+
 Büyük, binary veya hassas bulgulu dosyalar korunur ancak `metadata-only` ya da `excluded-sensitive` olarak işaretlenir. Uzak modele örtülü veri aktarımı yapılmaz.
 
 ## Taşınabilirlik
