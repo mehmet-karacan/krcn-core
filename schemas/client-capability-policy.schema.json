@@ -84,14 +84,12 @@
         "native-parallel": {
           "const": [
             "native_subagents",
-            "parallel_subagents",
-            "structured_results"
+            "parallel_subagents"
           ]
         },
         "native-sequential": {
           "const": [
-            "native_subagents",
-            "structured_results"
+            "native_subagents"
           ]
         },
         "isolated-role-fallback": {

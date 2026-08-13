@@ -1,7 +1,7 @@
 {
   "schema_ref": "schemas/client-capability-policy.schema.json",
   "schema_version": 1,
-  "revision": 1,
+  "revision": 2,
   "capabilities": [
     "native_subagents",
     "parallel_subagents",
@@ -19,12 +19,10 @@
   "mode_requirements": {
     "native-parallel": [
       "native_subagents",
-      "parallel_subagents",
-      "structured_results"
+      "parallel_subagents"
     ],
     "native-sequential": [
-      "native_subagents",
-      "structured_results"
+      "native_subagents"
     ],
     "isolated-role-fallback": [
       "structured_results",

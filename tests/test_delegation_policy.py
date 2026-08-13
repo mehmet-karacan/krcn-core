@@ -65,6 +65,27 @@ class DelegationPolicyTests(unittest.TestCase):
         self.assertEqual("delegated-project-work", decision.decision_basis)
         self.assertFalse(decision.as_dict()["client_declaration_grants_authority"])
 
+    def test_codex_native_text_results_allow_parallel_delegation(self) -> None:
+        profile = self.profile(
+            capabilities(
+                native_subagents=True,
+                parallel_subagents=True,
+                agent_cancellation=True,
+            ),
+            3,
+        )
+        decision = decide_delegation(
+            self.policy,
+            profile,
+            work_class="project-design",
+            project_matched=True,
+        )
+        self.assertEqual("native-parallel", decision.selected_mode)
+        self.assertTrue(decision.execution_allowed)
+        self.assertTrue(decision.delegation_required)
+        self.assertTrue(decision.coordinator_only)
+        self.assertFalse(decision.as_dict()["client_declaration_grants_authority"])
+
     def test_sequential_subagents_remain_a_visible_fallback(self) -> None:
         profile = self.profile(
             capabilities(native_subagents=True, structured_results=True)

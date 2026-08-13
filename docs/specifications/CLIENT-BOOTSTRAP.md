@@ -28,6 +28,11 @@ The guidance tells a client to:
 8. Keep the main agent coordinator-only when delegation is required. Source inspection, domain analysis, implementation, tests, and independent verification belong to delegated roles.
 9. Prefer native parallel execution for independent work. Report sequential or isolated-role fallback as degraded execution. Stop when delegation is unavailable instead of silently performing project work in the main agent.
 10. Resolve a model profile before delegation when the client supports model selection. A client that cannot select models keeps its current default. Embedding provider approval remains a separate gate.
+
+Native attributed terminal text is a delegated result channel, but it does not
+by itself mean structured-result support. Clients declare structured results only
+when delegated payloads are independently machine-validatable against an explicit
+result contract.
 11. Keep client-generated operational artifacts out of `KRCN_CORE_HOME` and registered project sources. Supported project artifacts use `.krcn/projects/<project-id>/local-data/client-artifacts/`; `.krcn/global/local-data/client-artifacts/` is reserved for project-independent output. Without a reviewed write operation, the client returns the result and asks before creating a file.
 12. Treat versioned core writes as authorized only by an explicit KRCN Core product-development request. Integration, audit, retrieval, and ordinary project work are not core mutation authority.
 

@@ -126,9 +126,8 @@ def parse_client_capability_policy(payload: object) -> ClientCapabilityPolicy:
         "native-parallel": (
             "native_subagents",
             "parallel_subagents",
-            "structured_results",
         ),
-        "native-sequential": ("native_subagents", "structured_results"),
+        "native-sequential": ("native_subagents",),
         "isolated-role-fallback": (
             "structured_results",
             "isolated_role_execution",

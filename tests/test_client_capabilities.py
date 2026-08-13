@@ -62,6 +62,21 @@ class ClientCapabilityTests(unittest.TestCase):
         self.assertFalse(payload["secret_values_included"])
         self.assertFalse(payload["absolute_paths_included"])
 
+    def test_native_result_channel_does_not_require_structured_schema(self) -> None:
+        parallel = self.profile(
+            declaration(
+                native_subagents=True,
+                parallel_subagents=True,
+                agent_cancellation=True,
+            ),
+            max_parallel_agents=3,
+        )
+        sequential = self.profile(declaration(native_subagents=True))
+        self.assertEqual("native-parallel", parallel.selected_mode)
+        self.assertEqual("native-sequential", sequential.selected_mode)
+        self.assertFalse(parallel.capabilities["structured_results"])
+        self.assertFalse(sequential.capabilities["structured_results"])
+
     def test_sequential_and_isolated_fallbacks_are_explicit(self) -> None:
         sequential = self.profile(
             declaration(native_subagents=True, structured_results=True)
@@ -72,9 +87,15 @@ class ClientCapabilityTests(unittest.TestCase):
         self.assertEqual("native-sequential", sequential.selected_mode)
         self.assertEqual("isolated-role-fallback", isolated.selected_mode)
 
-    def test_incomplete_or_unstructured_support_fails_closed(self) -> None:
-        unavailable = self.profile(declaration(native_subagents=True))
+    def test_missing_delegation_channel_or_incomplete_declaration_fails_closed(self) -> None:
+        unavailable = self.profile(declaration())
+        isolated_without_contract = self.profile(
+            declaration(isolated_role_execution=True)
+        )
         self.assertEqual("delegation-unavailable", unavailable.selected_mode)
+        self.assertEqual(
+            "delegation-unavailable", isolated_without_contract.selected_mode
+        )
         incomplete = declaration()
         incomplete.pop("structured_results")
         with self.assertRaisesRegex(ClientCapabilityError, "incomplete"):

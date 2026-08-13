@@ -139,14 +139,19 @@ declaration and delegation selection are read-only and do not grant authority.
 
 ```powershell
 krcn client capabilities --session-id session-001 --client-id codex `
-  --native-subagents --parallel-subagents --structured-results `
+  --native-subagents --parallel-subagents `
   --max-parallel-agents 4
 
 krcn client delegation --session-id session-001 --client-id codex `
   --work-class project-analysis --project-matched `
-  --native-subagents --parallel-subagents --structured-results `
+  --native-subagents --parallel-subagents `
   --max-parallel-agents 4
 ```
+
+Native subagents include an attributed lifecycle and terminal result channel.
+Use `--structured-results` only when delegated payloads are independently
+machine-validatable against a result schema. It is not required merely because a
+native agent returns text to its coordinator.
 
 Use `krcn client delegation --help` for every supported work class and capability
 flag. Sequential and isolated-role modes are reported as degraded. When meaningful

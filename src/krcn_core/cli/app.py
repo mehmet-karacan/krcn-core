@@ -573,11 +573,26 @@ def build_parser() -> argparse.ArgumentParser:
         command = client_commands.add_parser(command_name, help=help_text)
         command.add_argument("--session-id", required=True)
         command.add_argument("--client-id", required=True)
-        command.add_argument("--native-subagents", action="store_true")
-        command.add_argument("--parallel-subagents", action="store_true")
+        command.add_argument(
+            "--native-subagents",
+            action="store_true",
+            help=(
+                "Declare native subagent lifecycle and attributed terminal "
+                "result support"
+            ),
+        )
+        command.add_argument(
+            "--parallel-subagents",
+            action="store_true",
+            help="Declare concurrent native subagent execution support",
+        )
         command.add_argument("--per-agent-model-selection", action="store_true")
         command.add_argument("--agent-cancellation", action="store_true")
-        command.add_argument("--structured-results", action="store_true")
+        command.add_argument(
+            "--structured-results",
+            action="store_true",
+            help="Declare machine-validatable delegated result payloads",
+        )
         command.add_argument("--isolated-role-execution", action="store_true")
         command.add_argument("--max-parallel-agents", type=int, default=1)
         if command_name == "delegation":
