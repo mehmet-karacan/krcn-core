@@ -153,6 +153,13 @@ Use `--structured-results` only when delegated payloads are independently
 machine-validatable against a result schema. It is not required merely because a
 native agent returns text to its coordinator.
 
+The same flags apply to Codex, Claude, OpenCode, plugins, and future clients.
+KRCN does not select a mode from the client name. A genuine native parallel
+channel is not blocked by missing optional capability flags.
+When `--parallel-subagents` is declared and `--max-parallel-agents` is omitted,
+the CLI uses the safe minimum of two slots. An explicitly contradictory value of
+one remains invalid.
+
 Use `krcn client delegation --help` for every supported work class and capability
 flag. Sequential and isolated-role modes are reported as degraded. When meaningful
 matched project work requires delegation but the client cannot provide it, the

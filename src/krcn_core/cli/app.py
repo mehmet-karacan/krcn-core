@@ -594,7 +594,14 @@ def build_parser() -> argparse.ArgumentParser:
             help="Declare machine-validatable delegated result payloads",
         )
         command.add_argument("--isolated-role-execution", action="store_true")
-        command.add_argument("--max-parallel-agents", type=int, default=1)
+        command.add_argument(
+            "--max-parallel-agents",
+            type=int,
+            help=(
+                "Declare the available agent slots; defaults to 2 for native "
+                "parallel clients and 1 otherwise"
+            ),
+        )
         if command_name == "delegation":
             command.add_argument(
                 "--work-class",
@@ -1598,6 +1605,9 @@ def _run_client_command(args: argparse.Namespace) -> int:
             expected_plan = args.expected_plan
             approval_id = args.approval_id
         elif args.client_command in {"capabilities", "delegation"}:
+            max_parallel_agents = args.max_parallel_agents
+            if max_parallel_agents is None:
+                max_parallel_agents = 2 if args.parallel_subagents else 1
             arguments = {
                 "session_id": args.session_id,
                 "client_id": args.client_id,
@@ -1609,7 +1619,7 @@ def _run_client_command(args: argparse.Namespace) -> int:
                     "structured_results": args.structured_results,
                     "isolated_role_execution": args.isolated_role_execution,
                 },
-                "max_parallel_agents": args.max_parallel_agents,
+                "max_parallel_agents": max_parallel_agents,
             }
             operation = "client.capabilities"
             if args.client_command == "delegation":

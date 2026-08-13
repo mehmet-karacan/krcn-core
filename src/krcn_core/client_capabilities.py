@@ -151,6 +151,7 @@ def parse_client_capability_policy(payload: object) -> ClientCapabilityPolicy:
         "declaration_grants_authority": False,
         "secret_values_persisted": False,
         "absolute_paths_persisted": False,
+        "client_identity_affects_mode_selection": False,
         "mode_selection_fail_closed": True,
     }:
         raise ClientCapabilityError("client capability invariants are invalid")

@@ -104,28 +104,41 @@ class ClientDelegationApplicationTests(unittest.TestCase):
         self.assertIsNone(response.data["degradation"])
         self.assertFalse(response.data["authority_granted"])
 
-    def test_codex_desktop_native_text_results_are_supported(self) -> None:
-        arguments = self.arguments(
-            declared(
-                native_subagents=True,
-                parallel_subagents=True,
-                agent_cancellation=True,
-            ),
-            slots=3,
+    def test_native_text_results_are_supported_for_every_client(self) -> None:
+        client_matrix = (
+            ("cli", "codex-desktop"),
+            ("sdk", "claude-desktop"),
+            ("mcp", "claude-cli"),
+            ("plugin", "opencode"),
+            ("plugin", "custom-agent-client"),
         )
-        arguments["client_id"] = "codex-desktop"
-        arguments.update({"work_class": "project-design", "project_matched": True})
-        response = self.service.execute(
-            ServiceRequest("codex", "client.delegation", arguments)
-        )
-        self.assertEqual("ok", response.status)
-        self.assertEqual("native-parallel", response.data["profile"]["selected_mode"])
-        self.assertFalse(
-            response.data["profile"]["capabilities"]["structured_results"]
-        )
-        self.assertTrue(response.data["decision"]["execution_allowed"])
-        self.assertTrue(response.data["decision"]["coordinator_only"])
-        self.assertFalse(response.data["authority_granted"])
+        for transport, client_id in client_matrix:
+            with self.subTest(client_id=client_id):
+                arguments = self.arguments(
+                    declared(
+                        native_subagents=True,
+                        parallel_subagents=True,
+                        agent_cancellation=True,
+                    ),
+                    slots=3,
+                )
+                arguments["client_id"] = client_id
+                arguments.update(
+                    {"work_class": "project-design", "project_matched": True}
+                )
+                response = self.service.execute(
+                    ServiceRequest(transport, "client.delegation", arguments)
+                )
+                self.assertEqual("ok", response.status)
+                self.assertEqual(
+                    "native-parallel", response.data["profile"]["selected_mode"]
+                )
+                self.assertFalse(
+                    response.data["profile"]["capabilities"]["structured_results"]
+                )
+                self.assertTrue(response.data["decision"]["execution_allowed"])
+                self.assertTrue(response.data["decision"]["coordinator_only"])
+                self.assertFalse(response.data["authority_granted"])
 
     def test_sequential_is_degraded_and_unavailable_is_blocked(self) -> None:
         sequential = self.arguments(
@@ -209,33 +222,64 @@ class ClientDelegationCliTests(unittest.TestCase):
             "native-parallel", payload["data"]["decision"]["selected_mode"]
         )
 
-    def test_cli_supports_codex_native_text_results(self) -> None:
+    def test_cli_supports_native_text_results_for_every_client(self) -> None:
+        for client_id in (
+            "codex-desktop",
+            "claude-desktop",
+            "claude-cli",
+            "opencode",
+            "custom-agent-client",
+        ):
+            with self.subTest(client_id=client_id):
+                result, payload = self.run_cli(
+                    [
+                        "delegation",
+                        "--session-id",
+                        f"{client_id}-session",
+                        "--client-id",
+                        client_id,
+                        "--work-class",
+                        "project-design",
+                        "--project-matched",
+                        "--native-subagents",
+                        "--parallel-subagents",
+                        "--agent-cancellation",
+                        "--max-parallel-agents",
+                        "3",
+                    ]
+                )
+                self.assertEqual(0, result)
+                self.assertEqual("ok", payload["status"])
+                self.assertEqual(
+                    "native-parallel", payload["data"]["decision"]["selected_mode"]
+                )
+                self.assertFalse(
+                    payload["data"]["profile"]["capabilities"][
+                        "structured_results"
+                    ]
+                )
+                self.assertFalse(payload["data"]["authority_granted"])
+
+    def test_cli_infers_safe_minimum_parallel_slots(self) -> None:
         result, payload = self.run_cli(
             [
                 "delegation",
                 "--session-id",
-                "codex-desktop-session",
+                "opencode-session",
                 "--client-id",
-                "codex-desktop",
+                "opencode",
                 "--work-class",
                 "project-design",
                 "--project-matched",
                 "--native-subagents",
                 "--parallel-subagents",
-                "--agent-cancellation",
-                "--max-parallel-agents",
-                "3",
             ]
         )
         self.assertEqual(0, result)
-        self.assertEqual("ok", payload["status"])
         self.assertEqual(
             "native-parallel", payload["data"]["decision"]["selected_mode"]
         )
-        self.assertFalse(
-            payload["data"]["profile"]["capabilities"]["structured_results"]
-        )
-        self.assertFalse(payload["data"]["authority_granted"])
+        self.assertEqual(2, payload["data"]["profile"]["max_parallel_agents"])
 
     def test_cli_validates_a_session_capability_profile(self) -> None:
         result, payload = self.run_cli(

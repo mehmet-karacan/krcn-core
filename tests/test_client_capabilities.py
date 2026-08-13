@@ -35,11 +35,12 @@ class ClientCapabilityTests(unittest.TestCase):
         *,
         max_parallel_agents: int = 1,
         session_id: str = "session-001",
+        client_id: str = "codex",
     ):
         return create_client_capability_profile(
             self.policy,
             session_id=session_id,
-            client_id="codex",
+            client_id=client_id,
             capabilities=capabilities,
             max_parallel_agents=max_parallel_agents,
         )
@@ -76,6 +77,27 @@ class ClientCapabilityTests(unittest.TestCase):
         self.assertEqual("native-sequential", sequential.selected_mode)
         self.assertFalse(parallel.capabilities["structured_results"])
         self.assertFalse(sequential.capabilities["structured_results"])
+
+    def test_native_parallel_selection_is_client_neutral(self) -> None:
+        capabilities = declaration(
+            native_subagents=True,
+            parallel_subagents=True,
+        )
+        for client_id in (
+            "codex-desktop",
+            "claude-desktop",
+            "claude-cli",
+            "opencode",
+            "custom-agent-client",
+        ):
+            with self.subTest(client_id=client_id):
+                profile = self.profile(
+                    capabilities,
+                    client_id=client_id,
+                    max_parallel_agents=3,
+                )
+                self.assertEqual("native-parallel", profile.selected_mode)
+                self.assertFalse(profile.capabilities["structured_results"])
 
     def test_sequential_and_isolated_fallbacks_are_explicit(self) -> None:
         sequential = self.profile(
@@ -147,6 +169,10 @@ class ClientCapabilityTests(unittest.TestCase):
         changed["invariants"]["declaration_grants_authority"] = True
         with self.assertRaisesRegex(ClientCapabilityError, "invariants"):
             parse_client_capability_policy(changed)
+        client_specific = copy.deepcopy(payload)
+        client_specific["invariants"]["client_identity_affects_mode_selection"] = True
+        with self.assertRaisesRegex(ClientCapabilityError, "invariants"):
+            parse_client_capability_policy(client_specific)
 
 
 if __name__ == "__main__":

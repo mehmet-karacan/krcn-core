@@ -30,6 +30,12 @@ KRCN içinde `agent-result.schema.json` sözleşmesi bulunmasına rağmen native
 
 ## Geriye uyumluluk
 
+- Seçim yalnız gerçek session yeteneklerine dayanır. Codex, Claude, OpenCode,
+  plugin ve gelecekteki istemci adları için ayrı bir allowlist yoktur.
+- Gerçek native paralel kanal, cancellation, model selection, structured result
+  veya isolated-role gibi opsiyonel bir yetenek eksik olduğu için engellenmez.
+- CLI, paralel kanal bildiriminde slot sayısı verilmezse güvenli minimum olan iki
+  slotu kullanır. Açıkça bir slot bildiren çelişkili profil reddedilir.
 - Native kanalı olmayan istemciler `delegation-unavailable` kalır.
 - Çelişkili veya eksik yetenek bildirimleri reddedilir.
 - Isolated ve yapılandırılmamış istemci engellenir.

@@ -125,6 +125,7 @@
         "declaration_grants_authority",
         "secret_values_persisted",
         "absolute_paths_persisted",
+        "client_identity_affects_mode_selection",
         "mode_selection_fail_closed"
       ],
       "properties": {
@@ -138,6 +139,9 @@
           "const": false
         },
         "absolute_paths_persisted": {
+          "const": false
+        },
+        "client_identity_affects_mode_selection": {
           "const": false
         },
         "mode_selection_fail_closed": {

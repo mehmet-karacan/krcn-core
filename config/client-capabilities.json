@@ -1,7 +1,7 @@
 {
   "schema_ref": "schemas/client-capability-policy.schema.json",
   "schema_version": 1,
-  "revision": 2,
+  "revision": 3,
   "capabilities": [
     "native_subagents",
     "parallel_subagents",
@@ -38,6 +38,7 @@
     "declaration_grants_authority": false,
     "secret_values_persisted": false,
     "absolute_paths_persisted": false,
+    "client_identity_affects_mode_selection": false,
     "mode_selection_fail_closed": true
   }
 }

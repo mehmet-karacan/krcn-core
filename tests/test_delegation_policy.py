@@ -65,7 +65,7 @@ class DelegationPolicyTests(unittest.TestCase):
         self.assertEqual("delegated-project-work", decision.decision_basis)
         self.assertFalse(decision.as_dict()["client_declaration_grants_authority"])
 
-    def test_codex_native_text_results_allow_parallel_delegation(self) -> None:
+    def test_native_text_results_allow_parallel_delegation(self) -> None:
         profile = self.profile(
             capabilities(
                 native_subagents=True,

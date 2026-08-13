@@ -10,6 +10,12 @@ The contract is client-neutral. Codex, Claude, OpenCode, plugins, and future
 clients declare only the features available in the current session. A declaration
 does not grant mutation, provider, model, or project authority.
 
+Mode selection never uses a client-name allowlist. Every client with a genuine
+native subagent channel, parallel execution, and at least two declared slots gets
+the same `native-parallel` decision. Optional cancellation, per-agent model
+selection, structured payload, and isolated-role capabilities cannot downgrade or
+block that native parallel channel.
+
 ## Session capability profile
 
 Each session declares these capability facts:
