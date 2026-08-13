@@ -56,6 +56,7 @@
         "memory.persist",
         "memory.lifecycle",
         "work.item.put",
+        "work.list",
         "work.import",
         "work.documents.copy-initial",
         "work.documents.process",

@@ -216,17 +216,17 @@ class ProjectNavigationTests(unittest.TestCase):
         self.assertIn("Son işler:", selected)
         self.assertIn("request-item-100", selected)
 
-    def test_direct_project_list_supports_table_and_keeps_json_default(self) -> None:
+    def test_direct_project_list_defaults_to_table_and_supports_json(self) -> None:
         output = io.StringIO()
         with redirect_stdout(output):
             exit_code = cli_main([
                 "project", "list",
                 "--repo", str(REPO_ROOT),
                 "--data-root", str(self.home),
-                "--format", "text",
             ])
         self.assertEqual(0, exit_code)
         self.assertIn("Talep A/G", output.getvalue())
+        self.assertFalse(output.getvalue().lstrip().startswith("{"))
 
         json_output = io.StringIO()
         with redirect_stdout(json_output):
@@ -234,12 +234,100 @@ class ProjectNavigationTests(unittest.TestCase):
                 "project", "list",
                 "--repo", str(REPO_ROOT),
                 "--data-root", str(self.home),
+                "--format", "json",
             ])
         self.assertEqual(0, json_exit)
         self.assertEqual(
             "project.list",
             json.loads(json_output.getvalue())["operation"],
         )
+
+    def test_work_lists_support_natural_and_direct_table_output(self) -> None:
+        intent = parse_project_navigation_intent("gpu-fusion görev listesi")
+        self.assertEqual("work.list", intent.operation)
+        self.assertEqual("gpu-fusion", intent.project_ref)
+        self.assertEqual("task", intent.work_type)
+
+        natural_output = io.StringIO()
+        with redirect_stdout(natural_output):
+            natural_exit = cli_main([
+                "ask", "gpu-fusion görev listesi",
+                "--repo", str(REPO_ROOT),
+                "--data-root", str(self.home),
+            ])
+        self.assertEqual(0, natural_exit)
+        natural = natural_output.getvalue()
+        self.assertIn("Proje: gpu-fusion", natural)
+        self.assertIn("task-g-20260813-001", natural)
+        self.assertNotIn("request-item-100", natural)
+        self.assertFalse(natural.lstrip().startswith("{"))
+
+        direct_output = io.StringIO()
+        with redirect_stdout(direct_output):
+            direct_exit = cli_main([
+                "work", "list",
+                "--project", "gpu-fusion",
+                "--type", "defect",
+                "--repo", str(REPO_ROOT),
+                "--data-root", str(self.home),
+            ])
+        self.assertEqual(0, direct_exit)
+        direct = direct_output.getvalue()
+        self.assertIn("defect-item-200", direct)
+        self.assertNotIn("task-g-20260813-001", direct)
+
+    def test_work_list_can_use_current_project_and_lifecycle_filter(self) -> None:
+        source_root = self.root / "source"
+        source_root.mkdir()
+        binding = {
+            "schema_version": 1,
+            "binding_id": "gpu-fusion-source",
+            "source_id": "gpu-fusion",
+            "source_kind": "project",
+            "locator": {"kind": "local-path", "value": str(source_root)},
+            "default_access": "read-only",
+            "capabilities": ["read", "metadata"],
+            "policy_refs": [],
+            "revision": 1,
+        }
+        binding_plan = self.store.prepare_put(
+            "source-bindings",
+            "gpu-fusion-source",
+            binding,
+            expected_revision=0,
+            project_id="gpu-fusion",
+        )
+        self.store.apply_put(binding_plan, authorize(binding_plan.mutation))
+        project = self.store.read("projects", "gpu-fusion")
+        assert project is not None
+        project_payload = dict(project.payload)
+        project_payload["source_refs"] = ["gpu-fusion-source"]
+        project_plan = self.store.prepare_put(
+            "projects",
+            "gpu-fusion",
+            project_payload,
+            expected_revision=project.revision,
+            project_id="gpu-fusion",
+        )
+        self.store.apply_put(project_plan, authorize(project_plan.mutation))
+
+        output = io.StringIO()
+        previous = Path.cwd()
+        try:
+            import os
+            os.chdir(source_root)
+            with redirect_stdout(output):
+                exit_code = cli_main([
+                    "work", "list",
+                    "--type", "defect",
+                    "--status", "historical",
+                    "--repo", str(REPO_ROOT),
+                    "--data-root", str(self.home),
+                ])
+        finally:
+            os.chdir(previous)
+        self.assertEqual(0, exit_code)
+        self.assertIn("defect-item-200", output.getvalue())
 
 
 if __name__ == "__main__":

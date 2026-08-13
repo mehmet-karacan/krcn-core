@@ -50,12 +50,15 @@ python tools/krcn.py project integrate --project <project-id> --scan-mode automa
 python tools/krcn.py project index-code <project-id>
 python tools/krcn.py project search-code <project-id> "<source-question>"
 python tools/krcn.py project list
+python tools/krcn.py work list --project <project-id> --type <request|defect|task>
 python tools/krcn.py project inspect <project-id>
 python tools/krcn.py project current
 python tools/krcn.py project resume --request "<user-request>"
 python tools/krcn.py project onboard --workspace-id <workspace-id> --project-id <project-id> --binding-id <binding-id> --name <project-name> --source <source-directory>
 python tools/krcn.py project rescan <project-id>
 ```
+
+`project list` ve `work list` insan kullanımı için varsayılan olarak tablo döndürür. Otomasyonlar aynı komutlarda `--format json` kullanabilir. `krcn ask "<project-id> görev listesi"`, `talepler` ve `defectler` ifadeleri aynı salt okunur liste servisine yönlendirilir.
 
 Accept the proposed project-local home, inspect its exact plan, and then apply that same plan:
 

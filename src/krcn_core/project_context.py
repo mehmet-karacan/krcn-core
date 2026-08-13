@@ -41,6 +41,12 @@ ACTIVE_TASK_STATUSES = {
     "blocked",
 }
 
+WORK_TYPE_GROUPS = {
+    "request": "requests",
+    "defect": "defects",
+    "task": "tasks",
+}
+
 
 class ProjectContextError(ValueError):
     """Raised when current-project selection is invalid or ambiguous."""
@@ -271,6 +277,76 @@ def project_navigation_menu(store: LocalWorkspaceStore) -> dict[str, object]:
         "projects": result,
         "project_count": len(result),
         "selection_digest": selection_digest,
+        "selection_is_read_only": True,
+        "selection_grants_authority": False,
+        "paths_disclosed": False,
+    }
+
+
+def project_work_list(
+    store: LocalWorkspaceStore,
+    project_id: str,
+    *,
+    work_type: str | None = None,
+    lifecycle: str = "all",
+    limit: int = 100,
+) -> dict[str, object]:
+    """List authoritative project work with stable, path-redacted metadata."""
+
+    if work_type is not None and work_type not in WORK_TYPE_GROUPS:
+        raise ProjectContextError("work type is invalid")
+    if lifecycle not in {"active", "historical", "all"}:
+        raise ProjectContextError("work lifecycle is invalid")
+    if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 500:
+        raise ProjectContextError("work list limit must be between 1 and 500")
+    if store.read("projects", project_id) is None:
+        raise ProjectContextError("project is not registered")
+
+    matched = []
+    for record in store.list_records("work-items"):
+        if record.payload.get("project_id") != project_id:
+            continue
+        item = parse_work_item(record.payload)
+        if work_type is not None and item.work_type != work_type:
+            continue
+        item_lifecycle = (
+            "active" if item.status in ACTIVE_STATUSES else "historical"
+        )
+        if lifecycle != "all" and lifecycle != item_lifecycle:
+            continue
+        matched.append((
+            item,
+            item_lifecycle,
+            store.record_mtime_ns("work-items", record.record_id),
+        ))
+    matched.sort(key=lambda value: (
+        value[1] != "active",
+        -(value[2] or 0),
+        value[0].work_item_id,
+    ))
+    selected = matched[:limit]
+    return {
+        "schema_version": 1,
+        "project_id": project_id,
+        "work_type": work_type or "all",
+        "lifecycle": lifecycle,
+        "matched_count": len(matched),
+        "returned_count": len(selected),
+        "truncated": len(matched) > len(selected),
+        "items": [
+            {
+                "work_item_id": item.work_item_id,
+                "work_type": item.work_type,
+                "status": item.status,
+                "lifecycle": item_lifecycle,
+                "title": item.title,
+                "revision": item.revision,
+                "evidence_count": len(item.evidence),
+                "last_updated_at": _iso_timestamp(modified),
+            }
+            for item, item_lifecycle, modified in selected
+        ],
+        "authoritative_status": True,
         "selection_is_read_only": True,
         "selection_grants_authority": False,
         "paths_disclosed": False,

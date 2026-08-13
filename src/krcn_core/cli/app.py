@@ -155,6 +155,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="List registered projects without exposing source locations",
     )
     _add_service_options(project_list)
+    project_list.set_defaults(format="text")
     project_inspect = project_commands.add_parser(
         "inspect",
         help="Inspect a registered project with redacted source bindings",
@@ -385,6 +386,25 @@ def build_parser() -> argparse.ArgumentParser:
         help="Use the authoritative project Work Graph",
     )
     work_commands = work.add_subparsers(dest="work_command")
+    work_list = work_commands.add_parser(
+        "list",
+        help="List project tasks, requests, or defects as a readable table",
+    )
+    work_list.add_argument("--project")
+    work_list.add_argument(
+        "--type",
+        dest="work_type",
+        choices=("request", "defect", "task"),
+    )
+    work_list.add_argument(
+        "--status",
+        dest="lifecycle",
+        choices=("active", "historical", "all"),
+        default="all",
+    )
+    work_list.add_argument("--limit", type=int, default=100)
+    _add_service_options(work_list)
+    work_list.set_defaults(format="text")
     work_put = work_commands.add_parser(
         "put",
         help="Plan or apply one exact project work item revision",
@@ -1080,6 +1100,61 @@ def _project_resume_text(data: Mapping[str, object]) -> str:
     return "\n".join(lines)
 
 
+def _work_list_text(data: Mapping[str, object]) -> str:
+    if not data.get("matched"):
+        lines = ["Proje bulunamadı."]
+        navigation = data.get("navigation")
+        if isinstance(navigation, dict):
+            lines.extend(["", "Kayıtlı projeler:", _project_menu_text(navigation)])
+        return "\n".join(lines)
+    work = data.get("work")
+    if not isinstance(work, dict):
+        return "İş listesi kullanılamıyor."
+    project_id = str(work.get("project_id", "-"))
+    items = work.get("items")
+    if not isinstance(items, list) or not items:
+        return f"Proje: {project_id}\nFiltreye uyan kayıt bulunamadı."
+    rows = []
+    project_prefix = project_id + "-"
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        identifier = str(item.get("work_item_id", "-"))
+        if identifier.startswith(project_prefix):
+            identifier = identifier[len(project_prefix):]
+        rows.append([
+            _display_status(item.get("work_type")),
+            _display_status(item.get("status")),
+            _shorten(identifier, 38),
+            _shorten(item.get("title", "-"), 44),
+            item.get("revision", "-"),
+            item.get("evidence_count", 0),
+            _display_timestamp(item.get("last_updated_at")),
+        ])
+    lines = [
+        f"Proje: {project_id}",
+        _text_table(
+            [
+                "Tür",
+                "Durum",
+                "Kimlik",
+                "Başlık",
+                "Rev",
+                "Kanıt",
+                "Son düzenleme UTC",
+            ],
+            rows,
+        ),
+        (
+            f"Gösterilen: {work.get('returned_count', len(rows))} / "
+            f"{work.get('matched_count', len(rows))}"
+        ),
+    ]
+    if work.get("truncated"):
+        lines.append("Liste sınırlandı. Daha fazlası için --limit değerini artırın.")
+    return "\n".join(lines)
+
+
 def _research_action_text(
     status: str,
     data: Mapping[str, object],
@@ -1160,6 +1235,8 @@ def _print_service_response(
         print(_project_menu_text(response.data))
     elif response.operation == "project.resume":
         print(_project_resume_text(response.data))
+    elif response.operation == "work.list":
+        print(_work_list_text(response.data))
     elif response.operation == "research.action":
         print(_research_action_text(response.status, response.data))
     else:
@@ -1531,6 +1608,7 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
         operation = f"memory.{args.memory_command}"
         arguments = _load_phase_four_arguments(args.request_file)
     elif args.command == "work" and args.work_command in {
+        "list",
         "put",
         "import",
         "copy-documents-initial",
@@ -1540,7 +1618,17 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
         "query",
         "history",
     }:
-        if args.work_command == "put":
+        if args.work_command == "list":
+            operation = "work.list"
+            arguments = {
+                "working_directory": str(Path.cwd().resolve()),
+                "work_type": args.work_type,
+                "lifecycle": args.lifecycle,
+                "limit": args.limit,
+            }
+            if args.project is not None:
+                arguments["project_ref"] = args.project
+        elif args.work_command == "put":
             operation = "work.item.put"
             arguments = _load_phase_four_arguments(args.request_file)
         elif args.work_command == "import":
@@ -1614,6 +1702,8 @@ def _run_phase_four_service_command(args: argparse.Namespace) -> int:
     payload = response.as_dict()
     if args.format == "json":
         print(json.dumps(payload, ensure_ascii=False, indent=2))
+    elif response.operation == "work.list":
+        print(_work_list_text(response.data))
     else:
         print(f"{response.status}\t{response.operation}")
         print(json.dumps(response.data, ensure_ascii=False, indent=2))

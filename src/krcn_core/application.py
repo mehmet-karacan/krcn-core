@@ -150,6 +150,7 @@ from .project_context import (
     ProjectContextError,
     build_project_resume_summary,
     project_navigation_menu,
+    project_work_list,
     resolve_current_project,
     suggest_projects,
     unmatched_project_context,
@@ -330,6 +331,7 @@ OPERATIONS = {
     "memory.persist",
     "memory.lifecycle",
     "work.item.put",
+    "work.list",
     "work.import",
     "work.documents.copy-initial",
     "work.documents.process",
@@ -681,6 +683,7 @@ class KrcnApplicationService:
             "memory.persist": self._persist_memory,
             "memory.lifecycle": self._change_memory_lifecycle,
             "work.item.put": self._put_work_item,
+            "work.list": self._list_work,
             "work.import": self._import_work,
             "work.documents.copy-initial": self._copy_initial_work_documents,
             "work.documents.process": self._process_work_documents,
@@ -2391,6 +2394,61 @@ class KrcnApplicationService:
         if request.apply:
             raise ApplicationServiceError("read operation cannot be applied")
         return "ok", project_navigation_menu(self._store)
+
+    def _list_work(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"working_directory"},
+            optional={"project_ref", "work_type", "lifecycle", "limit"},
+        )
+        if request.apply:
+            raise ApplicationServiceError("read operation cannot be applied")
+        match = resolve_current_project(
+            self._store,
+            working_directory=self._absolute_path_argument(
+                request.arguments,
+                "working_directory",
+            ),
+            project_ref=(
+                _string_argument(request.arguments, "project_ref")
+                if "project_ref" in request.arguments
+                else None
+            ),
+        )
+        if match is None:
+            project_ref = request.arguments.get("project_ref")
+            return "ok", {
+                **unmatched_project_context(),
+                "work": None,
+                "navigation": project_navigation_menu(self._store),
+                "suggested_projects": (
+                    suggest_projects(self._store, project_ref)
+                    if isinstance(project_ref, str)
+                    else []
+                ),
+            }
+        work_type = request.arguments.get("work_type")
+        if work_type is not None and not isinstance(work_type, str):
+            raise ApplicationServiceError("work_type must be a string")
+        lifecycle = request.arguments.get("lifecycle", "all")
+        if not isinstance(lifecycle, str):
+            raise ApplicationServiceError("lifecycle must be a string")
+        limit = request.arguments.get("limit", 100)
+        if not isinstance(limit, int) or isinstance(limit, bool):
+            raise ApplicationServiceError("limit must be an integer")
+        return "ok", {
+            **match.public_summary(self._store),
+            "work": project_work_list(
+                self._store,
+                match.project.record_id,
+                work_type=work_type,
+                lifecycle=lifecycle,
+                limit=limit,
+            ),
+        }
 
     def _inspect_project(
         self,

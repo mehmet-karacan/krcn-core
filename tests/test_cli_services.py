@@ -79,6 +79,8 @@ class CliServiceTests(unittest.TestCase):
                 str(REPO_ROOT),
                 "--data-root",
                 self.data_temp.name,
+                "--format",
+                "json",
             ]
         )
         self.assertEqual(0, result, error)
