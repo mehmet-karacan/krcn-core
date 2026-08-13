@@ -332,6 +332,12 @@ def validate_foundation(repo_root: Path) -> list[str]:
         load_project_capability_profiler_policy(repo_root)
     except (ImportError, ValueError) as exc:
         errors.append(f"project capability profiler policy is invalid: {exc}")
+    try:
+        from .work_semantic_index import load_work_retrieval_policy
+
+        load_work_retrieval_policy(repo_root)
+    except (ImportError, ValueError) as exc:
+        errors.append(f"work retrieval policy is invalid: {exc}")
     return errors
 
 

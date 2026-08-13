@@ -31,6 +31,7 @@ from krcn_core.model_health import OpenAICompatibleModelHealthProbe
 from krcn_core.secret_provider import OpenCodeSecretProvider
 from krcn_core.repository_context import main as context_main
 from krcn_core.user_home import resolve_user_home
+from krcn_core.work_intent import WorkIntentError, parse_work_create_intent
 
 from .registry import compatibility_registry
 
@@ -375,6 +376,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="Plan or apply one exact project work item revision",
     )
     _add_phase_four_options(work_put, mutation=True)
+    work_import = work_commands.add_parser(
+        "import",
+        help="Plan or apply one project-scoped legacy work batch",
+    )
+    work_import.add_argument("--source-root", type=Path, required=True)
+    _add_phase_four_options(work_import, mutation=True)
+    work_index_semantic = work_commands.add_parser(
+        "index-semantic",
+        help="Plan or build the local project work semantic index",
+    )
+    _add_phase_four_options(work_index_semantic, mutation=True)
+    work_search = work_commands.add_parser(
+        "search",
+        help="Run exact, lexical, graph, and semantic work retrieval",
+    )
+    _add_phase_four_options(work_search)
     for operation in ("query", "history"):
         command = work_commands.add_parser(
             operation,
@@ -918,6 +935,32 @@ def _run_project_command(args: argparse.Namespace) -> int:
 def _run_ask_command(args: argparse.Namespace) -> int:
     try:
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
+        try:
+            work_intent = parse_work_create_intent(args.request)
+        except WorkIntentError:
+            work_intent = None
+        if work_intent is not None:
+            data_root = _active_project_data_root(args.data_root)
+            response = create_application_service(repo_root, data_root).execute(
+                ServiceRequest(
+                    client_kind="cli",
+                    operation="work.item.put",
+                    arguments=work_intent.service_arguments(),
+                    apply=args.apply,
+                    expected_plan_id=args.expected_plan,
+                    approval_id=args.approval_id,
+                )
+            )
+            response = ServiceResponse(
+                request_id=response.request_id,
+                operation=response.operation,
+                status=response.status,
+                data={
+                    "route": work_intent.public_summary(),
+                    **response.data,
+                },
+            )
+            return _print_service_response(response, args.format)
         route = route_project_request(repo_root, args.request)
         source_root = parse_project_learning_intent(
             args.request,
@@ -1073,9 +1116,26 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
     }:
         operation = f"memory.{args.memory_command}"
         arguments = _load_phase_four_arguments(args.request_file)
-    elif args.command == "work" and args.work_command in {"put", "query", "history"}:
-        operation = f"work.item.{args.work_command}" if args.work_command == "put" else f"work.{args.work_command}"
-        arguments = _load_phase_four_arguments(args.request_file)
+    elif args.command == "work" and args.work_command in {
+        "put",
+        "import",
+        "index-semantic",
+        "search",
+        "query",
+        "history",
+    }:
+        if args.work_command == "put":
+            operation = "work.item.put"
+            arguments = _load_phase_four_arguments(args.request_file)
+        elif args.work_command == "import":
+            operation = "work.import"
+            arguments = {
+                "source_root": str(args.source_root.resolve()),
+                "import_request": _load_phase_four_arguments(args.request_file),
+            }
+        else:
+            operation = f"work.{args.work_command}"
+            arguments = _load_phase_four_arguments(args.request_file)
     elif args.command == "runtime" and args.runtime_command in {
         "enqueue", "claim", "heartbeat", "complete", "fail", "recover",
         "reconcile", "status",

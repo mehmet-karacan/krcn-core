@@ -226,6 +226,17 @@ from .work_graph import (
     query_work_graph,
     query_work_history,
 )
+from .work_import import (
+    apply_work_import,
+    inventory_work_source,
+    parse_work_import_request,
+    prepare_work_import,
+)
+from .work_retrieval import search_work
+from .work_semantic_index import (
+    apply_work_semantic_index,
+    prepare_work_semantic_index,
+)
 
 
 IDENTIFIER = re.compile(r"^[a-z][a-z0-9-]*$")
@@ -280,6 +291,9 @@ OPERATIONS = {
     "memory.persist",
     "memory.lifecycle",
     "work.item.put",
+    "work.import",
+    "work.index-semantic",
+    "work.search",
     "work.query",
     "work.history",
     "runtime.queue.enqueue",
@@ -592,6 +606,9 @@ class KrcnApplicationService:
             "memory.persist": self._persist_memory,
             "memory.lifecycle": self._change_memory_lifecycle,
             "work.item.put": self._put_work_item,
+            "work.import": self._import_work,
+            "work.index-semantic": self._index_work_semantic,
+            "work.search": self._search_work,
             "work.query": self._query_work,
             "work.history": self._work_history,
             "runtime.queue.enqueue": self._runtime_queue_action,
@@ -634,6 +651,114 @@ class KrcnApplicationService:
         )
         result = apply_work_item(self._store, plan, authorizations)
         return "applied", {"plan": plan.public_summary(), "result": result, "applied": True}
+
+    def _import_work(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"source_root", "import_request"},
+        )
+        source_root = Path(_string_argument(request.arguments, "source_root"))
+        if not source_root.is_absolute():
+            raise ApplicationServiceError("source_root must be absolute")
+        import_request = _object_argument(request.arguments, "import_request")
+        _, declared_inventory, _ = parse_work_import_request(import_request)
+        current_inventory = inventory_work_source(
+            source_root,
+            source_id=declared_inventory.source_id,
+            logical_root=declared_inventory.logical_root,
+        )
+        if current_inventory.inventory_digest != declared_inventory.inventory_digest:
+            raise ApplicationServiceError(
+                "work import source inventory does not match the physical source"
+            )
+        plan = prepare_work_import(
+            self._store,
+            self._ownership,
+            import_request,
+        )
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        if request.expected_plan_id != plan.plan_id:
+            raise ApplicationServiceError(
+                "apply requires the exact work import plan id"
+            )
+        if plan.no_op:
+            authorizations: dict[str, MutationAuthorization] = {}
+        else:
+            authorizations = self._authorize_effect_plans(
+                request,
+                plan.plan_id,
+                plan.effect_plans,
+                "work import",
+            )
+        refreshed_inventory = inventory_work_source(
+            source_root,
+            source_id=declared_inventory.source_id,
+            logical_root=declared_inventory.logical_root,
+        )
+        result = apply_work_import(
+            self._store,
+            plan,
+            authorizations,
+            expected_plan_id=plan.plan_id,
+            current_source_inventory=refreshed_inventory.as_dict(),
+        )
+        return "applied", {
+            "plan": plan.public_summary(),
+            "result": result.as_dict(),
+            "applied": True,
+        }
+
+    def _index_work_semantic(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"project_id"})
+        project_id = _identifier_argument(request.arguments, "project_id")
+        plan = prepare_work_semantic_index(
+            self._repo_root,
+            self._store,
+            self._ownership,
+            project_id,
+        )
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        if request.expected_plan_id != plan.plan_id:
+            raise ApplicationServiceError(
+                "apply requires the exact work semantic index plan id"
+            )
+        authorization = authorize_mutation(
+            plan.mutation,
+            dry_run=DryRunEvidence(plan.mutation.plan_id, verified=True),
+        )
+        result = apply_work_semantic_index(
+            self._repo_root,
+            self._store,
+            plan,
+            authorization,
+        )
+        return "applied", {
+            "plan": plan.public_summary(),
+            "result": result,
+            "applied": True,
+        }
+
+    def _search_work(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        if request.apply:
+            raise ApplicationServiceError("work search is read-only")
+        return "ok", {
+            "result": search_work(
+                self._repo_root,
+                self._store,
+                request.arguments,
+            )
+        }
 
     def _query_work(
         self,

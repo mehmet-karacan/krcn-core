@@ -69,3 +69,31 @@ The application service and CLI adapters must rescan the physical source immedia
 ## Current limitation
 
 The first implementation provides in-process rollback across multiple files. A process or machine termination between file replacements cannot be made fully atomic by portable filesystem primitives. A later runtime integration can add a write-ahead recovery journal if crash recovery is required. The authoritative import manifest is written last, so an absent manifest never claims that a partial import completed.
+# Application and CLI boundary
+
+The shared application operation is `work.import`. Its arguments are:
+
+```json
+{
+  "source_root": "<local absolute path>",
+  "import_request": {
+    "schema_ref": "schemas/work-import-request.schema.json"
+  }
+}
+```
+
+`source_root` is an execution-only locator. It is never included in the public
+plan, result, manifest, WorkItem, or semantic index. The application rebuilds
+the declared source inventory from the physical directory during planning and
+again immediately before apply. Any difference blocks the import before a
+write.
+
+The CLI reads the portable import request from a file and receives the physical
+source directory separately:
+
+```text
+krcn work import --source-root <directory> --request-file import.json
+```
+
+Planning does not write. Apply requires the exact returned plan identity and
+the normal user-data approval.

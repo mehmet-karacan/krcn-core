@@ -82,5 +82,20 @@ search_work(...)
 ```
 
 Application service and CLI operations intentionally remain outside this
-implementation slice. They must preserve exact-plan authorization for index
-writes and project-scoped retrieval when added.
+module boundary. They are exposed through these shared operations:
+
+```text
+work.index-semantic
+work.search
+```
+
+The CLI accepts request files so every client uses the same structured
+contract:
+
+```text
+krcn work index-semantic --request-file index.json
+krcn work search --request-file search.json
+```
+
+Semantic index writes preserve exact-plan authorization. Search is read-only
+and project-scoped.
