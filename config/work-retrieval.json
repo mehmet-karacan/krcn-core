@@ -1,0 +1,14 @@
+{
+  "schema_ref": "schemas/work-retrieval-policy.schema.json",
+  "schema_version": 1,
+  "enabled": true,
+  "index_revision": 1,
+  "offline_embedding_profile_id": "deterministic-hashing",
+  "vector_dimensions": 192,
+  "maximum_document_characters": 16000,
+  "maximum_results": 100,
+  "graph_max_depth": 2,
+  "semantic_minimum_score": 0.05,
+  "source_content_persisted": false,
+  "remote_provider_implicit": false
+}

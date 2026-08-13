@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-semantic-index-plan:1",
+  "title": "KRCN Core work semantic index plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "project_id",
+    "graph_digest",
+    "policy_digest",
+    "index_digest",
+    "embedding_profile_id",
+    "vector_dimensions",
+    "item_count",
+    "processed_item_count",
+    "reused_item_count",
+    "removed_item_count",
+    "mutation",
+    "incremental",
+    "authoritative_source",
+    "canonical_document_persisted",
+    "source_content_persisted",
+    "remote_provider_used"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-semantic-index-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "graph_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "index_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "embedding_profile_id": {
+      "const": "deterministic-hashing"
+    },
+    "vector_dimensions": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "item_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "processed_item_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reused_item_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "removed_item_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "mutation": {
+      "$ref": "mutation-plan.schema.json"
+    },
+    "incremental": {
+      "const": true
+    },
+    "authoritative_source": {
+      "const": "work-item-v1"
+    },
+    "canonical_document_persisted": {
+      "const": false
+    },
+    "source_content_persisted": {
+      "const": false
+    },
+    "remote_provider_used": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

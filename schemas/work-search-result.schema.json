@@ -1,0 +1,182 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-search-result:1",
+  "title": "KRCN Core hybrid work search result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "project_id",
+    "query",
+    "graph_digest",
+    "semantic_index_digest",
+    "semantic_status",
+    "ranking_order",
+    "matched_count",
+    "hits",
+    "paths_disclosed",
+    "remote_provider_used",
+    "result_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-search-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "query": {
+      "type": "string",
+      "minLength": 1
+    },
+    "graph_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "semantic_index_digest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "semantic_status": {
+      "enum": [
+        "current",
+        "unavailable"
+      ]
+    },
+    "ranking_order": {
+      "const": [
+        "exact",
+        "lexical",
+        "graph",
+        "semantic"
+      ]
+    },
+    "matched_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "hits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "work_item_id",
+          "work_type",
+          "status",
+          "title",
+          "matched_by",
+          "score_breakdown"
+        ],
+        "properties": {
+          "work_item_id": {
+            "$ref": "#/$defs/id"
+          },
+          "work_type": {
+            "enum": [
+              "request",
+              "defect",
+              "task",
+              "subtask",
+              "decision"
+            ]
+          },
+          "status": {
+            "enum": [
+              "proposed",
+              "active",
+              "blocked",
+              "completed",
+              "cancelled",
+              "archived"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "matched_by": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "exact",
+                "lexical",
+                "graph",
+                "semantic"
+              ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          },
+          "score_breakdown": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "rank_tier",
+              "exact",
+              "lexical",
+              "graph",
+              "semantic",
+              "combined"
+            ],
+            "properties": {
+              "rank_tier": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 3
+              },
+              "exact": {
+                "$ref": "#/$defs/score"
+              },
+              "lexical": {
+                "$ref": "#/$defs/score"
+              },
+              "graph": {
+                "$ref": "#/$defs/score"
+              },
+              "semantic": {
+                "$ref": "#/$defs/score"
+              },
+              "combined": {
+                "$ref": "#/$defs/score"
+              }
+            }
+          }
+        }
+      }
+    },
+    "paths_disclosed": {
+      "const": false
+    },
+    "remote_provider_used": {
+      "const": false
+    },
+    "result_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-retrieval-policy:1",
+  "title": "KRCN Core work retrieval policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "enabled",
+    "index_revision",
+    "offline_embedding_profile_id",
+    "vector_dimensions",
+    "maximum_document_characters",
+    "maximum_results",
+    "graph_max_depth",
+    "semantic_minimum_score",
+    "source_content_persisted",
+    "remote_provider_implicit"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-retrieval-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "enabled": {
+      "const": true
+    },
+    "index_revision": {
+      "const": 1
+    },
+    "offline_embedding_profile_id": {
+      "const": "deterministic-hashing"
+    },
+    "vector_dimensions": {
+      "type": "integer",
+      "minimum": 32,
+      "maximum": 4096
+    },
+    "maximum_document_characters": {
+      "type": "integer",
+      "minimum": 256,
+      "maximum": 100000
+    },
+    "maximum_results": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 500
+    },
+    "graph_max_depth": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3
+    },
+    "semantic_minimum_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "source_content_persisted": {
+      "const": false
+    },
+    "remote_provider_implicit": {
+      "const": false
+    }
+  }
+}
