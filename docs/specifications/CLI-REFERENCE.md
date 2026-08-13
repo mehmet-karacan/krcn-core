@@ -121,6 +121,20 @@ Every command returns an exact plan before apply. Imported source bindings are u
 
 `project index-code` is the separate maintenance entrypoint for the same project source-code index. It is exact-plan controlled derived data. `project search-code` combines relative-path and symbol matching with local vectors. By default, selected chunks are hash-verified and read from the external project in place. Use `--metadata-only`, repeated `--language`, `--path-prefix`, and `--limit` to narrow the result. The index stores no source text or physical source root.
 
+## Natural Research Actions
+
+Natural Research Actions use the same `ask` entry point. The classifier prepares
+the reviewed research exact plan and does not call a provider or mutate source
+code:
+
+```powershell
+krcn ask "Bu projedeki rapor hatasını detaylı araştır"
+krcn ask "Bunu detaylı araştır" --context "Önceki konuşmadaki hazine payı oranı"
+```
+
+AI clients supply conversational context automatically when it is available.
+Direct shell users may use `--context` only for references such as `bunu`.
+
 ## AI client bootstrap
 
 Inspect and install the user-level KRCN discovery block for Codex, Claude Code, and OpenCode:

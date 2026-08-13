@@ -79,6 +79,9 @@
         "phase_four_baseline",
         "phase_five_boundary",
         "research_orchestration_boundary",
+        "research_intent_policy",
+        "research_intent_policy_schema",
+        "research_intent_result_schema",
         "phase_five_baseline",
         "project_local_home_boundary",
         "project_home_resolution_schema",
@@ -224,6 +227,15 @@
           "$ref": "#/$defs/repoPath"
         },
         "research_orchestration_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "research_intent_policy": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "research_intent_policy_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "research_intent_result_schema": {
           "$ref": "#/$defs/repoPath"
         },
         "phase_five_baseline": {

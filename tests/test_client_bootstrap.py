@@ -113,6 +113,14 @@ class ClientBootstrapTests(unittest.TestCase):
             "delegation-unavailable",
             self.codex.read_text(encoding="utf-8"),
         )
+        self.assertIn(
+            "Research Actions",
+            self.codex.read_text(encoding="utf-8"),
+        )
+        self.assertIn(
+            "detaylı araştır",
+            self.codex.read_text(encoding="utf-8"),
+        )
         for entry in plan.entries:
             if entry.existed:
                 assert entry.backup_path is not None

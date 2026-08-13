@@ -27,6 +27,7 @@ from krcn_core.project_home import (
     discover_initialized_project_home,
 )
 from krcn_core.project_learning_intent import parse_project_learning_intent
+from krcn_core.research_intent import ResearchIntentError, parse_research_intent
 from krcn_core.project_navigation import (
     ProjectNavigationError,
     parse_project_navigation_intent,
@@ -137,6 +138,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ask.add_argument("request")
     ask.add_argument("--source", type=Path)
+    ask.add_argument(
+        "--context",
+        help="Supply the current conversational subject for references such as 'bunu'",
+    )
     _add_service_options(ask, mutation=True)
     ask.set_defaults(format=None)
     _add_project_home_choice_options(ask)
@@ -1075,6 +1080,75 @@ def _project_resume_text(data: Mapping[str, object]) -> str:
     return "\n".join(lines)
 
 
+def _research_action_text(
+    status: str,
+    data: Mapping[str, object],
+) -> str:
+    route = data.get("route")
+    if not isinstance(route, dict):
+        return "Araştırma isteği işlendi."
+    if status == "choice-required":
+        selection_reason = data.get("selection_reason")
+        if route.get("needs_project") or selection_reason in {
+            "multiple-projects-mentioned",
+            "project-not-found",
+        }:
+            return (
+                "Araştırma isteğini aldım. Önce ilgili projeyi seçmem veya "
+                "proje dizininde çalışmam gerekiyor. İstek korunuyor."
+            )
+        return (
+            "Araştırma isteğini aldım, ancak 'bunu' ifadesinin hangi konuyu "
+            "gösterdiği belli değil. Konuyu bir cümleyle belirtin."
+        )
+    mode_names = {
+        "quick": "hızlı",
+        "standard": "standart",
+        "deep": "detaylı",
+        "comparison": "karşılaştırmalı",
+        "root-cause": "kök neden",
+    }
+    outcome_names = {
+        "research-only": "araştırma",
+        "research-and-plan": "araştırma ve plan",
+        "research-and-implement": "araştırma, plan ve onaylı uygulama",
+    }
+    mode = mode_names.get(str(route.get("mode")), str(route.get("mode", "-")))
+    outcome = outcome_names.get(
+        str(route.get("outcome")), str(route.get("outcome", "-"))
+    )
+    plan = data.get("plan")
+    plan_id = plan.get("plan_id") if isinstance(plan, dict) else None
+    lines = [
+        f"Araştırma rotası: {mode} {outcome}",
+        "Konu ve proje bağlamı çözüldü. Sağlayıcı veya değişiklik yetkisi verilmedi.",
+    ]
+    if status == "planned" and isinstance(plan_id, str):
+        lines.append(f"Exact plan: {plan_id}")
+        if data.get("next_stage") == "project-work-item-and-dispatch-planning":
+            lines.append(
+                "Bu plan araştırma alanını hazırlar. Sonrasında Work Item seçimi "
+                "ve ayrı dispatch planı/onayı gerekir."
+            )
+        else:
+            lines.append(
+                "Bu plan araştırma alanını hazırlar. Sonrasında istemci veya "
+                "operatör aracılı araştırma yürütülür."
+            )
+    elif status == "applied":
+        if data.get("next_stage") == "project-work-item-and-dispatch-planning":
+            lines.append(
+                "Araştırma alanı hazırlandı. Sıradaki adım Work Item seçimi ve "
+                "ayrı dispatch planıdır."
+            )
+        else:
+            lines.append(
+                "Araştırma alanı hazırlandı. İstemci veya operatör aracılı "
+                "araştırma ile devam edilir."
+            )
+    return "\n".join(lines)
+
+
 def _print_service_response(
     response: ServiceResponse,
     output_format: str | None,
@@ -1086,6 +1160,8 @@ def _print_service_response(
         print(_project_menu_text(response.data))
     elif response.operation == "project.resume":
         print(_project_resume_text(response.data))
+    elif response.operation == "research.action":
+        print(_research_action_text(response.status, response.data))
     else:
         print(f"{response.status}\t{response.operation}")
         print(json.dumps(response.data, ensure_ascii=False, indent=2))
@@ -1219,6 +1295,33 @@ def _run_ask_command(args: argparse.Namespace) -> int:
                     "route": navigation_intent.public_summary(),
                     **response.data,
                 },
+            )
+            return _print_service_response(response, args.format)
+        try:
+            research_intent = parse_research_intent(repo_root, args.request)
+        except ResearchIntentError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        if research_intent is not None:
+            data_root = _active_project_data_root(args.data_root)
+            response = create_application_service(repo_root, data_root).execute(
+                ServiceRequest(
+                    client_kind="cli",
+                    operation="research.action",
+                    arguments={
+                        "request_text": args.request,
+                        "working_directory": str(
+                            (args.source if args.source is not None else Path.cwd()).resolve()
+                        ),
+                        **(
+                            {"context_text": args.context}
+                            if args.context is not None
+                            else {}
+                        ),
+                    },
+                    apply=args.apply,
+                    expected_plan_id=args.expected_plan,
+                    approval_id=args.approval_id,
+                )
             )
             return _print_service_response(response, args.format)
         if args.format is None:

@@ -1,0 +1,101 @@
+{
+  "schema_ref": "schemas/research-intent-policy.schema.json",
+  "schema_version": 1,
+  "max_request_bytes": 16384,
+  "explicit_research_phrases": [
+    "araştır",
+    "araştırma yap",
+    "kaynak araştırması yap",
+    "karşılaştır",
+    "kök nedenini bul",
+    "kök neden analizi yap",
+    "research",
+    "investigate",
+    "compare",
+    "find the root cause",
+    "perform root cause analysis"
+  ],
+  "mode_markers": {
+    "quick": [
+      "hızlı araştır",
+      "hızlıca araştır",
+      "kısa araştır",
+      "quick research",
+      "research briefly"
+    ],
+    "deep": [
+      "derinlemesine araştır",
+      "kapsamlı araştır",
+      "detaylı araştır",
+      "deep research",
+      "research thoroughly",
+      "comprehensive research"
+    ],
+    "comparison": [
+      "karşılaştır",
+      "karşılaştırmalı araştır",
+      "compare",
+      "comparison research"
+    ],
+    "root-cause": [
+      "kök neden",
+      "kök nedenini",
+      "kök sebep",
+      "root cause"
+    ]
+  },
+  "outcome_markers": {
+    "research-and-plan": [
+      "araştır ve planla",
+      "araştırıp planla",
+      "research and plan",
+      "investigate and plan"
+    ],
+    "research-and-implement": [
+      "araştır ve uygula",
+      "araştırıp uygula",
+      "araştır ve geliştir",
+      "araştır ve düzelt",
+      "research and implement",
+      "investigate and implement",
+      "research and fix"
+    ]
+  },
+  "project_references": [
+    "bu proje",
+    "bu projeyi",
+    "bu projede",
+    "projedeki",
+    "proje kodu",
+    "project codebase",
+    "this project",
+    "in this project"
+  ],
+  "context_references": [
+    "bunu",
+    "şunu",
+    "onu",
+    "bu konuyu",
+    "şu konuyu",
+    "this",
+    "that",
+    "it",
+    "this topic",
+    "that topic"
+  ],
+  "generic_nonresearch_phrases": [
+    "bunu yap",
+    "şunu yap",
+    "onu yap",
+    "do this",
+    "do that",
+    "do it"
+  ],
+  "invariants": {
+    "generic_action_is_research": false,
+    "intent_grants_authority": false,
+    "raw_request_in_public_summary": false,
+    "physical_paths_in_public_summary": false,
+    "credential_values_in_public_summary": false
+  }
+}

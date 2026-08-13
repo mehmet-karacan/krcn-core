@@ -51,6 +51,29 @@ Bu görünümde turuncu çerçeveli tek odak, Git ile sürümlenen KRCN Core'dur
 
 Core güncellemeleri de aynı disiplinle ilerler: incele, `dry-run` göster, yedekle, uygula, gerekiyorsa migration çalıştır, doğrula; doğrulama başarısız olursa otomatik rollback devreye girer. Tam sözleşme için `docs/specifications/UPDATE-MERGE-CONTRACT.md`.
 
+## Doğal dille araştırma
+
+Bir proje dizininde Codex, Claude Code veya OpenCode ile konuşurken uzun bir araştırma
+promptu hazırlaman gerekmez. Örneğin şunları söyleyebilirsin:
+
+```text
+Bu hatanın kök nedenini araştır.
+Bunu detaylı araştır.
+Spring Boot ile Quarkus'u karşılaştır.
+Bu yaklaşımı araştır ve planla.
+```
+
+İstemci aktif projeyi ve konuşmadaki konuyu KRCN Research Action'a taşır. `Bunu`
+ifadesinin konusu konuşmada yoksa sistem konu uydurmaz, yalnız eksik konuyu sorar.
+Araştırma sonucu uygulama gerektiriyorsa ayrıca doğrulanmış plan ve normal değişiklik
+onayı gerekir.
+
+Doğrudan terminal kullanımı için aynı doğal dil girişi şöyledir:
+
+```bash
+krcn ask "Bu projedeki rapor hatasını detaylı araştır"
+```
+
 ## Geliştirme durumu
 
 Faz 0 - Faz 15 tamamlandı. Proje kapsülü, KRCN home yerleşim v2, kesin Work Graph, fencing korumalı ajan kuyruğu, satır verisi toplamayan Oracle metadata RAG ve kanıt öncelikli birleşik retrieval hazırdır. Görev durumu, geçmişi ve teslim kanıtları ajan oturumundan veya vektör benzerliğinden değil proje kapsülündeki revizyonlu kayıtlardan okunur. Proje kaynaklarını kopyalamayan artımlı kaynak kod RAG indeksi aynı yerleşimde çalışır. Oracle package spec, body, şema yapısı ve bağımlılıkları kullanıcı politikaları korunarak ayrı sürümlenir. Yerel referans kaynaklarındaki kullanıcı verileri repository içine alınmamıştır. Faz detayları için `docs/plans/ROADMAP.md`.

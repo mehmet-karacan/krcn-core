@@ -107,6 +107,34 @@ execution method, not an implicit network adapter. KRCN does not automate the we
 session, extract browser credentials, or call a Gemini endpoint during that
 import.
 
+## Natural Research Action entry
+
+The user-facing entry point is ordinary language. Clients route explicit research
+verbs through the versioned `config/research-intent.json` policy and the
+transport-neutral `research.action` operation. Direct shell users may use the
+same path through `krcn ask "<request>"`. A user is not required to know the
+typed research request schema, role graph, provider assignment, or dispatch
+command.
+
+The classifier distinguishes quick, standard, deep, comparison, and root-cause
+research. It also distinguishes research-only, research-and-plan, and
+research-and-implement outcomes. These labels choose a workload and acceptance
+shape only. They do not grant provider, mutation, database, project, or model
+authority.
+
+The active client supplies the matched project and bounded conversational subject
+when they are available. An anaphoric request such as `bunu araştır` is accepted
+when its subject is present in that context. Without a resolvable subject, the
+request remains preserved and returns `choice-required`; the classifier never
+invents a topic. A generic phrase such as `bunu yap` is not silently reclassified
+as research.
+
+`research.action` prepares the existing exact Research V1A plan. After approval,
+the client may continue through the V1B delegation, model, provider, lease,
+fencing, and verifier boundaries. A research-and-implement outcome does not run
+source mutations directly; implementation requires verified research and its own
+reviewed exact plan.
+
 ## Research roles and results
 
 Independent research roles may run concurrently when the active client declares

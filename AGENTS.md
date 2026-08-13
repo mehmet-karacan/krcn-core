@@ -114,6 +114,15 @@ The machine-readable route is `config/intent-routing.json`. Client adapters must
 - Never use a stale index silently. Report unavailable or blocked domains and preserve the safe results from current domains.
 - Semantic similarity cannot override exact or authoritative evidence, and the unified service never starts a remote provider call implicitly.
 
+## Natural Research Actions
+
+- Users may request research in ordinary language. Phrases such as `detaylı araştır`, `kök nedenini araştır`, `karşılaştır`, `araştır ve planla`, and their English equivalents route through the canonical Research Action classifier.
+- The client supplies the matched project and the current conversational subject when available. The user does not need to name `research`, compose a structured prompt, select roles, or know KRCN CLI internals.
+- A reference such as `bunu araştır` uses bounded conversational context. If that context is unavailable, preserve the request and ask only for the missing subject. Never invent it.
+- Generic execution phrases such as `bunu yap` do not become research automatically. The coordinator may propose research when evidence is insufficient, but must preserve the user's actual requested outcome.
+- Research depth, comparison, root-cause analysis, planning, and implementation follow-up are workload choices, not authority. Provider access, user-data writes, and implementation remain behind their existing gates.
+- The machine-readable policy is `config/research-intent.json`. Client adapters must not maintain a separate research phrase list.
+
 ## Project capsules
 
 - Layout v2 groups project-scoped KRCN records under `.krcn/projects/<project-id>`.

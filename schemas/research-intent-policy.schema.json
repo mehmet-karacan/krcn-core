@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:research-intent-policy:1",
+  "title": "KRCN Core natural research intent policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "max_request_bytes",
+    "explicit_research_phrases",
+    "mode_markers",
+    "outcome_markers",
+    "project_references",
+    "context_references",
+    "generic_nonresearch_phrases",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/research-intent-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "max_request_bytes": {
+      "type": "integer",
+      "minimum": 256,
+      "maximum": 65536
+    },
+    "explicit_research_phrases": {
+      "$ref": "#/$defs/phrases"
+    },
+    "mode_markers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "quick",
+        "deep",
+        "comparison",
+        "root-cause"
+      ],
+      "properties": {
+        "quick": {
+          "$ref": "#/$defs/phrases"
+        },
+        "deep": {
+          "$ref": "#/$defs/phrases"
+        },
+        "comparison": {
+          "$ref": "#/$defs/phrases"
+        },
+        "root-cause": {
+          "$ref": "#/$defs/phrases"
+        }
+      }
+    },
+    "outcome_markers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "research-and-plan",
+        "research-and-implement"
+      ],
+      "properties": {
+        "research-and-plan": {
+          "$ref": "#/$defs/phrases"
+        },
+        "research-and-implement": {
+          "$ref": "#/$defs/phrases"
+        }
+      }
+    },
+    "project_references": {
+      "$ref": "#/$defs/phrases"
+    },
+    "context_references": {
+      "$ref": "#/$defs/phrases"
+    },
+    "generic_nonresearch_phrases": {
+      "$ref": "#/$defs/phrases"
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "generic_action_is_research",
+        "intent_grants_authority",
+        "raw_request_in_public_summary",
+        "physical_paths_in_public_summary",
+        "credential_values_in_public_summary"
+      ],
+      "properties": {
+        "generic_action_is_research": {
+          "const": false
+        },
+        "intent_grants_authority": {
+          "const": false
+        },
+        "raw_request_in_public_summary": {
+          "const": false
+        },
+        "physical_paths_in_public_summary": {
+          "const": false
+        },
+        "credential_values_in_public_summary": {
+          "const": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "phrases": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      }
+    }
+  }
+}

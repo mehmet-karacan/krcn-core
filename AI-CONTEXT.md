@@ -85,6 +85,7 @@ Use `retrieval.unified` for a project-scoped question that can require Work Grap
 - Other AI clients and plugins use this file or `.ai/repository-context.json`.
 - MCP, SDK, plugin, IDE, and automation adapters use the transport-neutral services in `src/krcn_core/application.py` for supported actions.
 - The CLI exposes the same services through `krcn ask`, `krcn project`, `krcn portability`, `krcn knowledge`, `krcn retrieval`, `krcn context-package`, and `krcn memory`; it does not define separate product rules.
+- Explicit natural-language research requests route through `research.action`. Carry the matched project and bounded conversational subject for phrases such as `bunu detaylı araştır`; if the subject is unavailable, preserve the request and ask only for that missing context. The canonical vocabulary and safety rules are in `config/research-intent.json`.
 - Every action-capable client creates its service through `create_application_service`. Without an explicit data root, this resolves `KRCN_HOME` and then the platform default. A client must not invent a repository-local user-data path.
 - Future adapters must expose the same canonical context and application contracts instead of maintaining a separate copy or bypassing their safety gates.
 

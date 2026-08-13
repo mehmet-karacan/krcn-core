@@ -79,6 +79,7 @@
         "work.query",
         "work.history",
         "research.prepare",
+        "research.action",
         "research.import-response",
         "research.status",
         "research.availability",

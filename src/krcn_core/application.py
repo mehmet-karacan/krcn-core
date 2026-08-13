@@ -147,6 +147,7 @@ from .project_integration import (
 )
 from .project_learning_intent import parse_project_learning_intent
 from .project_context import (
+    ProjectContextError,
     build_project_resume_summary,
     project_navigation_menu,
     resolve_current_project,
@@ -194,6 +195,7 @@ from .research_orchestration import (
     prepare_research_result_import,
     prepare_research_run,
 )
+from .research_intent import ResearchIntentError, parse_research_intent
 from .research_execution import (
     ExecutableResolver,
     ProcessRunner,
@@ -336,6 +338,7 @@ OPERATIONS = {
     "work.query",
     "work.history",
     "research.prepare",
+    "research.action",
     "research.import-response",
     "research.status",
     "research.availability",
@@ -686,6 +689,7 @@ class KrcnApplicationService:
             "work.query": self._query_work,
             "work.history": self._work_history,
             "research.prepare": self._prepare_research,
+            "research.action": self._research_action,
             "research.import-response": self._import_research_response,
             "research.status": self._research_status,
             "research.availability": self._research_availability,
@@ -1018,6 +1022,159 @@ class KrcnApplicationService:
             "result": result,
             "applied": True,
             "no_op": plan.no_op,
+        }
+
+    def _research_action(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"request_text", "working_directory"},
+            optional={"project_id", "context_text"},
+        )
+        working_directory = Path(
+            _string_argument(request.arguments, "working_directory")
+        )
+        if not working_directory.is_absolute():
+            raise ApplicationServiceError("working_directory must be absolute")
+        project_ref = request.arguments.get("project_id")
+        if project_ref is not None:
+            project_ref = _identifier_argument(request.arguments, "project_id")
+        request_text = _string_argument(request.arguments, "request_text")
+        context_text = request.arguments.get("context_text")
+        if context_text is not None and not isinstance(context_text, str):
+            raise ApplicationServiceError("context_text must be a string")
+        try:
+            try:
+                match = resolve_current_project(
+                    self._store,
+                    working_directory=working_directory,
+                    project_ref=project_ref,
+                    request_text=request_text,
+                )
+            except ProjectContextError as exc:
+                if not str(exc).startswith("project selection is ambiguous:"):
+                    raise ApplicationServiceError(str(exc)) from exc
+                intent = parse_research_intent(
+                    self._repo_root,
+                    request_text,
+                    context_text=context_text,
+                )
+                if intent is None:
+                    raise ApplicationServiceError(
+                        "research action was not recognized"
+                    )
+                if request.apply:
+                    raise ApplicationServiceError(
+                        "research action needs one explicit project selection"
+                    )
+                return "choice-required", {
+                    "route": intent.public_summary(),
+                    "plan": None,
+                    "applied": False,
+                    "request_preserved": True,
+                    "selection_reason": "multiple-projects-mentioned",
+                    "navigation": project_navigation_menu(self._store),
+                }
+            if project_ref is not None and match is None:
+                if request.apply:
+                    raise ApplicationServiceError(
+                        "research action project is not registered"
+                    )
+                intent = parse_research_intent(
+                    self._repo_root,
+                    request_text,
+                    context_text=context_text,
+                )
+                if intent is None:
+                    raise ApplicationServiceError(
+                        "research action was not recognized"
+                    )
+                return "choice-required", {
+                    "route": intent.public_summary(),
+                    "plan": None,
+                    "applied": False,
+                    "request_preserved": True,
+                    "selection_reason": "project-not-found",
+                    "navigation": project_navigation_menu(self._store),
+                }
+            intent = parse_research_intent(
+                self._repo_root,
+                request_text,
+                project_id=match.project.record_id if match is not None else None,
+                context_text=context_text,
+            )
+        except (ResearchIntentError, ValueError) as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        if intent is None:
+            raise ApplicationServiceError("research action was not recognized")
+        route = intent.public_summary()
+        if intent.needs_context:
+            if request.apply:
+                raise ApplicationServiceError(
+                    "research action needs context before it can be applied"
+                )
+            data: dict[str, object] = {
+                "route": route,
+                "plan": None,
+                "applied": False,
+                "request_preserved": True,
+            }
+            if intent.needs_project:
+                data["navigation"] = project_navigation_menu(self._store)
+            return "choice-required", data
+        try:
+            plan = prepare_research_run(
+                self._repo_root,
+                self._store,
+                self._ownership,
+                intent.research_request(),
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        next_stage = (
+            "project-work-item-and-dispatch-planning"
+            if intent.project_id is not None
+            else "operator-mediated-or-client-research"
+        )
+        if not request.apply:
+            return "planned", {
+                "route": route,
+                "plan": plan.public_summary(),
+                "applied": False,
+                "no_op": plan.no_op,
+                "next_stage": next_stage,
+                "dispatch_ready": False,
+                "automatic_implementation": False,
+            }
+        authorizations = (
+            {}
+            if plan.no_op
+            else self._authorize_effect_plans(
+                request,
+                plan.plan_id,
+                plan.effect_plans,
+                "natural-language research preparation",
+            )
+        )
+        try:
+            result = apply_research_run(
+                plan,
+                authorizations,
+                expected_plan_id=request.expected_plan_id or "",
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "applied", {
+            "route": route,
+            "plan": plan.public_summary(),
+            "result": result,
+            "applied": True,
+            "no_op": plan.no_op,
+            "next_stage": next_stage,
+            "dispatch_ready": False,
+            "automatic_implementation": False,
         }
 
     def _import_research_response(

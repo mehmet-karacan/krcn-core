@@ -43,6 +43,9 @@ BOOTSTRAP_BODY = """<!-- KRCN-CORE:BEGIN -->
 - Prefer `native-parallel` and run independent work units concurrently. Report `native-sequential` or `isolated-role-fallback` as degraded execution. If the decision is `delegation-unavailable` or `execution_allowed` is false, stop project execution and report the limitation instead of silently doing the work in the main agent.
 - General conversation, status reporting, and exact identifier lookup are the only coordinator exceptions. A capability or delegation decision never grants mutation, provider, model, database, or project authority; preserve every existing exact-plan and approval gate.
 - Before delegating work or choosing a model, use `krcn model resolve` with a role or workload. Prefer the first supported client slot; if the client cannot select models, keep its current default. Embedding routes retain their separate provider approval gate.
+- Treat natural requests such as `detaylı araştır`, `kök nedenini araştır`, `karşılaştır`, `araştır ve planla`, and their English equivalents as Research Actions. Route them through `research.action` or `krcn ask` while supplying the current project and conversational subject when available. The user does not need to know KRCN research commands or write a structured prompt.
+- If `bunu araştır` refers to an earlier message, carry that subject as bounded context. If the subject or project is genuinely unavailable, preserve the request and ask only for the missing choice. Never invent the topic. A generic `bunu yap` request is not automatically research.
+- After an approved Research Action preparation, continue through the reviewed research delegation and provider gates. `araştır ve uygula` requests still require verified research, a separate implementation plan, and the normal mutation approval; the phrase itself grants no authority.
 <!-- KRCN-CORE:END -->"""
 
 

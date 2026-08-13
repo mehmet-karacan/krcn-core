@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:research-intent-result:1",
+  "title": "KRCN Core natural research intent result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "request_sha256",
+    "intent_sha256",
+    "objective_sha256",
+    "mode",
+    "outcome",
+    "scope_preference",
+    "project_id",
+    "needs_context",
+    "needs_project",
+    "status",
+    "next_action",
+    "authority_granted",
+    "mutation_authorized",
+    "provider_authorized",
+    "raw_request_included",
+    "physical_paths_included",
+    "credential_values_included"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/research-intent-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "request_sha256": {
+      "$ref": "#/$defs/digest"
+    },
+    "intent_sha256": {
+      "$ref": "#/$defs/digest"
+    },
+    "objective_sha256": {
+      "$ref": "#/$defs/digest"
+    },
+    "mode": {
+      "enum": [
+        "quick",
+        "standard",
+        "deep",
+        "comparison",
+        "root-cause"
+      ]
+    },
+    "outcome": {
+      "enum": [
+        "research-only",
+        "research-and-plan",
+        "research-and-implement"
+      ]
+    },
+    "scope_preference": {
+      "enum": [
+        "project",
+        "global",
+        "auto"
+      ]
+    },
+    "project_id": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "needs_context": {
+      "type": "boolean"
+    },
+    "needs_project": {
+      "type": "boolean"
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "needs-context"
+      ]
+    },
+    "next_action": {
+      "enum": [
+        "prepare-research",
+        "provide-context",
+        "select-project"
+      ]
+    },
+    "authority_granted": {
+      "const": false
+    },
+    "mutation_authorized": {
+      "const": false
+    },
+    "provider_authorized": {
+      "const": false
+    },
+    "raw_request_included": {
+      "const": false
+    },
+    "physical_paths_included": {
+      "const": false
+    },
+    "credential_values_included": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
