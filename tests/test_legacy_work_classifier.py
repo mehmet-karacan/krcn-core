@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -15,6 +16,7 @@ if str(SRC_ROOT) not in sys.path:
 from krcn_core.legacy_work_classifier import (  # noqa: E402
     LegacyWorkClassifierError,
     classify_legacy_work_source,
+    resolve_legacy_work_reviews,
 )
 from krcn_core.work_import import parse_work_import_request  # noqa: E402
 
@@ -76,6 +78,60 @@ class LegacyWorkClassifierTests(unittest.TestCase):
         self.assertEqual(result.reviews[0].code, "conflicting-task-id")
         with self.assertRaises(LegacyWorkClassifierError):
             result.work_import_request()
+
+    def test_explicit_split_preserves_conflicting_tasks_as_retrievable_variants(self) -> None:
+        self.write("aktif/G-20260812-001.md", b"active variant")
+        self.write("arsiv/20260812_G-20260812-001_ARCHIVE.md", b"archive variant")
+        classification = classify_legacy_work_source(self.root, project_id="gpu-fusion")
+
+        with self.assertRaises(LegacyWorkClassifierError):
+            resolve_legacy_work_reviews(classification, decision="merge")
+        resolution = resolve_legacy_work_reviews(
+            classification,
+            decision="split-conflicts",
+        )
+        request = resolution.work_import_request()
+        _project_id, _inventory, candidates = parse_work_import_request(request)
+        variants = [candidate for candidate in candidates if "g-20260812-001" in candidate.work_item_id]
+
+        self.assertEqual(len(variants), 2)
+        self.assertEqual({candidate.status for candidate in variants}, {"active", "archived"})
+        self.assertTrue(all("g-20260812-001" in candidate.work_item_id for candidate in variants))
+        self.assertTrue(all("G-20260812-001" in candidate.title for candidate in variants))
+        summary = resolution.public_summary()
+        self.assertEqual(summary["resolved_identity_count"], 1)
+        self.assertEqual(summary["splits"][0]["variant_count"], 2)
+        serialized = json.dumps(summary, ensure_ascii=False)
+        self.assertNotIn(str(self.root), serialized)
+        self.assertNotIn("active variant", serialized)
+
+    @unittest.skipUnless(
+        os.environ.get("KRCN_LEGACY_WORK_SOURCE"),
+        "requires the explicit read-only legacy work source",
+    )
+    def test_real_source_split_preview_resolves_five_known_identities(self) -> None:
+        source = Path(os.environ["KRCN_LEGACY_WORK_SOURCE"])
+        classification = classify_legacy_work_source(source, project_id="gpu-fusion")
+        resolution = resolve_legacy_work_reviews(
+            classification,
+            decision="split-conflicts",
+        )
+        summary = resolution.public_summary()
+
+        self.assertEqual(summary["resolved_identity_count"], 5)
+        self.assertEqual(summary["unresolved_review_count"], 0)
+        self.assertTrue(summary["import_ready"])
+        self.assertEqual(
+            {item["external_id"] for item in summary["splits"]},
+            {
+                "G-20260724-006",
+                "G-20260724-007",
+                "G-20260724-011",
+                "G-20260810-008",
+                "G-20260812-001",
+            },
+        )
+        self.assertNotIn(str(source), json.dumps(summary, ensure_ascii=False))
 
     def test_sensitive_source_reference_fails_closed(self) -> None:
         self.write("aktif/Talep_2026/123456/token=secret-value.txt")

@@ -124,6 +124,7 @@ class LegacyWorkClassification:
     source_inventory: WorkSourceInventory
     candidates: tuple[Mapping[str, object], ...]
     reviews: tuple[ClassificationReview, ...]
+    bucket_statuses: Mapping[str, str] = field(repr=False)
 
     @property
     def import_ready(self) -> bool:
@@ -139,6 +140,139 @@ class LegacyWorkClassification:
             "source_inventory": self.source_inventory.as_dict(),
             "candidates": [dict(candidate) for candidate in self.candidates],
         }
+
+
+@dataclass(frozen=True)
+class ConflictSplitSummary:
+    external_id: str
+    work_item_ids: tuple[str, ...]
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "external_id": self.external_id,
+            "variant_count": len(self.work_item_ids),
+            "work_item_ids": list(self.work_item_ids),
+        }
+
+
+@dataclass(frozen=True)
+class LegacyWorkReviewResolution:
+    project_id: str
+    source_inventory: WorkSourceInventory
+    candidates: tuple[Mapping[str, object], ...]
+    unresolved_reviews: tuple[ClassificationReview, ...]
+    splits: tuple[ConflictSplitSummary, ...]
+
+    @property
+    def import_ready(self) -> bool:
+        return bool(self.candidates) and not self.unresolved_reviews
+
+    def work_import_request(self) -> dict[str, object]:
+        if not self.import_ready:
+            raise LegacyWorkClassifierError("legacy work review resolution is incomplete")
+        return {
+            "schema_ref": "schemas/work-import-request.schema.json",
+            "schema_version": 1,
+            "project_id": self.project_id,
+            "source_inventory": self.source_inventory.as_dict(),
+            "candidates": [dict(candidate) for candidate in self.candidates],
+        }
+
+    def public_summary(self) -> dict[str, object]:
+        return {
+            "schema_ref": "schemas/legacy-work-review-resolution.schema.json",
+            "schema_version": 1,
+            "project_id": self.project_id,
+            "decision": "split-conflicts",
+            "resolved_identity_count": len(self.splits),
+            "splits": [split.as_dict() for split in self.splits],
+            "unresolved_review_count": len(self.unresolved_reviews),
+            "import_ready": self.import_ready,
+            "paths_disclosed": False,
+        }
+
+
+def _reference_bucket(reference: str, logical_root: str) -> str:
+    prefix = logical_root.rstrip("/") + "/"
+    if not reference.startswith(prefix):
+        raise LegacyWorkClassifierError("review source reference is outside its inventory")
+    remainder = reference[len(prefix):]
+    parts = PurePosixPath(remainder).parts
+    if not parts:
+        raise LegacyWorkClassifierError("review source reference has no source bucket")
+    return parts[0].casefold()
+
+
+def resolve_legacy_work_reviews(
+    classification: LegacyWorkClassification,
+    *,
+    decision: str,
+) -> LegacyWorkReviewResolution:
+    """Resolve task identity conflicts only after an explicit split decision."""
+
+    if decision != "split-conflicts":
+        raise LegacyWorkClassifierError("legacy work review resolution decision is unsupported")
+    conflict_refs: dict[str, set[str]] = {}
+    unresolved: list[ClassificationReview] = []
+    for review in classification.reviews:
+        if review.code != "conflicting-task-id" or not review.external_id:
+            unresolved.append(review)
+            continue
+        conflict_refs.setdefault(review.external_id, set()).update(review.source_refs)
+    entry_by_ref = {
+        entry.source_ref: (entry.sha256, entry.size_bytes)
+        for entry in classification.source_inventory.entries
+    }
+    candidates = {
+        str(candidate["work_item_id"]): dict(candidate)
+        for candidate in classification.candidates
+    }
+    splits: list[ConflictSplitSummary] = []
+    for external_id, refs in sorted(conflict_refs.items()):
+        base_id = f"{classification.project_id}-task-{_portable_slug(external_id)}"
+        candidates.pop(base_id, None)
+        variants: list[str] = []
+        for reference in sorted(refs):
+            entry = entry_by_ref.get(reference)
+            if entry is None:
+                raise LegacyWorkClassifierError("review source reference is absent from inventory")
+            digest = entry[0]
+            bucket = _reference_bucket(reference, classification.source_inventory.logical_root)
+            status = classification.bucket_statuses.get(bucket)
+            if status is None:
+                raise LegacyWorkClassifierError("review source bucket is not classified")
+            file_name = PurePosixPath(reference).name
+            file_slug = _portable_slug(PurePosixPath(reference).stem)[:48].rstrip("-")
+            variant_id = (
+                f"{base_id}-variant-{_portable_slug(bucket)}-{file_slug}-{digest[:12]}"
+            )
+            if variant_id in candidates:
+                raise LegacyWorkClassifierError("split conflict variant identity is duplicated")
+            draft = _CandidateDraft(
+                variant_id,
+                "task",
+                external_id,
+                bucket,
+                status,
+                f"Task {external_id} variant: {file_name}",
+                {reference},
+                set(),
+            )
+            candidate = draft.as_import_candidate(entry_by_ref)
+            candidate["description"] = (
+                f"Legacy task identity {external_id}; source bucket: {bucket}; "
+                "kept as a separate reviewed variant."
+            )
+            candidates[variant_id] = candidate
+            variants.append(variant_id)
+        splits.append(ConflictSplitSummary(external_id, tuple(variants)))
+    return LegacyWorkReviewResolution(
+        classification.project_id,
+        classification.source_inventory,
+        tuple(candidates[key] for key in sorted(candidates)),
+        tuple(sorted(unresolved, key=lambda value: (value.code, value.external_id or "", value.source_refs))),
+        tuple(splits),
+    )
 
     def as_dict(self) -> dict[str, object]:
         return {
@@ -289,4 +423,5 @@ def classify_legacy_work_source(
     return LegacyWorkClassification(
         project_id, inventory, candidates,
         tuple(sorted(reviews, key=lambda value: (value.code, value.external_id or "", value.source_refs))),
+        buckets,
     )

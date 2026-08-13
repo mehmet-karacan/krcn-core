@@ -19,6 +19,15 @@ Filename suffixes such as `-B` do not create a new authoritative task identity.
 Multiple files claiming the same base identity stop import readiness and
 produce a review record. The classifier does not silently merge those files.
 
+The default review state remains fail-closed. A caller may explicitly pass the
+`split-conflicts` resolution decision. Each conflicting source then becomes a
+separate candidate whose stable identifier contains the common external task
+identity, a portable source filename token, and a source digest token. This
+preserves exact and lexical retrieval by the shared task identity without
+silently choosing or discarding one source. The public resolution summary shows
+only external identities, variant counts, and portable WorkItem identifiers.
+It does not disclose source paths or source contents.
+
 Every source file is represented only by a portable logical reference, SHA-256
 digest, and byte size. Binary files are hashed but never read into candidate
 text. Sensitive paths, secret-shaped references, symbolic links, absolute
