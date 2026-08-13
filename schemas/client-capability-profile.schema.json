@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:client-capability-profile:1",
+  "title": "KRCN Core session-bound client capability profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "session_id",
+    "client_id",
+    "capabilities",
+    "max_parallel_agents",
+    "selected_mode",
+    "policy_digest",
+    "profile_digest",
+    "session_bound",
+    "declaration_grants_authority",
+    "secret_values_included",
+    "absolute_paths_included"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/client-capability-profile.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "client_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "native_subagents",
+        "parallel_subagents",
+        "per_agent_model_selection",
+        "agent_cancellation",
+        "structured_results",
+        "isolated_role_execution"
+      ],
+      "properties": {
+        "native_subagents": {
+          "type": "boolean"
+        },
+        "parallel_subagents": {
+          "type": "boolean"
+        },
+        "per_agent_model_selection": {
+          "type": "boolean"
+        },
+        "agent_cancellation": {
+          "type": "boolean"
+        },
+        "structured_results": {
+          "type": "boolean"
+        },
+        "isolated_role_execution": {
+          "type": "boolean"
+        }
+      }
+    },
+    "max_parallel_agents": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 128
+    },
+    "selected_mode": {
+      "enum": [
+        "native-parallel",
+        "native-sequential",
+        "isolated-role-fallback",
+        "delegation-unavailable"
+      ]
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "profile_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "session_bound": {
+      "const": true
+    },
+    "declaration_grants_authority": {
+      "const": false
+    },
+    "secret_values_included": {
+      "const": false
+    },
+    "absolute_paths_included": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

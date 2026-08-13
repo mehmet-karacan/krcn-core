@@ -1,0 +1,48 @@
+{
+  "schema_ref": "schemas/delegation-policy.schema.json",
+  "schema_version": 1,
+  "revision": 1,
+  "meaningful_project_work": [
+    "project-analysis",
+    "project-design",
+    "project-implementation",
+    "project-verification",
+    "project-integration",
+    "project-knowledge-update",
+    "project-work-import"
+  ],
+  "coordinator_exceptions": [
+    "general-chat",
+    "status",
+    "exact-lookup"
+  ],
+  "coordinator_boundary": {
+    "responsibilities": [
+      "classify-request",
+      "build-context-package",
+      "decompose-work",
+      "assign-subagents",
+      "resolve-dependencies",
+      "synthesize-results",
+      "report-delegation-limits"
+    ],
+    "prohibited_direct_actions": [
+      "inspect-project-source",
+      "perform-domain-analysis",
+      "modify-project-source",
+      "run-project-tests",
+      "self-verify-project-work"
+    ]
+  },
+  "parallelism": {
+    "prefer_parallel_when_independent": true,
+    "minimum_parallel_agents": 2
+  },
+  "invariants": {
+    "meaningful_project_work_requires_delegation": true,
+    "coordinator_performs_project_work": false,
+    "unknown_work_class_allowed": false,
+    "client_declaration_grants_authority": false,
+    "delegation_unavailable_blocks_project_work": true
+  }
+}

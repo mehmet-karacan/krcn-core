@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:delegation-decision:1",
+  "title": "KRCN Core session delegation decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "session_id",
+    "client_id",
+    "work_class",
+    "project_matched",
+    "delegation_required",
+    "selected_mode",
+    "execution_allowed",
+    "parallel_preferred",
+    "coordinator_only",
+    "decision_basis",
+    "profile_digest",
+    "policy_digest",
+    "decision_digest",
+    "client_declaration_grants_authority"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/delegation-decision.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "client_id": {
+      "$ref": "#/$defs/id"
+    },
+    "work_class": {
+      "$ref": "#/$defs/id"
+    },
+    "project_matched": {
+      "type": "boolean"
+    },
+    "delegation_required": {
+      "type": "boolean"
+    },
+    "selected_mode": {
+      "enum": [
+        "native-parallel",
+        "native-sequential",
+        "isolated-role-fallback",
+        "delegation-unavailable"
+      ]
+    },
+    "execution_allowed": {
+      "type": "boolean"
+    },
+    "parallel_preferred": {
+      "type": "boolean"
+    },
+    "coordinator_only": {
+      "type": "boolean"
+    },
+    "decision_basis": {
+      "enum": [
+        "delegated-project-work",
+        "delegation-capability-unavailable",
+        "coordinator-exception",
+        "project-context-unmatched"
+      ]
+    },
+    "profile_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "decision_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "client_declaration_grants_authority": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

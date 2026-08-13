@@ -1,0 +1,45 @@
+{
+  "schema_ref": "schemas/client-capability-policy.schema.json",
+  "schema_version": 1,
+  "revision": 1,
+  "capabilities": [
+    "native_subagents",
+    "parallel_subagents",
+    "per_agent_model_selection",
+    "agent_cancellation",
+    "structured_results",
+    "isolated_role_execution"
+  ],
+  "mode_order": [
+    "native-parallel",
+    "native-sequential",
+    "isolated-role-fallback",
+    "delegation-unavailable"
+  ],
+  "mode_requirements": {
+    "native-parallel": [
+      "native_subagents",
+      "parallel_subagents",
+      "structured_results"
+    ],
+    "native-sequential": [
+      "native_subagents",
+      "structured_results"
+    ],
+    "isolated-role-fallback": [
+      "structured_results",
+      "isolated_role_execution"
+    ],
+    "delegation-unavailable": []
+  },
+  "limits": {
+    "maximum_parallel_agents": 32
+  },
+  "invariants": {
+    "session_bound": true,
+    "declaration_grants_authority": false,
+    "secret_values_persisted": false,
+    "absolute_paths_persisted": false,
+    "mode_selection_fail_closed": true
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:delegation-policy:1",
+  "title": "KRCN Core coordinator delegation policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "revision",
+    "meaningful_project_work",
+    "coordinator_exceptions",
+    "coordinator_boundary",
+    "parallelism",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/delegation-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "meaningful_project_work": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "coordinator_exceptions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "coordinator_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "responsibilities",
+        "prohibited_direct_actions"
+      ],
+      "properties": {
+        "responsibilities": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "prohibited_direct_actions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        }
+      }
+    },
+    "parallelism": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "prefer_parallel_when_independent",
+        "minimum_parallel_agents"
+      ],
+      "properties": {
+        "prefer_parallel_when_independent": {
+          "const": true
+        },
+        "minimum_parallel_agents": {
+          "type": "integer",
+          "minimum": 2
+        }
+      }
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "meaningful_project_work_requires_delegation",
+        "coordinator_performs_project_work",
+        "unknown_work_class_allowed",
+        "client_declaration_grants_authority",
+        "delegation_unavailable_blocks_project_work"
+      ],
+      "properties": {
+        "meaningful_project_work_requires_delegation": {
+          "const": true
+        },
+        "coordinator_performs_project_work": {
+          "const": false
+        },
+        "unknown_work_class_allowed": {
+          "const": false
+        },
+        "client_declaration_grants_authority": {
+          "const": false
+        },
+        "delegation_unavailable_blocks_project_work": {
+          "const": true
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    }
+  }
+}

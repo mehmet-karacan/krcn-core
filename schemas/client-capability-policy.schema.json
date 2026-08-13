@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:client-capability-policy:1",
+  "title": "KRCN Core client capability negotiation policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "revision",
+    "capabilities",
+    "mode_order",
+    "mode_requirements",
+    "limits",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/client-capability-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "capabilities": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "const": "native_subagents"
+        },
+        {
+          "const": "parallel_subagents"
+        },
+        {
+          "const": "per_agent_model_selection"
+        },
+        {
+          "const": "agent_cancellation"
+        },
+        {
+          "const": "structured_results"
+        },
+        {
+          "const": "isolated_role_execution"
+        }
+      ],
+      "items": false,
+      "minItems": 6,
+      "maxItems": 6
+    },
+    "mode_order": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "const": "native-parallel"
+        },
+        {
+          "const": "native-sequential"
+        },
+        {
+          "const": "isolated-role-fallback"
+        },
+        {
+          "const": "delegation-unavailable"
+        }
+      ],
+      "items": false,
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "mode_requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "native-parallel",
+        "native-sequential",
+        "isolated-role-fallback",
+        "delegation-unavailable"
+      ],
+      "properties": {
+        "native-parallel": {
+          "const": [
+            "native_subagents",
+            "parallel_subagents",
+            "structured_results"
+          ]
+        },
+        "native-sequential": {
+          "const": [
+            "native_subagents",
+            "structured_results"
+          ]
+        },
+        "isolated-role-fallback": {
+          "const": [
+            "structured_results",
+            "isolated_role_execution"
+          ]
+        },
+        "delegation-unavailable": {
+          "const": []
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "maximum_parallel_agents"
+      ],
+      "properties": {
+        "maximum_parallel_agents": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 128
+        }
+      }
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "session_bound",
+        "declaration_grants_authority",
+        "secret_values_persisted",
+        "absolute_paths_persisted",
+        "mode_selection_fail_closed"
+      ],
+      "properties": {
+        "session_bound": {
+          "const": true
+        },
+        "declaration_grants_authority": {
+          "const": false
+        },
+        "secret_values_persisted": {
+          "const": false
+        },
+        "absolute_paths_persisted": {
+          "const": false
+        },
+        "mode_selection_fail_closed": {
+          "const": true
+        }
+      }
+    }
+  }
+}
