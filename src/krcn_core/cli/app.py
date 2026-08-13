@@ -31,7 +31,11 @@ from krcn_core.model_health import OpenAICompatibleModelHealthProbe
 from krcn_core.secret_provider import OpenCodeSecretProvider
 from krcn_core.repository_context import main as context_main
 from krcn_core.user_home import resolve_user_home
-from krcn_core.work_intent import WorkIntentError, parse_work_create_intent
+from krcn_core.work_intent import (
+    WorkIntentError,
+    parse_work_create_intent,
+    parse_work_document_intent,
+)
 
 from .registry import compatibility_registry
 
@@ -382,6 +386,20 @@ def build_parser() -> argparse.ArgumentParser:
     )
     work_import.add_argument("--source-root", type=Path, required=True)
     _add_phase_four_options(work_import, mutation=True)
+    work_copy_documents = work_commands.add_parser(
+        "copy-documents-initial",
+        help="Copy initial request, defect, and task documents into project-local data",
+    )
+    work_copy_documents.add_argument("project_id")
+    work_copy_documents.add_argument("--db-scripts-root", type=Path, required=True)
+    work_copy_documents.add_argument("--legacy-root", type=Path, required=True)
+    _add_service_options(work_copy_documents, mutation=True)
+    work_process_documents = work_commands.add_parser(
+        "process-documents",
+        help="Update Work Graph and semantic retrieval from project-local documents",
+    )
+    work_process_documents.add_argument("project_id")
+    _add_service_options(work_process_documents, mutation=True)
     work_index_semantic = work_commands.add_parser(
         "index-semantic",
         help="Plan or build the local project work semantic index",
@@ -936,6 +954,29 @@ def _run_ask_command(args: argparse.Namespace) -> int:
     try:
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
         try:
+            document_intent = parse_work_document_intent(args.request)
+        except WorkIntentError:
+            document_intent = None
+        if document_intent is not None:
+            data_root = _active_project_data_root(args.data_root)
+            response = create_application_service(repo_root, data_root).execute(
+                ServiceRequest(
+                    client_kind="cli",
+                    operation="work.documents.process",
+                    arguments=document_intent.service_arguments(),
+                    apply=args.apply,
+                    expected_plan_id=args.expected_plan,
+                    approval_id=args.approval_id,
+                )
+            )
+            response = ServiceResponse(
+                request_id=response.request_id,
+                operation=response.operation,
+                status=response.status,
+                data={"route": document_intent.public_summary(), **response.data},
+            )
+            return _print_service_response(response, args.format)
+        try:
             work_intent = parse_work_create_intent(args.request)
         except WorkIntentError:
             work_intent = None
@@ -1119,6 +1160,8 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
     elif args.command == "work" and args.work_command in {
         "put",
         "import",
+        "copy-documents-initial",
+        "process-documents",
         "index-semantic",
         "search",
         "query",
@@ -1133,6 +1176,16 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
                 "source_root": str(args.source_root.resolve()),
                 "import_request": _load_phase_four_arguments(args.request_file),
             }
+        elif args.work_command == "copy-documents-initial":
+            operation = "work.documents.copy-initial"
+            arguments = {
+                "project_id": args.project_id,
+                "db_scripts_root": str(args.db_scripts_root.resolve()),
+                "legacy_root": str(args.legacy_root.resolve()),
+            }
+        elif args.work_command == "process-documents":
+            operation = "work.documents.process"
+            arguments = {"project_id": args.project_id}
         else:
             operation = f"work.{args.work_command}"
             arguments = _load_phase_four_arguments(args.request_file)

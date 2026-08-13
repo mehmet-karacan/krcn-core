@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-document-manifest:1",
+  "title": "KRCN project-local work document manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "project_id",
+    "source_inventory_digests",
+    "entries",
+    "source_files_copied",
+    "source_files_modified",
+    "source_files_deleted",
+    "generated_content_separated",
+    "absolute_paths_included",
+    "manifest_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-document-manifest.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "source_inventory_digests": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "target_ref",
+          "sha256",
+          "size_bytes",
+          "source_id",
+          "source_ref",
+          "work_item_ids",
+          "semantic_policy",
+          "sensitivity_classes"
+        ],
+        "properties": {
+          "target_ref": {
+            "type": "string",
+            "pattern": "^work-documents/"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "source_id": {
+            "enum": [
+              "db-scripts",
+              "mk-hub"
+            ]
+          },
+          "source_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "work_item_ids": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9-]*$"
+            }
+          },
+          "semantic_policy": {
+            "enum": [
+              "safe-text",
+              "metadata-only",
+              "excluded-sensitive"
+            ]
+          },
+          "sensitivity_classes": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "source_files_copied": {
+      "const": true
+    },
+    "source_files_modified": {
+      "const": false
+    },
+    "source_files_deleted": {
+      "const": false
+    },
+    "generated_content_separated": {
+      "const": true
+    },
+    "absolute_paths_included": {
+      "const": false
+    },
+    "manifest_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

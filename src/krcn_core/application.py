@@ -232,6 +232,11 @@ from .work_import import (
     parse_work_import_request,
     prepare_work_import,
 )
+from .work_documents import (
+    apply_initial_work_document_copy,
+    prepare_initial_work_document_copy,
+    prepare_work_document_processing,
+)
 from .work_retrieval import search_work
 from .work_semantic_index import (
     apply_work_semantic_index,
@@ -292,6 +297,8 @@ OPERATIONS = {
     "memory.lifecycle",
     "work.item.put",
     "work.import",
+    "work.documents.copy-initial",
+    "work.documents.process",
     "work.index-semantic",
     "work.search",
     "work.query",
@@ -607,6 +614,8 @@ class KrcnApplicationService:
             "memory.lifecycle": self._change_memory_lifecycle,
             "work.item.put": self._put_work_item,
             "work.import": self._import_work,
+            "work.documents.copy-initial": self._copy_initial_work_documents,
+            "work.documents.process": self._process_work_documents,
             "work.index-semantic": self._index_work_semantic,
             "work.search": self._search_work,
             "work.query": self._query_work,
@@ -743,6 +752,124 @@ class KrcnApplicationService:
         return "applied", {
             "plan": plan.public_summary(),
             "result": result,
+            "applied": True,
+        }
+
+    def _copy_initial_work_documents(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"project_id", "db_scripts_root", "legacy_root"},
+        )
+        project_id = _identifier_argument(request.arguments, "project_id")
+        db_scripts_root = self._absolute_path_argument(request.arguments, "db_scripts_root")
+        legacy_root = self._absolute_path_argument(request.arguments, "legacy_root")
+        plan = prepare_initial_work_document_copy(
+            self._store,
+            self._ownership,
+            project_id,
+            db_scripts_root,
+            legacy_root,
+        )
+        if not request.apply:
+            return "planned", {"plan": plan.public_summary(), "applied": False}
+        authorizations = (
+            {}
+            if plan.no_op
+            else self._authorize_effect_plans(
+                request,
+                plan.plan_id,
+                plan.effect_plans,
+                "work document copy",
+            )
+        )
+        result = apply_initial_work_document_copy(
+            plan,
+            authorizations,
+            expected_plan_id=request.expected_plan_id or "",
+        )
+        return "applied", {"plan": plan.public_summary(), "result": result, "applied": True}
+
+    def _process_work_documents(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"project_id"})
+        project_id = _identifier_argument(request.arguments, "project_id")
+        import_plan, document_summary = prepare_work_document_processing(
+            self._store,
+            self._ownership,
+            project_id,
+        )
+        if import_plan is None:
+            semantic_plan = prepare_work_semantic_index(
+                self._repo_root, self._store, self._ownership, project_id,
+            )
+            plan_id = semantic_plan.plan_id
+            plan_summary: Mapping[str, object] = {
+                "plan_id": plan_id,
+                "project_id": project_id,
+                "work_import_required": False,
+                "semantic_index": semantic_plan.public_summary(),
+                **document_summary,
+            }
+            if not request.apply:
+                return "planned", {"plan": plan_summary, "applied": False}
+            if request.expected_plan_id != plan_id:
+                raise ApplicationServiceError(
+                    "apply requires the exact work document processing plan id"
+                )
+            semantic_authorization = authorize_mutation(
+                semantic_plan.mutation,
+                dry_run=DryRunEvidence(semantic_plan.plan_id, verified=True),
+            )
+            semantic_result = apply_work_semantic_index(
+                self._repo_root, self._store, semantic_plan, semantic_authorization,
+            )
+            return "applied", {
+                "plan": plan_summary,
+                "work_import": {"status": "current"},
+                "semantic_index": semantic_result,
+                "applied": True,
+            }
+        plan_summary = {
+            "plan_id": import_plan.plan_id,
+            "project_id": project_id,
+            "work_import_required": True,
+            "work_import": import_plan.public_summary(),
+            **document_summary,
+        }
+        if not request.apply:
+            return "planned", {"plan": plan_summary, "applied": False}
+        authorizations = self._authorize_effect_plans(
+            request,
+            import_plan.plan_id,
+            import_plan.effect_plans,
+            "work document processing",
+        )
+        import_result = apply_work_import(
+            self._store,
+            import_plan,
+            authorizations,
+            expected_plan_id=import_plan.plan_id,
+            current_source_inventory=import_plan.source_inventory.as_dict(),
+        )
+        semantic_plan = prepare_work_semantic_index(
+            self._repo_root, self._store, self._ownership, project_id,
+        )
+        semantic_authorization = authorize_mutation(
+            semantic_plan.mutation,
+            dry_run=DryRunEvidence(semantic_plan.plan_id, verified=True),
+        )
+        semantic_result = apply_work_semantic_index(
+            self._repo_root, self._store, semantic_plan, semantic_authorization,
+        )
+        return "applied", {
+            "plan": plan_summary,
+            "work_import": import_result.as_dict(),
+            "semantic_index": semantic_result,
             "applied": True,
         }
 

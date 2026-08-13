@@ -203,6 +203,7 @@ def _collect_capsule_entries(
     dependencies = []
     excluded_derived = 0
     excluded_runtime = 0
+    excluded_work_documents = 0
     active_task_ids = set()
     state_root = capsule_root / "runtime" / "orchestration-states"
     if state_root.is_dir() and not state_root.is_symlink():
@@ -225,6 +226,9 @@ def _collect_capsule_entries(
                 f"symbolic link blocks capsule export: {relative}"
             )
         if not path.is_file():
+            continue
+        if relative.startswith("local-data/work-documents/"):
+            excluded_work_documents += 1
             continue
         if _is_secret_path(relative):
             raise ProjectCapsulePortabilityError("secret path blocks capsule export")
@@ -272,6 +276,13 @@ def _collect_capsule_entries(
                 transformed,
             )
         )
+    if excluded_work_documents:
+        dependencies.append({
+            "dependency_type": "project-local-work-documents",
+            "document_count": excluded_work_documents,
+            "rebind_required": True,
+            "source_content_included": False,
+        })
     dependencies.sort(key=lambda item: str(item.get("binding_id")))
     return (
         tuple(entries),

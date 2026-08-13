@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-document-copy-plan:1",
+  "title": "KRCN work document copy plan summary",
+  "type": "object"
+}

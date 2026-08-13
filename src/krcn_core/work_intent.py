@@ -130,3 +130,72 @@ def parse_work_create_intent(request_text: str) -> WorkCreateIntent:
         "proposed",
         _digest(identity),
     )
+
+
+PROCESS_PATTERNS = (
+    re.compile(
+        r"^\s*(?P<project>[a-z][a-z0-9-]*)\s+(?:projesinin\s+)?"
+        r"(?:gelen\s+)?(?:işlerini|iş\s+belgelerini)\s+(?:işle|tara|güncelle)\s*[.!]?\s*$",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"^\s*(?P<project>[a-z][a-z0-9-]*)\s+için\s+"
+        r"(?P<external>[A-Za-z0-9][A-Za-z0-9._-]{0,127})\s+"
+        r"(?:talebini|defectini|görevini)\s+(?:işle|tara|güncelle)\s*[.!]?\s*$",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"^\s*(?P<external>[A-Za-z0-9][A-Za-z0-9._-]{0,127})\s+"
+        r"(?:talebini|defectini|görevini)\s+(?P<project>[a-z][a-z0-9-]*)\s+için\s+"
+        r"(?:işle|tara|güncelle)\s*[.!]?\s*$",
+        re.IGNORECASE,
+    ),
+)
+
+
+@dataclass(frozen=True)
+class WorkDocumentIntent:
+    project_id: str
+    requested_external_id: str | None
+    intent_digest: str
+
+    def service_arguments(self) -> dict[str, object]:
+        return {"project_id": self.project_id}
+
+    def public_summary(self) -> dict[str, object]:
+        return {
+            "operation": "work.documents.process",
+            "project_id": self.project_id,
+            "requested_external_id": self.requested_external_id,
+            "exact_plan_required": True,
+            "work_graph_update": True,
+            "semantic_index_update": True,
+            "intent_digest": self.intent_digest,
+        }
+
+
+def parse_work_document_intent(request_text: str) -> WorkDocumentIntent:
+    """Route a short project document-processing request without guessing."""
+
+    if not isinstance(request_text, str) or not request_text.strip():
+        raise WorkIntentError("work request text is required")
+    match = next(
+        (
+            pattern.fullmatch(request_text)
+            for pattern in PROCESS_PATTERNS
+            if pattern.fullmatch(request_text)
+        ),
+        None,
+    )
+    if match is None:
+        raise WorkIntentError(
+            "request is not a project work-document processing intent"
+        )
+    project_id = match.group("project").casefold()
+    external_id = match.groupdict().get("external")
+    identity = {
+        "operation": "work.documents.process",
+        "project_id": project_id,
+        "requested_external_id": external_id,
+    }
+    return WorkDocumentIntent(project_id, external_id, _digest(identity))

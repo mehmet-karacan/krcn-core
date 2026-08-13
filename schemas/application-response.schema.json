@@ -57,6 +57,8 @@
         "memory.lifecycle",
         "work.item.put",
         "work.import",
+        "work.documents.copy-initial",
+        "work.documents.process",
         "work.index-semantic",
         "work.search",
         "work.query",
