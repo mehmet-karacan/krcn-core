@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:research-execution-request:1",
+  "title": "KRCN Core research execution request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "client_id",
+    "cwd",
+    "cwd_boundary",
+    "provider",
+    "provider_request_id",
+    "session_id"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/research-execution-request.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "client_id": {
+      "enum": [
+        "opencode",
+        "codex-cli",
+        "claude-cli",
+        "gemini"
+      ]
+    },
+    "executable_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "cwd": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "cwd_boundary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "model_ref": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "provider": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "provider_request_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+    },
+    "timeout_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3600
+    },
+    "output_contract": {
+      "const": "research-agent-result-v1"
+    }
+  }
+}

@@ -2,12 +2,76 @@
 
 ## Purpose
 
-Research Orchestration V1A coordinates bounded research roles without making any
+Research Orchestration V1 coordinates bounded research roles without making any
 model vendor a source of authority. It reuses the existing orchestration,
 ownership, provider, exact-plan, verification, source revision, and Memory Gate
 contracts. Research output is evidence-bearing input to later review. It is not
 authoritative project knowledge merely because a model or web product produced
 it.
+
+## V1B native runtime boundary
+
+V1B adds an explicit native execution bridge. The research DAG contains
+`researcher`, `architecture-reviewer`, `critic`, `synthesizer`, and
+`citation-verifier`. The first two roles may run concurrently. Later roles run
+only after their declared dependencies complete. Worker and verifier identities
+remain independent.
+
+Native dispatch is permitted only when all of the following hold:
+
+- the project is registered and matched;
+- the current client capability declaration produces an allowed delegation
+  decision;
+- the coordinator remains coordinator-only;
+- all five roles carry an explicit worker identity, execution request, provider
+  disclosure, and provider request identity;
+- the user has reviewed the exact runtime plan and supplied matching approval;
+  and
+- every role returns the native execution and evidence contract.
+
+The application constructs the default role adapters from the exact execution
+assignments. OpenCode, Codex CLI, and Claude CLI are never discovered implicitly.
+Each executable is resolved from its explicit request and policy, then executed
+with a reviewed read-only boundary. OpenCode receives a KRCN-generated inline
+permission profile that denies edit, shell, task, network, skill, and external
+directory access. Codex uses its read-only sandbox while ignoring user rules and
+configuration. Claude uses safe mode, plan permission mode, a read-only tool set,
+and no external MCP configuration.
+
+Host callback injection remains a test and integration seam, not provider
+authority. Every native or injected path still requires an exact provider
+request and Provider Gate authorization. Missing or mismatched authorization
+blocks execution before the adapter runs. Manual or operator-mediated imports
+remain valid untrusted research artifacts, but they never count as native runtime
+completion.
+
+The accepted native response is one strict `research-agent-result-v1` JSON
+object. Free text, fenced JSON, malformed fields, missing evidence, path-bearing
+public content, and tampered execution evidence fail closed. Downstream roles
+receive a bounded canonical projection of verified dependency summaries,
+evidence, findings, response text, and result digests. Execution paths and other
+physical metadata are not forwarded. A dependency package that exceeds the
+explicit prompt budget is rejected instead of silently truncated.
+
+`research.cancel` signals only a dispatch running in the current application
+process. It does not claim persistence across process restart. `research.resume`
+is read-only: a completed run is a no-op, while a partial, blocked, or
+recovery-required run reports that a new exact dispatch plan and new
+`research_id` are required. V1B
+does not fabricate process-restart continuation because native response payloads
+are not persisted by the runtime queue.
+
+A separately started CLI process cannot cancel a dispatch owned by another CLI
+process. Cross-process cancellation is not part of V1B.
+
+The application surface is:
+
+- `research.availability`: resolve and probe one explicit client execution path;
+- `research.dispatch`: plan or apply the exact native research DAG;
+- `research.cancel`: plan or signal process-local cancellation;
+- `research.runtime-status`: read queue-backed role state;
+- `research.resume`: explain whether completion is current or a new exact plan is
+  required.
 
 ## V1 execution paths
 
@@ -17,12 +81,11 @@ uses only capabilities declared for the current client session. A client name,
 installed executable, cached login, or model suggestion does not grant provider,
 secret, project, or mutation authority.
 
-Provider availability is evaluated per role. An unavailable path produces an
-attributed unavailable result and does not fail the whole research run while
-another eligible path or an operator-mediated artifact can satisfy the required
-coverage. If no safe path can satisfy a mandatory role, the run is blocked with
-the missing coverage reported. The coordinator must not invent a result or
-silently claim that a different provider performed the work.
+Provider availability is evaluated per role before apply. The exact plan must be
+rebuilt with an eligible alternative when a mandatory role is unavailable. An
+operator-mediated artifact cannot satisfy native completion. The coordinator
+must not invent a result or silently claim that a different provider performed
+the work.
 
 ## Gemini boundary
 
@@ -127,14 +190,14 @@ normalization, current source revision checks, conflict review, and the existing
 user-data mutation approval. Durable memory uses the Memory Gate. Policy
 promotion remains a separate mutation and cannot weaken an active restriction.
 
-V1A does not add a vector database, graph database, embedding pipeline, or a new
+V1 does not add a vector database, graph database, embedding pipeline, or a new
 RAG subsystem. Existing exact, dependency, semantic, source-code, and unified
 retrieval services may consume approved promoted records through their current
 contracts only.
 
 ## Acceptance boundary
 
-V1A is conformant when:
+V1 is conformant when:
 
 - OpenCode, Codex CLI, and Claude CLI can be represented without vendor-specific
   authority rules;
@@ -147,4 +210,7 @@ V1A is conformant when:
 - conflicts and source drift are surfaced rather than silently merged;
 - exact-plan, provider, ownership, no-copy, verification, and knowledge promotion
   gates remain authoritative; and
+- native runtime completion requires exact default or injected adapters, queue leases, structured
+  execution evidence, periodic lease heartbeats, all five canonical role records,
+  and independent verifier identities; and
 - no new vector, RAG, or graph database dependency is introduced.

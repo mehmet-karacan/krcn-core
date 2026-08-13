@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:research-execution-policy:1",
+  "title": "KRCN Core research execution policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "policy_revision",
+    "clients",
+    "limits",
+    "environment_allowlist",
+    "blocked_executable_names",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/research-execution-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "policy_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "clients": {
+      "type": "array",
+      "minItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/client"
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "default_timeout_seconds",
+        "maximum_timeout_seconds",
+        "maximum_prompt_bytes",
+        "maximum_stdout_bytes",
+        "maximum_stderr_bytes"
+      ],
+      "properties": {
+        "default_timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 900
+        },
+        "maximum_timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600
+        },
+        "maximum_prompt_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 16777216
+        },
+        "maximum_stdout_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 16777216
+        },
+        "maximum_stderr_bytes": {
+          "type": "integer",
+          "minimum": 1024,
+          "maximum": 4194304
+        }
+      }
+    },
+    "environment_allowlist": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z][A-Z0-9_]*$"
+      }
+    },
+    "blocked_executable_names": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "implicit_host_scan",
+        "shell_string_execution",
+        "prompt_via_stdin",
+        "provider_authority_granted",
+        "credential_values_persisted",
+        "physical_paths_returned",
+        "gemini_required"
+      ],
+      "properties": {
+        "implicit_host_scan": {
+          "const": false
+        },
+        "shell_string_execution": {
+          "const": false
+        },
+        "prompt_via_stdin": {
+          "const": true
+        },
+        "provider_authority_granted": {
+          "const": false
+        },
+        "credential_values_persisted": {
+          "const": false
+        },
+        "physical_paths_returned": {
+          "const": false
+        },
+        "gemini_required": {
+          "const": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "client": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "client_id",
+        "execution_mode",
+        "optional",
+        "default_executable_refs",
+        "allowed_executable_names",
+        "base_argv",
+        "model_argv",
+        "output_format"
+      ],
+      "properties": {
+        "client_id": {
+          "enum": [
+            "opencode",
+            "codex-cli",
+            "claude-cli",
+            "gemini"
+          ]
+        },
+        "execution_mode": {
+          "enum": [
+            "native-cli",
+            "operator-mediated-only"
+          ]
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "default_executable_refs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "windows": {
+              "type": "string",
+              "minLength": 1
+            },
+            "posix": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "allowed_executable_names": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "base_argv": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "model_argv": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "output_format": {
+          "enum": [
+            "json-or-jsonl",
+            "none"
+          ]
+        }
+      }
+    }
+  }
+}

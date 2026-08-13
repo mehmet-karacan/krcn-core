@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:research-runtime-plan:1",
+  "title": "KRCN Core exact native research runtime plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "project_id",
+    "work_item_id",
+    "research_id",
+    "roles",
+    "max_concurrency",
+    "execution_assignments_sha256",
+    "queue_state_sha256",
+    "native_execution_required",
+    "operator_mediated_completion_allowed",
+    "mutation"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/research-runtime-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "project_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "research_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "roles": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "trust_role",
+          "depends_on",
+          "prompt_sha256"
+        ],
+        "properties": {
+          "role": {
+            "enum": [
+              "researcher",
+              "architecture-reviewer",
+              "critic",
+              "synthesizer",
+              "citation-verifier"
+            ]
+          },
+          "trust_role": {
+            "enum": [
+              "worker",
+              "verifier"
+            ]
+          },
+          "depends_on": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "prompt_sha256": {
+            "$ref": "#/$defs/digest"
+          }
+        }
+      }
+    },
+    "max_concurrency": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8
+    },
+    "execution_assignments_sha256": {
+      "$ref": "#/$defs/digest"
+    },
+    "queue_state_sha256": {
+      "$ref": "#/$defs/digest"
+    },
+    "native_execution_required": {
+      "const": true
+    },
+    "operator_mediated_completion_allowed": {
+      "const": false
+    },
+    "mutation": {
+      "$ref": "mutation-plan.schema.json"
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

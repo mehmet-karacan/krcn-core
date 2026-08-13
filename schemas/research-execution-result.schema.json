@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:research-execution-result:1",
+  "title": "KRCN Core bounded research execution result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "status",
+    "client_id",
+    "provider",
+    "provider_request_id",
+    "session_id",
+    "model_ref",
+    "response_markdown",
+    "response_sha256",
+    "stderr_sha256",
+    "exit_code",
+    "duration_ms",
+    "stdout_truncated",
+    "stderr_truncated",
+    "executable_ref_sha256",
+    "cwd_sha256",
+    "output_contract",
+    "provider_authority_granted",
+    "physical_paths_included",
+    "credential_values_included"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/research-execution-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "status": {
+      "enum": [
+        "completed",
+        "failed",
+        "timeout",
+        "cancelled",
+        "unavailable",
+        "optional-provider-unavailable"
+      ]
+    },
+    "client_id": {
+      "enum": [
+        "opencode",
+        "codex-cli",
+        "claude-cli",
+        "gemini"
+      ]
+    },
+    "provider": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "provider_request_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"
+    },
+    "model_ref": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "response_markdown": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "response_sha256": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "stderr_sha256": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "exit_code": {
+      "oneOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "stdout_truncated": {
+      "type": "boolean"
+    },
+    "stderr_truncated": {
+      "type": "boolean"
+    },
+    "executable_ref_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "cwd_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "output_contract": {
+      "const": "research-agent-result-v1"
+    },
+    "provider_authority_granted": {
+      "const": false
+    },
+    "physical_paths_included": {
+      "const": false
+    },
+    "credential_values_included": {
+      "const": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "completed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "response_markdown": {
+            "type": "string",
+            "minLength": 1
+          },
+          "response_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "exit_code": {
+            "const": 0
+          }
+        }
+      }
+    }
+  ]
+}

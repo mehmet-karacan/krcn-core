@@ -1,0 +1,149 @@
+{
+  "schema_ref": "schemas/research-execution-policy.schema.json",
+  "schema_version": 1,
+  "policy_revision": 1,
+  "clients": [
+    {
+      "client_id": "opencode",
+      "execution_mode": "native-cli",
+      "optional": false,
+      "default_executable_refs": {
+        "windows": "opencode.cmd",
+        "posix": "opencode"
+      },
+      "allowed_executable_names": [
+        "opencode",
+        "opencode.cmd",
+        "opencode.exe"
+      ],
+      "base_argv": [
+        "run",
+        "--format",
+        "json",
+        "--pure",
+        "--agent",
+        "krcn-research-read-only"
+      ],
+      "model_argv": [
+        "--model",
+        "{model_ref}"
+      ],
+      "output_format": "json-or-jsonl"
+    },
+    {
+      "client_id": "codex-cli",
+      "execution_mode": "native-cli",
+      "optional": false,
+      "default_executable_refs": {
+        "windows": "codex.cmd",
+        "posix": "codex"
+      },
+      "allowed_executable_names": [
+        "codex",
+        "codex.cmd",
+        "codex.exe"
+      ],
+      "base_argv": [
+        "exec",
+        "--json",
+        "--ephemeral",
+        "--sandbox",
+        "read-only",
+        "--ignore-user-config",
+        "--ignore-rules"
+      ],
+      "model_argv": [
+        "--model",
+        "{model_ref}"
+      ],
+      "output_format": "json-or-jsonl"
+    },
+    {
+      "client_id": "claude-cli",
+      "execution_mode": "native-cli",
+      "optional": false,
+      "default_executable_refs": {
+        "windows": "claude.exe",
+        "posix": "claude"
+      },
+      "allowed_executable_names": [
+        "claude",
+        "claude.cmd",
+        "claude.exe"
+      ],
+      "base_argv": [
+        "-p",
+        "--output-format",
+        "stream-json",
+        "--verbose",
+        "--no-session-persistence",
+        "--safe-mode",
+        "--permission-mode",
+        "plan",
+        "--tools",
+        "Read,Glob,Grep",
+        "--strict-mcp-config",
+        "--mcp-config",
+        "{}",
+        "--disable-slash-commands"
+      ],
+      "model_argv": [
+        "--model",
+        "{model_ref}"
+      ],
+      "output_format": "json-or-jsonl"
+    },
+    {
+      "client_id": "gemini",
+      "execution_mode": "operator-mediated-only",
+      "optional": true,
+      "default_executable_refs": {},
+      "allowed_executable_names": [],
+      "base_argv": [],
+      "model_argv": [],
+      "output_format": "none"
+    }
+  ],
+  "limits": {
+    "default_timeout_seconds": 300,
+    "maximum_timeout_seconds": 900,
+    "maximum_prompt_bytes": 1048576,
+    "maximum_stdout_bytes": 2097152,
+    "maximum_stderr_bytes": 262144
+  },
+  "environment_allowlist": [
+    "APPDATA",
+    "COMSPEC",
+    "HOME",
+    "LANG",
+    "LC_ALL",
+    "LOCALAPPDATA",
+    "PATH",
+    "PATHEXT",
+    "SYSTEMROOT",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "XDG_CONFIG_HOME",
+    "XDG_DATA_HOME"
+  ],
+  "blocked_executable_names": [
+    "bash",
+    "cmd",
+    "cmd.exe",
+    "powershell",
+    "powershell.exe",
+    "pwsh",
+    "pwsh.exe",
+    "sh"
+  ],
+  "invariants": {
+    "implicit_host_scan": false,
+    "shell_string_execution": false,
+    "prompt_via_stdin": true,
+    "provider_authority_granted": false,
+    "credential_values_persisted": false,
+    "physical_paths_returned": false,
+    "gemini_required": false
+  }
+}

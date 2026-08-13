@@ -426,7 +426,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Prepare, import, and inspect project research artifacts",
     )
     research_commands = research.add_subparsers(dest="research_command")
-    for operation in ("prepare", "import-response"):
+    for operation in ("prepare", "import-response", "dispatch", "cancel"):
         command = research_commands.add_parser(
             operation,
             help=f"Plan or apply research {operation} from a JSON request",
@@ -437,6 +437,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Read research status from a JSON request",
     )
     _add_phase_four_options(research_status)
+    for operation in ("availability", "runtime-status", "resume"):
+        command = research_commands.add_parser(
+            operation,
+            help=f"Read research {operation} from a JSON request",
+        )
+        _add_phase_four_options(command)
     runtime = subparsers.add_parser(
         "runtime",
         help="Use the project-scoped agent queue and lease runtime",
@@ -1083,7 +1089,7 @@ def _print_service_response(
     else:
         print(f"{response.status}\t{response.operation}")
         print(json.dumps(response.data, ensure_ascii=False, indent=2))
-    return 0
+    return 3 if response.status in {"blocked", "unavailable"} else 0
 
 
 def _active_project_data_root(explicit_data_root: Path | None) -> Path:
@@ -1380,7 +1386,7 @@ def _run_core_service_command(args: argparse.Namespace) -> int:
     else:
         print(f"{response.status}\t{response.operation}")
         print(json.dumps(response.data, ensure_ascii=False, indent=2))
-    return 0
+    return 3 if response.status in {"blocked", "unavailable"} else 0
 
 
 def _load_phase_four_arguments(path: Path) -> dict[str, object]:
@@ -1457,6 +1463,11 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
         "prepare",
         "import-response",
         "status",
+        "availability",
+        "dispatch",
+        "cancel",
+        "runtime-status",
+        "resume",
     }:
         operation = f"research.{args.research_command}"
         arguments = _load_phase_four_arguments(args.request_file)
@@ -1503,7 +1514,7 @@ def _run_phase_four_service_command(args: argparse.Namespace) -> int:
     else:
         print(f"{response.status}\t{response.operation}")
         print(json.dumps(response.data, ensure_ascii=False, indent=2))
-    return 0
+    return 3 if response.status in {"blocked", "unavailable"} else 0
 
 
 def _run_orchestrator_command(args: argparse.Namespace) -> int:

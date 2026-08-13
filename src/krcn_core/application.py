@@ -5,10 +5,11 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Mapping
+from typing import Callable, Mapping
 
 from .adapter_gate import (
     AdapterApproval,
@@ -182,6 +183,7 @@ from .portable_restore import apply_portable_restore, prepare_portable_restore
 from .provider_gate import (
     ProviderApproval,
     authorize_provider_request,
+    create_provider_request,
     load_provider_gate_policy,
 )
 from .rescan import apply_rescan, prepare_rescan
@@ -191,6 +193,25 @@ from .research_orchestration import (
     get_research_status,
     prepare_research_result_import,
     prepare_research_run,
+)
+from .research_execution import (
+    ExecutableResolver,
+    ProcessRunner,
+    ResearchExecutionPlan,
+    load_research_execution_policy,
+    probe_research_execution,
+    resolve_research_execution,
+)
+from .research_runtime_adapter import (
+    bind_research_runtime_adapter,
+    create_research_runtime_adapter,
+)
+from .research_runtime import (
+    RESEARCH_DAG,
+    ResearchWorkUnit,
+    dispatch_research_runtime,
+    get_research_runtime_status,
+    prepare_research_runtime_dispatch,
 )
 from .release import validate_release_bundle
 from .repo_local_migration import (
@@ -230,7 +251,9 @@ from .update_effects import DerivedActionRegistry, MigrationRegistry
 from .user_home import resolve_user_home
 from .verification import verify_installation
 from .work_graph import (
+    ACTIVE_STATUSES,
     apply_work_item,
+    parse_work_item,
     prepare_work_item,
     query_work_graph,
     query_work_history,
@@ -315,6 +338,11 @@ OPERATIONS = {
     "research.prepare",
     "research.import-response",
     "research.status",
+    "research.availability",
+    "research.dispatch",
+    "research.cancel",
+    "research.runtime-status",
+    "research.resume",
     "runtime.queue.enqueue",
     "runtime.queue.claim",
     "runtime.queue.heartbeat",
@@ -504,6 +532,11 @@ class KrcnApplicationService:
         sqlite_runtime: SqliteReferenceRuntime | None = None,
         oracle_metadata_transports: Mapping[str, OracleMetadataTransport] | None = None,
         model_health_probes: Mapping[str, ModelHealthProbe] | None = None,
+        research_execution_adapters: Mapping[
+            str, Callable[[ResearchWorkUnit], Mapping[str, object]]
+        ] | None = None,
+        research_process_runners: Mapping[str, ProcessRunner] | None = None,
+        research_executable_resolver: ExecutableResolver | None = None,
     ) -> None:
         self._repo_root = repo_root.resolve()
         self._store = store
@@ -553,6 +586,26 @@ class KrcnApplicationService:
         ):
             raise ApplicationServiceError("model health probes are invalid")
         self._model_health_probes = health_probes
+        research_adapters = dict(research_execution_adapters or {})
+        if research_adapters and (
+            set(research_adapters) != set(RESEARCH_DAG)
+            or any(not callable(adapter) for adapter in research_adapters.values())
+        ):
+            raise ApplicationServiceError(
+                "research execution adapters must cover every runtime role"
+            )
+        self._research_execution_adapters = research_adapters
+        runners = dict(research_process_runners or {})
+        if set(runners) - set(RESEARCH_DAG) or any(
+            not callable(getattr(runner, "run", None)) for runner in runners.values()
+        ):
+            raise ApplicationServiceError("research process runners are invalid")
+        if research_executable_resolver is not None and not callable(research_executable_resolver):
+            raise ApplicationServiceError("research executable resolver is invalid")
+        self._research_process_runners = runners
+        self._research_executable_resolver = research_executable_resolver
+        self._research_cancellations: dict[tuple[str, str], threading.Event] = {}
+        self._research_cancellation_lock = threading.Lock()
         self._orchestration = OrchestrationApplicationService(
             self._repo_root,
             self._store,
@@ -635,6 +688,11 @@ class KrcnApplicationService:
             "research.prepare": self._prepare_research,
             "research.import-response": self._import_research_response,
             "research.status": self._research_status,
+            "research.availability": self._research_availability,
+            "research.dispatch": self._research_dispatch,
+            "research.cancel": self._research_cancel,
+            "research.runtime-status": self._research_runtime_status,
+            "research.resume": self._research_resume,
             "runtime.queue.enqueue": self._runtime_queue_action,
             "runtime.queue.claim": self._runtime_queue_action,
             "runtime.queue.heartbeat": self._runtime_queue_action,
@@ -1017,6 +1075,412 @@ class KrcnApplicationService:
         except ValueError as exc:
             raise ApplicationServiceError(str(exc)) from exc
         return "ok", {"result": result}
+
+    def _research_availability(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"execution_request"},
+            optional={"platform_name"},
+        )
+        if request.apply:
+            raise ApplicationServiceError("research availability is read-only")
+        platform_name = request.arguments.get("platform_name")
+        if platform_name is not None and not isinstance(platform_name, str):
+            raise ApplicationServiceError("platform_name must be a string")
+        try:
+            plan = resolve_research_execution(
+                load_research_execution_policy(self._repo_root),
+                _object_argument(request.arguments, "execution_request"),
+                platform_name=platform_name,
+            )
+            probe = probe_research_execution(plan)
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        status = "ok" if probe.available or probe.optional else "degraded"
+        return status, {
+            "execution": plan.public_summary(),
+            "availability": probe.public_summary(),
+            "gemini_required": False,
+            "authority_granted": False,
+        }
+
+    def _research_delegation_decision(
+        self,
+        arguments: Mapping[str, object],
+    ):
+        delegation = _object_argument(arguments, "delegation")
+        _check_arguments(
+            delegation,
+            required={
+                "session_id", "client_id", "capabilities",
+                "max_parallel_agents", "work_class", "project_matched",
+            },
+        )
+        project_matched = delegation.get("project_matched")
+        if project_matched is not True:
+            raise ApplicationServiceError(
+                "native research dispatch requires a matched project"
+            )
+        profile = self._client_capability_profile(delegation)
+        decision = decide_delegation(
+            load_delegation_policy(self._repo_root),
+            profile,
+            work_class=_identifier_argument(delegation, "work_class"),
+            project_matched=True,
+        )
+        if (
+            not decision.delegation_required
+            or not decision.execution_allowed
+            or not decision.coordinator_only
+        ):
+            raise ApplicationServiceError(
+                "native research delegation is unavailable for this client session"
+            )
+        return decision
+
+    def _research_runtime_plan(
+        self,
+        arguments: Mapping[str, object],
+    ):
+        _check_arguments(
+            arguments,
+            required={
+                "project_id", "work_item_id", "work_item_revision",
+                "work_item_digest", "research_id", "task_plan_id", "prompts",
+                "delegation", "executions",
+            },
+            optional={"max_concurrency"},
+        )
+        project_id = _identifier_argument(arguments, "project_id")
+        if self._store.read("projects", project_id) is None:
+            raise ApplicationServiceError("research runtime project is not registered")
+        work_item_id = _identifier_argument(arguments, "work_item_id")
+        record = self._store.read("work-items", work_item_id)
+        if record is None:
+            raise ApplicationServiceError("research runtime work item is not registered")
+        try:
+            work_item = parse_work_item(record.payload)
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        work_item_revision = _nonnegative_integer_argument(arguments, "work_item_revision")
+        work_item_digest = _string_argument(arguments, "work_item_digest")
+        if (
+            work_item.project_id != project_id
+            or work_item.revision != work_item_revision
+            or work_item.work_digest != work_item_digest
+            or work_item.status not in ACTIVE_STATUSES
+        ):
+            raise ApplicationServiceError(
+                "research runtime work item does not match the authoritative active record"
+            )
+        decision = self._research_delegation_decision(arguments)
+        executions = _object_argument(arguments, "executions")
+        if set(executions) != set(RESEARCH_DAG):
+            raise ApplicationServiceError("research executions must cover every runtime role")
+        policy = load_research_execution_policy(self._repo_root)
+        execution_bindings = {}
+        execution_identity = {}
+        for role in RESEARCH_DAG:
+            assignment = executions.get(role)
+            if not isinstance(assignment, Mapping) or set(assignment) != {
+                "worker_id", "execution_request", "provider_disclosure"
+            }:
+                raise ApplicationServiceError("research execution assignment is invalid")
+            worker_id = assignment.get("worker_id")
+            if not isinstance(worker_id, str) or not worker_id.strip():
+                raise ApplicationServiceError("research execution worker id is invalid")
+            disclosure = assignment.get("provider_disclosure")
+            if not isinstance(disclosure, Mapping) or set(disclosure) != {
+                "provider", "endpoint", "data_categories", "operation_scope",
+                "retention_assumptions", "session_id", "remote",
+            }:
+                raise ApplicationServiceError("research provider disclosure is invalid")
+            categories = disclosure.get("data_categories")
+            if not isinstance(categories, list) or any(not isinstance(value, str) for value in categories):
+                raise ApplicationServiceError("research provider data categories are invalid")
+            try:
+                provider_request = create_provider_request(
+                    provider=str(disclosure.get("provider", "")),
+                    endpoint=str(disclosure.get("endpoint", "")),
+                    data_categories=tuple(categories),
+                    operation_scope=str(disclosure.get("operation_scope", "")),
+                    retention_assumptions=str(disclosure.get("retention_assumptions", "")),
+                    session_id=str(disclosure.get("session_id", "")),
+                    remote=disclosure.get("remote") is True,
+                )
+                execution_plan = resolve_research_execution(
+                    policy,
+                    assignment.get("execution_request") if isinstance(assignment.get("execution_request"), Mapping) else {},
+                )
+                probe = probe_research_execution(
+                    execution_plan,
+                    **(
+                        {"executable_resolver": self._research_executable_resolver}
+                        if self._research_executable_resolver is not None
+                        else {}
+                    ),
+                )
+            except ValueError as exc:
+                raise ApplicationServiceError(str(exc)) from exc
+            if (
+                execution_plan.provider != provider_request.provider
+                or execution_plan.provider_request_id != provider_request.request_id
+                or execution_plan.session_id != provider_request.session_id
+            ):
+                raise ApplicationServiceError(
+                    "research execution does not match its exact provider request"
+                )
+            execution_bindings[role] = (worker_id, execution_plan, provider_request, probe)
+            execution_identity[role] = dict(assignment)
+        if len({binding[0] for binding in execution_bindings.values()}) != len(RESEARCH_DAG):
+            raise ApplicationServiceError("research role workers must be independent")
+        execution_digest = hashlib.sha256(
+            json.dumps(execution_identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        prompts = _object_argument(arguments, "prompts")
+        if any(not isinstance(key, str) or not isinstance(value, str) for key, value in prompts.items()):
+            raise ApplicationServiceError("research prompts must be a string map")
+        max_concurrency = arguments.get("max_concurrency", 2)
+        if not isinstance(max_concurrency, int) or isinstance(max_concurrency, bool):
+            raise ApplicationServiceError("max_concurrency must be an integer")
+        declared_parallelism = _object_argument(arguments, "delegation").get(
+            "max_parallel_agents"
+        )
+        if (
+            not isinstance(declared_parallelism, int)
+            or isinstance(declared_parallelism, bool)
+            or max_concurrency > declared_parallelism
+        ):
+            raise ApplicationServiceError(
+                "research concurrency exceeds the declared client capability"
+            )
+        queue = AgentRuntimeQueue(
+            self._store.data_root,
+            project_id,
+            load_scheduler_policy(self._repo_root),
+        )
+        try:
+            plan = prepare_research_runtime_dispatch(
+                queue,
+                self._ownership,
+                project_id=project_id,
+                work_item_id=work_item_id,
+                work_item_revision=work_item_revision,
+                work_item_digest=work_item_digest,
+                research_id=_identifier_argument(arguments, "research_id"),
+                task_plan_id=_string_argument(arguments, "task_plan_id"),
+                prompts={str(key): str(value) for key, value in prompts.items()},
+                execution_assignments_digest=execution_digest,
+                max_concurrency=max_concurrency,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return queue, plan, decision, execution_bindings
+
+    def _research_dispatch(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        queue, plan, decision, execution_bindings = self._research_runtime_plan(request.arguments)
+        role_execution = {
+            role: {
+                "worker_id": binding[0],
+                "execution": binding[1].public_summary(),
+                "availability": binding[3].public_summary(),
+                "provider_request": binding[2].public_summary(),
+                "host_override": role in self._research_execution_adapters,
+            }
+            for role, binding in execution_bindings.items()
+        }
+        plan_summary = {
+            **plan.public_summary(),
+            "delegation_mode": decision.selected_mode,
+            "delegation_decision_digest": decision.decision_digest,
+            "execution_adapter_available": all(
+                role in self._research_execution_adapters or binding[3].available
+                for role, binding in execution_bindings.items()
+            ),
+            "role_executions": role_execution,
+            "authority_granted": False,
+        }
+        if not request.apply:
+            return "planned", {"plan": plan_summary, "applied": False}
+        if request.expected_plan_id != plan.plan_id:
+            raise ApplicationServiceError(
+                "apply requires the exact research runtime plan id"
+            )
+        if request.approval_id is None:
+            raise ApplicationServiceError("research dispatch requires approval id")
+        authorization = authorize_mutation(
+            plan.mutation,
+            dry_run=DryRunEvidence(plan.mutation.plan_id, verified=True),
+            approval=ApprovalEvidence(
+                plan.mutation.plan_id, request.approval_id, approved=True
+            ),
+        )
+        owner_tokens = {
+            role: hashlib.sha256(
+                f"{decision.decision_digest}:{role}".encode("utf-8")
+            ).hexdigest()
+            for role in RESEARCH_DAG
+        }
+        cancellation = threading.Event()
+        adapters = {}
+        provider_policy = load_provider_gate_policy(self._repo_root)
+        for role, binding in execution_bindings.items():
+            worker_id, execution_plan, provider_request, probe = binding
+            approval = ProviderApproval(
+                provider_request.request_id,
+                provider_request.session_id,
+                request.approval_id,
+                approved=True,
+            )
+            try:
+                provider_authorization = authorize_provider_request(
+                    provider_policy,
+                    provider_request,
+                    approval=approval,
+                )
+            except ValueError as exc:
+                raise ApplicationServiceError(str(exc)) from exc
+            if role in self._research_execution_adapters:
+                adapters[role] = bind_research_runtime_adapter(
+                    self._research_execution_adapters[role],
+                    execution_plan,
+                    worker_id=worker_id,
+                )
+                continue
+            if not probe.available:
+                raise ApplicationServiceError(
+                    f"native research execution is unavailable for role {role}"
+                )
+            factory_options = {
+                "worker_id": worker_id,
+                "runner": self._research_process_runners.get(role),
+                "cancellation": cancellation,
+            }
+            if self._research_executable_resolver is not None:
+                factory_options["executable_resolver"] = self._research_executable_resolver
+            adapters[role] = create_research_runtime_adapter(
+                execution_plan,
+                provider_authorization,
+                **factory_options,
+            )
+        with self._research_cancellation_lock:
+            cancellation_key = (plan.project_id, plan.research_id)
+            if cancellation_key in self._research_cancellations:
+                raise ApplicationServiceError("research dispatch is already running")
+            self._research_cancellations[cancellation_key] = cancellation
+        try:
+            result = dispatch_research_runtime(
+                queue,
+                plan,
+                authorization,
+                adapters=adapters,
+                owner_tokens=owner_tokens,
+                expected_plan_id=plan.plan_id,
+                cancellation=cancellation.is_set,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        finally:
+            with self._research_cancellation_lock:
+                self._research_cancellations.pop((plan.project_id, plan.research_id), None)
+        return "applied", {
+            "plan": plan_summary,
+            "result": result,
+            "applied": True,
+        }
+
+    def _research_runtime_status(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"project_id", "research_id"})
+        if request.apply:
+            raise ApplicationServiceError("research runtime status is read-only")
+        project_id = _identifier_argument(request.arguments, "project_id")
+        if self._store.read("projects", project_id) is None:
+            raise ApplicationServiceError("research runtime project is not registered")
+        queue = AgentRuntimeQueue(
+            self._store.data_root,
+            project_id,
+            load_scheduler_policy(self._repo_root),
+        )
+        result = get_research_runtime_status(
+            queue, _identifier_argument(request.arguments, "research_id")
+        )
+        with self._research_cancellation_lock:
+            running = (project_id, str(result["research_id"])) in self._research_cancellations
+        return "ok", {"result": {**result, "process_local_running": running}}
+
+    def _research_cancel(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"project_id", "research_id"})
+        project_id = _identifier_argument(request.arguments, "project_id")
+        research_id = _identifier_argument(request.arguments, "research_id")
+        if self._store.read("projects", project_id) is None:
+            raise ApplicationServiceError("research runtime project is not registered")
+        identity = {
+            "operation": "research.cancel",
+            "project_id": project_id,
+            "research_id": research_id,
+        }
+        plan_id = hashlib.sha256(
+            json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        if not request.apply:
+            return "planned", {
+                "plan": {**identity, "plan_id": plan_id, "process_local": True},
+                "applied": False,
+            }
+        if request.expected_plan_id != plan_id or request.approval_id is None:
+            raise ApplicationServiceError(
+                "cancel requires the exact plan id and approval id"
+            )
+        with self._research_cancellation_lock:
+            signal = self._research_cancellations.get((project_id, research_id))
+        if signal is None:
+            return "unavailable", {
+                "research_id": research_id,
+                "cancellation_signalled": False,
+                "process_local": True,
+                "separate_process_supported": False,
+                "reason": "no in-process research dispatch is running in this service instance",
+            }
+        with self._research_cancellation_lock:
+            if signal is not None:
+                signal.set()
+        return ("cancelled" if signal is not None else "ok"), {
+            "research_id": research_id,
+            "cancellation_signalled": signal is not None,
+            "process_local": True,
+            "restart_persistent": False,
+            "separate_process_supported": False,
+        }
+
+    def _research_resume(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        status, data = self._research_runtime_status(request)
+        result = dict(data["result"])
+        completed = bool(result.get("native_completion"))
+        return status, {
+            "result": result,
+            "resume": {
+                "no_op": completed,
+                "new_exact_dispatch_plan_required": not completed,
+                "automatic_process_restart_resume": False,
+                "same_research_id_resume_supported": False,
+                "new_research_id_required": not completed,
+            },
+        }
 
     def _retrieve_unified(
         self,

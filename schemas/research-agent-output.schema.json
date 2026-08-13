@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:research-agent-output:1",
+  "title": "KRCN Core structured native research agent output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "agent_result",
+    "research_result"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/research-agent-output.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "agent_result": {
+      "$ref": "agent-result.schema.json"
+    },
+    "research_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "response_markdown",
+        "findings"
+      ],
+      "properties": {
+        "response_markdown": {
+          "type": "string",
+          "minLength": 1
+        },
+        "findings": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sources",
+            "claims",
+            "conflicts"
+          ],
+          "properties": {
+            "sources": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "claims": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "conflicts": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
