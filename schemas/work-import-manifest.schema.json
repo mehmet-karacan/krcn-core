@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-import-manifest:1",
+  "title": "KRCN Core applied legacy work import manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "import_id",
+    "project_id",
+    "import_digest",
+    "source_id",
+    "logical_root",
+    "source_inventory_digest",
+    "graph_digest_before",
+    "graph_digest_after",
+    "items",
+    "status",
+    "manifest_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-import-manifest.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "import_id": {
+      "$ref": "#/$defs/id"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "import_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "source_id": {
+      "$ref": "#/$defs/id"
+    },
+    "logical_root": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_inventory_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "graph_digest_before": {
+      "$ref": "#/$defs/digest"
+    },
+    "graph_digest_after": {
+      "$ref": "#/$defs/digest"
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "work_item_id",
+          "revision",
+          "work_digest",
+          "source_ref"
+        ],
+        "properties": {
+          "work_item_id": {
+            "$ref": "#/$defs/id"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "work_digest": {
+            "$ref": "#/$defs/digest"
+          },
+          "source_ref": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "status": {
+      "const": "applied"
+    },
+    "manifest_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

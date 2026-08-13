@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-import-request:1",
+  "title": "KRCN Core legacy work batch import request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "project_id",
+    "source_inventory",
+    "candidates"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-import-request.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "source_inventory": {
+      "$ref": "#/$defs/inventory"
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/candidate"
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "portableRef": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "pattern": "(?:^/|^[A-Za-z]:[\\\\/]|\\\\|(?:^|/)\\.\\.(?:/|$))"
+      }
+    },
+    "inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "logical_root",
+        "entries",
+        "inventory_digest"
+      ],
+      "properties": {
+        "source_id": {
+          "$ref": "#/$defs/id"
+        },
+        "logical_root": {
+          "$ref": "#/$defs/portableRef"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source_ref",
+              "sha256",
+              "size_bytes"
+            ],
+            "properties": {
+              "source_ref": {
+                "$ref": "#/$defs/portableRef"
+              },
+              "sha256": {
+                "$ref": "#/$defs/digest"
+              },
+              "size_bytes": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "inventory_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "work_item_id",
+        "work_type",
+        "title",
+        "description",
+        "status",
+        "acceptance_criteria",
+        "relations",
+        "evidence",
+        "source_ref"
+      ],
+      "properties": {
+        "work_item_id": {
+          "$ref": "#/$defs/id"
+        },
+        "work_type": {
+          "enum": [
+            "request",
+            "defect",
+            "task",
+            "subtask",
+            "decision"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "proposed",
+            "active",
+            "blocked",
+            "completed",
+            "cancelled",
+            "archived"
+          ]
+        },
+        "acceptance_criteria": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "relations": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "relation_type",
+              "target_ref"
+            ],
+            "properties": {
+              "relation_type": {
+                "enum": [
+                  "depends-on",
+                  "blocks",
+                  "parent-of",
+                  "implements",
+                  "caused-by",
+                  "relates-to",
+                  "supersedes"
+                ]
+              },
+              "target_ref": {
+                "$ref": "#/$defs/id"
+              }
+            }
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "evidence_type",
+              "reference",
+              "digest",
+              "label"
+            ],
+            "properties": {
+              "evidence_type": {
+                "enum": [
+                  "commit",
+                  "branch",
+                  "file",
+                  "test",
+                  "release",
+                  "document"
+                ]
+              },
+              "reference": {
+                "$ref": "#/$defs/portableRef"
+              },
+              "digest": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/digest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "source_ref": {
+          "$ref": "#/$defs/portableRef"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-import-result:1",
+  "title": "KRCN Core legacy work import result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "project_id",
+    "import_id",
+    "import_digest",
+    "status",
+    "item_count",
+    "work_item_ids",
+    "graph_digest",
+    "projection_updated",
+    "manifest_recorded",
+    "paths_disclosed"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-import-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "import_id": {
+      "$ref": "#/$defs/id"
+    },
+    "import_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "status": {
+      "enum": [
+        "applied",
+        "already-applied"
+      ]
+    },
+    "item_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "work_item_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "graph_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "projection_updated": {
+      "type": "boolean"
+    },
+    "manifest_recorded": {
+      "type": "boolean"
+    },
+    "paths_disclosed": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
