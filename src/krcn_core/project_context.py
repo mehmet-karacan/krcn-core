@@ -2,28 +2,32 @@
 
 from __future__ import annotations
 
+import difflib
+import hashlib
 import re
+import unicodedata
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Mapping
 
+from .agent_runtime import AgentRuntimeQueue, load_scheduler_policy
+from .discovery import DiscoveryResult
 from .information_records import parse_information_record, record_is_stale
+from .json_documents import canonical_json_bytes
 from .local_store import LocalWorkspaceStore, StoredRecord
 from .orchestration_state import parse_orchestration_handoff
-from .project_integration_state import parse_project_integration_state
 from .project_capability_profile import (
     ProjectCapabilityProfileError,
     parse_project_capability_profile,
     project_capability_public_summary,
+    project_capability_profile_is_current,
 )
-from .source_code_index import source_code_index_summary
+from .project_integration_state import parse_project_integration_state
 from .source_bindings import SourceBinding, parse_source_binding
+from .source_code_index import source_code_index_summary
 from .source_state import parse_source_state
 from .work_graph import ACTIVE_STATUSES, parse_work_item
-from .agent_runtime import AgentRuntimeQueue, load_scheduler_policy
-from .discovery import DiscoveryResult
-from .project_capability_profile import project_capability_profile_is_current
 
 
 ACTIVE_TASK_STATUSES = {
@@ -124,15 +128,188 @@ def _explicit_projects(
     reference = project_ref.strip().casefold()
     if not reference:
         raise ProjectContextError("project reference must be non-empty")
+    if reference.isdigit():
+        position = int(reference)
+        ordered = tuple(sorted(projects, key=lambda project: project.record_id))
+        if 1 <= position <= len(ordered):
+            return (ordered[position - 1],)
+        return ()
+    normalized_reference = _search_key(reference)
     return tuple(
         project
         for project in projects
-        if reference
+        if normalized_reference
         in {
-            project.record_id.casefold(),
-            str(project.payload.get("name", "")).strip().casefold(),
+            _search_key(project.record_id),
+            _search_key(project.payload.get("name", "")),
         }
     )
+
+
+def _search_key(value: object) -> str:
+    normalized = unicodedata.normalize("NFKD", str(value).casefold())
+    return "".join(character for character in normalized if character.isalnum())
+
+
+def _project_integration_status(
+    store: LocalWorkspaceStore,
+    project_id: str,
+) -> str:
+    stored = store.read("project-integrations", project_id)
+    if stored is None:
+        return "not-integrated"
+    try:
+        state = parse_project_integration_state(stored.payload)
+    except ValueError:
+        return "invalid"
+    if any(value != "complete" for value in state.stages.values()):
+        return "incomplete"
+    modified = store.record_mtime_ns("project-integrations", project_id)
+    if modified is None:
+        return "invalid"
+    last_scan = datetime.fromtimestamp(modified / 1_000_000_000, timezone.utc)
+    if datetime.now(timezone.utc) >= last_scan + timedelta(hours=state.freshness_hours):
+        return "stale"
+    return "complete"
+
+
+def _iso_timestamp(value: int | None) -> str | None:
+    if value is None:
+        return None
+    return datetime.fromtimestamp(value / 1_000_000_000, timezone.utc).isoformat()
+
+
+def project_navigation_menu(store: LocalWorkspaceStore) -> dict[str, object]:
+    """Return a stable, path-redacted project menu with work activity counts."""
+
+    projects = tuple(sorted(
+        store.list_records("projects"), key=lambda project: project.record_id,
+    ))
+    work_records = tuple(store.list_records("work-items"))
+    result = []
+    for position, project in enumerate(projects, 1):
+        project_id = project.record_id
+        scoped_work = tuple(
+            (record, parse_work_item(record.payload))
+            for record in work_records
+            if record.payload.get("project_id") == project_id
+        )
+        counts = {
+            "requests": {"active": 0, "historical": 0, "total": 0},
+            "defects": {"active": 0, "historical": 0, "total": 0},
+            "tasks": {"active": 0, "historical": 0, "total": 0},
+        }
+        activity_candidates: list[tuple[int, str]] = []
+        project_modified = store.record_mtime_ns("projects", project_id)
+        if project_modified is not None:
+            activity_candidates.append((project_modified, "project"))
+        integration_modified = store.record_mtime_ns(
+            "project-integrations", project_id,
+        )
+        if integration_modified is not None:
+            activity_candidates.append((integration_modified, "integration"))
+        source_refs = project.payload.get("source_refs", [])
+        if isinstance(source_refs, list):
+            for source_ref in source_refs:
+                if isinstance(source_ref, str):
+                    source_modified = store.record_mtime_ns(
+                        "source-states", source_ref,
+                    )
+                    if source_modified is not None:
+                        activity_candidates.append((source_modified, "source"))
+        for record, item in scoped_work:
+            group = (
+                "requests" if item.work_type == "request"
+                else "defects" if item.work_type == "defect"
+                else "tasks"
+            )
+            lifecycle = "active" if item.status in ACTIVE_STATUSES else "historical"
+            counts[group][lifecycle] += 1
+            counts[group]["total"] += 1
+            modified = store.record_mtime_ns("work-items", record.record_id)
+            if modified is not None:
+                activity_candidates.append((modified, group[:-1]))
+        document_manifest = (
+            store.data_root / "projects" / project_id / "local-data"
+            / "work-documents" / "_krcn" / "import-manifest.json"
+        )
+        if document_manifest.exists():
+            if document_manifest.is_symlink() or not document_manifest.is_file():
+                raise ProjectContextError("work document manifest must be regular")
+            activity_candidates.append(
+                (document_manifest.stat().st_mtime_ns, "work-documents")
+            )
+        latest = max(activity_candidates, default=(0, "none"))
+        active_total = sum(value["active"] for value in counts.values())
+        historical_total = sum(value["historical"] for value in counts.values())
+        result.append({
+            "position": position,
+            "project_id": project_id,
+            "name": project.payload.get("name"),
+            "status": project.payload.get("status"),
+            "revision": project.revision,
+            "integration_status": _project_integration_status(store, project_id),
+            "work_counts": {
+                **counts,
+                "active_total": active_total,
+                "historical_total": historical_total,
+                "total": active_total + historical_total,
+            },
+            "last_updated_at": _iso_timestamp(latest[0] or None),
+            "last_update_scope": latest[1],
+        })
+    selection_digest = hashlib.sha256(canonical_json_bytes([
+        {
+            "position": item["position"],
+            "project_id": item["project_id"],
+            "revision": item["revision"],
+            "last_updated_at": item["last_updated_at"],
+        }
+        for item in result
+    ])).hexdigest()
+    return {
+        "projects": result,
+        "project_count": len(result),
+        "selection_digest": selection_digest,
+        "selection_is_read_only": True,
+        "selection_grants_authority": False,
+        "paths_disclosed": False,
+    }
+
+
+def suggest_projects(
+    store: LocalWorkspaceStore,
+    reference: str,
+    *,
+    limit: int = 3,
+) -> list[dict[str, object]]:
+    """Suggest registered projects without silently choosing a fuzzy match."""
+
+    query = _search_key(reference)
+    menu = project_navigation_menu(store)
+    projects = menu["projects"]
+    assert isinstance(projects, list)
+    scored = []
+    for project in projects:
+        candidate = _search_key(project["project_id"])
+        name = _search_key(project.get("name", ""))
+        score = max(
+            difflib.SequenceMatcher(a=query, b=candidate).ratio(),
+            difflib.SequenceMatcher(a=query, b=name).ratio(),
+        )
+        scored.append((score, project))
+    return [
+        {
+            "position": project["position"],
+            "project_id": project["project_id"],
+            "name": project["name"],
+            "similarity": round(score, 3),
+        }
+        for score, project in sorted(
+            scored, key=lambda value: (-value[0], value[1]["project_id"]),
+        )[:limit]
+        if score >= 0.45
+    ]
 
 
 def _path_depth(path: Path) -> int:
@@ -202,13 +379,18 @@ def resolve_current_project(
 
     projects = store.list_records("projects")
     if project_ref is not None:
+        basis = (
+            "ordinal-project"
+            if project_ref.strip().isdigit()
+            else "explicit-project"
+        )
         match = _single_match(
             store,
             _explicit_projects(projects, project_ref),
-            "explicit-project",
+            basis,
         )
         if match is None:
-            raise ProjectContextError("referenced project is not registered")
+            return None
         return match
     if request_text is not None and request_text.strip():
         mentioned = _mentioned_projects(projects, request_text)
@@ -308,15 +490,39 @@ def _work_summary(
         for handoff in handoffs[:5]
     ]
     work_items = [
-        parse_work_item(record.payload)
+        (
+            parse_work_item(record.payload),
+            store.record_mtime_ns("work-items", record.record_id),
+        )
         for record in store.list_records("work-items")
         if record.payload.get("project_id") == project_id
     ]
     work_items.sort(
-        key=lambda item: (
-            item.status not in ACTIVE_STATUSES,
-            item.work_item_id,
+        key=lambda value: (
+            value[0].status not in ACTIVE_STATUSES,
+            -(value[1] or 0),
+            value[0].work_item_id,
         )
+    )
+    work_counts = {
+        "requests": {"active": 0, "historical": 0, "total": 0},
+        "defects": {"active": 0, "historical": 0, "total": 0},
+        "tasks": {"active": 0, "historical": 0, "total": 0},
+    }
+    for item, _ in work_items:
+        group = (
+            "requests" if item.work_type == "request"
+            else "defects" if item.work_type == "defect"
+            else "tasks"
+        )
+        lifecycle = (
+            "active" if item.status in ACTIVE_STATUSES else "historical"
+        )
+        work_counts[group][lifecycle] += 1
+        work_counts[group]["total"] += 1
+    active_total = sum(value["active"] for value in work_counts.values())
+    historical_total = sum(
+        value["historical"] for value in work_counts.values()
     )
     runtime_queue: dict[str, object] = {
         "counts": {},
@@ -339,12 +545,14 @@ def _work_summary(
             "integrity_verified": runtime_status["integrity_verified"],
         }
     return {
-        "active_task_count": sum(
-            item.status in ACTIVE_STATUSES for item in work_items
-        ),
-        "historical_task_count": sum(
-            item.status not in ACTIVE_STATUSES for item in work_items
-        ),
+        "active_task_count": active_total,
+        "historical_task_count": historical_total,
+        "work_counts": {
+            **work_counts,
+            "active_total": active_total,
+            "historical_total": historical_total,
+            "total": active_total + historical_total,
+        },
         "items": [
             {
                 "work_item_id": item.work_item_id,
@@ -353,8 +561,9 @@ def _work_summary(
                 "status": item.status,
                 "revision": item.revision,
                 "evidence_count": len(item.evidence),
+                "last_updated_at": _iso_timestamp(modified),
             }
-            for item in work_items[:10]
+            for item, modified in work_items[:10]
         ],
         "active_orchestration_count": sum(
             handoff.status in ACTIVE_TASK_STATUSES for handoff in handoffs

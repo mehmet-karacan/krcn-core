@@ -99,6 +99,7 @@
     "project_metadata_inference_schema": "schemas/project-metadata-inference.schema.json",
     "project_learning_plan_schema": "schemas/project-learning-plan.schema.json",
     "project_context_result_schema": "schemas/project-context-result.schema.json",
+    "project_navigation_boundary": "docs/specifications/PROJECT-NAVIGATION.md",
     "client_bootstrap_plan_schema": "schemas/client-bootstrap-plan.schema.json",
     "client_capability_policy": "config/client-capabilities.json",
     "client_capability_policy_schema": "schemas/client-capability-policy.schema.json",

@@ -28,6 +28,7 @@
       "enum": [
         "none",
         "explicit-project",
+        "ordinal-project",
         "request-mention",
         "working-directory"
       ]
@@ -58,6 +59,15 @@
         "object",
         "null"
       ]
+    },
+    "navigation": {
+      "type": "object"
+    },
+    "suggested_projects": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
     }
   }
 }

@@ -147,7 +147,9 @@ from .project_integration import (
 from .project_learning_intent import parse_project_learning_intent
 from .project_context import (
     build_project_resume_summary,
+    project_navigation_menu,
     resolve_current_project,
+    suggest_projects,
     unmatched_project_context,
 )
 from .project_home import choose_project_home, resolve_project_home
@@ -1654,17 +1656,7 @@ class KrcnApplicationService:
         _check_arguments(request.arguments, required=set())
         if request.apply:
             raise ApplicationServiceError("read operation cannot be applied")
-        projects = []
-        for record in self._store.list_records("projects"):
-            projects.append(
-                {
-                    "project_id": record.record_id,
-                    "name": record.payload.get("name"),
-                    "status": record.payload.get("status"),
-                    "revision": record.revision,
-                }
-            )
-        return "ok", {"projects": projects}
+        return "ok", project_navigation_menu(self._store)
 
     def _inspect_project(
         self,
@@ -1760,7 +1752,16 @@ class KrcnApplicationService:
     ) -> tuple[str, Mapping[str, object]]:
         match = self._project_context_match(request)
         if match is None:
-            return "ok", unmatched_project_context()
+            project_ref = request.arguments.get("project_ref")
+            return "ok", {
+                **unmatched_project_context(),
+                "navigation": project_navigation_menu(self._store),
+                "suggested_projects": (
+                    suggest_projects(self._store, project_ref)
+                    if isinstance(project_ref, str)
+                    else []
+                ),
+            }
         return "ok", match.public_summary(self._store)
 
     def _resume_project(
@@ -1769,7 +1770,17 @@ class KrcnApplicationService:
     ) -> tuple[str, Mapping[str, object]]:
         match = self._project_context_match(request)
         if match is None:
-            return "ok", {**unmatched_project_context(), "resume": None}
+            project_ref = request.arguments.get("project_ref")
+            return "ok", {
+                **unmatched_project_context(),
+                "resume": None,
+                "navigation": project_navigation_menu(self._store),
+                "suggested_projects": (
+                    suggest_projects(self._store, project_ref)
+                    if isinstance(project_ref, str)
+                    else []
+                ),
+            }
         return "ok", build_project_resume_summary(
             self._store,
             match,

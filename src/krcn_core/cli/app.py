@@ -27,6 +27,10 @@ from krcn_core.project_home import (
     discover_initialized_project_home,
 )
 from krcn_core.project_learning_intent import parse_project_learning_intent
+from krcn_core.project_navigation import (
+    ProjectNavigationError,
+    parse_project_navigation_intent,
+)
 from krcn_core.model_health import OpenAICompatibleModelHealthProbe
 from krcn_core.secret_provider import OpenCodeSecretProvider
 from krcn_core.repository_context import main as context_main
@@ -953,6 +957,31 @@ def _run_project_command(args: argparse.Namespace) -> int:
 def _run_ask_command(args: argparse.Namespace) -> int:
     try:
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
+        try:
+            navigation_intent = parse_project_navigation_intent(args.request)
+        except ProjectNavigationError:
+            navigation_intent = None
+        if navigation_intent is not None:
+            data_root = _active_project_data_root(args.data_root)
+            response = create_application_service(repo_root, data_root).execute(
+                ServiceRequest(
+                    client_kind="cli",
+                    operation=navigation_intent.operation,
+                    arguments=navigation_intent.service_arguments(
+                        str(Path.cwd().resolve())
+                    ),
+                )
+            )
+            response = ServiceResponse(
+                request_id=response.request_id,
+                operation=response.operation,
+                status=response.status,
+                data={
+                    "route": navigation_intent.public_summary(),
+                    **response.data,
+                },
+            )
+            return _print_service_response(response, args.format)
         try:
             document_intent = parse_work_document_intent(args.request)
         except WorkIntentError:
