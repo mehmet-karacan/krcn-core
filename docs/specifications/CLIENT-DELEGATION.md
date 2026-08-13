@@ -78,3 +78,23 @@ Capability and delegation decisions are informational controls. They do not bypa
 exact-plan approval, ownership, provider, model, database, or mutation policies.
 Runtime integration must bind the decision to the same session and task context
 before work begins.
+
+## Application and CLI operations
+
+`client.capabilities` validates one complete session declaration and returns a
+credential-free capability profile. `client.delegation` validates the same profile,
+classifies one work request, and returns the coordinator boundary and delegation
+decision. Both operations are read-only and reject apply mode.
+
+The CLI exposes the same transport-neutral operations:
+
+```text
+krcn client capabilities --help
+krcn client delegation --help
+```
+
+The delegation command requires an explicit matched or unmatched project result.
+It returns `ok` for native parallel delegation or a coordinator exception,
+`degraded` for allowed sequential and isolated-role fallback, and `blocked` when
+meaningful project work cannot be delegated. A blocked CLI decision uses a nonzero
+exit code after printing the structured decision.

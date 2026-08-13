@@ -31,6 +31,8 @@
         "project.resolve-current",
         "project.resume",
         "client.bootstrap",
+        "client.capabilities",
+        "client.delegation",
         "model.resolve",
         "project.learn",
         "project.integrate",
@@ -97,6 +99,8 @@
         "ok",
         "planned",
         "applied",
+        "degraded",
+        "blocked",
         "choice-required",
         "cancelled"
       ]

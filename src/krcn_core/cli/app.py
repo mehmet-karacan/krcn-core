@@ -520,6 +520,44 @@ def build_parser() -> argparse.ArgumentParser:
         help="Plan or install managed KRCN guidance for supported AI clients",
     )
     _add_service_options(client_bootstrap, mutation=True)
+    for command_name, help_text in (
+        (
+            "capabilities",
+            "Validate the current AI client session capability declaration",
+        ),
+        (
+            "delegation",
+            "Classify project work and select a safe multi-agent execution mode",
+        ),
+    ):
+        command = client_commands.add_parser(command_name, help=help_text)
+        command.add_argument("--session-id", required=True)
+        command.add_argument("--client-id", required=True)
+        command.add_argument("--native-subagents", action="store_true")
+        command.add_argument("--parallel-subagents", action="store_true")
+        command.add_argument("--per-agent-model-selection", action="store_true")
+        command.add_argument("--agent-cancellation", action="store_true")
+        command.add_argument("--structured-results", action="store_true")
+        command.add_argument("--isolated-role-execution", action="store_true")
+        command.add_argument("--max-parallel-agents", type=int, default=1)
+        if command_name == "delegation":
+            command.add_argument(
+                "--work-class",
+                required=True,
+                help="Reviewed work class from the delegation policy",
+            )
+            project_match = command.add_mutually_exclusive_group(required=True)
+            project_match.add_argument(
+                "--project-matched",
+                dest="project_matched",
+                action="store_true",
+            )
+            project_match.add_argument(
+                "--project-unmatched",
+                dest="project_matched",
+                action="store_false",
+            )
+        _add_service_options(command)
     model = subparsers.add_parser(
         "model",
         help="Resolve client-neutral model profiles without granting authority",
@@ -1195,24 +1233,59 @@ def _run_portability_command(args: argparse.Namespace) -> int:
 
 def _run_client_command(args: argparse.Namespace) -> int:
     try:
-        if args.client_command != "bootstrap":
+        if args.client_command not in {"bootstrap", "capabilities", "delegation"}:
             raise ApplicationServiceError("client command is required")
         repo_root = args.repo.resolve() if args.repo else discover_repo_root()
         data_root = resolve_user_home(args.data_root).path
+        if args.client_command == "bootstrap":
+            operation = "client.bootstrap"
+            arguments = {}
+            apply = args.apply
+            expected_plan = args.expected_plan
+            approval_id = args.approval_id
+        elif args.client_command in {"capabilities", "delegation"}:
+            arguments = {
+                "session_id": args.session_id,
+                "client_id": args.client_id,
+                "capabilities": {
+                    "native_subagents": args.native_subagents,
+                    "parallel_subagents": args.parallel_subagents,
+                    "per_agent_model_selection": args.per_agent_model_selection,
+                    "agent_cancellation": args.agent_cancellation,
+                    "structured_results": args.structured_results,
+                    "isolated_role_execution": args.isolated_role_execution,
+                },
+                "max_parallel_agents": args.max_parallel_agents,
+            }
+            operation = "client.capabilities"
+            if args.client_command == "delegation":
+                operation = "client.delegation"
+                arguments.update(
+                    {
+                        "work_class": args.work_class,
+                        "project_matched": args.project_matched,
+                    }
+                )
+            apply = False
+            expected_plan = None
+            approval_id = None
+        else:
+            raise ApplicationServiceError("client command is required")
         response = create_application_service(repo_root, data_root).execute(
             ServiceRequest(
                 client_kind="cli",
-                operation="client.bootstrap",
-                arguments={},
-                apply=args.apply,
-                expected_plan_id=args.expected_plan,
-                approval_id=args.approval_id,
+                operation=operation,
+                arguments=arguments,
+                apply=apply,
+                expected_plan_id=expected_plan,
+                approval_id=approval_id,
             )
         )
     except (ApplicationServiceError, OSError, ValueError) as exc:
         _print_error(exc)
         return 2
-    return _print_service_response(response, args.format)
+    printed = _print_service_response(response, args.format)
+    return 3 if response.status == "blocked" else printed
 
 
 def _run_model_command(args: argparse.Namespace) -> int:

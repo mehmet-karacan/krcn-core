@@ -67,6 +67,12 @@ from .context_builder import (
     parse_context_build_request,
 )
 from .client_bootstrap import apply_client_bootstrap, prepare_client_bootstrap
+from .client_capabilities import (
+    ClientCapabilityProfile,
+    create_client_capability_profile,
+    load_client_capability_policy,
+)
+from .delegation_policy import decide_delegation, load_delegation_policy
 from .memory_gate import (
     apply_memory_lifecycle,
     apply_memory_persistence,
@@ -234,6 +240,8 @@ OPERATIONS = {
     "project.resolve-current",
     "project.resume",
     "client.bootstrap",
+    "client.capabilities",
+    "client.delegation",
     "model.resolve",
     "model.inventory",
     "model.list",
@@ -544,6 +552,8 @@ class KrcnApplicationService:
             "project.resolve-current": self._resolve_current_project,
             "project.resume": self._resume_project,
             "client.bootstrap": self._bootstrap_clients,
+            "client.capabilities": self._client_capabilities,
+            "client.delegation": self._client_delegation,
             "model.resolve": self._resolve_model,
             "model.inventory": self._model_inventory,
             "model.list": self._list_models,
@@ -1513,6 +1523,103 @@ class KrcnApplicationService:
             match,
             self._repo_root,
         )
+
+    def _client_capability_profile(
+        self,
+        arguments: Mapping[str, object],
+    ) -> ClientCapabilityProfile:
+        capabilities = _object_argument(arguments, "capabilities")
+        max_parallel_agents = arguments.get("max_parallel_agents")
+        if (
+            not isinstance(max_parallel_agents, int)
+            or isinstance(max_parallel_agents, bool)
+        ):
+            raise ApplicationServiceError("max_parallel_agents must be an integer")
+        return create_client_capability_profile(
+            load_client_capability_policy(self._repo_root),
+            session_id=_string_argument(arguments, "session_id"),
+            client_id=_identifier_argument(arguments, "client_id"),
+            capabilities=capabilities,
+            max_parallel_agents=max_parallel_agents,
+        )
+
+    def _client_capabilities(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={
+                "session_id",
+                "client_id",
+                "capabilities",
+                "max_parallel_agents",
+            },
+        )
+        if request.apply:
+            raise ApplicationServiceError("client capability declaration is read-only")
+        profile = self._client_capability_profile(request.arguments)
+        return "ok", {"profile": profile.as_dict()}
+
+    def _client_delegation(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={
+                "session_id",
+                "client_id",
+                "capabilities",
+                "max_parallel_agents",
+                "work_class",
+                "project_matched",
+            },
+        )
+        if request.apply:
+            raise ApplicationServiceError("client delegation decision is read-only")
+        project_matched = request.arguments.get("project_matched")
+        if not isinstance(project_matched, bool):
+            raise ApplicationServiceError("project_matched must be boolean")
+        profile = self._client_capability_profile(request.arguments)
+        policy = load_delegation_policy(self._repo_root)
+        decision = decide_delegation(
+            policy,
+            profile,
+            work_class=_identifier_argument(request.arguments, "work_class"),
+            project_matched=project_matched,
+        )
+        degradation: Mapping[str, object] | None = None
+        status = "ok"
+        if decision.delegation_required and not decision.execution_allowed:
+            status = "blocked"
+            degradation = {
+                "code": "delegation-unavailable",
+                "execution_blocked": True,
+                "user_visible_notice_required": True,
+            }
+        elif (
+            decision.delegation_required
+            and decision.selected_mode != "native-parallel"
+        ):
+            status = "degraded"
+            degradation = {
+                "code": decision.selected_mode,
+                "execution_blocked": False,
+                "user_visible_notice_required": True,
+            }
+        return status, {
+            "profile": profile.as_dict(),
+            "decision": decision.as_dict(),
+            "coordinator_boundary": {
+                "responsibilities": list(policy.coordinator_responsibilities),
+                "prohibited_direct_actions": list(
+                    policy.coordinator_prohibited_actions
+                ),
+            },
+            "degradation": degradation,
+            "authority_granted": False,
+        }
 
     def _bootstrap_clients(
         self,

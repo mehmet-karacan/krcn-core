@@ -130,7 +130,28 @@ krcn client bootstrap
 krcn client bootstrap --apply --expected-plan <plan-id> --approval-id <approval-id>
 ```
 
-The first command is read-only. Apply backs up every existing client instruction file into the active ignored KRCN local-data area, preserves content outside the managed KRCN markers, and rolls back already changed client files if a later write fails.
+Bootstrap planning is read-only. Apply backs up every existing client instruction file into the active ignored KRCN local-data area, preserves content outside the managed KRCN markers, and rolls back already changed client files if a later write fails.
+
+## AI client capability and delegation checks
+
+Clients declare only capabilities present in the current session. Capability
+declaration and delegation selection are read-only and do not grant authority.
+
+```powershell
+krcn client capabilities --session-id session-001 --client-id codex `
+  --native-subagents --parallel-subagents --structured-results `
+  --max-parallel-agents 4
+
+krcn client delegation --session-id session-001 --client-id codex `
+  --work-class project-analysis --project-matched `
+  --native-subagents --parallel-subagents --structured-results `
+  --max-parallel-agents 4
+```
+
+Use `krcn client delegation --help` for every supported work class and capability
+flag. Sequential and isolated-role modes are reported as degraded. When meaningful
+matched project work requires delegation but the client cannot provide it, the
+command returns a blocked decision and a nonzero exit code.
 
 ## Model inventory and health
 

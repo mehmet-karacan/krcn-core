@@ -31,6 +31,8 @@
         "project.resolve-current",
         "project.resume",
         "client.bootstrap",
+        "client.capabilities",
+        "client.delegation",
         "model.resolve",
         "model.inventory",
         "model.list",

@@ -101,6 +101,18 @@ class ClientBootstrapTests(unittest.TestCase):
             "explicit KRCN Core product-development request",
             self.codex.read_text(encoding="utf-8"),
         )
+        self.assertIn(
+            "krcn client delegation",
+            self.codex.read_text(encoding="utf-8"),
+        )
+        self.assertIn(
+            "main agent is coordinator-only",
+            self.codex.read_text(encoding="utf-8"),
+        )
+        self.assertIn(
+            "delegation-unavailable",
+            self.codex.read_text(encoding="utf-8"),
+        )
         for entry in plan.entries:
             if entry.existed:
                 assert entry.backup_path is not None

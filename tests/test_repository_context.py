@@ -76,6 +76,22 @@ class RepositoryContextTests(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertTrue(resolve_repo_reference(REPO_ROOT, canonical[key]).is_file())
 
+    def test_client_delegation_contract_is_canonical(self) -> None:
+        canonical = resolve_repository_context(REPO_ROOT).manifest["canonical"]
+        for key in (
+            "client_capability_policy",
+            "client_capability_policy_schema",
+            "client_capability_profile_schema",
+            "delegation_policy",
+            "delegation_policy_schema",
+            "delegation_decision_schema",
+            "client_delegation_boundary",
+        ):
+            with self.subTest(key=key):
+                self.assertTrue(
+                    resolve_repo_reference(REPO_ROOT, canonical[key]).is_file()
+                )
+
     def test_project_capability_profile_contract_is_canonical(self) -> None:
         canonical = resolve_repository_context(REPO_ROOT).manifest["canonical"]
         for key in (
