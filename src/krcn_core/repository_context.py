@@ -273,6 +273,8 @@ def validate_repository_context(repo_root: Path) -> list[str]:
     expected_data_policy = {
         "offline_by_default": True,
         "local_data_in_git": False,
+        "operational_artifacts_in_core": False,
+        "operational_artifact_root": ".krcn/local-data/client-artifacts",
         "implicit_provider_discovery": False,
         "user_data_mutation_requires_approval": True,
     }

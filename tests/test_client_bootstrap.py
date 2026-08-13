@@ -89,6 +89,14 @@ class ClientBootstrapTests(unittest.TestCase):
             "krcn model resolve",
             self.codex.read_text(encoding="utf-8"),
         )
+        self.assertIn(
+            ".krcn/local-data/client-artifacts/",
+            self.codex.read_text(encoding="utf-8"),
+        )
+        self.assertIn(
+            "explicit KRCN Core product-development request",
+            self.codex.read_text(encoding="utf-8"),
+        )
         for entry in plan.entries:
             if entry.existed:
                 assert entry.backup_path is not None

@@ -48,6 +48,15 @@ class RepositoryContextTests(unittest.TestCase):
         instructions = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn(".ai/repository-context.json", instructions)
         self.assertIn(".ai/current-work.json", instructions)
+        self.assertIn(".krcn/local-data/client-artifacts/**", instructions)
+
+    def test_operational_artifacts_stay_outside_versioned_core(self) -> None:
+        policy = resolve_repository_context(REPO_ROOT).manifest["data_policy"]
+        self.assertFalse(policy["operational_artifacts_in_core"])
+        self.assertEqual(
+            ".krcn/local-data/client-artifacts",
+            policy["operational_artifact_root"],
+        )
 
     def test_model_routing_contract_is_canonical(self) -> None:
         canonical = resolve_repository_context(REPO_ROOT).manifest["canonical"]
