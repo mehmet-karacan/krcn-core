@@ -22,6 +22,18 @@ from krcn_core.work_import import parse_work_import_request  # noqa: E402
 
 
 class LegacyWorkClassifierTests(unittest.TestCase):
+    def test_review_classification_public_summary_remains_available(self) -> None:
+        self.write("aktif/20260812_G-20260812-001_A.md", b"first")
+        self.write("aktif/20260812_G-20260812-001_B.md", b"second")
+        result = classify_legacy_work_source(
+            self.root,
+            project_id="gpu-fusion",
+        )
+        summary = result.as_dict()
+        self.assertFalse(summary["import_ready"])
+        self.assertIsNone(summary["work_import_request"])
+        self.assertFalse(summary["paths_disclosed"])
+
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name) / "isler"

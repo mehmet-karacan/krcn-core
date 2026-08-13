@@ -141,6 +141,19 @@ class LegacyWorkClassification:
             "candidates": [dict(candidate) for candidate in self.candidates],
         }
 
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "schema_ref": "schemas/legacy-work-classification.schema.json",
+            "schema_version": 1,
+            "project_id": self.project_id,
+            "source_inventory": self.source_inventory.public_summary(),
+            "candidate_count": len(self.candidates),
+            "reviews": [review.as_dict() for review in self.reviews],
+            "import_ready": self.import_ready,
+            "work_import_request": self.work_import_request() if self.import_ready else None,
+            "paths_disclosed": False,
+        }
+
 
 @dataclass(frozen=True)
 class ConflictSplitSummary:
@@ -273,20 +286,6 @@ def resolve_legacy_work_reviews(
         tuple(sorted(unresolved, key=lambda value: (value.code, value.external_id or "", value.source_refs))),
         tuple(splits),
     )
-
-    def as_dict(self) -> dict[str, object]:
-        return {
-            "schema_ref": "schemas/legacy-work-classification.schema.json",
-            "schema_version": 1,
-            "project_id": self.project_id,
-            "source_inventory": self.source_inventory.public_summary(),
-            "candidate_count": len(self.candidates),
-            "reviews": [review.as_dict() for review in self.reviews],
-            "import_ready": self.import_ready,
-            "work_import_request": self.work_import_request() if self.import_ready else None,
-            "paths_disclosed": False,
-        }
-
 
 def _category_type(name: str, prefixes: Mapping[str, object]) -> str | None:
     prefix = name.split("_", 1)[0].casefold()
