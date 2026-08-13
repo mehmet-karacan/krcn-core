@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:legacy-work-classification:1",
+  "title": "KRCN Core legacy work classification result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "project_id",
+    "source_inventory",
+    "candidate_count",
+    "reviews",
+    "import_ready",
+    "work_import_request",
+    "paths_disclosed"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/legacy-work-classification.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "source_inventory": {
+      "type": "object"
+    },
+    "candidate_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "reviews": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "external_id",
+          "source_refs",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "enum": [
+              "conflicting-task-id",
+              "unclassified-entry"
+            ]
+          },
+          "external_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_refs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "import_ready": {
+      "type": "boolean"
+    },
+    "work_import_request": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "paths_disclosed": {
+      "const": false
+    }
+  }
+}

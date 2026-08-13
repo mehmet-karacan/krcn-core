@@ -1,0 +1,19 @@
+{
+  "schema_ref": "schemas/legacy-work-classifier-policy.schema.json",
+  "schema_version": 1,
+  "source_id": "mk-hub-isler",
+  "logical_root": "legacy-work/mk-hub-isler",
+  "buckets": {
+    "aktif": "active",
+    "arsiv": "archived"
+  },
+  "category_prefixes": {
+    "defect": "defect",
+    "talep": "request"
+  },
+  "task_extensions": [
+    ".md"
+  ],
+  "task_id_pattern": "(?:^|_)((?:G|SC)-[0-9]{8}-[0-9]{3})(?:-[A-Z])?(?:_|\\.|$)",
+  "combined_relation_type": "relates-to"
+}

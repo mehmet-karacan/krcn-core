@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:legacy-work-classifier-policy:1",
+  "title": "KRCN Core legacy work classifier policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "source_id",
+    "logical_root",
+    "buckets",
+    "category_prefixes",
+    "task_extensions",
+    "task_id_pattern",
+    "combined_relation_type"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/legacy-work-classifier-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "source_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "logical_root": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^\\\\:]+$"
+    },
+    "buckets": {
+      "type": "object",
+      "additionalProperties": {
+        "enum": [
+          "active",
+          "archived"
+        ]
+      },
+      "minProperties": 1
+    },
+    "category_prefixes": {
+      "type": "object",
+      "additionalProperties": {
+        "enum": [
+          "request",
+          "defect"
+        ]
+      },
+      "minProperties": 1
+    },
+    "task_extensions": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^\\.[a-z0-9]+$"
+      }
+    },
+    "task_id_pattern": {
+      "type": "string",
+      "minLength": 1
+    },
+    "combined_relation_type": {
+      "const": "relates-to"
+    }
+  }
+}
