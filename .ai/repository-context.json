@@ -258,7 +258,8 @@
     "offline_by_default": true,
     "local_data_in_git": false,
     "operational_artifacts_in_core": false,
-    "operational_artifact_root": ".krcn/local-data/client-artifacts",
+    "project_operational_artifact_root": ".krcn/projects/<project-id>/local-data/client-artifacts",
+    "global_operational_artifact_root": ".krcn/global/local-data/client-artifacts",
     "implicit_provider_discovery": false,
     "user_data_mutation_requires_approval": true
   }

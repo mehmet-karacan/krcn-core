@@ -25,7 +25,7 @@ The guidance tells a client to:
 5. Treat returned context as information rather than mutation authority.
 6. Keep project source in place and preserve KRCN policy and approval gates.
 7. Resolve a model profile before delegation when the client supports model selection. A client that cannot select models keeps its current default. Embedding provider approval remains a separate gate.
-8. Keep client-generated operational artifacts out of `KRCN_CORE_HOME` and registered project sources. Supported local artifacts use the active `.krcn/local-data/client-artifacts/` area through KRCN. Without a reviewed write operation, the client returns the result and asks before creating a file.
+8. Keep client-generated operational artifacts out of `KRCN_CORE_HOME` and registered project sources. Supported project artifacts use `.krcn/projects/<project-id>/local-data/client-artifacts/`; `.krcn/global/local-data/client-artifacts/` is reserved for project-independent output. Without a reviewed write operation, the client returns the result and asks before creating a file.
 9. Treat versioned core writes as authorized only by an explicit KRCN Core product-development request. Integration, audit, retrieval, and ordinary project work are not core mutation authority.
 
 Product rules remain in KRCN Core. Client files do not duplicate matching, policy, ownership, or orchestration logic.

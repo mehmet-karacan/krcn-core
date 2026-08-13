@@ -54,7 +54,7 @@ The output contains relative references and current work metadata. It must not c
 
 ## Operational artifact ownership
 
-Client-generated audit reports, imported work summaries, benchmark results, task notes, and session artifacts are local user data. They must not be created under the versioned KRCN Core tree or another registered project source directory. Route supported writes through the shared KRCN application service and store machine-local artifacts under the active KRCN home at `.krcn/local-data/client-artifacts/**`.
+Client-generated audit reports, imported work summaries, benchmark results, task notes, and session artifacts are local user data. They must not be created under the versioned KRCN Core tree or another registered project source directory. Route supported writes through the shared KRCN application service. Store a project-scoped artifact under `.krcn/projects/<project-id>/local-data/client-artifacts/**`; use `.krcn/global/local-data/client-artifacts/**` only when no project owns the artifact.
 
 Versioned core files may change only for an explicit KRCN Core product-development request. If no reviewed KRCN operation supports an operational artifact write, return the result to the user and ask before creating a file. Do not improvise a path under `docs/`, `.ai/`, the repository root, or an external project.
 

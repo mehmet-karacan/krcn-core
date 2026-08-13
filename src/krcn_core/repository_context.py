@@ -274,7 +274,12 @@ def validate_repository_context(repo_root: Path) -> list[str]:
         "offline_by_default": True,
         "local_data_in_git": False,
         "operational_artifacts_in_core": False,
-        "operational_artifact_root": ".krcn/local-data/client-artifacts",
+        "project_operational_artifact_root": (
+            ".krcn/projects/<project-id>/local-data/client-artifacts"
+        ),
+        "global_operational_artifact_root": (
+            ".krcn/global/local-data/client-artifacts"
+        ),
         "implicit_provider_discovery": False,
         "user_data_mutation_requires_approval": True,
     }

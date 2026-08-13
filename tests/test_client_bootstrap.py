@@ -90,7 +90,11 @@ class ClientBootstrapTests(unittest.TestCase):
             self.codex.read_text(encoding="utf-8"),
         )
         self.assertIn(
-            ".krcn/local-data/client-artifacts/",
+            ".krcn/projects/<project-id>/local-data/client-artifacts/",
+            self.codex.read_text(encoding="utf-8"),
+        )
+        self.assertIn(
+            ".krcn/global/local-data/client-artifacts/",
             self.codex.read_text(encoding="utf-8"),
         )
         self.assertIn(

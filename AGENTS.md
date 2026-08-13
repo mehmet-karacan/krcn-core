@@ -35,7 +35,7 @@ At the start of each task:
 ## Invariants
 
 - Git is the source of truth for the product core and versioned schemas, not for all live user data.
-- Never write client-generated operational artifacts such as audit reports, imported work summaries, benchmark results, task notes, or session output into the versioned KRCN Core tree. Store them through the active KRCN home under `.krcn/local-data/client-artifacts/**`; if no reviewed KRCN operation supports the write, keep the result in the response and ask before creating a file.
+- Never write client-generated operational artifacts such as audit reports, imported work summaries, benchmark results, task notes, or session output into the versioned KRCN Core tree. Store project-scoped artifacts under `.krcn/projects/<project-id>/local-data/client-artifacts/**` and truly project-independent artifacts under `.krcn/global/local-data/client-artifacts/**`; if no reviewed KRCN operation supports the write, keep the result in the response and ask before creating a file.
 - Modify versioned core paths only when the user explicitly requests KRCN Core product development. A project integration, audit, retrieval, or ordinary work request does not authorize writes to `src/`, `config/`, `schemas/`, `docs/`, `tests/`, `.ai/`, or another tracked core path.
 - Core, runtime state, user data, derived data, and secrets are separate ownership classes.
 - Updates preserve existing projects, documents, work requests, memory, settings, secrets, and indexes by default.
@@ -142,7 +142,7 @@ The machine-readable route is `config/intent-routing.json`. Client adapters must
 - `docs/adr/`: Turkish architectural decision records.
 - `docs/handoffs/`: Turkish task/session handoff summaries.
 - `.ai/`: English machine-readable schemas, policies, and executable task definitions.
-- Operational reports and other machine-local client artifacts belong under `.krcn/local-data/client-artifacts/**` and must remain outside Git.
+- Project operational reports and other machine-local client artifacts belong under `.krcn/projects/<project-id>/local-data/client-artifacts/**`. Only project-independent artifacts belong under `.krcn/global/local-data/client-artifacts/**`. Both locations must remain outside Git.
 
 ## Client adapters
 

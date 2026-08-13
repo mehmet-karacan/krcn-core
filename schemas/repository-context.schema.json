@@ -453,7 +453,8 @@
         "offline_by_default",
         "local_data_in_git",
         "operational_artifacts_in_core",
-        "operational_artifact_root",
+        "project_operational_artifact_root",
+        "global_operational_artifact_root",
         "implicit_provider_discovery",
         "user_data_mutation_requires_approval"
       ],
@@ -467,8 +468,11 @@
         "operational_artifacts_in_core": {
           "const": false
         },
-        "operational_artifact_root": {
-          "const": ".krcn/local-data/client-artifacts"
+        "project_operational_artifact_root": {
+          "const": ".krcn/projects/<project-id>/local-data/client-artifacts"
+        },
+        "global_operational_artifact_root": {
+          "const": ".krcn/global/local-data/client-artifacts"
         },
         "implicit_provider_discovery": {
           "const": false
