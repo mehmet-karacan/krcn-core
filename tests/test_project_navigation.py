@@ -16,7 +16,7 @@ from krcn_core.application import (  # noqa: E402
     KrcnApplicationService,
     ServiceRequest,
 )
-from krcn_core.cli.app import main as cli_main  # noqa: E402
+from krcn_core.cli.app import _project_resume_text, main as cli_main  # noqa: E402
 from krcn_core.home_layout import user_home_layout_bytes  # noqa: E402
 from krcn_core.local_store import LocalWorkspaceStore  # noqa: E402
 from krcn_core.mutation_gate import (  # noqa: E402
@@ -162,6 +162,44 @@ class ProjectNavigationTests(unittest.TestCase):
             "gpu-fusion",
             response.data["suggested_projects"][0]["project_id"],
         )
+
+    def test_resume_table_shows_durable_step_progress(self) -> None:
+        rendered = _project_resume_text({
+            "matched": True,
+            "project": {"project_id": "sample"},
+            "resume": {
+                "work": {
+                    "work_counts": {
+                        "requests": {"active": 0, "historical": 0},
+                        "defects": {"active": 0, "historical": 0},
+                        "tasks": {"active": 1, "historical": 0},
+                    },
+                    "active_progress": [
+                        {
+                            "work_item_id": "sample-task",
+                            "status": "running",
+                            "completed_step_count": 4,
+                            "total_step_count": 10,
+                            "current_step": {
+                                "step_id": "step-05",
+                                "title": "Beşinci adımı doğrula",
+                            },
+                            "next_steps": [
+                                {
+                                    "step_id": "step-06",
+                                    "title": "Altıncı adıma geç",
+                                }
+                            ],
+                        }
+                    ],
+                    "items": [],
+                }
+            },
+        })
+        self.assertIn("Aktif ilerleme:", rendered)
+        self.assertIn("4/10", rendered)
+        self.assertIn("Beşinci adımı doğrula", rendered)
+        self.assertIn("Altıncı adıma geç", rendered)
 
     def test_natural_list_and_number_are_routed(self) -> None:
         listed = parse_project_navigation_intent("proje listesi")

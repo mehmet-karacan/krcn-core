@@ -1,11 +1,11 @@
 {
   "schema_ref": "schemas/current-work.schema.json",
   "schema_version": 1,
-  "phase_id": "phase-18",
-  "workstream_id": "project-aware-agent-orchestration",
-  "status": "active",
-  "goal": "Qualify models per project and workload, enforce evidence-bound subagent orchestration, pilot gpu-fusion, then integrate six real projects and migrate high-confidence historical work",
-  "plan_ref": "docs/plans/PLAN-018-GERCEK-PROJELER-VE-GOREV-MIRASI.md",
+  "phase_id": "phase-19",
+  "workstream_id": "durable-task-continuity",
+  "status": "completed",
+  "goal": "Çok adımlı proje görevlerinde tamamlanan, mevcut ve sonraki adımı sohbetten bağımsız ve ezilmeyen kayıtlarla korumak",
+  "plan_ref": "docs/plans/PLAN-019-KALICI-GOREV-ILERLEMESI.md",
   "progress_refs": [
     "docs/progress/PHASE-1-FOUNDATION.md",
     "docs/progress/PHASE-1-PACKAGE-1.md",
@@ -106,16 +106,14 @@
     "docs/progress/PHASE-18-NATURAL-RESEARCH-ACTION.md",
     "docs/progress/CODEX-DESKTOP-DELEGASYON-UYUMLULUGU.md",
     "docs/progress/ILK-ENTEGRASYON-CLI-BASLANGICI.md",
+    "docs/progress/PHASE-19-KALICI-GOREV-ILERLEMESI.md",
     "docs/progress/KAYNAK-KOD-INDEKSI-REBIND-DUZELTMESI.md"
   ],
   "next_actions": [
-    "run an approved native research request on gpu-fusion with explicit role assignments",
-    "run project benchmark suites and persist workload scorecards",
-    "select project-specific primary and fallback model assignments",
-    "enforce coordinator delegation through the runtime queue",
-    "pilot the complete coordinator architecture on gpu-fusion"
+    "gpu-fusion üzerinde çok adımlı gerçek bir görevle kalıcı ilerleme pilotu çalıştır",
+    "global KRCN CLI kurulumunu onaylı kurulum akışıyla güncelle"
   ],
-  "baseline_commit": "37d1496",
+  "baseline_commit": "b383e2f",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

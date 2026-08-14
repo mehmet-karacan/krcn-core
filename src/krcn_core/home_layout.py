@@ -37,6 +37,7 @@ PROJECT_COLLECTION_PATHS = {
     "oracle-dependencies": "database/oracle/dependencies",
     "oracle-collection-reports": "database/oracle/reports",
     "orchestration-states": "runtime/orchestration-states",
+    "orchestration-plans": "runtime/orchestration-plans",
     "orchestration-events": "runtime/events/orchestration",
     "orchestration-checkpoints": "runtime/checkpoints/orchestration",
     "orchestration-handoffs": "runtime/orchestration-handoffs",

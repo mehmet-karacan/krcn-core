@@ -16,7 +16,7 @@ from .discovery import DiscoveryResult
 from .information_records import parse_information_record, record_is_stale
 from .json_documents import canonical_json_bytes
 from .local_store import LocalWorkspaceStore, StoredRecord
-from .orchestration_state import parse_orchestration_handoff
+from .orchestration_state import OrchestrationStateStore, parse_orchestration_handoff
 from .project_capability_profile import (
     ProjectCapabilityProfileError,
     parse_project_capability_profile,
@@ -620,6 +620,16 @@ def _work_summary(
             ),
             "integrity_verified": runtime_status["integrity_verified"],
         }
+    progress = OrchestrationStateStore(store).project_progress(project_id)
+    active_progress = tuple(
+        item for item in progress if item["status"] in ACTIVE_TASK_STATUSES
+    )
+    progress_task_ids = {str(item["task_id"]) for item in progress}
+    legacy_active_handoff_count = sum(
+        handoff.status in ACTIVE_TASK_STATUSES
+        and handoff.task_id not in progress_task_ids
+        for handoff in handoffs
+    )
     return {
         "active_task_count": active_total,
         "historical_task_count": historical_total,
@@ -641,9 +651,10 @@ def _work_summary(
             }
             for item, modified in work_items[:10]
         ],
-        "active_orchestration_count": sum(
-            handoff.status in ACTIVE_TASK_STATUSES for handoff in handoffs
+        "active_orchestration_count": (
+            len(active_progress) + legacy_active_handoff_count
         ),
+        "active_progress": list(active_progress[:5]),
         "handoffs": public_handoffs,
         "authoritative_status": True,
         "runtime_queue": runtime_queue,

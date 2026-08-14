@@ -1069,6 +1069,38 @@ def _project_resume_text(data: Mapping[str, object]) -> str:
             + " | Görevler A/G: " + _work_count_pair(summary, "tasks")
         ),
     ]
+    active_progress = work.get("active_progress")
+    if isinstance(active_progress, list) and active_progress:
+        progress_rows = []
+        for progress in active_progress:
+            if not isinstance(progress, dict):
+                continue
+            current = progress.get("current_step")
+            current_title = current.get("title") if isinstance(current, dict) else "-"
+            next_steps = progress.get("next_steps")
+            next_title = "-"
+            if isinstance(next_steps, list) and next_steps and isinstance(next_steps[0], dict):
+                next_title = next_steps[0].get("title", "-")
+            elif progress.get("verification_required") is True:
+                next_title = "Görevi doğrula"
+            completed = int(progress.get("completed_step_count", 0))
+            total = int(progress.get("total_step_count", 0))
+            progress_rows.append([
+                _shorten(progress.get("work_item_id", "-"), 30),
+                _display_status(progress.get("status")),
+                f"{completed}/{total}",
+                _shorten(current_title, 34),
+                _shorten(next_title, 34),
+            ])
+        if progress_rows:
+            lines.extend([
+                "",
+                "Aktif ilerleme:",
+                _text_table(
+                    ["İş", "Durum", "İlerleme", "Mevcut adım", "Sonraki adım"],
+                    progress_rows,
+                ),
+            ])
     items = work.get("items")
     if isinstance(items, list) and items:
         rows = []

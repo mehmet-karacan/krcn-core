@@ -101,6 +101,11 @@ COLLECTIONS = {
         "runtime/orchestration-states",
         "runtime",
     ),
+    "orchestration-plans": (
+        "plan_record_id",
+        "runtime/orchestration-plans",
+        "runtime",
+    ),
     "orchestration-events": (
         "event_id",
         "events/orchestration",
@@ -263,12 +268,15 @@ def _validate_record_identity(
             parse_orchestration_checkpoint,
             parse_orchestration_event,
             parse_orchestration_handoff,
+            parse_orchestration_plan_record,
             parse_orchestration_state,
         )
 
         try:
             if record_type == "orchestration-states":
                 return parse_orchestration_state(payload).revision
+            if record_type == "orchestration-plans":
+                return parse_orchestration_plan_record(payload).revision
             if record_type == "orchestration-events":
                 return parse_orchestration_event(payload).revision
             if record_type == "orchestration-checkpoints":

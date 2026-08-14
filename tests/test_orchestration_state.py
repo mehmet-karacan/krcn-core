@@ -18,6 +18,7 @@ from krcn_core.orchestration_state import (  # noqa: E402
     OrchestrationStateStore,
     transition_state,
 )
+from krcn_core.orchestration_plan import create_task_plan, parse_task_plan  # noqa: E402
 from krcn_core.orchestration_verifier import VerifierHandlerResult  # noqa: E402
 import test_orchestration_authorization as authorization_fixtures  # noqa: E402
 import test_orchestration_verifier as verifier_fixtures  # noqa: E402
@@ -132,6 +133,53 @@ class OrchestrationStateTests(unittest.TestCase):
         self.assertEqual(("inspect-policy",), resumed.next_step_ids)
         self.assertEqual(3, resumed.event_count)
 
+    def test_ten_step_plan_is_persisted_and_resumed_in_order(self) -> None:
+        worker = next(step for step in self.plan.steps if step.role == "worker")
+        verifier = next(step for step in self.plan.steps if step.role == "verifier")
+        step_payloads = []
+        previous = None
+        worker_ids = []
+        for index in range(1, 11):
+            payload = worker.as_dict()
+            payload.pop("step_digest")
+            step_id = f"work-{index:02d}"
+            worker_ids.append(step_id)
+            payload["step_id"] = step_id
+            payload["title"] = f"Kalıcı adım {index}"
+            payload["depends_on"] = [previous] if previous else []
+            step_payloads.append(payload)
+            previous = step_id
+        verifier_payload = verifier.as_dict()
+        verifier_payload.pop("step_digest")
+        verifier_payload["depends_on"] = worker_ids
+        step_payloads.append(verifier_payload)
+        plan = create_task_plan(self.intent, self.fixture.selection, step_payloads)
+        self.assertEqual(plan.as_dict(), parse_task_plan(plan.as_dict()).as_dict())
+
+        self.store.initialize(
+            plan,
+            "ten-step-session",
+            project_id="sample-project",
+            work_item_id="sample-task",
+        )
+        progress = self.store.project_progress("sample-project")
+        self.assertEqual(10, progress[0]["total_step_count"])
+        self.assertEqual(0, progress[0]["completed_step_count"])
+        self.assertEqual("work-01", progress[0]["next_steps"][0]["step_id"])
+        self.assertTrue(progress[0]["resume_available"])
+
+        plan_path = (
+            Path(self.temporary.name)
+            / "runtime"
+            / "orchestration-plans"
+            / f"{plan.task_id}.json"
+        )
+        envelope = json.loads(plan_path.read_text(encoding="utf-8"))
+        envelope["payload"]["plan"]["steps"][0]["title"] = "Değiştirilmiş adım"
+        plan_path.write_text(json.dumps(envelope), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "digest"):
+            self.store.project_progress("sample-project")
+
     def test_completion_requires_passing_verification(self) -> None:
         state = self.store.initialize(
             self.plan,
@@ -219,6 +267,7 @@ class OrchestrationStateTests(unittest.TestCase):
 
     def test_orchestration_schemas_are_versioned(self) -> None:
         expected = {
+            "orchestration-plan-record.schema.json": "urn:krcn:schemas:orchestration-plan-record:1",
             "orchestration-state.schema.json": "urn:krcn:schemas:orchestration-state:1",
             "orchestration-event.schema.json": "urn:krcn:schemas:orchestration-event:1",
             "orchestration-checkpoint.schema.json": "urn:krcn:schemas:orchestration-checkpoint:1",

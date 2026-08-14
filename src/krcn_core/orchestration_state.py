@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Mapping, Sequence
 from .information_records import canonical_json
 from .mutation_gate import DryRunEvidence, authorize_mutation
 from .orchestration_authorization import TaskAuthorization
-from .orchestration_plan import TaskPlan
+from .orchestration_plan import TaskPlan, parse_task_plan
 from .orchestration_verifier import TaskVerification
 from .orchestration_worker import (
     WorkerExecution,
@@ -159,6 +159,31 @@ class OrchestrationHandoff:
             "resume_token": self.resume_token,
             "revision": self.revision,
             "handoff_digest": self.handoff_digest,
+        }
+
+
+@dataclass(frozen=True)
+class OrchestrationPlanRecord:
+    plan_record_id: str
+    task_id: str
+    project_id: str
+    work_item_id: str
+    plan: TaskPlan
+    revision: int
+    record_digest: str
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "schema_ref": "schemas/orchestration-plan-record.schema.json",
+            "schema_version": 1,
+            "plan_record_id": self.plan_record_id,
+            "task_id": self.task_id,
+            "project_id": self.project_id,
+            "work_item_id": self.work_item_id,
+            "plan": self.plan.as_dict(),
+            "revision": self.revision,
+            "record_digest": self.record_digest,
+            "grants_authority": False,
         }
 
 
@@ -355,6 +380,58 @@ def parse_orchestration_handoff(payload: object) -> OrchestrationHandoff:
         authorization_id, str(payload["state_digest"]), str(payload["event_head_digest"]),
         str(payload["status"]), completed, pending, approvals, failures, tuple(refs),
         str(payload["resume_token"]), revision, str(payload["handoff_digest"]),
+    )
+
+
+def parse_orchestration_plan_record(payload: object) -> OrchestrationPlanRecord:
+    expected = {
+        "schema_ref",
+        "schema_version",
+        "plan_record_id",
+        "task_id",
+        "project_id",
+        "work_item_id",
+        "plan",
+        "revision",
+        "record_digest",
+        "grants_authority",
+    }
+    if not isinstance(payload, dict) or set(payload) != expected:
+        raise OrchestrationStateError("orchestration plan record fields are invalid")
+    if (
+        payload.get("schema_ref") != "schemas/orchestration-plan-record.schema.json"
+        or payload.get("schema_version") != 1
+        or payload.get("grants_authority") is not False
+    ):
+        raise OrchestrationStateError("orchestration plan record header is invalid")
+    identifiers = []
+    for name in ("plan_record_id", "task_id", "project_id", "work_item_id"):
+        value = payload.get(name)
+        if not isinstance(value, str) or not IDENTIFIER.fullmatch(value):
+            raise OrchestrationStateError(f"orchestration plan record {name} is invalid")
+        identifiers.append(value)
+    plan = parse_task_plan(payload.get("plan"))
+    revision = payload.get("revision")
+    record_digest = payload.get("record_digest")
+    if (
+        identifiers[0] != identifiers[1]
+        or plan.task_id != identifiers[1]
+        or not isinstance(revision, int)
+        or isinstance(revision, bool)
+        or revision < 1
+        or not isinstance(record_digest, str)
+        or not SHA256.fullmatch(record_digest)
+        or record_digest != _digest(payload, "record_digest")
+    ):
+        raise OrchestrationStateError("orchestration plan record identity is invalid")
+    return OrchestrationPlanRecord(
+        identifiers[0],
+        identifiers[1],
+        identifiers[2],
+        identifiers[3],
+        plan,
+        revision,
+        record_digest,
     )
 
 
@@ -626,19 +703,183 @@ class OrchestrationStateStore:
             raise OrchestrationStateError("orchestration records must stay in runtime ownership")
         return self._store.apply_put(plan, self._authorize(plan))
 
+    def save_plan(
+        self,
+        plan: TaskPlan,
+        project_id: str,
+        work_item_id: str,
+    ) -> OrchestrationPlanRecord:
+        """Persist a non-authoritative plan snapshot for cross-session resume."""
+
+        if not IDENTIFIER.fullmatch(project_id) or not IDENTIFIER.fullmatch(work_item_id):
+            raise OrchestrationStateError("orchestration plan scope is invalid")
+        current = self._store.read("orchestration-plans", plan.task_id)
+        if current is not None:
+            record = parse_orchestration_plan_record(current.payload)
+            if (
+                record.project_id != project_id
+                or record.work_item_id != work_item_id
+                or record.plan.as_dict() != plan.as_dict()
+            ):
+                raise OrchestrationStateError("persisted orchestration plan conflicts")
+            return record
+        payload = {
+            "schema_ref": "schemas/orchestration-plan-record.schema.json",
+            "schema_version": 1,
+            "plan_record_id": plan.task_id,
+            "task_id": plan.task_id,
+            "project_id": project_id,
+            "work_item_id": work_item_id,
+            "plan": plan.as_dict(),
+            "revision": 1,
+            "grants_authority": False,
+        }
+        payload["record_digest"] = _digest(payload, "record_digest")
+        record = parse_orchestration_plan_record(payload)
+        self._put("orchestration-plans", plan.task_id, record.as_dict(), project_id)
+        return record
+
     def initialize(
         self,
         plan: TaskPlan,
         session_id: str,
         authorization: TaskAuthorization | None = None,
         project_id: str | None = None,
+        work_item_id: str | None = None,
     ) -> OrchestrationState:
+        if (project_id is None) != (work_item_id is None):
+            raise OrchestrationStateError(
+                "project and work item must be persisted together"
+            )
         if self._store.read("orchestration-states", plan.task_id) is not None:
             raise OrchestrationStateError("orchestration state already exists")
+        if project_id is not None and work_item_id is not None:
+            self.save_plan(plan, project_id, work_item_id)
         state, event = create_initial_state(plan, session_id, authorization)
         self._put("orchestration-events", event.event_id, event.as_dict(), project_id)
         self._put("orchestration-states", state.state_id, state.as_dict(), project_id)
         return state
+
+    def project_progress(self, project_id: str) -> tuple[dict[str, object], ...]:
+        """Return digest-verified progress without restoring execution authority."""
+
+        if not IDENTIFIER.fullmatch(project_id):
+            raise OrchestrationStateError("project progress scope is invalid")
+        summaries = []
+        for stored_plan in self._store.list_records("orchestration-plans"):
+            record = parse_orchestration_plan_record(stored_plan.payload)
+            if record.project_id != project_id:
+                continue
+            stored_state = self._store.read("orchestration-states", record.task_id)
+            if stored_state is None:
+                raise OrchestrationStateError("persisted orchestration state is missing")
+            state = parse_orchestration_state(stored_state.payload)
+            if state.plan_id != record.plan.plan_id:
+                raise OrchestrationStateError("persisted orchestration plan is stale")
+            self._event_chain(state)
+            worker_steps = tuple(step for step in record.plan.steps if step.role == "worker")
+            by_id = {step.step_id: step for step in worker_steps}
+            completed = set(state.completed_step_ids)
+            failed = set(state.failed_step_ids)
+            if not completed.issubset(by_id) or not failed.issubset(by_id):
+                raise OrchestrationStateError("persisted orchestration progress is invalid")
+            completed_checkpoints = set()
+            for checkpoint_record in self._store.list_records("orchestration-checkpoints"):
+                _, execution = parse_orchestration_checkpoint(checkpoint_record.payload)
+                checkpoint = execution.checkpoint
+                if checkpoint.task_id != record.task_id:
+                    continue
+                step = by_id.get(checkpoint.step_id)
+                if (
+                    step is None
+                    or checkpoint.plan_id != record.plan.plan_id
+                    or checkpoint.step_digest != step.step_digest
+                ):
+                    raise OrchestrationStateError(
+                        "persisted orchestration checkpoint does not match the plan"
+                    )
+                if checkpoint.status == "completed":
+                    completed_checkpoints.add(checkpoint.step_id)
+            if not completed.issubset(completed_checkpoints):
+                raise OrchestrationStateError(
+                    "persisted orchestration completion lacks a checkpoint"
+                )
+            pending = tuple(step for step in worker_steps if step.step_id not in completed)
+            ready = tuple(
+                step
+                for step in pending
+                if (set(step.depends_on) & set(by_id)).issubset(completed)
+            )
+            current = by_id.get(state.current_step_id or "")
+            handoff_record = self._store.read(
+                "orchestration-handoffs", f"{record.task_id}-handoff"
+            )
+            resume_token = None
+            if handoff_record is not None:
+                handoff = parse_orchestration_handoff(handoff_record.payload)
+                if (
+                    handoff.plan_id == record.plan.plan_id
+                    and handoff.state_digest == state.state_digest
+                ):
+                    resume_token = handoff.resume_token
+            if state.status == "verifying":
+                next_action = "verify-task"
+            elif state.status == "completed":
+                next_action = "none"
+            elif state.status in {"failed", "blocked"}:
+                next_action = "review-blocked-or-failed-step"
+            elif ready:
+                next_action = "execute-next-step"
+            else:
+                next_action = "resume-current-step"
+            summary = {
+                "task_id": record.task_id,
+                "work_item_id": record.work_item_id,
+                "status": state.status,
+                "state_revision": state.revision,
+                "plan_id": record.plan.plan_id,
+                "total_step_count": len(worker_steps),
+                "completed_step_count": len(completed),
+                "pending_step_count": len(pending),
+                "failed_step_count": len(failed),
+                "current_step": (
+                    {
+                        "step_id": current.step_id,
+                        "title": current.title,
+                    }
+                    if current is not None
+                    else None
+                ),
+                "completed_steps": [
+                    {"step_id": step.step_id, "title": step.title}
+                    for step in worker_steps
+                    if step.step_id in completed
+                ],
+                "next_steps": [
+                    {"step_id": step.step_id, "title": step.title}
+                    for step in ready
+                ],
+                "resume_token": resume_token,
+                "resume_available": state.status != "completed" and bool(ready),
+                "verification_required": state.status == "verifying",
+                "next_action": next_action,
+                "continuation_requires_authorization": state.status != "completed",
+                "grants_authority": False,
+            }
+            summary["progress_digest"] = hashlib.sha256(
+                canonical_json(summary)
+            ).hexdigest()
+            summaries.append(summary)
+        return tuple(
+            sorted(
+                summaries,
+                key=lambda item: (
+                    item["status"] == "completed",
+                    -int(item["state_revision"]),
+                    str(item["task_id"]),
+                ),
+            )
+        )
 
     def transition(
         self,

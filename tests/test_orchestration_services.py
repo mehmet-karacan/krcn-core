@@ -30,6 +30,7 @@ from krcn_core.orchestration_verifier import (  # noqa: E402
     VerifierHandlerSpec,
     create_verification_evidence,
 )
+from krcn_core.orchestration_state import OrchestrationStateStore  # noqa: E402
 from krcn_core.orchestration_worker import (  # noqa: E402
     WorkerEffect,
     WorkerHandlerRegistry,
@@ -341,9 +342,49 @@ class OrchestrationServiceTests(unittest.TestCase):
         self.assertEqual("authorized", started.data["state"]["status"])
         runtime = self.data_root / "projects" / "sample" / "runtime"
         self.assertTrue((runtime / "orchestration-states" / f"{self.plan.task_id}.json").is_file())
+        self.assertTrue((runtime / "orchestration-plans" / f"{self.plan.task_id}.json").is_file())
         handoff = store.read("orchestration-handoffs", f"{self.plan.task_id}-handoff")
         self.assertIn("project:sample", handoff.payload["context_refs"])
         self.assertIn("work-item:task-scoped", handoff.payload["context_refs"])
+
+        progress = OrchestrationStateStore(store).project_progress("sample")
+        self.assertEqual(1, len(progress))
+        self.assertEqual("task-scoped", progress[0]["work_item_id"])
+        self.assertEqual(1, progress[0]["total_step_count"])
+        self.assertEqual(0, progress[0]["completed_step_count"])
+        self.assertEqual("inspect-policy", progress[0]["next_steps"][0]["step_id"])
+        self.assertFalse(progress[0]["grants_authority"])
+        resumed_project = self.service.execute(ServiceRequest(
+            "opencode",
+            "project.resume",
+            {
+                "working_directory": str(self.data_root),
+                "project_ref": "sample",
+            },
+        ))
+        active_progress = resumed_project.data["resume"]["work"]["active_progress"]
+        self.assertEqual("task-scoped", active_progress[0]["work_item_id"])
+        self.assertEqual(0, active_progress[0]["completed_step_count"])
+
+        executed = self.service.execute(ServiceRequest(
+            "codex",
+            "orchestrator.execute",
+            {
+                **arguments,
+                "step_id": "inspect-policy",
+                "handler_id": "inspect-handler",
+                "input": {"query": "synthetic-select"},
+            },
+            apply=True,
+            expected_plan_id=self.plan.plan_id,
+        ))
+        self.assertEqual("verifying", executed.data["state"]["status"])
+        progress = OrchestrationStateStore(store).project_progress("sample")
+        self.assertEqual(1, progress[0]["completed_step_count"])
+        self.assertEqual(0, progress[0]["pending_step_count"])
+        self.assertEqual([], progress[0]["next_steps"])
+        self.assertTrue(progress[0]["verification_required"])
+        self.assertEqual("verify-task", progress[0]["next_action"])
 
     def test_cli_uses_the_same_plan_service_contract(self) -> None:
         request_path = self.data_root / "orchestrator-plan.json"

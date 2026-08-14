@@ -29,6 +29,7 @@ BOOTSTRAP_BODY = """<!-- KRCN-CORE:BEGIN -->
 - Before project work, run `krcn project current --format json` from the current working directory.
 - If a project is matched, run `krcn project integrate --project "<project-id>" --scan-mode automatic --format json`. A fresh complete integration is a no-op; a stale or incomplete integration returns an exact plan that still requires its normal approval before apply.
 - When the user asks where work stopped, run `krcn project resume --format json` before answering.
+- For a multi-step project task, bind the exact plan to the matched project and Work Graph item. Persist a checkpoint and handoff after every worker step. On interruption, use `work.active_progress` from `project.resume`; never infer completed steps only from chat or overwrite prior checkpoints.
 - When the user explicitly names another registered project, run `krcn project resume --project \"<project-id-or-name>\" --format json`.
 - If KRCN returns `matched: true`, use its project, source-state, information, policy, and work summary as durable context.
 - For source implementation questions in a matched project, run `krcn project search-code "<project-id>" "<question>" --format json` before a broad source-tree scan. Use the relative paths, line ranges, and verified in-place content as candidate evidence.

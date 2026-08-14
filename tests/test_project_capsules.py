@@ -380,12 +380,28 @@ class ProjectCapsuleTests(unittest.TestCase):
         )
         states.mkdir(parents=True)
         events.mkdir(parents=True)
+        plans = (
+            self.home
+            / "projects"
+            / "sample"
+            / "runtime"
+            / "orchestration-plans"
+        )
+        plans.mkdir(parents=True)
         (states / "active-task.json").write_text(
             json.dumps({"payload": {"task_id": "active-task", "status": "running"}}),
             encoding="utf-8",
         )
         (events / "active-event.json").write_text(
             json.dumps({"payload": {"task_id": "active-task", "to_status": "running"}}),
+            encoding="utf-8",
+        )
+        (plans / "active-task.json").write_text(
+            json.dumps({"payload": {"task_id": "active-task"}}),
+            encoding="utf-8",
+        )
+        (plans / "completed-task.json").write_text(
+            json.dumps({"payload": {"task_id": "completed-task"}}),
             encoding="utf-8",
         )
         (states / "completed-task.json").write_text(
@@ -421,6 +437,14 @@ class ProjectCapsuleTests(unittest.TestCase):
             )
             self.assertNotIn(
                 "payload/runtime/events/orchestration/active-event.json",
+                exported.namelist(),
+            )
+            self.assertNotIn(
+                "payload/runtime/orchestration-plans/active-task.json",
+                exported.namelist(),
+            )
+            self.assertIn(
+                "payload/runtime/orchestration-plans/completed-task.json",
                 exported.namelist(),
             )
             self.assertIn(

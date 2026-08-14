@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:orchestration-plan-record:1",
+  "title": "KRCN Core persisted orchestration plan record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_record_id",
+    "task_id",
+    "project_id",
+    "work_item_id",
+    "plan",
+    "revision",
+    "record_digest",
+    "grants_authority"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/orchestration-plan-record.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_record_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_id": {
+      "$ref": "#/$defs/id"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/id"
+    },
+    "plan": {
+      "$ref": "task-plan.schema.json"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "record_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "grants_authority": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

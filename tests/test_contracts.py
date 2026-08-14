@@ -44,7 +44,13 @@ def package_text_paths() -> list[Path]:
 
 class PackageOneContractTests(unittest.TestCase):
     def test_every_json_document_parses(self) -> None:
-        documents = list(PROPOSED_ROOT.rglob("*.json"))
+        documents = [
+            path
+            for path in PROPOSED_ROOT.rglob("*.json")
+            if not {".git", ".krcn"}.intersection(
+                path.relative_to(PROPOSED_ROOT).parts
+            )
+        ]
         self.assertGreaterEqual(len(documents), 10)
         for document in documents:
             with self.subTest(document=document.relative_to(PROPOSED_ROOT)):

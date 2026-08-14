@@ -349,7 +349,11 @@ class OrchestrationApplicationService:
         if operation == "orchestrator.start":
             self._require_apply_plan(apply, expected_plan_id, plan.plan_id)
             state = self._states.initialize(
-                plan, authorization.session_id, authorization, project_id
+                plan,
+                authorization.session_id,
+                authorization,
+                project_id,
+                work_item_id,
             )
             handoff = self._states.save_handoff(
                 state, plan, project_id=project_id, work_item_id=work_item_id

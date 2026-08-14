@@ -48,6 +48,8 @@ REQUIRED_CANONICAL_KEYS = {
     "capability_registry",
     "capability_registry_schema",
     "task_plan_schema",
+    "orchestration_plan_record_schema",
+    "work_continuity",
     "task_authorization_schema",
     "worker_execution_schema",
     "task_verification_schema",

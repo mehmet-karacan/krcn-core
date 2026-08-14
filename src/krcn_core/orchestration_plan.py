@@ -146,6 +146,195 @@ def _step_digest(payload: Mapping[str, object]) -> str:
     return hashlib.sha256(canonical_json(identity)).hexdigest()
 
 
+def _free_text_list(value: object, label: str) -> tuple[str, ...]:
+    if (
+        not isinstance(value, list)
+        or any(not isinstance(item, str) or not item.strip() for item in value)
+        or len(set(value)) != len(value)
+        or any(SENSITIVE_TEXT.search(item) for item in value)
+    ):
+        raise TaskPlanError(f"{label} must be a unique safe text list")
+    return tuple(sorted(item.strip() for item in value))
+
+
+def _parse_persisted_step(payload: object) -> TaskPlanStep:
+    expected = {
+        "step_id",
+        "title",
+        "role",
+        "depends_on",
+        "required_capabilities",
+        "capability_record_refs",
+        "side_effects",
+        "ownership_impacts",
+        "provider_mode",
+        "approval_triggers",
+        "acceptance_criteria",
+        "verification_requirements",
+        "reversible",
+        "rollback_strategy",
+        "step_digest",
+    }
+    if not isinstance(payload, dict) or set(payload) != expected:
+        raise TaskPlanError("persisted task plan step fields are invalid")
+    step_id = _identifier(payload.get("step_id"), "step_id")
+    title = _text(payload.get("title"), "step title")
+    role = payload.get("role")
+    if role not in ROLES:
+        raise TaskPlanError("persisted task plan role is invalid")
+    depends_on = _unique_strings(payload.get("depends_on"), IDENTIFIER, "depends_on")
+    if step_id in depends_on:
+        raise TaskPlanError("persisted task plan step cannot depend on itself")
+    required_capabilities = _unique_strings(
+        payload.get("required_capabilities"), CAPABILITY, "required_capabilities"
+    )
+    record_refs = _unique_strings(
+        payload.get("capability_record_refs"), IDENTIFIER, "capability_record_refs"
+    )
+    if not required_capabilities or not record_refs:
+        raise TaskPlanError("persisted task plan capability bindings are incomplete")
+    side_effects = _unique_strings(
+        payload.get("side_effects"), SIDE_EFFECTS, "side_effects"
+    )
+    ownership_impacts = _unique_strings(
+        payload.get("ownership_impacts"), OWNERSHIP_CLASSES, "ownership_impacts"
+    )
+    provider_mode = payload.get("provider_mode")
+    if provider_mode not in PROVIDER_MODES:
+        raise TaskPlanError("persisted task plan provider mode is invalid")
+    approval_triggers = _unique_strings(
+        payload.get("approval_triggers"), APPROVAL_TRIGGERS, "approval_triggers"
+    )
+    acceptance = _free_text_list(payload.get("acceptance_criteria"), "acceptance_criteria")
+    verification = _free_text_list(
+        payload.get("verification_requirements"), "verification_requirements"
+    )
+    reversible = payload.get("reversible")
+    rollback_strategy = payload.get("rollback_strategy")
+    if not isinstance(reversible, bool) or rollback_strategy not in ROLLBACK_STRATEGIES:
+        raise TaskPlanError("persisted task plan rollback fields are invalid")
+    normalized = {
+        "step_id": step_id,
+        "title": title,
+        "role": role,
+        "depends_on": list(depends_on),
+        "required_capabilities": list(required_capabilities),
+        "capability_record_refs": list(record_refs),
+        "side_effects": list(side_effects),
+        "ownership_impacts": list(ownership_impacts),
+        "provider_mode": provider_mode,
+        "approval_triggers": list(approval_triggers),
+        "acceptance_criteria": list(acceptance),
+        "verification_requirements": list(verification),
+        "reversible": reversible,
+        "rollback_strategy": rollback_strategy,
+    }
+    digest = payload.get("step_digest")
+    if not isinstance(digest, str) or not re.fullmatch(r"[a-f0-9]{64}", digest):
+        raise TaskPlanError("persisted task plan step digest is invalid")
+    if digest != _step_digest(normalized):
+        raise TaskPlanError("persisted task plan step digest does not match")
+    return TaskPlanStep(
+        step_id,
+        title,
+        str(role),
+        depends_on,
+        required_capabilities,
+        record_refs,
+        side_effects,
+        ownership_impacts,
+        str(provider_mode),
+        approval_triggers,
+        acceptance,
+        verification,
+        reversible,
+        str(rollback_strategy),
+        digest,
+    )
+
+
+def parse_task_plan(payload: object) -> TaskPlan:
+    """Parse a persisted task plan without granting execution authority."""
+
+    expected = {
+        "schema_ref",
+        "schema_version",
+        "task_id",
+        "intent_digest",
+        "registry_digest",
+        "selection_digest",
+        "steps",
+        "approval_triggers",
+        "requires_approval",
+        "grants_execution",
+        "plan_id",
+    }
+    if not isinstance(payload, dict) or set(payload) != expected:
+        raise TaskPlanError("persisted task plan fields are invalid")
+    if (
+        payload.get("schema_ref") != "schemas/task-plan.schema.json"
+        or payload.get("schema_version") != 1
+        or payload.get("grants_execution") is not False
+    ):
+        raise TaskPlanError("persisted task plan header is invalid")
+    task_id = _identifier(payload.get("task_id"), "task_id")
+    digests = []
+    for name in ("intent_digest", "registry_digest", "selection_digest", "plan_id"):
+        value = payload.get(name)
+        if not isinstance(value, str) or not re.fullmatch(r"[a-f0-9]{64}", value):
+            raise TaskPlanError(f"persisted task plan {name} is invalid")
+        digests.append(value)
+    raw_steps = payload.get("steps")
+    if not isinstance(raw_steps, list) or not raw_steps or len(raw_steps) > MAX_STEPS:
+        raise TaskPlanError("persisted task plan step count is invalid")
+    steps = tuple(_parse_persisted_step(item) for item in raw_steps)
+    if len({step.step_id for step in steps}) != len(steps):
+        raise TaskPlanError("persisted task plan step ids must be unique")
+    ordered = _topological_steps(steps)
+    if tuple(step.step_id for step in ordered) != tuple(step.step_id for step in steps):
+        raise TaskPlanError("persisted task plan step order is not deterministic")
+    workers = {step.step_id for step in steps if step.role == "worker"}
+    verifiers = tuple(step for step in steps if step.role == "verifier")
+    if not workers or not verifiers:
+        raise TaskPlanError("persisted task plan requires worker and verifier steps")
+    by_id = {step.step_id: step for step in steps}
+    covered_workers = {
+        worker
+        for verifier in verifiers
+        for worker in workers & _ancestors(verifier.step_id, by_id)
+    }
+    if covered_workers != workers:
+        raise TaskPlanError("persisted task plan verifier coverage is incomplete")
+    triggers = _unique_strings(
+        payload.get("approval_triggers"), APPROVAL_TRIGGERS, "approval_triggers"
+    )
+    requires_approval = payload.get("requires_approval")
+    if not isinstance(requires_approval, bool) or requires_approval != bool(triggers):
+        raise TaskPlanError("persisted task plan approval state is invalid")
+    identity = {
+        "task_id": task_id,
+        "intent_digest": digests[0],
+        "registry_digest": digests[1],
+        "selection_digest": digests[2],
+        "steps": [step.as_dict() for step in steps],
+        "approval_triggers": list(triggers),
+        "requires_approval": requires_approval,
+        "grants_execution": False,
+    }
+    if hashlib.sha256(canonical_json(identity)).hexdigest() != digests[3]:
+        raise TaskPlanError("persisted task plan identity does not match")
+    return TaskPlan(
+        task_id,
+        digests[0],
+        digests[1],
+        digests[2],
+        steps,
+        triggers,
+        requires_approval,
+        digests[3],
+    )
+
+
 def _selected_by_id(selection: CapabilitySelection) -> dict[str, CapabilityRecord]:
     return {record.record_id: record for record in selection.selected}
 

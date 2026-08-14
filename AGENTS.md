@@ -114,6 +114,15 @@ The machine-readable route is `config/intent-routing.json`. Client adapters must
 - Never use a stale index silently. Report unavailable or blocked domains and preserve the safe results from current domains.
 - Semantic similarity cannot override exact or authoritative evidence, and the unified service never starts a remote provider call implicitly.
 
+## Durable task continuity
+
+- Treat one project task with many steps as one authoritative Work Graph item plus one persisted orchestration plan.
+- Bind every project orchestration start to `project_id` and `work_item_id`. Never keep the only copy of the plan in chat.
+- After every worker step, persist the checkpoint and handoff before reporting that step complete.
+- On interruption or a new client session, read `project.resume` and use `work.active_progress` to identify completed, current, and dependency-ready next steps.
+- Completed checkpoints are monotonic history. Do not overwrite or discard them when preparing a continuation.
+- A persisted plan, checkpoint, handoff, or resume token is context, not execution authority. Preserve current authorization and approval gates.
+
 ## Natural Research Actions
 
 - Users may request research in ordinary language. Phrases such as `detaylı araştır`, `kök nedenini araştır`, `karşılaştır`, `araştır ve planla`, and their English equivalents route through the canonical Research Action classifier.

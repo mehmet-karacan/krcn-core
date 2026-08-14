@@ -70,6 +70,8 @@ Project requests, defects, tasks, subtasks, decisions, relations, and delivery e
 
 Project workers, verifiers, and delegated agents use the shared runtime queue. A current lease and fencing token are required for heartbeat, completion, failure, and lock release. Never treat a client session or old handoff as execution authority. Active runtime ownership is never portable.
 
+For a multi-step Work Graph item, the exact task plan is stored under the project runtime capsule. Every worker completion updates a digest-bound checkpoint and handoff. `project.resume` exposes `work.active_progress` so another client can see the completed, current, and next steps without chat history. These records do not restore or grant execution authority.
+
 ## Oracle metadata
 
 Oracle schema objects, package specifications, package bodies, grants, structure, and dependency evidence use the dedicated project database domain. The workflow never reads application rows or accepts free SQL. `select-only` and `execute deny` user policies remain authoritative. Batch metadata calls need explicit execute permission and session approval. Read `docs/specifications/ORACLE-METADATA-RAG.md` before collecting, refreshing, indexing, or transferring Oracle metadata.

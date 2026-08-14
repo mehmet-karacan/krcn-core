@@ -103,6 +103,8 @@
         "capability_registry",
         "capability_registry_schema",
         "task_plan_schema",
+        "orchestration_plan_record_schema",
+        "work_continuity",
         "task_authorization_schema",
         "worker_execution_schema",
         "task_verification_schema",
@@ -299,6 +301,12 @@
           "$ref": "#/$defs/repoPath"
         },
         "task_plan_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "orchestration_plan_record_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "work_continuity": {
           "$ref": "#/$defs/repoPath"
         },
         "task_authorization_schema": {

@@ -69,6 +69,8 @@
     "phase_twelve_baseline": ".ai/phase-12-baseline.json",
     "phase_twelve_baseline_schema": "schemas/phase-12-baseline.schema.json",
     "work_graph": "docs/specifications/WORK-GRAPH.md",
+    "work_continuity": "docs/specifications/WORK-CONTINUITY.md",
+    "orchestration_plan_record_schema": "schemas/orchestration-plan-record.schema.json",
     "work_item_schema": "schemas/work-item.schema.json",
     "work_event_schema": "schemas/work-event.schema.json",
     "work_graph_plan_schema": "schemas/work-graph-plan.schema.json",
