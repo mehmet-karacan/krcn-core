@@ -268,9 +268,16 @@ from .work_import import (
     prepare_work_import,
 )
 from .work_documents import (
+    WorkDocumentError,
+    apply_work_document_manifest_update,
     apply_initial_work_document_copy,
     prepare_initial_work_document_copy,
+    prepare_work_document_manifest_update,
     prepare_work_document_processing,
+)
+from .work_document_layout_migration import (
+    apply_work_document_layout_migration,
+    prepare_work_document_layout_migration,
 )
 from .work_retrieval import search_work
 from .work_semantic_index import (
@@ -334,6 +341,7 @@ OPERATIONS = {
     "work.list",
     "work.import",
     "work.documents.copy-initial",
+    "work.documents.migrate-layout",
     "work.documents.process",
     "work.index-semantic",
     "work.search",
@@ -490,6 +498,28 @@ def _object_argument(arguments: Mapping[str, object], name: str) -> dict[str, ob
     if not isinstance(value, dict):
         raise ApplicationServiceError(f"{name} must be an object")
     return dict(value)
+
+
+def _reviewed_identity_decisions_argument(
+    arguments: Mapping[str, object],
+) -> dict[str, str]:
+    value = arguments.get("reviewed_identity_decisions", {})
+    if not isinstance(value, dict):
+        raise ApplicationServiceError(
+            "reviewed_identity_decisions must be an object"
+        )
+    decisions: dict[str, str] = {}
+    for key, decision in value.items():
+        if (
+            not isinstance(key, str)
+            or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", key)
+            or decision not in {"request", "defect", "exclude"}
+        ):
+            raise ApplicationServiceError(
+                "reviewed identity decisions must map portable keys to request, defect, or exclude"
+            )
+        decisions[key] = decision
+    return decisions
 
 
 def _string_tuple_argument(
@@ -686,6 +716,7 @@ class KrcnApplicationService:
             "work.list": self._list_work,
             "work.import": self._import_work,
             "work.documents.copy-initial": self._copy_initial_work_documents,
+            "work.documents.migrate-layout": self._migrate_work_document_layout,
             "work.documents.process": self._process_work_documents,
             "work.index-semantic": self._index_work_semantic,
             "work.search": self._search_work,
@@ -872,16 +903,200 @@ class KrcnApplicationService:
         )
         return "applied", {"plan": plan.public_summary(), "result": result, "applied": True}
 
+    def _migrate_work_document_layout(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"project_id"},
+            optional={"reviewed_identity_decisions"},
+        )
+        project_id = _identifier_argument(request.arguments, "project_id")
+        identity_decisions = _reviewed_identity_decisions_argument(
+            request.arguments
+        )
+        plan = prepare_work_document_layout_migration(
+            self._store,
+            self._ownership,
+            project_id,
+            reviewed_identity_decisions=identity_decisions,
+        )
+        plan_summary = plan.public_summary()
+        unresolved_count = int(plan_summary.get("unresolved_review_count", 0))
+        excluded_count = int(plan_summary.get("excluded_count", 0))
+        processing_required = bool(
+            plan_summary.get("work_document_processing_required", False)
+        )
+        planned_next_actions: list[str] = []
+        if unresolved_count:
+            planned_next_actions.append(
+                "Çözümlenmemiş kimlikleri request veya exclude olarak incele."
+            )
+        elif excluded_count:
+            planned_next_actions.append(
+                "Hariç bırakılan kimlik kararlarını gözden geçir; bu kayıtlar korunur."
+            )
+        if not plan.no_op and not unresolved_count:
+            planned_next_actions.append(
+                "Bu yerleşim migration exact planını kullanıcı onayıyla uygula."
+            )
+        if processing_required and not unresolved_count:
+            planned_next_actions.extend([
+                "work.documents.process için ayrı exact plan hazırla.",
+                "Onaylı Work Graph güncellemesini ve derived rebuild işlemini uygula.",
+            ])
+        if not request.apply:
+            return "planned", {
+                "plan": plan_summary,
+                "next_operation": (
+                    "work.documents.process"
+                    if processing_required and not unresolved_count
+                    else None
+                ),
+                "next_actions": planned_next_actions,
+                "applied": False,
+            }
+        if int(plan_summary.get("unresolved_review_count", 0)) > 0:
+            raise ApplicationServiceError(
+                "work document layout migration requires a reviewed identity mapping"
+            )
+        authorizations = (
+            {}
+            if plan.no_op
+            else self._authorize_effect_plans(
+                request,
+                plan.plan_id,
+                plan.effect_plans,
+                "work document layout migration",
+            )
+        )
+        result = apply_work_document_layout_migration(
+            plan,
+            authorizations,
+            expected_plan_id=request.expected_plan_id or "",
+        )
+        return "applied", {
+            "plan": plan_summary,
+            "result": result,
+            "next_operation": (
+                "work.documents.process" if processing_required else None
+            ),
+            "next_actions": (
+                (
+                    [
+                        "Hariç bırakılan kimlik kararlarını gözden geçir; bu kayıtlar korunur."
+                    ]
+                    if excluded_count
+                    else []
+                )
+                + (
+                    [
+                        "work.documents.process için ayrı exact plan hazırla.",
+                        "Onaylı Work Graph güncellemesini ve derived rebuild işlemini uygula.",
+                    ]
+                    if processing_required
+                    else []
+                )
+            ),
+            "applied": True,
+        }
+
     def _process_work_documents(
         self,
         request: ServiceRequest,
     ) -> tuple[str, Mapping[str, object]]:
-        _check_arguments(request.arguments, required={"project_id"})
+        _check_arguments(
+            request.arguments,
+            required={"project_id"},
+            optional={"requested_external_id", "requested_work_type"},
+        )
         project_id = _identifier_argument(request.arguments, "project_id")
+        requested_external_id = None
+        if "requested_external_id" in request.arguments:
+            requested_external_id = _string_argument(
+                request.arguments, "requested_external_id"
+            )
+            if not re.fullmatch(
+                r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", requested_external_id
+            ):
+                raise ApplicationServiceError(
+                    "requested_external_id must be a portable external identity"
+                )
+        requested_work_type = None
+        if "requested_work_type" in request.arguments:
+            requested_work_type = _string_argument(
+                request.arguments, "requested_work_type"
+            )
+            if requested_work_type not in {"request", "defect", "task"}:
+                raise ApplicationServiceError(
+                    "requested_work_type must be request, defect, or task"
+                )
+        manifest_plan = None
+        if requested_work_type != "task":
+            try:
+                manifest_plan = prepare_work_document_manifest_update(
+                    self._store,
+                    self._ownership,
+                    project_id,
+                    requested_external_id=requested_external_id,
+                    requested_work_type=requested_work_type,
+                )
+            except WorkDocumentError as exc:
+                if str(exc) != "work document layout V2 migration is required":
+                    raise
+        if manifest_plan is not None and not manifest_plan.no_op:
+            plan_summary: Mapping[str, object] = {
+                "plan_id": manifest_plan.plan_id,
+                "project_id": project_id,
+                "requested_external_id": requested_external_id,
+                "requested_work_type": requested_work_type,
+                "manifest_update_required": True,
+                "work_import_required": False,
+                "manifest_update": manifest_plan.public_summary(),
+            }
+            next_actions = [
+                "Yeni veya değişmiş V2 belgelerini manifest envanterine işleyen exact planı onayla.",
+                "Manifest güncellemesinden sonra work.documents.process işlemini yeniden çalıştır.",
+            ]
+            if not request.apply:
+                return "planned", {
+                    "plan": plan_summary,
+                    "next_operation": "work.documents.process",
+                    "next_actions": next_actions,
+                    "applied": False,
+                }
+            authorizations = self._authorize_effect_plans(
+                request,
+                manifest_plan.plan_id,
+                manifest_plan.effect_plans,
+                "work document manifest update",
+            )
+            authorization = (
+                None
+                if manifest_plan.mutation is None
+                else authorizations[manifest_plan.mutation.plan_id]
+            )
+            manifest_result = apply_work_document_manifest_update(
+                manifest_plan,
+                authorization,
+                expected_plan_id=request.expected_plan_id or "",
+            )
+            return "applied", {
+                "plan": plan_summary,
+                "manifest_update": manifest_result,
+                "next_operation": "work.documents.process",
+                "next_actions": [
+                    "work.documents.process için yeni exact plan hazırla.",
+                ],
+                "applied": True,
+            }
         import_plan, document_summary = prepare_work_document_processing(
             self._store,
             self._ownership,
             project_id,
+            requested_external_id=requested_external_id,
+            requested_work_type=requested_work_type,
         )
         if import_plan is None:
             semantic_plan = prepare_work_semantic_index(

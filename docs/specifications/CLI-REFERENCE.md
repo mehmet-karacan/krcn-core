@@ -228,6 +228,57 @@ krcn work history --request-file <work-history-query.json>
 
 Work item JSON is authoritative. The local SQLite projection is rebuildable and is not used as the final source of lifecycle state.
 
+## Work Documents
+
+Request and defect documents use the canonical project-local layout
+`requests/<request-id>/<files>` and `defects/<defect-id>/<files>`. A user may
+place a file directly in either identity directory and process it through the
+shared service:
+
+```text
+krcn work process-documents <project-id>
+```
+
+An identity-specific natural request such as `gpu-fusion için 893614 talebini
+işle` carries `893614` to the same application service instead of silently
+processing another identity.
+
+When a new file is not yet in the V2 manifest, the first command returns only
+the manifest-update exact plan. Applying that plan requires the exact plan ID
+and approval, then reports `work process-documents` as the next operation. The
+next preparation creates the separate Work Graph and derived-index plan. The
+readable CLI output identifies this boundary instead of presenting the two
+mutations as one approval.
+
+The same output reports `Yeni belge` and `İçerik revizyonu` separately when an
+already manifested file has changed. A reviewed non-numeric directory is
+accepted only when an existing Work Item matches its project, work type, and
+normalized identity; otherwise processing stops for clarification.
+
+Historical nested document layouts are migrated only through an exact plan:
+
+```text
+krcn work migrate-document-layout <project-id>
+krcn work migrate-document-layout <project-id> --identity-decision corpsms=request --identity-decision legacy-error=defect --identity-decision unassigned=exclude
+krcn work migrate-document-layout <project-id> --apply --expected-plan <plan-id> --approval-id <approval-id>
+```
+
+Planning is read-only. Apply mutates user-owned document records, so both the
+exact plan identity and explicit user approval are required. A successful
+migration reports `work process-documents` as a separate next operation with
+its own exact plan for Work Graph and derived-index updates. Source import
+directories are never modified. See
+`docs/specifications/WORK-DOCUMENTS.md` for collision, rollback, manifest, and
+index-rebuild behavior.
+
+Every identity decision is part of the exact plan input and must be repeated on
+apply. The readable summary distinguishes logical source mappings, physical
+targets, target-name collision groups, different-content conflicts,
+equal-content deduplicated groups, unresolved identities, and explicitly
+excluded identities. An unresolved identity blocks apply. An excluded identity
+remains in the preserved legacy tree and is recorded under the separate strict
+`legacy_preserved_entries` manifest contract, never as a canonical V2 entry.
+
 ## Agent runtime queue
 
 Each mutation first produces an exact runtime plan. Apply the same request with its plan ID:

@@ -22,7 +22,167 @@
       "const": "schemas/work-document-manifest.schema.json"
     },
     "schema_version": {
-      "const": 1
+      "enum": [
+        1,
+        2
+      ]
+    },
+    "layout_version": {
+      "const": 2
+    },
+    "legacy_reference_aliases": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^work-documents/"
+      },
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "uniqueItems": true,
+        "items": {
+          "type": "string",
+          "pattern": "^work-documents/"
+        }
+      }
+    },
+    "legacy_preserved_entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "entry",
+          "preservation_reason"
+        ],
+        "properties": {
+          "preservation_reason": {
+            "enum": [
+              "excluded-review",
+              "unresolved-review"
+            ]
+          },
+          "entry": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "target_ref",
+              "sha256",
+              "size_bytes",
+              "source_id",
+              "source_ref",
+              "work_item_ids",
+              "semantic_policy",
+              "sensitivity_classes"
+            ],
+            "properties": {
+              "target_ref": {
+                "type": "string",
+                "pattern": "^work-documents/(requests|defects)/20[0-9]{2}/"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "size_bytes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "source_id": {
+                "enum": [
+                  "db-scripts",
+                  "mk-hub",
+                  "user"
+                ]
+              },
+              "source_ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "work_item_ids": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9-]*$"
+                }
+              },
+              "semantic_policy": {
+                "enum": [
+                  "safe-text",
+                  "metadata-only",
+                  "excluded-sensitive"
+                ]
+              },
+              "sensitivity_classes": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "source_provenance": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "source_id",
+                    "source_ref"
+                  ],
+                  "properties": {
+                    "source_id": {
+                      "enum": [
+                        "db-scripts",
+                        "mk-hub",
+                        "user"
+                      ]
+                    },
+                    "source_ref": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              },
+              "work_type": {
+                "enum": [
+                  "request",
+                  "defect"
+                ]
+              },
+              "external_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "document_year": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^20[0-9]{2}$"
+              },
+              "original_name": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^[^/\\\\]+$"
+              },
+              "document_revision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "previous_sha256": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        }
+      }
     },
     "project_id": {
       "type": "string",
@@ -66,7 +226,8 @@
           "source_id": {
             "enum": [
               "db-scripts",
-              "mk-hub"
+              "mk-hub",
+              "user"
             ]
           },
           "source_ref": {
@@ -95,6 +256,65 @@
               "type": "string",
               "minLength": 1
             }
+          },
+          "source_provenance": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "source_id",
+                "source_ref"
+              ],
+              "properties": {
+                "source_id": {
+                  "enum": [
+                    "db-scripts",
+                    "mk-hub",
+                    "user"
+                  ]
+                },
+                "source_ref": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "work_type": {
+            "enum": [
+              "request",
+              "defect",
+              "task"
+            ]
+          },
+          "external_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "document_year": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^20[0-9]{2}$"
+          },
+          "original_name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[^/\\\\]+$"
+          },
+          "document_revision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "previous_sha256": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[a-f0-9]{64}$"
           }
         }
       }
@@ -118,5 +338,54 @@
       "type": "string",
       "pattern": "^[a-f0-9]{64}$"
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": 2
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "layout_version",
+          "legacy_reference_aliases",
+          "legacy_preserved_entries"
+        ],
+        "properties": {
+          "entries": {
+            "items": {
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "target_ref": {
+                        "pattern": "^work-documents/(requests|defects)/"
+                      }
+                    },
+                    "required": [
+                      "target_ref"
+                    ]
+                  },
+                  "then": {
+                    "required": [
+                      "work_type",
+                      "external_id",
+                      "document_year",
+                      "original_name",
+                      "source_provenance",
+                      "document_revision",
+                      "previous_sha256"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ]
 }

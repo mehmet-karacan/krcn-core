@@ -2,5 +2,108 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:krcn:schemas:work-document-copy-plan:1",
   "title": "KRCN work document copy plan summary",
-  "type": "object"
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "project_id",
+    "document_count",
+    "copy_count",
+    "source_inventory_digests",
+    "manifest_digest",
+    "work_item_link_count",
+    "safe_text_count",
+    "metadata_only_count",
+    "sensitive_excluded_count",
+    "no_op",
+    "layout_version",
+    "identity_review_required",
+    "review_required",
+    "source_files_modified",
+    "source_files_deleted",
+    "absolute_paths_persisted",
+    "paths_disclosed"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-document-copy-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "document_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "copy_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_inventory_digests": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    },
+    "manifest_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "work_item_link_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "safe_text_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "metadata_only_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "sensitive_excluded_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "no_op": {
+      "type": "boolean"
+    },
+    "layout_version": {
+      "const": 2
+    },
+    "identity_review_required": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "review_required": {
+      "type": "boolean"
+    },
+    "source_files_modified": {
+      "const": false
+    },
+    "source_files_deleted": {
+      "const": false
+    },
+    "absolute_paths_persisted": {
+      "const": false
+    },
+    "paths_disclosed": {
+      "const": false
+    }
+  }
 }

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-document-manifest-update-plan:1",
+  "title": "KRCN Work Documents manifest update plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "project_id",
+    "previous_manifest_digest",
+    "desired_manifest_digest",
+    "new_document_count",
+    "revised_document_count",
+    "revision_digest",
+    "no_op",
+    "approval_required",
+    "work_document_processing_required",
+    "reversible",
+    "paths_disclosed"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-document-manifest-update-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "previous_manifest_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "desired_manifest_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "new_document_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "revised_document_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "revision_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "no_op": {
+      "type": "boolean"
+    },
+    "approval_required": {
+      "type": "boolean"
+    },
+    "work_document_processing_required": {
+      "type": "boolean"
+    },
+    "reversible": {
+      "const": true
+    },
+    "paths_disclosed": {
+      "const": false
+    }
+  }
+}

@@ -141,12 +141,16 @@ PROCESS_PATTERNS = (
     re.compile(
         r"^\s*(?P<project>[a-z][a-z0-9-]*)\s+için\s+"
         r"(?P<external>[A-Za-z0-9][A-Za-z0-9._-]{0,127})\s+"
-        r"(?:talebini|defectini|görevini)\s+(?:işle|tara|güncelle)\s*[.!]?\s*$",
+        r"(?P<kind>talebini|talep|requestini|request|defectini|defect|"
+        r"hatasını|hatasini|hata|görevini|gorevini|görev|gorev|"
+        r"taskini|task)\s+(?:işle|tara|güncelle)\s*[.!]?\s*$",
         re.IGNORECASE,
     ),
     re.compile(
         r"^\s*(?P<external>[A-Za-z0-9][A-Za-z0-9._-]{0,127})\s+"
-        r"(?:talebini|defectini|görevini)\s+(?P<project>[a-z][a-z0-9-]*)\s+için\s+"
+        r"(?P<kind>talebini|talep|requestini|request|defectini|defect|"
+        r"hatasını|hatasini|hata|görevini|gorevini|görev|gorev|"
+        r"taskini|task)\s+(?P<project>[a-z][a-z0-9-]*)\s+için\s+"
         r"(?:işle|tara|güncelle)\s*[.!]?\s*$",
         re.IGNORECASE,
     ),
@@ -157,16 +161,23 @@ PROCESS_PATTERNS = (
 class WorkDocumentIntent:
     project_id: str
     requested_external_id: str | None
+    requested_work_type: str | None
     intent_digest: str
 
     def service_arguments(self) -> dict[str, object]:
-        return {"project_id": self.project_id}
+        arguments: dict[str, object] = {"project_id": self.project_id}
+        if self.requested_external_id is not None:
+            arguments["requested_external_id"] = self.requested_external_id
+        if self.requested_work_type is not None:
+            arguments["requested_work_type"] = self.requested_work_type
+        return arguments
 
     def public_summary(self) -> dict[str, object]:
         return {
             "operation": "work.documents.process",
             "project_id": self.project_id,
             "requested_external_id": self.requested_external_id,
+            "requested_work_type": self.requested_work_type,
             "exact_plan_required": True,
             "work_graph_update": True,
             "semantic_index_update": True,
@@ -193,9 +204,25 @@ def parse_work_document_intent(request_text: str) -> WorkDocumentIntent:
         )
     project_id = match.group("project").casefold()
     external_id = match.groupdict().get("external")
+    kind = (match.groupdict().get("kind") or "").casefold()
+    requested_work_type = (
+        "request"
+        if kind in {"talebini", "talep", "requestini", "request"}
+        else "defect"
+        if kind in {"defectini", "defect", "hatasını", "hatasini", "hata"}
+        else "task"
+        if kind in {"görevini", "gorevini", "görev", "gorev", "taskini", "task"}
+        else None
+    )
     identity = {
         "operation": "work.documents.process",
         "project_id": project_id,
         "requested_external_id": external_id,
+        "requested_work_type": requested_work_type,
     }
-    return WorkDocumentIntent(project_id, external_id, _digest(identity))
+    return WorkDocumentIntent(
+        project_id,
+        external_id,
+        requested_work_type,
+        _digest(identity),
+    )

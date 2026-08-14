@@ -74,6 +74,7 @@
         "work.list",
         "work.import",
         "work.documents.copy-initial",
+        "work.documents.migrate-layout",
         "work.documents.process",
         "work.index-semantic",
         "work.search",

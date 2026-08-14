@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-document-layout-migration-plan:1",
+  "title": "KRCN Work Documents layout V2 migration plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "project_id",
+    "from_layout_versions",
+    "target_layout_version",
+    "document_count",
+    "source_mapping_count",
+    "physical_target_count",
+    "collision_group_count",
+    "content_conflict_count",
+    "deduplicated_group_count",
+    "copy_count",
+    "legacy_source_count",
+    "source_inventory_digest",
+    "previous_manifest_digest",
+    "desired_manifest_digest",
+    "identity_review_required",
+    "reviewed_identity_decisions",
+    "excluded_review_refs",
+    "unresolved_review_count",
+    "excluded_count",
+    "review_required",
+    "mapping_digest",
+    "approval_required",
+    "no_op",
+    "reversible",
+    "work_document_processing_required",
+    "derived_rebuild_required",
+    "cleanup_required",
+    "transaction_rollback_supported",
+    "post_apply_rollback_available",
+    "paths_disclosed"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-document-layout-migration-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "project_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "from_layout_versions": {
+      "type": "array",
+      "const": [
+        1,
+        2
+      ]
+    },
+    "target_layout_version": {
+      "const": 2
+    },
+    "document_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_mapping_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "physical_target_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "collision_group_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "content_conflict_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "deduplicated_group_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "copy_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "legacy_source_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_inventory_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "previous_manifest_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "desired_manifest_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "identity_review_required": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "reviewed_identity_decisions": {
+      "type": "object",
+      "propertyNames": {
+        "minLength": 1
+      },
+      "additionalProperties": {
+        "enum": [
+          "request",
+          "defect",
+          "exclude"
+        ]
+      }
+    },
+    "excluded_review_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^work-documents/"
+      }
+    },
+    "unresolved_review_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "excluded_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "review_required": {
+      "type": "boolean"
+    },
+    "mapping_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "approval_required": {
+      "type": "boolean"
+    },
+    "no_op": {
+      "type": "boolean"
+    },
+    "reversible": {
+      "const": true
+    },
+    "work_document_processing_required": {
+      "type": "boolean"
+    },
+    "derived_rebuild_required": {
+      "type": "boolean"
+    },
+    "cleanup_required": {
+      "type": "boolean"
+    },
+    "transaction_rollback_supported": {
+      "const": true
+    },
+    "post_apply_rollback_available": {
+      "const": false
+    },
+    "paths_disclosed": {
+      "const": false
+    }
+  }
+}

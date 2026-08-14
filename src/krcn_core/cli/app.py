@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -424,6 +425,22 @@ def build_parser() -> argparse.ArgumentParser:
     work_copy_documents.add_argument("--db-scripts-root", type=Path, required=True)
     work_copy_documents.add_argument("--legacy-root", type=Path, required=True)
     _add_service_options(work_copy_documents, mutation=True)
+    work_migrate_document_layout = work_commands.add_parser(
+        "migrate-document-layout",
+        help="Plan or apply the project work-document layout migration",
+    )
+    work_migrate_document_layout.add_argument("project_id")
+    work_migrate_document_layout.add_argument(
+        "--identity-decision",
+        action="append",
+        default=[],
+        metavar="KEY=request|defect|exclude",
+        help=(
+            "Review one ambiguous identity as a request or explicitly exclude it; "
+            "repeat for multiple identities"
+        ),
+    )
+    _add_service_options(work_migrate_document_layout, mutation=True)
     work_process_documents = work_commands.add_parser(
         "process-documents",
         help="Update Work Graph and semantic retrieval from project-local documents",
@@ -1187,6 +1204,92 @@ def _work_list_text(data: Mapping[str, object]) -> str:
     return "\n".join(lines)
 
 
+def _work_document_migration_text(
+    status: str,
+    data: Mapping[str, object],
+) -> str:
+    plan = data.get("plan")
+    if not isinstance(plan, dict):
+        return "Belge yerleşim migration özeti kullanılamıyor."
+    lines = [
+        f"Proje: {plan.get('project_id', '-')}",
+        f"Durum: {_display_status(status)}",
+        (
+            f"Belgeler: {plan.get('document_count', 0)} | "
+            f"Kopyalanacak: {plan.get('copy_count', 0)} | "
+            f"Hedef yerleşim: V{plan.get('target_layout_version', 2)}"
+        ),
+        (
+            f"Kaynak eşleme: {plan.get('source_mapping_count', 0)} | "
+            f"Fiziksel hedef: {plan.get('physical_target_count', 0)}"
+        ),
+        (
+            f"Ad çakışma grubu: {plan.get('collision_group_count', 0)} | "
+            f"İçerik çatışması: {plan.get('content_conflict_count', 0)} | "
+            f"Tekilleştirilen grup: {plan.get('deduplicated_group_count', 0)}"
+        ),
+        (
+            f"Çözümlenmemiş: {plan.get('unresolved_review_count', 0)} | "
+            f"Hariç: {plan.get('excluded_count', 0)}"
+        ),
+    ]
+    if plan.get("review_required") is True:
+        values = plan.get("identity_review_required")
+        rendered = (
+            ", ".join(str(value) for value in values)
+            if isinstance(values, list)
+            else "-"
+        )
+        lines.append(f"Kimlik incelemesi gerekiyor: {rendered}")
+    if status == "planned" and plan.get("no_op") is not True:
+        lines.append("Uygulama için exact plan kimliği ve kullanıcı onayı gerekir.")
+    if plan.get("cleanup_required") is True:
+        lines.append(
+            "Eski yerleşim korunur; temizlik ayrı bir exact plan ve onay gerektirir."
+        )
+    actions = data.get("next_actions")
+    if isinstance(actions, list) and actions:
+        lines.extend(["", "Sonraki adımlar:"])
+        lines.extend(
+            f"{index}. {value}"
+            for index, value in enumerate(actions, start=1)
+        )
+    return "\n".join(lines)
+
+
+def _work_document_processing_text(
+    status: str,
+    data: Mapping[str, object],
+) -> str:
+    plan = data.get("plan", {})
+    if not isinstance(plan, Mapping):
+        plan = {}
+    lines = [f"İş belgesi işlemi: {status}"]
+    project_id = plan.get("project_id")
+    if project_id is not None:
+        lines.append(f"Proje: {project_id}")
+    manifest = plan.get("manifest_update", {})
+    if plan.get("manifest_update_required") and isinstance(manifest, Mapping):
+        lines.extend([
+            "Önce belge manifesti güncellenecek.",
+            f"Yeni belge: {manifest.get('new_document_count', 0)}",
+            f"İçerik revizyonu: {manifest.get('revised_document_count', 0)}",
+            f"Exact plan: {plan.get('plan_id', '-')}",
+            "Work Graph ve indeks güncellemesi bu onaya dahil değildir.",
+        ])
+    else:
+        lines.extend([
+            f"Değişecek Work Item: {plan.get('changed_work_item_count', 0)}",
+            f"Belge: {plan.get('document_count', 0)}",
+            f"Exact plan: {plan.get('plan_id', '-')}",
+        ])
+    next_actions = data.get("next_actions", [])
+    if isinstance(next_actions, list) and next_actions:
+        lines.append("Sonraki adımlar:")
+        lines.extend(f"- {value}" for value in next_actions)
+    return "\n".join(lines)
+
+
 def _research_action_text(
     status: str,
     data: Mapping[str, object],
@@ -1269,6 +1372,10 @@ def _print_service_response(
         print(_project_resume_text(response.data))
     elif response.operation == "work.list":
         print(_work_list_text(response.data))
+    elif response.operation == "work.documents.migrate-layout":
+        print(_work_document_migration_text(response.status, response.data))
+    elif response.operation == "work.documents.process":
+        print(_work_document_processing_text(response.status, response.data))
     elif response.operation == "research.action":
         print(_research_action_text(response.status, response.data))
     else:
@@ -1609,6 +1716,27 @@ def _load_phase_four_arguments(path: Path) -> dict[str, object]:
     return payload
 
 
+def _identity_decisions(values: list[str]) -> dict[str, str]:
+    decisions: dict[str, str] = {}
+    for raw in values:
+        if "=" not in raw:
+            raise ApplicationServiceError(
+                "identity decision must use KEY=request, KEY=defect, or KEY=exclude"
+            )
+        key, decision = (value.strip() for value in raw.split("=", 1))
+        if (
+            not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", key)
+            or decision not in {"request", "defect", "exclude"}
+        ):
+            raise ApplicationServiceError(
+                "identity decision must use a portable key and request, defect, or exclude"
+            )
+        if key in decisions:
+            raise ApplicationServiceError("identity decision key is duplicated")
+        decisions[key] = decision
+    return decisions
+
+
 def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
     if args.command == "knowledge":
         if args.knowledge_command == "catalog":
@@ -1644,6 +1772,7 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
         "put",
         "import",
         "copy-documents-initial",
+        "migrate-document-layout",
         "process-documents",
         "index-semantic",
         "search",
@@ -1675,6 +1804,14 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
                 "project_id": args.project_id,
                 "db_scripts_root": str(args.db_scripts_root.resolve()),
                 "legacy_root": str(args.legacy_root.resolve()),
+            }
+        elif args.work_command == "migrate-document-layout":
+            operation = "work.documents.migrate-layout"
+            arguments = {
+                "project_id": args.project_id,
+                "reviewed_identity_decisions": _identity_decisions(
+                    args.identity_decision
+                ),
             }
         elif args.work_command == "process-documents":
             operation = "work.documents.process"
