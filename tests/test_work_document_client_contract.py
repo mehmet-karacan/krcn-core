@@ -448,6 +448,15 @@ class WorkDocumentMigrationApplicationTests(unittest.TestCase):
             [],
             list(Draft202012Validator(manifest_schema).iter_errors(manifest)),
         )
+        processing = self.service.execute(ServiceRequest(
+            "cli",
+            "work.documents.process",
+            {"project_id": "gpu-fusion"},
+        ))
+        self.assertEqual("planned", processing.status)
+        self.assertFalse(
+            processing.data["plan"].get("manifest_update_required", False)
+        )
 
     def test_unmanifested_v2_file_requires_manifest_exact_plan_first(self) -> None:
         migration_arguments = {"project_id": "gpu-fusion"}

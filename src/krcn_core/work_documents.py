@@ -985,6 +985,11 @@ def prepare_work_document_processing(
             raise WorkDocumentError("work document manifest reference is duplicated")
         known_references.add(reference)
         relative = reference.removeprefix("work-documents/")
+        relative_parts = PurePosixPath(relative).parts
+        if layout_version == 2 and relative_parts[:2] == ("shared", "requests"):
+            # Shared V1 request bundles are carried forward for provenance and
+            # cleanup review. They are not authoritative V2 processing inputs.
+            continue
         path = root / Path(*PurePosixPath(relative).parts)
         if not path.is_file() or path.is_symlink() or _file_digest(path) != digest:
             raise WorkDocumentError("work document differs from its manifest")
@@ -993,11 +998,25 @@ def prepare_work_document_processing(
             value for value in raw.get("work_item_ids", [])
             if isinstance(value, str)
         }
-        inferred_type, _ = _local_work_identity(
-            project_id,
-            reference,
-            known_ids | raw_work_ids,
-        )
+        inferred_type = raw.get("work_type")
+        if inferred_type not in {"request", "defect", "task"}:
+            reviewed_types = {
+                current_items[work_id].work_type
+                for work_id in raw_work_ids
+                if work_id in current_items
+            }
+            if len(reviewed_types) > 1:
+                raise WorkDocumentError(
+                    "manifest work document links use conflicting work types"
+                )
+            if reviewed_types:
+                inferred_type = next(iter(reviewed_types))
+            else:
+                inferred_type, _ = _local_work_identity(
+                    project_id,
+                    reference,
+                    known_ids | raw_work_ids,
+                )
         for work_id in raw.get("work_item_ids", []):
             if isinstance(work_id, str) and requested(work_id):
                 by_work.setdefault(work_id, []).append(raw)

@@ -52,14 +52,20 @@ documents remain under `tasks/<active|archived>/<task-id>/source/<source-id>`.
 Their lifecycle bucket, task identity, provenance, and Work Item links are
 carried forward without flattening or reclassification.
 
-Historical `shared/requests` documents are not retained as a new canonical
-navigation branch. A reviewed shared mapping projects the same digest and
-source provenance into every allowed `requests/<request-id>` target. This may
-create several logical source mappings while using fewer physical targets
-after equal-content deduplication. An unresolved identity remains in the
-legacy tree. An explicit `exclude` decision preserves the legacy source and
-omits it from the current migration plan. Neither case permits guessing or
-deletion.
+Historical `shared/requests` documents are retained unchanged only as legacy
+carry-forward records. They are not a new canonical navigation branch and are
+not automatically projected into multiple request identities. An unresolved
+identity remains in the legacy tree. An explicit `exclude` decision preserves
+the legacy source and omits it from the current migration plan. Neither case
+permits guessing, implicit fan-out, or deletion.
+
+Shared V1 bundles that are carried forward only for provenance and future
+cleanup are not authoritative V2 processing inputs. A later physical change to
+such a fallback file does not invalidate or rewrite canonical Work Graph
+evidence. To process that content, the user places it under a canonical
+`requests/<id>/` directory and follows the manifest-update exact-plan flow.
+Likewise, a migration rerun ignores alias-backed and preserved legacy fallback
+copies so they are not remigrated or counted as new canonical documents.
 
 ## File identity and conflicts
 

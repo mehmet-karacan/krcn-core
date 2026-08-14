@@ -17,6 +17,7 @@ from .work_documents import (
     WorkDocumentError,
     _atomic_copy,
     _digest,
+    _existing_work_maps,
     _file_digest,
     _logical_ref,
     _portable_target_ref,
@@ -271,6 +272,24 @@ def prepare_work_document_layout_migration(
     manifest_path = root / "_krcn" / "import-manifest.json"
     manifest = _read_manifest(manifest_path)
     by_ref = _manifest_entry_by_ref(manifest)
+    current_items, _ = _existing_work_maps(store, project_id)
+    layout_version = manifest.get("layout_version", 1)
+    legacy_fallback_refs: set[str] = set()
+    if layout_version == 2:
+        aliases = manifest.get("legacy_reference_aliases", {})
+        if isinstance(aliases, dict):
+            legacy_fallback_refs.update(
+                value for value in aliases if isinstance(value, str)
+            )
+        preserved = manifest.get("legacy_preserved_entries", [])
+        if isinstance(preserved, list):
+            legacy_fallback_refs.update(
+                str(value["entry"]["target_ref"])
+                for value in preserved
+                if isinstance(value, dict)
+                and isinstance(value.get("entry"), dict)
+                and isinstance(value["entry"].get("target_ref"), str)
+            )
     decisions = dict(reviewed_identity_decisions or {})
     for source_identity, target_identity in decisions.items():
         if (
@@ -293,8 +312,13 @@ def prepare_work_document_layout_migration(
             raise WorkDocumentError("work documents may not contain symbolic links")
         if not path.is_file() or "_krcn" in {part.casefold() for part in path.relative_to(root).parts}:
             continue
-        document_count += 1
         logical = _logical_ref(root, path)
+        if logical in legacy_fallback_refs:
+            # Copy-first V1 sources remain physically available until a
+            # separately approved cleanup. A V2 rerun must not remigrate or
+            # count these alias-backed fallback copies as incoming documents.
+            continue
+        document_count += 1
         parts = PurePosixPath(logical.removeprefix("work-documents/")).parts
         category = _category(parts)
         if category is None or parts[:2] == ("shared", "requests"):
@@ -310,6 +334,19 @@ def prepare_work_document_layout_migration(
         for external_id in identifiers:
             if not external_id.isdigit():
                 reviewed = decisions.get(external_id)
+                expected_decision = "request" if category == "requests" else "defect"
+                reviewed_work_item = (
+                    layout_version == 2
+                    and raw is not None
+                    and any(
+                        isinstance(work_id, str)
+                        and work_id in current_items
+                        and current_items[work_id].work_type == expected_decision
+                        for work_id in raw.get("work_item_ids", [])
+                    )
+                )
+                if reviewed is None and reviewed_work_item:
+                    reviewed = expected_decision
                 if reviewed is None:
                     review.add(external_id)
                     unresolved_review_refs.add(logical)
@@ -317,7 +354,6 @@ def prepare_work_document_layout_migration(
                 if reviewed == "exclude":
                     excluded_review_refs.add(logical)
                     continue
-                expected_decision = "request" if category == "requests" else "defect"
                 if reviewed != expected_decision:
                     raise WorkDocumentError(
                         "reviewed work document identity decision conflicts with its category"

@@ -620,6 +620,109 @@ class WorkDocumentTests(unittest.TestCase):
             repeated.no_op,
             msg=str([value.as_dict() for value in repeated.effect_plans]),
         )
+        self.assertEqual(2, repeated.public_summary()["document_count"])
+        self.assertEqual(2, repeated.public_summary()["source_mapping_count"])
+        self.assertEqual(2, repeated.public_summary()["physical_target_count"])
+
+    def test_v2_processing_ignores_changed_shared_v1_fallback_documents(self) -> None:
+        root = work_documents_root(self.home, "gpu-fusion")
+        request = (
+            root / "requests" / "2026" / "893614" / "source"
+            / "db-scripts" / "893614" / "request.txt"
+        )
+        shared = (
+            root / "shared" / "requests" / "2026" / "893614-893609"
+            / "source" / "mk-hub" / "bundle" / "shared.md"
+        )
+        request.parent.mkdir(parents=True)
+        shared.parent.mkdir(parents=True)
+        request.write_text("request", encoding="utf-8")
+        shared.write_text("shared before", encoding="utf-8")
+        self._write_v1_manifest([
+            (
+                request,
+                "work-documents/" + request.relative_to(root).as_posix(),
+                ("gpu-fusion-request-item-893614",),
+            ),
+            (
+                shared,
+                "work-documents/" + shared.relative_to(root).as_posix(),
+                (
+                    "gpu-fusion-request-item-893614",
+                    "gpu-fusion-request-item-893609",
+                ),
+            ),
+        ])
+        migration = prepare_work_document_layout_migration(
+            self.store, self.ownership, "gpu-fusion"
+        )
+        apply_work_document_layout_migration(
+            migration,
+            {effect.plan_id: authorize(effect) for effect in migration.effect_plans},
+            expected_plan_id=migration.plan_id,
+        )
+        shared.write_text("shared changed after migration", encoding="utf-8")
+        processing, summary = prepare_work_document_processing(
+            self.store, self.ownership, "gpu-fusion"
+        )
+        self.assertIsNotNone(processing)
+        self.assertEqual(1, summary["document_count"])
+        self.assertEqual(1, summary["linked_work_item_count"])
+
+    def test_v2_processing_uses_reviewed_task_link_instead_of_reinferring_variant(self) -> None:
+        for work_item_id, title in (
+            ("gpu-fusion-task-g-20260812-001", "Görev varyantı bir"),
+            ("gpu-fusion-task-g-20260812-001-variant-2", "İkinci görev kaydı"),
+        ):
+            item_plan = prepare_work_item(self.store, self.ownership, {
+                "project_id": "gpu-fusion",
+                "work_item_id": work_item_id,
+                "work_type": "task",
+                "title": title,
+                "description": "İncelenmiş görev varyantı",
+                "status": "active",
+                "acceptance_criteria": [],
+                "relations": [],
+                "evidence": [],
+                "provenance": {
+                    "source_kind": "user",
+                    "source_ref": "review/" + work_item_id,
+                },
+            })
+            apply_work_item(
+                self.store,
+                item_plan,
+                {effect.plan_id: authorize(effect) for effect in item_plan.effect_plans},
+            )
+        root = work_documents_root(self.home, "gpu-fusion")
+        task = (
+            root / "tasks" / "active" / "g-20260812-001" / "source"
+            / "mk-hub" / "task.md"
+        )
+        task.parent.mkdir(parents=True)
+        task.write_text("task", encoding="utf-8")
+        self._write_v1_manifest([(
+            task,
+            "work-documents/" + task.relative_to(root).as_posix(),
+            ("gpu-fusion-task-g-20260812-001-variant-2",),
+        )])
+        migration = prepare_work_document_layout_migration(
+            self.store, self.ownership, "gpu-fusion"
+        )
+        apply_work_document_layout_migration(
+            migration,
+            {effect.plan_id: authorize(effect) for effect in migration.effect_plans},
+            expected_plan_id=migration.plan_id,
+        )
+        processing, summary = prepare_work_document_processing(
+            self.store, self.ownership, "gpu-fusion"
+        )
+        self.assertIsNotNone(processing)
+        self.assertEqual(1, summary["linked_work_item_count"])
+        self.assertEqual(
+            ["gpu-fusion-task-g-20260812-001-variant-2"],
+            [value.work_item_id for value in processing.items],
+        )
 
     def test_v1_layout_migration_rolls_back_partial_copy(self) -> None:
         root = work_documents_root(self.home, "gpu-fusion")
