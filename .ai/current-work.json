@@ -3,7 +3,7 @@
   "schema_version": 1,
   "phase_id": "phase-20",
   "workstream_id": "work-document-layout",
-  "status": "active",
+  "status": "completed",
   "goal": "Talep ve defect belgelerini doğrudan iş kimliği altında erişilebilir, kayıpsız ve onaylı migration ile yönetilebilir hale getirmek",
   "plan_ref": "docs/plans/PLAN-020-IS-BELGESI-YERLESIMI.md",
   "progress_refs": [
@@ -111,9 +111,7 @@
     "docs/progress/PHASE-20-IS-BELGESI-YERLESIMI.md"
   ],
   "next_actions": [
-    "gpu-fusion iş belgeleri için onaylanan exact migration planını uygula",
-    "güncel Work Item belge referanslarını ayrı exact planla işle",
-    "Work Graph ve semantic indexleri yeniden kurup doğrula"
+    "eski V1 iş belgesi ağacını yalnız kullanıcı isterse ayrı cleanup exact planıyla değerlendir"
   ],
   "baseline_commit": "b383e2f",
   "approval_gates": {

@@ -2,7 +2,7 @@
 
 ## Durum
 
-Core geliştirmesi ve ilk canlı GPU Fusion yerleşim migration işlemi tamamlandı. Work Item referans güncellemesi için ikinci exact plan kullanıcı onayı bekliyor.
+Tamamlandı.
 
 ## Tamamlananlar
 
@@ -34,9 +34,7 @@ Core geliştirmesi ve ilk canlı GPU Fusion yerleşim migration işlemi tamamlan
 
 ## Bekleyen onaylı işlemler
 
-1. Güncel Work Item belge referanslarını ikinci exact planla işle.
-2. Work Graph ve semantic indexleri yeniden kurup doğrula.
-3. Eski V1 ağacını yalnız ayrı cleanup planı ve kullanıcı onayıyla değerlendir.
+1. Eski V1 ağacını yalnız ayrı cleanup planı ve kullanıcı onayıyla değerlendir.
 
 ## Uygulanan canlı migration
 
@@ -47,6 +45,12 @@ Core geliştirmesi ve ilk canlı GPU Fusion yerleşim migration işlemi tamamlan
 - Migration tekrarının no-op olduğu doğrulandı.
 - Sonraki Work Item işleme planı: `fde73608cda75c6a299611f2e28788e536fc5be49c7454368f3c594c9b11771b`
 - İkinci plan 362 belgeyi 115 Work Item ile ilişkilendiriyor ve 61 Work Item revizyonu hazırlıyor.
+- İkinci exact plan kullanıcı onayıyla uygulandı.
+- 61 Work Item yeni V2 belge referanslarıyla güncellendi.
+- Work Graph projection güncellendi.
+- Semantic index 116 vektörle yeniden kuruldu; 61 kayıt işlendi ve 55 kayıt yeniden kullanıldı.
+- İşlem tekrarının 0 değişiklik ve 0 incoming belge ile no-op olduğu doğrulandı.
+- `893614` exact aramada ilk sırada ve semantic index durumu `current` olarak doğrulandı.
 
 ## Doğrulama
 
