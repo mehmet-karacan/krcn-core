@@ -10,7 +10,7 @@ Bileşim ve sadeleştirme paketleri başlamadan önce dokunulmayacak güvenlik v
 
 ## Tamamlananlar
 
-1. `ADR-013` yazıldı ve 13 değişmez sözleşme kabul edildi: sahiplik sınıfları, exact plan ve onay, sağlayıcı disclosure, Work Graph authority, kaynağı yerinde okuma, stale fail-closed, lease ve fencing, bağımsız verifier, kayıtların yetki vermemesi, model kararının yetki olmaması, tek immutable root execution, JSON authoritative ve yeniden üretilebilir projection, kullanıcı politikalarının korunması.
+1. `ADR-013` yazıldı ve 13 değişmez sözleşme kabul edildi: sahiplik sınıfları, exact plan ve onay, sağlayıcı disclosure, Work Graph authority, kaynağı yerinde okuma, stale fail-closed, lease ve fencing, bağımsız verifier, kayıtların yetki vermemesi, model kararının yetki olmaması, tek immutable root execution, JSON authoritative ve yeniden üretilebilir projection, kullanıcı politikalarının korunması. Golden retrieval değerlendirmesi bu sözleşmeleri gevşetmez ve yetki üretmez.
 2. `config/v1-architecture-contracts.json` eklendi. Her sözleşme modül sembolü, policy değeri, policy üyesi veya normatif spesifikasyon cümlesi olarak kanıt noktalarına bağlandı.
 3. `schemas/v1-architecture-contracts.schema.json` ile kayıt biçimi sabitlendi.
 4. `src/krcn_core/architecture_contracts.py` kanıt çözümlemesini uyguladı. Modül import edilebilir mi, sembol var mı, policy değeri beklenen mi, normatif cümle yerinde mi kontrol ediliyor.

@@ -20,10 +20,10 @@
     "docs/progress/PHASE-21-OKUNUR-IS-INDEKSI.md",
     "docs/progress/PHASE-21-KUYRUK-ALTYAPISI-UYGUNLUK-OLCUMU.md",
     "docs/progress/PHASE-21-EXECUTION-COORDINATOR.md",
-    "docs/progress/PHASE-21-MODEL-KARAR-SERVISI.md"
+    "docs/progress/PHASE-21-MODEL-KARAR-SERVISI.md",
+    "docs/progress/PHASE-21-RETRIEVAL-GOLDEN-VE-OLCEK.md"
   ],
   "next_actions": [
-    "retrieval golden set ve olcek fixturelarini tamamla",
     "application ve CLI ic bolunmesini tamamla",
     "Faz 21 kapanis dogrulamasini tamamla"
   ],

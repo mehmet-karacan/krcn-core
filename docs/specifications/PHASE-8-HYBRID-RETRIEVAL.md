@@ -29,7 +29,7 @@ The output includes catalog, query, index, and result digests. It contains evide
 
 ## Evaluation and scale decision
 
-`config/retrieval-evaluation.json` is the versioned four-case quality set. It covers exact retrieval, typographical vector recall, deployment retrieval, and dependency recall. The acceptance threshold is 1.0 for recall at five and mean reciprocal rank on this reference set.
+`config/retrieval-evaluation.json` remains the small Phase 8 hybrid smoke set. Product-level comparison uses `config/retrieval-golden-set.json` and the engine-neutral contract in `RETRIEVAL-GOLDEN-EVALUATION.md`. The larger suite adds exact ID, multilingual business concepts, source symbols, dependency impact, continuity, PL/SQL, project isolation, stale rejection, nDCG, and p50/p95 evidence.
 
 `tools/benchmark_hybrid_retrieval.py` measures actual index build and query latency on generated catalogs. The Phase 8 reference measurement covered 101 and 1001 catalog entries. SQLite was selected only after these measurements stayed inside the versioned thresholds in `.ai/retrieval-performance-baseline.json`.
 

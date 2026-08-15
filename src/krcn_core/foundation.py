@@ -344,6 +344,16 @@ def validate_foundation(repo_root: Path) -> list[str]:
         load_work_index_policy(repo_root)
     except (ImportError, ValueError) as exc:
         errors.append(f"work index policy is invalid: {exc}")
+    try:
+        from .retrieval_quality import (
+            load_retrieval_golden_set,
+            load_retrieval_scale_policy,
+        )
+
+        load_retrieval_golden_set(repo_root)
+        load_retrieval_scale_policy(repo_root)
+    except (ImportError, ValueError) as exc:
+        errors.append(f"retrieval quality policy is invalid: {exc}")
     return errors
 
 

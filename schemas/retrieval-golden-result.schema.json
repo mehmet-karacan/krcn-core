@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:retrieval-golden-result:1",
+  "title": "KRCN retrieval golden evaluation result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "suite_digest",
+    "engine_profile_id",
+    "ranking_results",
+    "safety_results",
+    "metrics",
+    "critical_failure_case_ids",
+    "passed",
+    "result_digest",
+    "latency_ms",
+    "case_count",
+    "provider_call_performed",
+    "source_content_copied",
+    "grants_authority"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/retrieval-golden-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "suite_digest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "engine_profile_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "ranking_results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/rankingResult"
+      }
+    },
+    "safety_results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/safetyResult"
+      }
+    },
+    "metrics": {
+      "$ref": "#/$defs/metrics"
+    },
+    "critical_failure_case_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "result_digest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "latency_ms": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "p50",
+        "p95"
+      ],
+      "properties": {
+        "p50": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "p95": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "case_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "provider_call_performed": {
+      "const": false
+    },
+    "source_content_copied": {
+      "const": false
+    },
+    "grants_authority": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "basisPoints": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "rankingResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "recall_at_k_basis_points",
+        "reciprocal_rank_basis_points",
+        "ndcg_at_k_basis_points",
+        "first_relevant_rank",
+        "forbidden_hit_count",
+        "cross_project_hit_count",
+        "passed"
+      ],
+      "properties": {
+        "case_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "recall_at_k_basis_points": {
+          "$ref": "#/$defs/basisPoints"
+        },
+        "reciprocal_rank_basis_points": {
+          "$ref": "#/$defs/basisPoints"
+        },
+        "ndcg_at_k_basis_points": {
+          "$ref": "#/$defs/basisPoints"
+        },
+        "first_relevant_rank": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "forbidden_hit_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cross_project_hit_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "passed": {
+          "type": "boolean"
+        }
+      }
+    },
+    "safetyResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "passed",
+        "status",
+        "forbidden_hit_count",
+        "cross_project_hit_count"
+      ],
+      "properties": {
+        "case_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "status": {
+          "enum": [
+            "completed",
+            "stale-rejected"
+          ]
+        },
+        "forbidden_hit_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cross_project_hit_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recall_at_k_basis_points",
+        "mean_reciprocal_rank_basis_points",
+        "ndcg_at_k_basis_points",
+        "exact_top_one_basis_points",
+        "safety_pass_basis_points",
+        "cross_project_leakage_count",
+        "stale_acceptance_count"
+      ],
+      "properties": {
+        "recall_at_k_basis_points": {
+          "$ref": "#/$defs/basisPoints"
+        },
+        "mean_reciprocal_rank_basis_points": {
+          "$ref": "#/$defs/basisPoints"
+        },
+        "ndcg_at_k_basis_points": {
+          "$ref": "#/$defs/basisPoints"
+        },
+        "exact_top_one_basis_points": {
+          "$ref": "#/$defs/basisPoints"
+        },
+        "safety_pass_basis_points": {
+          "$ref": "#/$defs/basisPoints"
+        },
+        "cross_project_leakage_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "stale_acceptance_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

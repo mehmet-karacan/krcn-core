@@ -227,6 +227,13 @@ from .research_runtime import (
     get_research_runtime_status,
     prepare_research_runtime_dispatch,
 )
+from .retrieval_quality import (
+    build_retrieval_scale_manifest,
+    evaluate_retrieval_golden_set,
+    load_retrieval_golden_set,
+    load_retrieval_scale_policy,
+    parse_retrieval_observations,
+)
 from .release import validate_release_bundle
 from .repo_local_migration import (
     apply_repo_local_migration,
@@ -322,6 +329,8 @@ OPERATIONS = {
     "model.benchmark-list",
     "model.decide",
     "model.decide-plan",
+    "retrieval.evaluate-golden",
+    "retrieval.scale-fixture",
     "project.learn",
     "project.integrate",
     "project.index-source-code",
@@ -701,6 +710,8 @@ class KrcnApplicationService:
             "model.benchmark-list": self._list_model_benchmarks,
             "model.decide": self._decide_model,
             "model.decide-plan": self._decide_task_plan_models,
+            "retrieval.evaluate-golden": self._evaluate_retrieval_golden,
+            "retrieval.scale-fixture": self._retrieval_scale_fixture,
             "project.learn": self._learn_project,
             "project.integrate": self._integrate_project,
             "project.index-source-code": self._index_source_code,
@@ -2210,6 +2221,63 @@ class KrcnApplicationService:
             "domain_status": dict(sorted(domain_status.items())),
             "next_actions": sorted(next_actions),
         }
+
+    def _evaluate_retrieval_golden(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        """Evaluate complete engine observations without invoking a provider."""
+
+        _check_arguments(
+            request.arguments,
+            required={"engine_profile_id", "observations"},
+        )
+        if request.apply:
+            raise ApplicationServiceError("retrieval golden evaluation is read-only")
+        engine_profile_id = _identifier_argument(
+            request.arguments,
+            "engine_profile_id",
+        )
+        golden_set = load_retrieval_golden_set(self._repo_root)
+        try:
+            observations = parse_retrieval_observations(
+                request.arguments.get("observations"),
+                golden_set,
+            )
+            result = evaluate_retrieval_golden_set(
+                golden_set,
+                observations,
+                engine_profile_id=engine_profile_id,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {
+            "result": result,
+            "suite": {
+                "suite_id": golden_set.suite_id,
+                "suite_digest": golden_set.suite_digest,
+                "case_count": len(golden_set.cases),
+            },
+        }
+
+    def _retrieval_scale_fixture(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        """Return only the digest-bound manifest for a lazy synthetic corpus."""
+
+        _check_arguments(request.arguments, required={"profile_id"})
+        if request.apply:
+            raise ApplicationServiceError("retrieval scale fixtures are read-only")
+        profile_id = _identifier_argument(request.arguments, "profile_id")
+        try:
+            manifest = build_retrieval_scale_manifest(
+                load_retrieval_scale_policy(self._repo_root),
+                profile_id,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {"manifest": manifest}
 
     def _runtime_queue_action(
         self,

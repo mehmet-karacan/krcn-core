@@ -165,6 +165,13 @@ class RepositoryContextTests(unittest.TestCase):
             "model_runtime_observation_schema",
             "model_decision_schema",
             "task_model_assignments_schema",
+            "retrieval_golden_boundary",
+            "retrieval_golden_set",
+            "retrieval_golden_set_schema",
+            "retrieval_golden_result_schema",
+            "retrieval_scale_policy",
+            "retrieval_scale_policy_schema",
+            "retrieval_scale_manifest_schema",
         ):
             with self.subTest(key=key):
                 self.assertTrue(

@@ -131,6 +131,13 @@
         "model_runtime_observation_schema",
         "model_decision_schema",
         "task_model_assignments_schema",
+        "retrieval_golden_boundary",
+        "retrieval_golden_set",
+        "retrieval_golden_set_schema",
+        "retrieval_golden_result_schema",
+        "retrieval_scale_policy",
+        "retrieval_scale_policy_schema",
+        "retrieval_scale_manifest_schema",
         "independent_verifier_identity_boundary",
         "agent_execution_identity_schema",
         "generic_dag_executor_boundary",
@@ -431,6 +438,27 @@
           "$ref": "#/$defs/repoPath"
         },
         "task_model_assignments_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "retrieval_golden_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "retrieval_golden_set": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "retrieval_golden_set_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "retrieval_golden_result_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "retrieval_scale_policy": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "retrieval_scale_policy_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "retrieval_scale_manifest_schema": {
           "$ref": "#/$defs/repoPath"
         },
         "independent_verifier_identity_boundary": {

@@ -43,6 +43,8 @@
         "model.benchmark-list",
         "model.decide",
         "model.decide-plan",
+        "retrieval.evaluate-golden",
+        "retrieval.scale-fixture",
         "project.learn",
         "project.integrate",
         "project.index-source-code",

@@ -1,0 +1,175 @@
+{
+  "schema_ref": "schemas/retrieval-golden-set.schema.json",
+  "schema_version": 1,
+  "suite_id": "v1-retrieval-golden",
+  "revision": 1,
+  "top_k": 5,
+  "thresholds": {
+    "minimum_recall_at_k_basis_points": 9000,
+    "minimum_mrr_basis_points": 8500,
+    "minimum_ndcg_at_k_basis_points": 8500,
+    "minimum_exact_top_one_basis_points": 10000,
+    "maximum_p95_latency_ms": 2000
+  },
+  "cases": [
+    {
+      "case_id": "exact-request-id",
+      "category": "exact-id",
+      "language": "tr",
+      "query_text": "893614 talebinin özeti",
+      "scope_project_ids": [
+        "gpu-fusion"
+      ],
+      "expected_relevant_refs": [
+        "work:gpu-fusion/request-893614"
+      ],
+      "forbidden_refs": [],
+      "expected_outcome": "ranked",
+      "critical": true
+    },
+    {
+      "case_id": "turkish-typo-request",
+      "category": "typo-lexical",
+      "language": "tr",
+      "query_text": "kurumsal mesj hakediş raporu",
+      "scope_project_ids": [
+        "gpu-fusion"
+      ],
+      "expected_relevant_refs": [
+        "work:gpu-fusion/request-893614"
+      ],
+      "forbidden_refs": [],
+      "expected_outcome": "ranked",
+      "critical": false
+    },
+    {
+      "case_id": "business-revenue-share",
+      "category": "business-concept",
+      "language": "polyglot",
+      "query_text": "gelir payı oranı revenue share rule",
+      "scope_project_ids": [
+        "gpu-fusion"
+      ],
+      "expected_relevant_refs": [
+        "knowledge:gpu-fusion/revenue-share-rule"
+      ],
+      "forbidden_refs": [],
+      "expected_outcome": "ranked",
+      "critical": false
+    },
+    {
+      "case_id": "java-symbol-lookup",
+      "category": "symbol-lookup",
+      "language": "en",
+      "query_text": "PaymentController createPayment symbol",
+      "scope_project_ids": [
+        "java-service"
+      ],
+      "expected_relevant_refs": [
+        "code:java-service/payment-controller"
+      ],
+      "forbidden_refs": [],
+      "expected_outcome": "ranked",
+      "critical": true
+    },
+    {
+      "case_id": "java-dependency-impact",
+      "category": "dependency-impact",
+      "language": "en",
+      "query_text": "PaymentService repository dependency impact",
+      "scope_project_ids": [
+        "java-service"
+      ],
+      "expected_relevant_refs": [
+        "code:java-service/payment-service",
+        "code:java-service/payment-repository"
+      ],
+      "forbidden_refs": [],
+      "expected_outcome": "ranked",
+      "critical": true
+    },
+    {
+      "case_id": "continuity-last-step",
+      "category": "continuity-resume",
+      "language": "tr",
+      "query_text": "en son nerede kaldık ve sıradaki adım ne",
+      "scope_project_ids": [
+        "gpu-fusion"
+      ],
+      "expected_relevant_refs": [
+        "work:gpu-fusion/task-g-20260815-001"
+      ],
+      "forbidden_refs": [],
+      "expected_outcome": "ranked",
+      "critical": true
+    },
+    {
+      "case_id": "plsql-package-lookup",
+      "category": "plsql-symbol",
+      "language": "en",
+      "query_text": "PKG_SMS_SETTLEMENT package specification",
+      "scope_project_ids": [
+        "oracle-app"
+      ],
+      "expected_relevant_refs": [
+        "code:oracle-app/pkg-sms-settlement"
+      ],
+      "forbidden_refs": [],
+      "expected_outcome": "ranked",
+      "critical": true
+    },
+    {
+      "case_id": "plsql-procedure-lookup",
+      "category": "plsql-symbol",
+      "language": "en",
+      "query_text": "CALCULATE_SHARE procedure implementation",
+      "scope_project_ids": [
+        "oracle-app"
+      ],
+      "expected_relevant_refs": [
+        "code:oracle-app/pkg-sms-settlement.calculate-share"
+      ],
+      "forbidden_refs": [],
+      "expected_outcome": "ranked",
+      "critical": true
+    },
+    {
+      "case_id": "cross-project-isolation",
+      "category": "cross-project-isolation",
+      "language": "en",
+      "query_text": "request 42 in alpha project",
+      "scope_project_ids": [
+        "alpha-project"
+      ],
+      "expected_relevant_refs": [],
+      "forbidden_refs": [
+        "work:beta-project/request-42"
+      ],
+      "expected_outcome": "empty",
+      "critical": true
+    },
+    {
+      "case_id": "stale-source-revision",
+      "category": "stale-revision",
+      "language": "en",
+      "query_text": "PaymentController from an obsolete source revision",
+      "scope_project_ids": [
+        "java-service"
+      ],
+      "expected_relevant_refs": [],
+      "forbidden_refs": [
+        "code:java-service/payment-controller"
+      ],
+      "expected_outcome": "stale-rejected",
+      "critical": true
+    }
+  ],
+  "suite_digest": "a4db37edd3b1d159b679224efe462097a1ceecbaa8a4652c65f984b96ed9b12c",
+  "invariants": {
+    "source_content_included": false,
+    "secret_values_included": false,
+    "physical_paths_included": false,
+    "provider_call_performed": false,
+    "grants_authority": false
+  }
+}

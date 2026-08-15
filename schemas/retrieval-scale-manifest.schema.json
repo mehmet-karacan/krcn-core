@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:retrieval-scale-manifest:1",
+  "title": "KRCN retrieval synthetic scale manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "policy_digest",
+    "profile_id",
+    "document_count",
+    "query_count",
+    "project_count",
+    "payload_tokens_per_document",
+    "maximum_expected_p95_ms",
+    "corpus_digest",
+    "query_digest",
+    "sample_refs",
+    "sample_query_ids",
+    "manifest_digest",
+    "synthetic_only",
+    "source_content_included",
+    "physical_paths_included",
+    "provider_call_performed",
+    "grants_authority"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/retrieval-scale-manifest.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "profile_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "document_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "query_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "project_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "payload_tokens_per_document": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "maximum_expected_p95_ms": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "corpus_digest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "query_digest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "sample_refs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 6,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^fixture:[A-Za-z0-9][A-Za-z0-9._:/-]*$"
+      }
+    },
+    "sample_query_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^scale-query-[0-9]{6}$"
+      }
+    },
+    "manifest_digest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "synthetic_only": {
+      "const": true
+    },
+    "source_content_included": {
+      "const": false
+    },
+    "physical_paths_included": {
+      "const": false
+    },
+    "provider_call_performed": {
+      "const": false
+    },
+    "grants_authority": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

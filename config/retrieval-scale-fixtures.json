@@ -1,0 +1,48 @@
+{
+  "schema_ref": "schemas/retrieval-scale-policy.schema.json",
+  "schema_version": 1,
+  "policy_id": "v1-retrieval-scale",
+  "revision": 1,
+  "profiles": [
+    {
+      "profile_id": "smoke",
+      "document_count": 128,
+      "query_count": 16,
+      "project_count": 2,
+      "payload_tokens_per_document": 24,
+      "maximum_expected_p95_ms": 100
+    },
+    {
+      "profile_id": "small",
+      "document_count": 1000,
+      "query_count": 64,
+      "project_count": 4,
+      "payload_tokens_per_document": 48,
+      "maximum_expected_p95_ms": 250
+    },
+    {
+      "profile_id": "medium",
+      "document_count": 10000,
+      "query_count": 256,
+      "project_count": 8,
+      "payload_tokens_per_document": 64,
+      "maximum_expected_p95_ms": 1000
+    },
+    {
+      "profile_id": "large",
+      "document_count": 50000,
+      "query_count": 512,
+      "project_count": 16,
+      "payload_tokens_per_document": 96,
+      "maximum_expected_p95_ms": 3000
+    }
+  ],
+  "policy_digest": "39f80ccced859bc588df1c4b26f5dd8b9c201445fecc45daea980dd83b5ef118",
+  "invariants": {
+    "synthetic_only": true,
+    "source_content_included": false,
+    "physical_paths_included": false,
+    "provider_call_performed": false,
+    "grants_authority": false
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:retrieval-scale-policy:1",
+  "title": "KRCN retrieval synthetic scale fixture policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "policy_id",
+    "revision",
+    "profiles",
+    "policy_digest",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/retrieval-scale-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "policy_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "profiles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/profile"
+      }
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "invariants": {
+      "const": {
+        "synthetic_only": true,
+        "source_content_included": false,
+        "physical_paths_included": false,
+        "provider_call_performed": false,
+        "grants_authority": false
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile_id",
+        "document_count",
+        "query_count",
+        "project_count",
+        "payload_tokens_per_document",
+        "maximum_expected_p95_ms"
+      ],
+      "properties": {
+        "profile_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "document_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "query_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "project_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "payload_tokens_per_document": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maximum_expected_p95_ms": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

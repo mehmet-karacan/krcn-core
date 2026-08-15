@@ -162,6 +162,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 - `PHASE-21-KUYRUK-ALTYAPISI-UYGUNLUK-OLCUMU.md`
 - `PHASE-21-EXECUTION-COORDINATOR.md`
 - `PHASE-21-MODEL-KARAR-SERVISI.md`
+- `PHASE-21-RETRIEVAL-GOLDEN-VE-OLCEK.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 
