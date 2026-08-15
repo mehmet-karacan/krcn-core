@@ -105,6 +105,10 @@
         "task_plan_schema",
         "orchestration_plan_record_schema",
         "work_continuity",
+        "continuity_boundary",
+        "continuity_snapshot_schema",
+        "work_journal_event_schema",
+        "finalized_handoff_schema",
         "work_documents_boundary",
         "work_document_manifest_schema",
         "work_document_manifest_update_plan_schema",
@@ -311,6 +315,18 @@
           "$ref": "#/$defs/repoPath"
         },
         "work_continuity": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "continuity_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "continuity_snapshot_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "work_journal_event_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "finalized_handoff_schema": {
           "$ref": "#/$defs/repoPath"
         },
         "work_documents_boundary": {

@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-journal-event:1",
+  "title": "KRCN Core append-only work journal event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "event_id",
+    "work_item_id",
+    "occurred_at",
+    "actor",
+    "kind",
+    "summary",
+    "evidence_refs",
+    "previous_digest",
+    "grants_authority",
+    "event_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-journal-event.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "event_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "actor": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "kind": {
+      "enum": [
+        "step-started",
+        "step-completed",
+        "step-failed",
+        "test-failed",
+        "test-passed",
+        "error-observed",
+        "root-cause-found",
+        "approach-rejected",
+        "decision-recorded",
+        "decision-superseded",
+        "artifact-produced",
+        "source-revision-changed",
+        "approval-granted",
+        "approval-rejected",
+        "actor-changed",
+        "handoff-created"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "evidence_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      }
+    },
+    "previous_digest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "event_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

@@ -10,12 +10,13 @@
     "docs/progress/PROGRESS-KATALOGU.md",
     "docs/progress/PHASE-21-KICKOFF.md",
     "docs/progress/PHASE-21-ZORUNLU-KONTROL-VE-BASELINE-KANITI.md",
-    "docs/progress/PHASE-21-V1-MIMARI-SOZLESMELERI.md"
+    "docs/progress/PHASE-21-V1-MIMARI-SOZLESMELERI.md",
+    "docs/progress/PHASE-21-COMPACTION-DAYANIKLI-DEVAMLILIK.md"
   ],
   "next_actions": [
-    "sinirli devamlilik snapshot, calisma gunlugu ve devir kaydi sozlesmelerini ekle",
     "kanonik execution trace ve tek status projection sozlesmesini ekle",
-    "proje relocation siniflandirmasini ve exact rebind kararlarini guclendir"
+    "proje relocation siniflandirmasini ve exact rebind kararlarini guclendir",
+    "model yetenek koruma kapisini ve golden karsilastirmayi ekle"
   ],
   "baseline_commit": "2e4d23a",
   "approval_gates": {

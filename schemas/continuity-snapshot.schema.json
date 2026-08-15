@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:continuity-snapshot:1",
+  "title": "KRCN Core bounded continuity snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "snapshot_id",
+    "project_id",
+    "work_item_id",
+    "goal",
+    "status",
+    "current_step",
+    "approval_state",
+    "work_item_revision",
+    "state_digest",
+    "last_handoff_ref",
+    "branch",
+    "baseline_commit",
+    "current_commit",
+    "catalog_ref",
+    "updated_at",
+    "completed_steps",
+    "next_safe_actions",
+    "decisions",
+    "failed_attempts",
+    "known_errors",
+    "open_risks",
+    "changed_artifacts",
+    "verification_refs",
+    "source_binding_refs",
+    "grants_authority",
+    "snapshot_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/continuity-snapshot.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "snapshot_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "project_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 280
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "current_step": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 512
+    },
+    "approval_state": {
+      "enum": [
+        "current",
+        "fresh-authorization-required"
+      ]
+    },
+    "work_item_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "state_digest": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "last_handoff_ref": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/identifier"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "branch": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$"
+    },
+    "baseline_commit": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
+    "current_commit": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
+    "catalog_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "updated_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "completed_steps": {
+      "$ref": "#/$defs/section"
+    },
+    "next_safe_actions": {
+      "$ref": "#/$defs/section"
+    },
+    "decisions": {
+      "$ref": "#/$defs/section"
+    },
+    "failed_attempts": {
+      "$ref": "#/$defs/section"
+    },
+    "known_errors": {
+      "$ref": "#/$defs/section"
+    },
+    "open_risks": {
+      "$ref": "#/$defs/section"
+    },
+    "changed_artifacts": {
+      "$ref": "#/$defs/section"
+    },
+    "verification_refs": {
+      "$ref": "#/$defs/section"
+    },
+    "source_binding_refs": {
+      "$ref": "#/$defs/section"
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "snapshot_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entries"
+      ],
+      "properties": {
+        "entries": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "omitted_count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

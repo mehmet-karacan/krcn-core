@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:finalized-handoff:1",
+  "title": "KRCN Core authority-free finalized handoff",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "handoff_id",
+    "project_id",
+    "work_item_id",
+    "goal",
+    "status",
+    "completed_step_ids",
+    "pending_step_ids",
+    "decisions",
+    "open_risks",
+    "first_reads",
+    "next_safe_action",
+    "requires_fresh_authorization",
+    "snapshot_digest",
+    "created_at",
+    "grants_authority",
+    "carries_active_lease",
+    "handoff_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/finalized-handoff.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "handoff_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "project_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 280
+    },
+    "status": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "completed_step_ids": {
+      "$ref": "#/$defs/entries"
+    },
+    "pending_step_ids": {
+      "$ref": "#/$defs/entries"
+    },
+    "decisions": {
+      "$ref": "#/$defs/entries"
+    },
+    "open_risks": {
+      "$ref": "#/$defs/entries"
+    },
+    "first_reads": {
+      "$ref": "#/$defs/entries"
+    },
+    "next_safe_action": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 512
+    },
+    "requires_fresh_authorization": {
+      "type": "boolean"
+    },
+    "snapshot_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "carries_active_lease": {
+      "const": false
+    },
+    "handoff_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "entries": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 512
+      }
+    }
+  }
+}
