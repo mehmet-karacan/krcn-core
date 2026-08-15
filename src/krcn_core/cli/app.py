@@ -390,6 +390,71 @@ def build_parser() -> argparse.ArgumentParser:
             help=f"Plan or apply shared memory {operation} from a JSON request",
         )
         _add_phase_four_options(command, mutation=True)
+    for operation, help_text in (
+        (
+            "hygiene",
+            "Measure stale, conflicting, duplicate, unused, and retention metadata",
+        ),
+        (
+            "context-effectiveness",
+            "Measure evidence recall, context use, and downstream effectiveness",
+        ),
+    ):
+        command = memory_commands.add_parser(operation, help=help_text)
+        _add_phase_four_options(command)
+        command.set_defaults(format="text")
+    autonomy = subparsers.add_parser(
+        "autonomy",
+        help="Inspect bounded measured-loop state without granting authority",
+    )
+    autonomy_commands = autonomy.add_subparsers(dest="autonomy_command")
+    for operation, help_text in (
+        ("status", "Validate a measured-loop chain and calculate its state"),
+        ("morning", "Build a prompt-free morning digest from a valid status"),
+        ("admission", "Calculate adaptive claim admission from bounded pressure data"),
+    ):
+        command = autonomy_commands.add_parser(operation, help=help_text)
+        _add_phase_four_options(command)
+        command.set_defaults(format="text")
+    skills = subparsers.add_parser(
+        "skills",
+        help="Evaluate skill candidates and prepare reviewed registry changes",
+    )
+    skill_commands = skills.add_subparsers(dest="skills_command")
+    skill_evaluate = skill_commands.add_parser(
+        "evaluate",
+        help="Evaluate one candidate with independent verifier evidence",
+    )
+    _add_phase_four_options(skill_evaluate)
+    skill_evaluate.set_defaults(format="text")
+    skill_plan = skill_commands.add_parser(
+        "plan-change",
+        help="Prepare but never apply an exact skill registry change",
+    )
+    _add_phase_four_options(skill_plan)
+    skill_plan.set_defaults(format="text")
+    models = subparsers.add_parser(
+        "models",
+        help="Use measured model benchmark execution contracts",
+    )
+    models_commands = models.add_subparsers(dest="models_command")
+    benchmark = models_commands.add_parser(
+        "benchmark",
+        help="Prepare or execute repeated benchmark trials",
+    )
+    benchmark_commands = benchmark.add_subparsers(dest="benchmark_command")
+    benchmark_prepare = benchmark_commands.add_parser(
+        "prepare",
+        help="Prepare an exact repeated-trial benchmark plan",
+    )
+    _add_phase_four_options(benchmark_prepare, approval=True)
+    benchmark_prepare.set_defaults(format="text")
+    benchmark_execute = benchmark_commands.add_parser(
+        "execute",
+        help="Execute only through an explicitly injected host adapter",
+    )
+    _add_phase_four_options(benchmark_execute, mutation=True)
+    benchmark_execute.set_defaults(format="text")
     work = subparsers.add_parser(
         "work",
         help="Use the authoritative project Work Graph",
@@ -1330,6 +1395,89 @@ def _research_action_text(
     return "\n".join(lines)
 
 
+def _phase22_text(response: ServiceResponse) -> str:
+    data = response.data
+    operation = response.operation
+    if operation == "autonomy.status":
+        status = data.get("status", {})
+        usage = status.get("usage", {}) if isinstance(status, Mapping) else {}
+        return _text_table(["Ölçüm", "Değer"], [
+            ["Durum", status.get("state", "-")],
+            ["Duruş nedeni", status.get("stop_reason", "-")],
+            ["Tur", usage.get("rounds", 0)],
+            ["Maliyet", usage.get("cost_microunits", 0)],
+            ["Devam", "evet" if status.get("resume_allowed") else "hayır"],
+        ])
+    if operation == "autonomy.morning":
+        digest = data.get("digest", {})
+        return _text_table(
+            ["Run", "Durum", "Neden", "Tur", "Sonraki adım"],
+            [[digest.get("run_id", "-"), digest.get("state", "-"),
+              digest.get("stop_reason", "-"), digest.get("rounds", 0),
+              digest.get("next_safe_action", "-")]],
+        )
+    if operation == "autonomy.admission":
+        admission = data.get("admission", {})
+        reasons = admission.get("reason_codes", [])
+        return _text_table(
+            ["Karar", "İstenen", "Kabul", "Tavan", "Nedenler"],
+            [[admission.get("decision", "-"), admission.get("requested_claims", 0),
+              admission.get("admitted_claims", 0), admission.get("concurrency_ceiling", 0),
+              ", ".join(reasons) if isinstance(reasons, list) else "-"]],
+        )
+    if operation == "model.benchmark-prepare":
+        plan = data.get("plan", {})
+        return _text_table(
+            ["Plan", "Model", "İş yükü", "Tekrar", "Adapter çağrıldı"],
+            [[_shorten(data.get("expected_plan_id", "-"), 20), plan.get("model_ref", "-"),
+              plan.get("workload_id", "-"), plan.get("repetitions", 0), "hayır"]],
+        )
+    if operation == "model.benchmark-execute":
+        if response.status == "blocked":
+            return _text_table(
+                ["Durum", "Neden", "Model", "Çalıştırıldı"],
+                [["engelli", data.get("reason_code", "-"), data.get("model_ref", "-"), "hayır"]],
+            )
+        result = data.get("result", {})
+        aggregate = result.get("aggregate", {}) if isinstance(result, Mapping) else {}
+        return _text_table(
+            ["Durum", "Deneme", "Başarılı", "Kalıcı yazım"],
+            [[response.status, aggregate.get("sample_count", 0),
+              "evet" if aggregate.get("passed") else "hayır", "hayır"]],
+        )
+    if operation == "skill.evaluate":
+        evaluation = data.get("evaluation", {})
+        return _text_table(
+            ["Aday", "Sonuç", "Deneme", "Başarılı", "Puan"],
+            [[evaluation.get("candidate_id", "-"), evaluation.get("outcome", "-"),
+              evaluation.get("trial_count", 0), evaluation.get("passed_trials", 0),
+              evaluation.get("score_basis_points", 0)]],
+        )
+    if operation == "skill.plan-change":
+        plan = data.get("plan", {})
+        transition = f"{plan.get('from_state', '-')} -> {plan.get('to_state', '-')}"
+        return _text_table(
+            ["Skill", "Geçiş", "Plan", "Onay", "Uygulandı"],
+            [[plan.get("skill_id", "-"), transition,
+              _shorten(data.get("expected_plan_id", "-"), 20), "gerekli", "hayır"]],
+        )
+    if operation == "memory.context-effectiveness":
+        evaluation = data.get("evaluation", {})
+        metrics = evaluation.get("metrics", {}) if isinstance(evaluation, Mapping) else {}
+        rows = [[key, value] for key, value in sorted(metrics.items())]
+        rows.append(["passed", "evet" if evaluation.get("passed") else "hayır"])
+        return _text_table(["Metrik", "Değer"], rows)
+    report = data.get("report", {})
+    return _text_table(["Hygiene", "Adet"], [
+        ["Stale", len(report.get("stale_memory_ids", []))],
+        ["Çakışma", len(report.get("conflict_memory_ids", []))],
+        ["Duplicate grup", len(report.get("duplicate_groups", []))],
+        ["Kullanılmayan", len(report.get("unused_memory_ids", []))],
+        ["Retention", len(report.get("retention_candidate_ids", []))],
+        ["Öneri", len(report.get("action_suggestions", []))],
+    ])
+
+
 def _print_service_response(
     response: ServiceResponse,
     output_format: str | None,
@@ -1744,8 +1892,30 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
         "review",
         "persist",
         "lifecycle",
+        "hygiene",
+        "context-effectiveness",
     }:
         operation = f"memory.{args.memory_command}"
+        arguments = _load_phase_four_arguments(args.request_file)
+    elif args.command == "autonomy" and args.autonomy_command in {
+        "status",
+        "morning",
+        "admission",
+    }:
+        operation = f"autonomy.{args.autonomy_command}"
+        arguments = _load_phase_four_arguments(args.request_file)
+    elif args.command == "skills" and args.skills_command in {
+        "evaluate",
+        "plan-change",
+    }:
+        operation = f"skill.{args.skills_command}"
+        arguments = _load_phase_four_arguments(args.request_file)
+    elif (
+        args.command == "models"
+        and args.models_command == "benchmark"
+        and args.benchmark_command in {"prepare", "execute"}
+    ):
+        operation = f"model.benchmark-{args.benchmark_command}"
         arguments = _load_phase_four_arguments(args.request_file)
     elif args.command == "work" and args.work_command in {
         "list",
@@ -1859,6 +2029,18 @@ def _run_phase_four_service_command(args: argparse.Namespace) -> int:
         print(_work_list_text(response.data))
     elif response.operation == "work.index-readable":
         print(_work_index_text(response.status, response.data))
+    elif response.operation in {
+        "autonomy.status",
+        "autonomy.morning",
+        "autonomy.admission",
+        "model.benchmark-prepare",
+        "model.benchmark-execute",
+        "skill.evaluate",
+        "skill.plan-change",
+        "memory.hygiene",
+        "memory.context-effectiveness",
+    }:
+        print(_phase22_text(response))
     else:
         print(f"{response.status}\t{response.operation}")
         print(json.dumps(response.data, ensure_ascii=False, indent=2))
@@ -2171,6 +2353,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         "runtime",
         "oracle",
         "retrieval",
+        "autonomy",
+        "skills",
+        "models",
     }:
         return _run_phase_four_service_command(args)
 

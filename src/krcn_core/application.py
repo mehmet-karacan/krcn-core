@@ -87,11 +87,30 @@ from .memory_gate import (
     prepare_memory_lifecycle,
     prepare_memory_persistence,
 )
+from .memory_hygiene import (
+    build_context_effectiveness,
+    build_memory_hygiene_report,
+    load_memory_hygiene_policy,
+    parse_context_effectiveness,
+    parse_memory_metadata_overlay,
+    parse_research_evidence_metadata,
+)
+from .measured_loop import (
+    build_measured_loop_status,
+    build_morning_digest,
+    decide_admission,
+    load_measured_loop_policy,
+)
 from .model_routing import load_model_routing_policy, resolve_model_route
 from .model_benchmark import (
     apply_project_benchmark_suite,
     list_project_benchmark_suites,
     prepare_project_benchmark_suite,
+)
+from .model_benchmark_runner import (
+    BenchmarkAdapter,
+    execute_model_benchmark_run,
+    prepare_model_benchmark_run,
 )
 from .model_inventory import (
     apply_model_inventory,
@@ -255,6 +274,15 @@ from .source_code_index import (
     source_code_index_summary,
 )
 from .source_state import parse_source_state
+from .skill_lifecycle import (
+    build_skill_evaluation,
+    load_skill_lifecycle_policy,
+    parse_skill_candidate,
+    parse_skill_evaluation,
+    parse_skill_lifecycle_record,
+    prepare_skill_activation,
+    prepare_skill_state_change,
+)
 from .source_rebind import (
     apply_source_rebind,
     candidate_binding,
@@ -338,6 +366,7 @@ class KrcnApplicationService:
         sqlite_runtime: SqliteReferenceRuntime | None = None,
         oracle_metadata_transports: Mapping[str, OracleMetadataTransport] | None = None,
         model_health_probes: Mapping[str, ModelHealthProbe] | None = None,
+        model_benchmark_adapters: Mapping[str, BenchmarkAdapter] | None = None,
         research_execution_adapters: Mapping[
             str, Callable[[ResearchWorkUnit], Mapping[str, object]]
         ] | None = None,
@@ -392,6 +421,15 @@ class KrcnApplicationService:
         ):
             raise ApplicationServiceError("model health probes are invalid")
         self._model_health_probes = health_probes
+        benchmark_adapters = dict(model_benchmark_adapters or {})
+        if any(
+            not isinstance(model_ref, str)
+            or not IDENTIFIER.fullmatch(model_ref)
+            or not callable(adapter)
+            for model_ref, adapter in benchmark_adapters.items()
+        ):
+            raise ApplicationServiceError("model benchmark adapters are invalid")
+        self._model_benchmark_adapters = benchmark_adapters
         research_adapters = dict(research_execution_adapters or {})
         if research_adapters and (
             set(research_adapters) != set(RESEARCH_DAG)
@@ -3057,6 +3095,341 @@ class KrcnApplicationService:
             "remote_call_performed": False,
         }
 
+    def _benchmark_provider_authorization(
+        self,
+        request: ServiceRequest,
+        model: Mapping[str, object],
+    ):
+        disclosure = request.arguments.get("provider_disclosure")
+        if model.get("remote") is not True:
+            if disclosure is not None:
+                raise ApplicationServiceError(
+                    "local benchmark accepts no provider disclosure"
+                )
+            return None, None
+        if not isinstance(disclosure, Mapping) or set(disclosure) != {
+            "provider",
+            "endpoint",
+            "data_categories",
+            "operation_scope",
+            "retention_assumptions",
+            "session_id",
+            "remote",
+            "authorization_ref",
+        }:
+            raise ApplicationServiceError(
+                "remote benchmark requires exact provider disclosure"
+            )
+        categories = disclosure.get("data_categories")
+        if not isinstance(categories, list) or any(
+            not isinstance(item, str) for item in categories
+        ):
+            raise ApplicationServiceError(
+                "provider data_categories must be a string list"
+            )
+        try:
+            provider_request = create_provider_request(
+                provider=str(disclosure.get("provider", "")),
+                endpoint=str(disclosure.get("endpoint", "")),
+                data_categories=tuple(categories),
+                operation_scope=str(disclosure.get("operation_scope", "")),
+                retention_assumptions=str(
+                    disclosure.get("retention_assumptions", "")
+                ),
+                session_id=str(disclosure.get("session_id", "")),
+                remote=disclosure.get("remote") is True,
+            )
+            authorization = authorize_provider_request(
+                load_provider_gate_policy(self._repo_root),
+                provider_request,
+                approval=ProviderApproval(
+                    provider_request.request_id,
+                    provider_request.session_id,
+                    request.approval_id or "",
+                    bool(request.approval_id),
+                ),
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        authorization_ref = disclosure.get("authorization_ref")
+        if not isinstance(authorization_ref, str) or not IDENTIFIER.fullmatch(
+            authorization_ref
+        ):
+            raise ApplicationServiceError(
+                "provider authorization_ref must be a portable identifier"
+            )
+        return authorization, authorization_ref
+
+    @staticmethod
+    def _benchmark_timestamp(value: object, label: str) -> datetime:
+        if not isinstance(value, str) or not value.strip():
+            raise ApplicationServiceError(f"{label} must be an ISO 8601 timestamp")
+        try:
+            timestamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ApplicationServiceError(
+                f"{label} must be an ISO 8601 timestamp"
+            ) from exc
+        if timestamp.tzinfo is None:
+            raise ApplicationServiceError(f"{label} must carry a timezone")
+        return timestamp
+
+    def _prepare_model_benchmark_execution(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={
+                "suite",
+                "model",
+                "health_record",
+                "execution_profile",
+                "current_source_digest",
+                "workload_id",
+                "repetitions",
+                "model_assignment_id",
+                "now",
+            },
+            optional={"timeout_ms", "provider_disclosure"},
+        )
+        if request.apply:
+            raise ApplicationServiceError("benchmark preparation is read-only")
+        model = _object_argument(request.arguments, "model")
+        authorization, authorization_ref = self._benchmark_provider_authorization(
+            request, model
+        )
+        repetitions = request.arguments.get("repetitions")
+        if not isinstance(repetitions, int) or isinstance(repetitions, bool):
+            raise ApplicationServiceError("repetitions must be an integer")
+        timeout = request.arguments.get("timeout_ms")
+        if timeout is not None and (
+            not isinstance(timeout, int) or isinstance(timeout, bool)
+        ):
+            raise ApplicationServiceError("timeout_ms must be an integer or null")
+        try:
+            plan = prepare_model_benchmark_run(
+                self._repo_root,
+                suite=_object_argument(request.arguments, "suite"),
+                model=model,
+                health_record=_object_argument(request.arguments, "health_record"),
+                execution_profile=_object_argument(
+                    request.arguments, "execution_profile"
+                ),
+                current_source_digest=_string_argument(
+                    request.arguments, "current_source_digest"
+                ),
+                workload_id=_identifier_argument(request.arguments, "workload_id"),
+                repetitions=repetitions,
+                model_assignment_id=_identifier_argument(
+                    request.arguments, "model_assignment_id"
+                ),
+                timeout_ms=timeout,
+                now=self._benchmark_timestamp(request.arguments.get("now"), "now"),
+                provider_authorization=authorization,
+                provider_authorization_ref=authorization_ref,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "planned", {
+            "plan": plan,
+            "expected_plan_id": plan["plan_digest"],
+            "adapter_called": False,
+            "provider_call_performed": False,
+            "execution_performed": False,
+            "grants_authority": False,
+        }
+
+    def _execute_model_benchmark(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={
+                "plan",
+                "suite",
+                "model",
+                "health_record",
+                "execution_profile",
+                "current_source_digest",
+                "observed_at",
+            },
+            optional={"provider_disclosure"},
+        )
+        model = _object_argument(request.arguments, "model")
+        model_ref = model.get("model_ref")
+        if not isinstance(model_ref, str) or not IDENTIFIER.fullmatch(model_ref):
+            raise ApplicationServiceError("model_ref must be a portable identifier")
+        adapter = self._model_benchmark_adapters.get(model_ref)
+        if adapter is None:
+            return "blocked", {
+                "reason_code": "benchmark-adapter-unavailable",
+                "model_ref": model_ref,
+                "adapter_injected": False,
+                "execution_performed": False,
+                "provider_call_performed": False,
+                "grants_authority": False,
+            }
+        if not request.apply:
+            raise ApplicationServiceError(
+                "benchmark execution requires explicit --apply"
+            )
+        plan = _object_argument(request.arguments, "plan")
+        if request.expected_plan_id != plan.get("plan_digest"):
+            raise ApplicationServiceError(
+                "benchmark execution requires the exact plan digest"
+            )
+        if request.approval_id is None:
+            raise ApplicationServiceError(
+                "benchmark execution requires explicit approval id"
+            )
+        authorization, authorization_ref = self._benchmark_provider_authorization(
+            request, model
+        )
+        try:
+            output = execute_model_benchmark_run(
+                self._repo_root,
+                plan,
+                expected_plan_id=str(plan.get("plan_id", "")),
+                suite=_object_argument(request.arguments, "suite"),
+                model=model,
+                health_record=_object_argument(request.arguments, "health_record"),
+                execution_profile=_object_argument(
+                    request.arguments, "execution_profile"
+                ),
+                current_source_digest=_string_argument(
+                    request.arguments, "current_source_digest"
+                ),
+                adapter=adapter,
+                observed_at=self._benchmark_timestamp(
+                    request.arguments.get("observed_at"), "observed_at"
+                ),
+                provider_authorization=authorization,
+                provider_authorization_ref=authorization_ref,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "applied", {
+            "result": output.as_dict(),
+            "adapter_injected": True,
+            "execution_performed": True,
+            "persisted": False,
+            "grants_authority": False,
+        }
+
+    def _autonomy_status(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"plan", "iterations", "observed_at"},
+            optional={"cancellation_record"},
+        )
+        if request.apply:
+            raise ApplicationServiceError("autonomy status is read-only")
+        iterations = request.arguments.get("iterations")
+        if not isinstance(iterations, list):
+            raise ApplicationServiceError("iterations must be a list")
+        cancellation = request.arguments.get("cancellation_record")
+        if cancellation is not None and not isinstance(cancellation, Mapping):
+            raise ApplicationServiceError("cancellation_record must be an object")
+        try:
+            status = build_measured_loop_status(
+                load_measured_loop_policy(self._repo_root),
+                _object_argument(request.arguments, "plan"),
+                iterations,
+                observed_at=_string_argument(request.arguments, "observed_at"),
+                cancellation_record=cancellation,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {"status": status.as_dict(), "grants_authority": False}
+
+    def _autonomy_morning(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"status", "generated_at"})
+        if request.apply:
+            raise ApplicationServiceError("autonomy morning digest is read-only")
+        try:
+            digest = build_morning_digest(
+                _object_argument(request.arguments, "status"),
+                generated_at=_string_argument(request.arguments, "generated_at"),
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {"digest": digest.as_dict(), "grants_authority": False}
+
+    def _autonomy_admission(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={
+                "plan",
+                "status",
+                "observed_at",
+                "requested_claims",
+                "active_claims",
+                "cpu_pressure_basis_points",
+                "ram_pressure_basis_points",
+                "provider_required",
+                "provider_quota_remaining_basis_points",
+                "cost_headroom_microunits",
+                "failure_pressure_basis_points",
+            },
+        )
+        if request.apply:
+            raise ApplicationServiceError("autonomy admission is read-only")
+        integer_names = (
+            "requested_claims",
+            "active_claims",
+            "cpu_pressure_basis_points",
+            "ram_pressure_basis_points",
+            "cost_headroom_microunits",
+            "failure_pressure_basis_points",
+        )
+        values = {name: request.arguments.get(name) for name in integer_names}
+        if any(
+            not isinstance(value, int) or isinstance(value, bool)
+            for value in values.values()
+        ):
+            raise ApplicationServiceError("autonomy admission counters are invalid")
+        provider_required = request.arguments.get("provider_required")
+        if not isinstance(provider_required, bool):
+            raise ApplicationServiceError("provider_required must be boolean")
+        quota = request.arguments.get("provider_quota_remaining_basis_points")
+        if quota is not None and (
+            not isinstance(quota, int) or isinstance(quota, bool)
+        ):
+            raise ApplicationServiceError(
+                "provider quota must be an integer or null"
+            )
+        try:
+            decision = decide_admission(
+                load_measured_loop_policy(self._repo_root),
+                _object_argument(request.arguments, "plan"),
+                _object_argument(request.arguments, "status"),
+                observed_at=_string_argument(request.arguments, "observed_at"),
+                requested_claims=values["requested_claims"],
+                active_claims=values["active_claims"],
+                cpu_pressure_basis_points=values["cpu_pressure_basis_points"],
+                ram_pressure_basis_points=values["ram_pressure_basis_points"],
+                provider_required=provider_required,
+                provider_quota_remaining_basis_points=quota,
+                cost_headroom_microunits=values["cost_headroom_microunits"],
+                failure_pressure_basis_points=values[
+                    "failure_pressure_basis_points"
+                ],
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {"admission": decision.as_dict(), "grants_authority": False}
+
     def _decide_model(
         self,
         request: ServiceRequest,
@@ -4519,6 +4892,216 @@ class KrcnApplicationService:
             "plan": plan_summary,
             "record": stored.public_summary(),
             "applied": True,
+        }
+
+    def _evaluate_skill(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"candidate", "evaluation"})
+        if request.apply:
+            raise ApplicationServiceError("skill evaluation is read-only")
+        evaluation = _object_argument(request.arguments, "evaluation")
+        expected = {
+            "evaluation_id",
+            "project_fixture_digest",
+            "evaluation_run_digest",
+            "evaluator_ref",
+            "verifier_ref",
+            "tested_model_digest",
+            "verifier_model_digest",
+            "environment_digest",
+            "trial_count",
+            "passed_trials",
+            "score_basis_points",
+            "evaluated_at",
+        }
+        if set(evaluation) != expected:
+            raise ApplicationServiceError("skill evaluation fields are invalid")
+        try:
+            result = build_skill_evaluation(
+                load_skill_lifecycle_policy(self._repo_root),
+                parse_skill_candidate(
+                    _object_argument(request.arguments, "candidate")
+                ),
+                **evaluation,
+            )
+        except (TypeError, ValueError) as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {
+            "evaluation": result.as_payload(),
+            "registry_mutated": False,
+            "grants_authority": False,
+        }
+
+    def _plan_skill_change(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        if request.apply:
+            raise ApplicationServiceError(
+                "skill plan-change prepares a plan and never applies it"
+            )
+        change_kind = request.arguments.get("change_kind")
+        try:
+            if change_kind == "activation":
+                _check_arguments(
+                    request.arguments,
+                    required={
+                        "change_kind",
+                        "candidate",
+                        "evaluation",
+                        "expected_registry_digest",
+                        "rollback_target_ref",
+                    },
+                    optional={"supersedes_ref"},
+                )
+                expected_digest = request.arguments.get(
+                    "expected_registry_digest"
+                )
+                if expected_digest is not None and not isinstance(
+                    expected_digest, str
+                ):
+                    raise ApplicationServiceError(
+                        "expected_registry_digest must be a string or null"
+                    )
+                supersedes = request.arguments.get("supersedes_ref")
+                if supersedes is not None and not isinstance(supersedes, str):
+                    raise ApplicationServiceError(
+                        "supersedes_ref must be a string or null"
+                    )
+                plan = prepare_skill_activation(
+                    self._ownership,
+                    load_skill_lifecycle_policy(self._repo_root),
+                    parse_skill_candidate(
+                        _object_argument(request.arguments, "candidate")
+                    ),
+                    parse_skill_evaluation(
+                        _object_argument(request.arguments, "evaluation")
+                    ),
+                    expected_registry_digest=expected_digest,
+                    rollback_target_ref=_string_argument(
+                        request.arguments, "rollback_target_ref"
+                    ),
+                    supersedes_ref=supersedes,
+                )
+            elif change_kind == "transition":
+                _check_arguments(
+                    request.arguments,
+                    required={
+                        "change_kind",
+                        "current",
+                        "to_state",
+                        "rollback_target_ref",
+                    },
+                    optional={"supersedes_ref"},
+                )
+                supersedes = request.arguments.get("supersedes_ref")
+                if supersedes is not None and not isinstance(supersedes, str):
+                    raise ApplicationServiceError(
+                        "supersedes_ref must be a string or null"
+                    )
+                plan = prepare_skill_state_change(
+                    self._ownership,
+                    parse_skill_lifecycle_record(
+                        _object_argument(request.arguments, "current")
+                    ),
+                    to_state=_string_argument(request.arguments, "to_state"),
+                    rollback_target_ref=_string_argument(
+                        request.arguments, "rollback_target_ref"
+                    ),
+                    supersedes_ref=supersedes,
+                )
+            else:
+                raise ApplicationServiceError(
+                    "change_kind must be activation or transition"
+                )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "planned", {
+            "plan": plan.as_payload(),
+            "expected_plan_id": plan.mutation.plan_id,
+            "approval_required": True,
+            "registry_mutated": False,
+            "grants_authority": False,
+        }
+
+    def _memory_context_effectiveness(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        fields = {
+            "evaluation_id",
+            "required_evidence_refs",
+            "recalled_evidence_refs",
+            "selected_bytes",
+            "used_bytes",
+            "selected_tokens",
+            "used_tokens",
+            "selected_count",
+            "stale_selected_count",
+            "duplicate_selected_count",
+            "omitted_required_count",
+            "downstream_success_basis_points",
+            "compaction_rehydration_passed",
+        }
+        _check_arguments(request.arguments, required=fields)
+        if request.apply:
+            raise ApplicationServiceError(
+                "memory context effectiveness is read-only"
+            )
+        try:
+            result = build_context_effectiveness(
+                load_memory_hygiene_policy(self._repo_root),
+                **dict(request.arguments),
+            )
+        except (TypeError, ValueError) as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {
+            "evaluation": result.as_payload(),
+            "memory_mutated": False,
+            "grants_authority": False,
+        }
+
+    def _memory_hygiene(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={
+                "report_id",
+                "as_of",
+                "memories",
+                "research_evidence",
+                "context_evaluations",
+            },
+        )
+        if request.apply:
+            raise ApplicationServiceError("memory hygiene is read-only")
+        memories = request.arguments.get("memories")
+        evidence = request.arguments.get("research_evidence")
+        contexts = request.arguments.get("context_evaluations")
+        if not all(isinstance(items, list) for items in (memories, evidence, contexts)):
+            raise ApplicationServiceError(
+                "memory hygiene inputs must be lists"
+            )
+        try:
+            report = build_memory_hygiene_report(
+                load_memory_hygiene_policy(self._repo_root),
+                [parse_memory_metadata_overlay(item) for item in memories],
+                [parse_research_evidence_metadata(item) for item in evidence],
+                [parse_context_effectiveness(item) for item in contexts],
+                report_id=_identifier_argument(request.arguments, "report_id"),
+                as_of=_string_argument(request.arguments, "as_of"),
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {
+            "report": report,
+            "memory_mutated": False,
+            "automatic_actions_performed": False,
+            "grants_authority": False,
         }
 
     @staticmethod

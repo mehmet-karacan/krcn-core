@@ -215,6 +215,60 @@ krcn model benchmark-list --project <project-id>
 
 Suite building requires a complete current project capability profile. It performs no provider call and stores no source or prompt text. Database cases remain local-only. See `docs/specifications/PROJECT-MODEL-BENCHMARK-SUITES.md`.
 
+Prepare or execute a repeated-trial benchmark through the measured runner:
+
+```bash
+krcn models benchmark prepare --request-file <benchmark-prepare.json>
+krcn models benchmark execute --request-file <benchmark-execute.json> --apply --expected-plan <plan-digest> --approval-id <approval-id>
+```
+
+Preparation performs no adapter or provider call. Execution requires the exact
+prepared digest, an explicit approval, and a benchmark adapter injected by the
+host for the selected model. The normal CLI host injects no adapter and returns
+`blocked` instead of pretending to execute a model. Remote models additionally
+require an exact session-bound provider disclosure and authorization. Results
+contain measurements and provenance only; prompts, responses, credentials,
+endpoints, physical paths, and source content are not returned or persisted.
+
+## Measured autonomy, skill lifecycle, and memory hygiene
+
+The bounded loop can be inspected from reviewed JSON records without granting
+new authority:
+
+```bash
+krcn autonomy status --request-file <loop-status.json>
+krcn autonomy morning --request-file <morning-digest.json>
+krcn autonomy admission --request-file <admission.json>
+```
+
+`status` validates the iteration hash chain and calculates stop state. `morning`
+returns a prompt-free, output-free summary. `admission` may admit or defer new
+claims from bounded CPU, RAM, provider quota, cost, failure, and concurrency
+measurements; it never terminates active work.
+
+Skill candidates are evaluated independently and registry changes remain a
+separate exact plan:
+
+```bash
+krcn skills evaluate --request-file <skill-evaluation.json>
+krcn skills plan-change --request-file <skill-change.json>
+```
+
+`plan-change` never applies its own plan. It reports the exact mutation identity
+and required approval while leaving the registry unchanged.
+
+Memory and context quality are measured from content-free metadata:
+
+```bash
+krcn memory context-effectiveness --request-file <context-measurement.json>
+krcn memory hygiene --request-file <memory-hygiene.json>
+```
+
+Hygiene reports only recommend reviewed Memory Gate actions. They never delete,
+merge, supersede, or change lifecycle state automatically. Human output is a
+bounded table by default for these commands; `--format json` preserves the
+stable application response envelope for automation.
+
 ## Work Graph
 
 Prepare a JSON request containing the project and work item fields, inspect the exact plan, then apply the same plan with approval:
