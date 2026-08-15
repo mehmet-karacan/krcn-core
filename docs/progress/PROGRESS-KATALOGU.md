@@ -153,6 +153,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 - `PHASE-21-ZORUNLU-KONTROL-VE-BASELINE-KANITI.md`
 - `PHASE-21-V1-MIMARI-SOZLESMELERI.md`
 - `PHASE-21-COMPACTION-DAYANIKLI-DEVAMLILIK.md`
+- `PHASE-21-KANONIK-IZLEME-VE-DURUM.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 

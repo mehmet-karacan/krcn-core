@@ -109,6 +109,9 @@
         "continuity_snapshot_schema",
         "work_journal_event_schema",
         "finalized_handoff_schema",
+        "execution_observability_boundary",
+        "execution_trace_schema",
+        "status_projection_schema",
         "work_documents_boundary",
         "work_document_manifest_schema",
         "work_document_manifest_update_plan_schema",
@@ -327,6 +330,15 @@
           "$ref": "#/$defs/repoPath"
         },
         "finalized_handoff_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "execution_observability_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "execution_trace_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "status_projection_schema": {
           "$ref": "#/$defs/repoPath"
         },
         "work_documents_boundary": {

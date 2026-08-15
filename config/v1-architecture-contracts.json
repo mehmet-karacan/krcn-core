@@ -196,6 +196,16 @@
           ]
         },
         {
+          "kind": "module-symbol",
+          "module": "krcn_core.execution_observability",
+          "symbols": [
+            "ExecutionTrace",
+            "StatusProjection",
+            "build_execution_trace",
+            "project_execution_status"
+          ]
+        },
+        {
           "kind": "document-phrase",
           "document": "docs/specifications/WORK-CONTINUITY.md",
           "phrase": "execution authority"

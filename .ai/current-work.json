@@ -11,12 +11,13 @@
     "docs/progress/PHASE-21-KICKOFF.md",
     "docs/progress/PHASE-21-ZORUNLU-KONTROL-VE-BASELINE-KANITI.md",
     "docs/progress/PHASE-21-V1-MIMARI-SOZLESMELERI.md",
-    "docs/progress/PHASE-21-COMPACTION-DAYANIKLI-DEVAMLILIK.md"
+    "docs/progress/PHASE-21-COMPACTION-DAYANIKLI-DEVAMLILIK.md",
+    "docs/progress/PHASE-21-KANONIK-IZLEME-VE-DURUM.md"
   ],
   "next_actions": [
-    "kanonik execution trace ve tek status projection sozlesmesini ekle",
     "proje relocation siniflandirmasini ve exact rebind kararlarini guclendir",
-    "model yetenek koruma kapisini ve golden karsilastirmayi ekle"
+    "model yetenek koruma kapisini ve golden karsilastirmayi ekle",
+    "generic akista bagimsiz verifier execution identity zorunlulugunu guclendir"
   ],
   "baseline_commit": "2e4d23a",
   "approval_gates": {

@@ -1,0 +1,262 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:execution-trace:1",
+  "title": "KRCN Core canonical execution trace",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "correlation_id",
+    "request_id",
+    "client_id",
+    "project_id",
+    "work_item_id",
+    "intent_digest",
+    "context_digest",
+    "plan_id",
+    "approval_envelope_id",
+    "delegation_mode",
+    "model_assignment_ids",
+    "queue_ids",
+    "agent_execution_ids",
+    "verification_id",
+    "evidence_digest",
+    "status",
+    "started_at",
+    "ended_at",
+    "duration_ms",
+    "token_usage",
+    "estimated_cost",
+    "retry_count",
+    "cache_hit",
+    "failure_code",
+    "grants_authority",
+    "contains_raw_payload",
+    "contains_physical_paths",
+    "trace_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/execution-trace.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "correlation_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "request_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "client_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "project_id": {
+      "$ref": "#/$defs/nullableIdentifier"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/nullableIdentifier"
+    },
+    "intent_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "context_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "plan_id": {
+      "$ref": "#/$defs/nullableDigest"
+    },
+    "approval_envelope_id": {
+      "$ref": "#/$defs/nullableIdentifier"
+    },
+    "delegation_mode": {
+      "enum": [
+        "direct",
+        "native-parallel",
+        "native-sequential",
+        "isolated-role-fallback",
+        "delegation-unavailable"
+      ]
+    },
+    "model_assignment_ids": {
+      "$ref": "#/$defs/identifiers"
+    },
+    "queue_ids": {
+      "$ref": "#/$defs/identifiers"
+    },
+    "agent_execution_ids": {
+      "$ref": "#/$defs/identifiers"
+    },
+    "verification_id": {
+      "$ref": "#/$defs/nullableIdentifier"
+    },
+    "evidence_digest": {
+      "$ref": "#/$defs/nullableDigest"
+    },
+    "status": {
+      "$ref": "#/$defs/status"
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ended_at": {
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "duration_ms": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "token_usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_tokens",
+        "output_tokens",
+        "cache_read_tokens",
+        "cache_write_tokens",
+        "total_tokens"
+      ],
+      "properties": {
+        "input_tokens": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "output_tokens": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "cache_read_tokens": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "cache_write_tokens": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "total_tokens": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        }
+      }
+    },
+    "estimated_cost": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "amount_microunits",
+            "currency",
+            "is_estimate"
+          ],
+          "properties": {
+            "amount_microunits": {
+              "$ref": "#/$defs/nonNegativeInteger"
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            },
+            "is_estimate": {
+              "const": true
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "retry_count": {
+      "$ref": "#/$defs/nonNegativeInteger"
+    },
+    "cache_hit": {
+      "type": "boolean"
+    },
+    "failure_code": {
+      "$ref": "#/$defs/nullableIdentifier"
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "contains_raw_payload": {
+      "const": false
+    },
+    "contains_physical_paths": {
+      "const": false
+    },
+    "trace_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "nullableIdentifier": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/identifier"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nullableDigest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "identifiers": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "nonNegativeInteger": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "status": {
+      "enum": [
+        "preparing",
+        "awaiting-approval",
+        "queued",
+        "running",
+        "partially-completed",
+        "awaiting-verification",
+        "blocked",
+        "degraded",
+        "cancelled",
+        "recovery-required",
+        "completed",
+        "derived-stale",
+        "failed"
+      ]
+    }
+  }
+}

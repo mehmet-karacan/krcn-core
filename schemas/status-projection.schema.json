@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:status-projection:1",
+  "title": "KRCN Core canonical user-facing status projection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "correlation_id",
+    "project_id",
+    "work_item_id",
+    "status",
+    "summary",
+    "next_action",
+    "reason_codes",
+    "degraded",
+    "derived_stale",
+    "source_status_digest",
+    "trace_digest",
+    "updated_at",
+    "grants_authority",
+    "projection_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/status-projection.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "correlation_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "project_id": {
+      "$ref": "#/$defs/nullableIdentifier"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/nullableIdentifier"
+    },
+    "status": {
+      "$ref": "#/$defs/status"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 280
+    },
+    "next_action": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 280
+    },
+    "reason_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "degraded": {
+      "type": "boolean"
+    },
+    "derived_stale": {
+      "type": "boolean"
+    },
+    "source_status_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "trace_digest": {
+      "$ref": "#/$defs/nullableDigest"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "projection_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "nullableIdentifier": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/identifier"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nullableDigest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "status": {
+      "enum": [
+        "preparing",
+        "awaiting-approval",
+        "queued",
+        "running",
+        "partially-completed",
+        "awaiting-verification",
+        "blocked",
+        "degraded",
+        "cancelled",
+        "recovery-required",
+        "completed",
+        "derived-stale",
+        "failed"
+      ]
+    }
+  }
+}
