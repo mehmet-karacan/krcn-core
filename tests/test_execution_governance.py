@@ -143,6 +143,8 @@ class ExecutionGovernanceTests(unittest.TestCase):
         tampered["evidence_digest"] = digest("c")
         with self.assertRaisesRegex(ExecutionGovernanceError, "digest"):
             parse_register_entry(tampered)
+        with self.assertRaisesRegex(ExecutionGovernanceError, "predate"):
+            self.entry(entry_id="entry-before-plan", recorded_at="2026-08-16T00:58:00Z")
 
     def test_register_supersession_must_reference_an_earlier_immutable_entry(self) -> None:
         first = self.entry(entry_id="unknown-first")
@@ -198,6 +200,8 @@ class ExecutionGovernanceTests(unittest.TestCase):
             self.promotion(register_entries=[future_resolution.as_dict()])
 
     def test_promotions_cannot_skip_stages_or_enter_production_directly(self) -> None:
+        with self.assertRaisesRegex(ExecutionGovernanceError, "predate"):
+            self.promotion(created_at="2026-08-16T00:59:00Z")
         with self.assertRaisesRegex(ExecutionGovernanceError, "adjacent"):
             self.promotion(target_stage="pilot")
         with self.assertRaisesRegex(ExecutionGovernanceError, "adjacent"):

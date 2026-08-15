@@ -291,6 +291,9 @@ def create_register_entry(
         raise ExecutionGovernanceError("register classification is invalid")
     if disposition not in DISPOSITIONS_BY_KIND[kind]:
         raise ExecutionGovernanceError("register disposition is invalid for its kind")
+    entry_time = _timestamp(recorded_at, "recorded at")
+    if entry_time < _timestamp(parsed_plan.payload["created_at"], "plan created at"):
+        raise ExecutionGovernanceError("governance entry cannot predate its plan")
     payload: dict[str, object] = {
         "schema_ref": "schemas/execution-governance-entry.schema.json",
         "schema_version": 1,
@@ -304,7 +307,7 @@ def create_register_entry(
         "disposition": disposition,
         "owner_ref": _ref(owner_ref, "owner ref"),
         "related_ref": _ref(related_ref, "related ref"),
-        "recorded_at": _timestamp(recorded_at, "recorded at"),
+        "recorded_at": entry_time,
         "supersedes_entry_digest": (
             None
             if supersedes_entry_digest is None
@@ -387,6 +390,12 @@ def validate_register(
         raise ExecutionGovernanceError("governance register contains duplicates")
     if any(item.payload["governance_plan_digest"] != plan_digest for item in parsed):
         raise ExecutionGovernanceError("governance entry belongs to another plan")
+    plan_created_at = _timestamp(plan.payload["created_at"], "plan created at")
+    if any(
+        _timestamp(item.payload["recorded_at"], "recorded at") < plan_created_at
+        for item in parsed
+    ):
+        raise ExecutionGovernanceError("governance entry cannot predate its plan")
     known_digests = set(digests)
     by_digest = {str(item.payload["entry_digest"]): item for item in parsed}
     for item in parsed:
@@ -588,6 +597,8 @@ def _build_transition_plan(
     ):
         raise ExecutionGovernanceError("independent verifier identity is required")
     transition_created_at = _timestamp(created_at, "created at")
+    if transition_created_at < _timestamp(plan.payload["created_at"], "plan created at"):
+        raise ExecutionGovernanceError("environment transition cannot predate its governance plan")
     entries = validate_register(plan, register_entries)
     if any(
         _timestamp(item.payload["recorded_at"], "recorded at")
