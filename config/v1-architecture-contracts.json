@@ -1,0 +1,281 @@
+{
+  "schema_ref": "schemas/v1-architecture-contracts.schema.json",
+  "schema_version": 1,
+  "decision_ref": "docs/adr/ADR-013-V1-DEGISMEZ-MIMARI-SOZLESMELERI.md",
+  "contracts": [
+    {
+      "id": "ownership-classes",
+      "statement": "Core, runtime, user-data, derived, and secrets remain separate ownership classes.",
+      "evidence": [
+        {
+          "kind": "policy-members",
+          "policy": "config/ownership-manifest.json",
+          "collection": "classes",
+          "member_key": "id",
+          "required": [
+            "core",
+            "runtime",
+            "user-data",
+            "derived",
+            "secrets"
+          ]
+        },
+        {
+          "kind": "module-symbol",
+          "module": "krcn_core.mutation_gate",
+          "symbols": [
+            "OwnershipResolver"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "exact-plan-approval",
+      "statement": "Every mutation passes through an exact plan, dry-run evidence, and explicit approval.",
+      "evidence": [
+        {
+          "kind": "module-symbol",
+          "module": "krcn_core.mutation_gate",
+          "symbols": [
+            "MutationPlan",
+            "DryRunEvidence",
+            "ApprovalEvidence",
+            "plan_mutation",
+            "authorize_mutation"
+          ]
+        },
+        {
+          "kind": "document-phrase",
+          "document": "docs/specifications/MUTATION-GATE.md",
+          "phrase": "Approval for another plan, path, operation, or content digest is invalid."
+        }
+      ]
+    },
+    {
+      "id": "provider-disclosure",
+      "statement": "Remote provider use requires disclosure and session approval; the provider is never inferred from the environment.",
+      "evidence": [
+        {
+          "kind": "policy-flag",
+          "policy": "config/provider-policy.json",
+          "key": "default_mode",
+          "expected": "offline"
+        },
+        {
+          "kind": "policy-flag",
+          "policy": "config/provider-policy.json",
+          "key": "implicit_provider_discovery",
+          "expected": false
+        },
+        {
+          "kind": "module-symbol",
+          "module": "krcn_core.provider_gate",
+          "symbols": [
+            "create_provider_request",
+            "authorize_provider_request"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "work-graph-authoritative",
+      "statement": "Work Graph records are authoritative for task state and history; derived projections cannot override them.",
+      "evidence": [
+        {
+          "kind": "module-symbol",
+          "module": "krcn_core.work_graph",
+          "symbols": [
+            "parse_work_item",
+            "parse_work_event",
+            "build_work_event"
+          ]
+        },
+        {
+          "kind": "policy-flag",
+          "policy": "config/unified-retrieval.json",
+          "key": "semantic_can_override_exact",
+          "expected": false
+        }
+      ]
+    },
+    {
+      "id": "source-read-in-place",
+      "statement": "Registered source code is read in place; the index persists no source text and no physical source root.",
+      "evidence": [
+        {
+          "kind": "policy-flag",
+          "policy": "config/source-code-index.json",
+          "key": "source_content_persisted",
+          "expected": false
+        },
+        {
+          "kind": "module-symbol",
+          "module": "krcn_core.source_code_index",
+          "symbols": [
+            "load_source_code_index_policy",
+            "SourceCodeIndexPlan"
+          ]
+        },
+        {
+          "kind": "document-phrase",
+          "document": "docs/specifications/EXTERNAL-SOURCE-NO-COPY.md",
+          "phrase": "It does not import the project tree into the KRCN user home."
+        }
+      ]
+    },
+    {
+      "id": "stale-fail-closed",
+      "statement": "A stale index or a digest mismatch fails closed instead of returning unverified evidence.",
+      "evidence": [
+        {
+          "kind": "policy-flag",
+          "policy": "config/unified-retrieval.json",
+          "key": "stale_index_allowed",
+          "expected": false
+        },
+        {
+          "kind": "policy-flag",
+          "policy": "config/source-code-index.json",
+          "key": "remote_provider_implicit",
+          "expected": false
+        }
+      ]
+    },
+    {
+      "id": "queue-lease-fencing",
+      "statement": "Queue transitions require a current lease, heartbeat, and monotonic fencing evidence.",
+      "evidence": [
+        {
+          "kind": "module-symbol",
+          "module": "krcn_core.agent_runtime",
+          "symbols": [
+            "AgentRuntimeQueue",
+            "SchedulerPolicy",
+            "load_scheduler_policy"
+          ]
+        },
+        {
+          "kind": "policy-flag",
+          "policy": "config/runtime-scheduler.json",
+          "key": "heartbeat_interval_seconds"
+        },
+        {
+          "kind": "policy-flag",
+          "policy": "config/runtime-scheduler.json",
+          "key": "default_lease_seconds"
+        }
+      ]
+    },
+    {
+      "id": "independent-verifier",
+      "statement": "A verifier is a separate role with its own execution identity and no side effects beyond read and execute.",
+      "evidence": [
+        {
+          "kind": "module-symbol",
+          "module": "krcn_core.orchestration_verifier",
+          "symbols": [
+            "TaskVerification",
+            "VerifierContext",
+            "VerifierHandlerRegistry",
+            "create_verification_evidence"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "records-grant-no-authority",
+      "statement": "Checkpoint, handoff, resume, trace, and catalog records provide context and never grant execution authority.",
+      "evidence": [
+        {
+          "kind": "module-symbol",
+          "module": "krcn_core.orchestration_state",
+          "symbols": [
+            "parse_orchestration_checkpoint",
+            "parse_orchestration_handoff",
+            "ResumePackage"
+          ]
+        },
+        {
+          "kind": "document-phrase",
+          "document": "docs/specifications/WORK-CONTINUITY.md",
+          "phrase": "execution authority"
+        }
+      ]
+    },
+    {
+      "id": "model-decision-grants-no-authority",
+      "statement": "A model, agent, or delegation decision is never a source of authority.",
+      "evidence": [
+        {
+          "kind": "module-symbol",
+          "module": "krcn_core.model_routing",
+          "symbols": [
+            "resolve_model_route",
+            "ModelRouteSelection"
+          ]
+        },
+        {
+          "kind": "document-phrase",
+          "document": "docs/specifications/MODEL-ROUTING.md",
+          "phrase": "never grants access or approval"
+        }
+      ]
+    },
+    {
+      "id": "json-authoritative-projection-rebuildable",
+      "statement": "Authoritative user records are JSON; SQLite projections and vector indexes are rebuildable derived data.",
+      "evidence": [
+        {
+          "kind": "policy-members",
+          "policy": "config/ownership-manifest.json",
+          "collection": "classes",
+          "member_key": "id",
+          "required": [
+            "derived"
+          ]
+        },
+        {
+          "kind": "module-symbol",
+          "module": "krcn_core.work_graph",
+          "symbols": [
+            "work_graph_index_path"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "user-policies-preserved",
+      "statement": "Approved user policies are user-owned; a core update may migrate their schema but never weakens their meaning.",
+      "evidence": [
+        {
+          "kind": "module-symbol",
+          "module": "krcn_core.policies",
+          "symbols": [
+            "UserPolicy",
+            "parse_user_policy",
+            "evaluate_policies"
+          ]
+        },
+        {
+          "kind": "policy-members",
+          "policy": "config/ownership-manifest.json",
+          "collection": "classes",
+          "member_key": "id",
+          "required": [
+            "user-data"
+          ]
+        },
+        {
+          "kind": "document-phrase",
+          "document": "docs/specifications/POLICY-LAYERS.md",
+          "phrase": "Relaxation requires an explicit update to the user policy record."
+        },
+        {
+          "kind": "document-phrase",
+          "document": "docs/specifications/POLICY-LAYERS.md",
+          "phrase": "Relaxation requires an explicit update to the user policy record."
+        }
+      ]
+    }
+  ]
+}

@@ -7,6 +7,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from .architecture_contracts import validate_architecture_contracts_repository
 from .baseline_attestation import resolve_baseline_attestations
 from .cli.registry import compatibility_registry
 from .foundation import load_json, validate_foundation, verify_repository
@@ -289,6 +290,13 @@ def run_doctor(
             "baseline-attestation",
             _baseline_attestation(repo_root),
             "quality baselines name the commit they were measured on",
+        )
+    )
+    checks.append(
+        _check(
+            "v1-architecture-contracts",
+            validate_architecture_contracts_repository(repo_root),
+            "frozen V1 architecture contracts still resolve to real evidence",
         )
     )
     if data_root is not None:

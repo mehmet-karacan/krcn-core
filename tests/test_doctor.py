@@ -30,6 +30,7 @@ class DoctorTests(unittest.TestCase):
                 "sqlite-runtime",
                 "coverage-baseline",
                 "baseline-attestation",
+                "v1-architecture-contracts",
                 "phase-one-baseline",
                 "phase-two-baseline",
                 "phase-three-baseline",

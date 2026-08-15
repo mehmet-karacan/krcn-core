@@ -9,12 +9,13 @@
   "progress_refs": [
     "docs/progress/PROGRESS-KATALOGU.md",
     "docs/progress/PHASE-21-KICKOFF.md",
-    "docs/progress/PHASE-21-ZORUNLU-KONTROL-VE-BASELINE-KANITI.md"
+    "docs/progress/PHASE-21-ZORUNLU-KONTROL-VE-BASELINE-KANITI.md",
+    "docs/progress/PHASE-21-V1-MIMARI-SOZLESMELERI.md"
   ],
   "next_actions": [
-    "coverage baseline olcumunu guncel commit uzerinde tazele",
-    "V1 degismez mimari sozlesmelerini ADR ile dondur",
-    "sinirli devamlilik snapshot, calisma gunlugu ve devir kaydi sozlesmelerini ekle"
+    "sinirli devamlilik snapshot, calisma gunlugu ve devir kaydi sozlesmelerini ekle",
+    "kanonik execution trace ve tek status projection sozlesmesini ekle",
+    "proje relocation siniflandirmasini ve exact rebind kararlarini guclendir"
   ],
   "baseline_commit": "2e4d23a",
   "approval_gates": {

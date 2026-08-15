@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:v1-architecture-contracts:1",
+  "title": "KRCN Core V1 immutable architecture contracts",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "decision_ref",
+    "contracts"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/v1-architecture-contracts.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "decision_ref": {
+      "$ref": "#/$defs/repoPath"
+    },
+    "contracts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "statement",
+          "evidence"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "statement": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/moduleSymbol"
+                },
+                {
+                  "$ref": "#/$defs/policyFlag"
+                },
+                {
+                  "$ref": "#/$defs/policyMembers"
+                },
+                {
+                  "$ref": "#/$defs/documentPhrase"
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "repoPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "moduleSymbol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "module",
+        "symbols"
+      ],
+      "properties": {
+        "kind": {
+          "const": "module-symbol"
+        },
+        "module": {
+          "type": "string",
+          "pattern": "^krcn_core(\\.[a-z_][a-z0-9_]*)+$"
+        },
+        "symbols": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          }
+        }
+      }
+    },
+    "policyFlag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "policy",
+        "key"
+      ],
+      "properties": {
+        "kind": {
+          "const": "policy-flag"
+        },
+        "policy": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected": {}
+      }
+    },
+    "policyMembers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "policy",
+        "collection",
+        "member_key",
+        "required"
+      ],
+      "properties": {
+        "kind": {
+          "const": "policy-members"
+        },
+        "policy": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "collection": {
+          "type": "string",
+          "minLength": 1
+        },
+        "member_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "documentPhrase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "document",
+        "phrase"
+      ],
+      "properties": {
+        "kind": {
+          "const": "document-phrase"
+        },
+        "document": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "phrase": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
