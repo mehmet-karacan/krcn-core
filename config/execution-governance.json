@@ -1,0 +1,44 @@
+{
+  "schema_ref": "schemas/execution-governance-policy.schema.json",
+  "schema_version": 1,
+  "entry_kinds": [
+    "assumption",
+    "deviation",
+    "known",
+    "unknown"
+  ],
+  "severities": [
+    "critical",
+    "high",
+    "low",
+    "medium"
+  ],
+  "dispositions": [
+    "accepted",
+    "blocked",
+    "invalidated",
+    "mitigated",
+    "open",
+    "resolved"
+  ],
+  "blocking_severities": [
+    "critical",
+    "high"
+  ],
+  "blocking_dispositions": [
+    "blocked",
+    "open"
+  ],
+  "environment_stages": [
+    "dev",
+    "test",
+    "pilot",
+    "production"
+  ],
+  "require_adjacent_promotion": true,
+  "require_independent_verifier": true,
+  "require_exact_mutation_plan": true,
+  "require_rollback_evidence": true,
+  "transition_target_template": ".krcn/projects/{project_id}/local-data/execution-governance/transitions/{transition_id}.json",
+  "grants_authority": false
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:execution-environment-transition-authorization:1",
+  "title": "KRCN Core environment transition gate authorization",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "transition_id",
+    "transition_digest",
+    "mutation_plan_id",
+    "decision",
+    "authorized_at",
+    "dry_run_verified",
+    "user_approval_verified",
+    "does_not_execute",
+    "grants_implicit_authority",
+    "authorization_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/execution-environment-transition-authorization.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "transition_id": {
+      "$ref": "#/$defs/id"
+    },
+    "transition_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "mutation_plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "decision": {
+      "const": "gate-passed"
+    },
+    "authorized_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "dry_run_verified": {
+      "const": true
+    },
+    "user_approval_verified": {
+      "const": true
+    },
+    "does_not_execute": {
+      "const": true
+    },
+    "grants_implicit_authority": {
+      "const": false
+    },
+    "authorization_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,127}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

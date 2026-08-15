@@ -1,0 +1,234 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:execution-environment-transition-plan:1",
+  "title": "KRCN Core environment transition gate plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "transition_id",
+    "governance_plan_digest",
+    "project_id",
+    "task_id",
+    "task_plan_id",
+    "transition_kind",
+    "source_stage",
+    "target_stage",
+    "source_environment_digest",
+    "target_environment_digest",
+    "artifact_digest",
+    "test_digest",
+    "verifier_evidence_digest",
+    "rollback_digest",
+    "worker_execution_identity",
+    "verifier_execution_identity",
+    "provider_gate",
+    "register_snapshot_digest",
+    "blocking_entry_digests",
+    "rollback_of_transition_digest",
+    "created_at",
+    "does_not_execute",
+    "grants_authority",
+    "mutation",
+    "transition_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/execution-environment-transition-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "transition_id": {
+      "$ref": "#/$defs/id"
+    },
+    "governance_plan_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "transition_kind": {
+      "enum": [
+        "promotion",
+        "rollback"
+      ]
+    },
+    "source_stage": {
+      "$ref": "#/$defs/stage"
+    },
+    "target_stage": {
+      "$ref": "#/$defs/stage"
+    },
+    "source_environment_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "target_environment_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "artifact_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "test_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "verifier_evidence_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "rollback_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "worker_execution_identity": {
+      "$ref": "urn:krcn:schemas:agent-execution-identity:1"
+    },
+    "verifier_execution_identity": {
+      "$ref": "urn:krcn:schemas:agent-execution-identity:1"
+    },
+    "provider_gate": {
+      "$ref": "#/$defs/provider-gate"
+    },
+    "register_snapshot_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "blocking_entry_digests": {
+      "const": []
+    },
+    "rollback_of_transition_digest": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/digest"
+        }
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "does_not_execute": {
+      "const": true
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "mutation": {
+      "$ref": "urn:krcn:schemas:mutation-plan:1"
+    },
+    "transition_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,127}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$"
+    },
+    "stage": {
+      "enum": [
+        "dev",
+        "test",
+        "pilot",
+        "production"
+      ]
+    },
+    "provider-gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "provider_ref",
+        "approval_ref",
+        "authorization_digest"
+      ],
+      "properties": {
+        "required": {
+          "type": "boolean"
+        },
+        "provider_ref": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "approval_ref": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "authorization_digest": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/digest"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "required": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "provider_ref": {
+                "$ref": "#/$defs/ref"
+              },
+              "approval_ref": {
+                "$ref": "#/$defs/ref"
+              },
+              "authorization_digest": {
+                "$ref": "#/$defs/digest"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "provider_ref": {
+                "type": "null"
+              },
+              "approval_ref": {
+                "type": "null"
+              },
+              "authorization_digest": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

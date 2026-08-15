@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:execution-governance-plan:1",
+  "title": "KRCN Core immutable execution governance plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "governance_id",
+    "project_id",
+    "task_id",
+    "task_plan_id",
+    "policy_digest",
+    "created_at",
+    "objective_ref",
+    "objective_digest",
+    "constraint_refs",
+    "grants_authority",
+    "plan_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/execution-governance-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "governance_id": {
+      "$ref": "#/$defs/id"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "objective_ref": {
+      "$ref": "#/$defs/ref"
+    },
+    "objective_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "constraint_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/ref"
+      }
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "plan_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,127}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$"
+    }
+  }
+}

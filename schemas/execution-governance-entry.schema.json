@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:execution-governance-entry:1",
+  "title": "KRCN Core contentless governance register entry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "entry_id",
+    "governance_plan_digest",
+    "kind",
+    "topic_ref",
+    "statement_digest",
+    "evidence_digest",
+    "severity",
+    "disposition",
+    "owner_ref",
+    "related_ref",
+    "recorded_at",
+    "supersedes_entry_digest",
+    "contains_raw_content",
+    "contains_secrets",
+    "contains_physical_paths",
+    "grants_authority",
+    "entry_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/execution-governance-entry.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "entry_id": {
+      "$ref": "#/$defs/id"
+    },
+    "governance_plan_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "kind": {
+      "enum": [
+        "assumption",
+        "deviation",
+        "known",
+        "unknown"
+      ]
+    },
+    "topic_ref": {
+      "$ref": "#/$defs/ref"
+    },
+    "statement_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "evidence_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "severity": {
+      "enum": [
+        "critical",
+        "high",
+        "low",
+        "medium"
+      ]
+    },
+    "disposition": {
+      "enum": [
+        "accepted",
+        "blocked",
+        "invalidated",
+        "mitigated",
+        "open",
+        "resolved"
+      ]
+    },
+    "owner_ref": {
+      "$ref": "#/$defs/ref"
+    },
+    "related_ref": {
+      "$ref": "#/$defs/ref"
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "supersedes_entry_digest": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/digest"
+        }
+      ]
+    },
+    "contains_raw_content": {
+      "const": false
+    },
+    "contains_secrets": {
+      "const": false
+    },
+    "contains_physical_paths": {
+      "const": false
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "entry_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,127}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$"
+    }
+  }
+}

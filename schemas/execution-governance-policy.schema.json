@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:execution-governance-policy:1",
+  "title": "KRCN Core execution governance policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "entry_kinds",
+    "severities",
+    "dispositions",
+    "blocking_severities",
+    "blocking_dispositions",
+    "environment_stages",
+    "require_adjacent_promotion",
+    "require_independent_verifier",
+    "require_exact_mutation_plan",
+    "require_rollback_evidence",
+    "transition_target_template",
+    "grants_authority"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/execution-governance-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "entry_kinds": {
+      "const": [
+        "assumption",
+        "deviation",
+        "known",
+        "unknown"
+      ]
+    },
+    "severities": {
+      "const": [
+        "critical",
+        "high",
+        "low",
+        "medium"
+      ]
+    },
+    "dispositions": {
+      "const": [
+        "accepted",
+        "blocked",
+        "invalidated",
+        "mitigated",
+        "open",
+        "resolved"
+      ]
+    },
+    "blocking_severities": {
+      "const": [
+        "critical",
+        "high"
+      ]
+    },
+    "blocking_dispositions": {
+      "const": [
+        "blocked",
+        "open"
+      ]
+    },
+    "environment_stages": {
+      "const": [
+        "dev",
+        "test",
+        "pilot",
+        "production"
+      ]
+    },
+    "require_adjacent_promotion": {
+      "const": true
+    },
+    "require_independent_verifier": {
+      "const": true
+    },
+    "require_exact_mutation_plan": {
+      "const": true
+    },
+    "require_rollback_evidence": {
+      "const": true
+    },
+    "transition_target_template": {
+      "const": ".krcn/projects/{project_id}/local-data/execution-governance/transitions/{transition_id}.json"
+    },
+    "grants_authority": {
+      "const": false
+    }
+  }
+}
