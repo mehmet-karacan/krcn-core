@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:task-model-assignments:1",
+  "title": "KRCN task plan model assignments",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "task_id",
+    "task_plan_id",
+    "project_id",
+    "client_id",
+    "assignments",
+    "worker_model_refs",
+    "verifier_model_reuse_detected",
+    "unknown_client_default_used",
+    "assignment_digest",
+    "provider_call_performed",
+    "grants_authority"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/task-model-assignments.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "task_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "client_id": {
+      "$ref": "#/$defs/id"
+    },
+    "assignments": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "step_id",
+          "role",
+          "workload",
+          "decision_id",
+          "decision_digest",
+          "model_assignment_id",
+          "model_ref",
+          "model_id",
+          "selection_basis"
+        ],
+        "properties": {
+          "step_id": {
+            "$ref": "#/$defs/id"
+          },
+          "role": {
+            "enum": [
+              "worker",
+              "verifier"
+            ]
+          },
+          "workload": {
+            "$ref": "#/$defs/id"
+          },
+          "decision_id": {
+            "$ref": "#/$defs/id"
+          },
+          "decision_digest": {
+            "$ref": "#/$defs/digest"
+          },
+          "model_assignment_id": {
+            "$ref": "#/$defs/id"
+          },
+          "model_ref": {
+            "$ref": "#/$defs/nullableId"
+          },
+          "model_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "selection_basis": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "worker_model_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "verifier_model_reuse_detected": {
+      "const": false
+    },
+    "unknown_client_default_used": {
+      "type": "boolean"
+    },
+    "assignment_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "provider_call_performed": {
+      "const": false
+    },
+    "grants_authority": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "nullableId": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

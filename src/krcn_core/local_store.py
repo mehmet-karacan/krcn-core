@@ -128,8 +128,27 @@ COLLECTIONS = {
         "derived/model-benchmark-suites",
         "derived",
     ),
+    "model-price-catalogs": (
+        "catalog_id",
+        "models/pricing",
+        "user-data",
+    ),
+    "model-benchmark-results": (
+        "result_id",
+        "derived/model-benchmark-results",
+        "derived",
+    ),
+    "model-runtime-observations": (
+        "observation_id",
+        "derived/model-runtime-observations",
+        "derived",
+    ),
 }
-GLOBAL_ONLY_COLLECTIONS = {"model-inventory", "model-health"}
+GLOBAL_ONLY_COLLECTIONS = {
+    "model-inventory",
+    "model-health",
+    "model-price-catalogs",
+}
 INFORMATION_COLLECTIONS = {
     "authoritative-sources": "authoritative-source",
     "knowledge": "knowledge",
@@ -247,6 +266,27 @@ def _validate_record_identity(
             return int(parse_model_benchmark_suite(payload)["suite_revision"])
         except ValueError as exc:
             raise LocalStoreError(str(exc)) from exc
+    if record_type in {
+        "model-price-catalogs",
+        "model-benchmark-results",
+        "model-runtime-observations",
+    }:
+        from .model_decision import (
+            parse_model_benchmark_result,
+            parse_model_price_catalog,
+            parse_model_runtime_observation,
+        )
+
+        try:
+            if record_type == "model-price-catalogs":
+                return int(parse_model_price_catalog(payload)["catalog_revision"])
+            if record_type == "model-benchmark-results":
+                parse_model_benchmark_result(payload)
+            else:
+                parse_model_runtime_observation(payload)
+        except ValueError as exc:
+            raise LocalStoreError(str(exc)) from exc
+        return None
     if record_type == "information-relations":
         try:
             relation = parse_information_relation(payload)

@@ -35,6 +35,8 @@
         "client.delegation",
         "execution.coordinate",
         "model.resolve",
+        "model.decide",
+        "model.decide-plan",
         "project.learn",
         "project.integrate",
         "project.index-source-code",

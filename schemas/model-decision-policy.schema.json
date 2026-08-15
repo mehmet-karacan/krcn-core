@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:model-decision-policy:1",
+  "title": "KRCN Core closed-loop model decision policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "policy_revision",
+    "maximum_health_age_seconds",
+    "maximum_benchmark_age_seconds",
+    "minimum_benchmark_score_basis_points",
+    "minimum_runtime_observations",
+    "default_success_basis_points",
+    "latency_reference_ms",
+    "cost_reference_microunits",
+    "score_weights",
+    "workload_route_map",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/model-decision-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "policy_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "maximum_health_age_seconds": {
+      "type": "integer",
+      "minimum": 60,
+      "maximum": 2592000
+    },
+    "maximum_benchmark_age_seconds": {
+      "type": "integer",
+      "minimum": 60,
+      "maximum": 31536000
+    },
+    "minimum_benchmark_score_basis_points": {
+      "$ref": "#/$defs/basisPoints"
+    },
+    "minimum_runtime_observations": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+    },
+    "default_success_basis_points": {
+      "$ref": "#/$defs/basisPoints"
+    },
+    "latency_reference_ms": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3600000
+    },
+    "cost_reference_microunits": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "score_weights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "benchmark",
+        "success",
+        "latency",
+        "cost"
+      ],
+      "properties": {
+        "benchmark": {
+          "$ref": "#/$defs/weight"
+        },
+        "success": {
+          "$ref": "#/$defs/weight"
+        },
+        "latency": {
+          "$ref": "#/$defs/weight"
+        },
+        "cost": {
+          "$ref": "#/$defs/weight"
+        }
+      }
+    },
+    "workload_route_map": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysis",
+        "architecture",
+        "code-review",
+        "database-analysis",
+        "discovery",
+        "embedding",
+        "general",
+        "implementation",
+        "performance-analysis",
+        "planning",
+        "reranking",
+        "security-review",
+        "verification"
+      ],
+      "patternProperties": {
+        "^[a-z][a-z0-9-]*$": {
+          "enum": [
+            "general",
+            "planning",
+            "implementation",
+            "verification",
+            "discovery",
+            "embedding"
+          ]
+        }
+      }
+    },
+    "invariants": {
+      "const": {
+        "stale_evidence_allowed": false,
+        "quarantined_model_allowed": false,
+        "static_price_embedded_in_core": false,
+        "provider_call_during_decision": false,
+        "verifier_model_reuse_allowed": false,
+        "unknown_client_default_blocks_assignment": false,
+        "model_decision_grants_authority": false
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "basisPoints": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "weight": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    }
+  }
+}

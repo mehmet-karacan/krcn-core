@@ -107,6 +107,10 @@ from .model_health import (
     persist_model_health_observation,
     prepare_model_health_action,
 )
+from .model_decision import (
+    decide_model_assignment_from_store,
+    decide_task_plan_model_assignments_from_store,
+)
 from .merge_engine import execute_deployment
 from .merge_plan import prepare_merge_plan
 from .migrations import MigrationHandlerRegistry
@@ -316,6 +320,8 @@ OPERATIONS = {
     "model.health-list",
     "model.benchmark-suite",
     "model.benchmark-list",
+    "model.decide",
+    "model.decide-plan",
     "project.learn",
     "project.integrate",
     "project.index-source-code",
@@ -693,6 +699,8 @@ class KrcnApplicationService:
             "model.health-list": self._list_model_health,
             "model.benchmark-suite": self._model_benchmark_suite,
             "model.benchmark-list": self._list_model_benchmarks,
+            "model.decide": self._decide_model,
+            "model.decide-plan": self._decide_task_plan_models,
             "project.learn": self._learn_project,
             "project.integrate": self._integrate_project,
             "project.index-source-code": self._index_source_code,
@@ -3324,6 +3332,178 @@ class KrcnApplicationService:
             "source_content_included": False,
             "paths_disclosed": False,
             "remote_call_performed": False,
+        }
+
+    def _decide_model(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={
+                "project_id",
+                "client_id",
+                "workload",
+                "role",
+                "available_bindings",
+                "now",
+                "input_token_budget",
+                "output_token_budget",
+            },
+            optional={
+                "price_catalog_id",
+                "maximum_cost_microunits",
+                "maximum_latency_ms",
+                "excluded_model_refs",
+            },
+        )
+        if request.apply:
+            raise ApplicationServiceError("model decision is read-only")
+        project_id = _identifier_argument(request.arguments, "project_id")
+        client_id = _identifier_argument(request.arguments, "client_id")
+        workload = _identifier_argument(request.arguments, "workload")
+        role = _identifier_argument(request.arguments, "role")
+        bindings = request.arguments.get("available_bindings")
+        if not isinstance(bindings, dict) or any(
+            not isinstance(key, str) or not isinstance(value, str)
+            for key, value in bindings.items()
+        ):
+            raise ApplicationServiceError("available_bindings must be a string map")
+        now_value = _string_argument(request.arguments, "now")
+        try:
+            now = datetime.fromisoformat(now_value.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ApplicationServiceError("now must be an ISO 8601 timestamp") from exc
+        if now.tzinfo is None:
+            raise ApplicationServiceError("now must carry a timezone")
+        input_budget = request.arguments.get("input_token_budget")
+        output_budget = request.arguments.get("output_token_budget")
+        if any(
+            not isinstance(value, int) or isinstance(value, bool) or value < 0
+            for value in (input_budget, output_budget)
+        ):
+            raise ApplicationServiceError("model token budgets are invalid")
+        excluded = request.arguments.get("excluded_model_refs", [])
+        if not isinstance(excluded, list) or any(
+            not isinstance(value, str) for value in excluded
+        ):
+            raise ApplicationServiceError(
+                "excluded_model_refs must be a string list"
+            )
+        price_catalog_id = request.arguments.get("price_catalog_id")
+        if price_catalog_id is not None:
+            price_catalog_id = _identifier_argument(
+                request.arguments,
+                "price_catalog_id",
+            )
+        maximum_cost = request.arguments.get("maximum_cost_microunits")
+        maximum_latency = request.arguments.get("maximum_latency_ms")
+        try:
+            decision = decide_model_assignment_from_store(
+                self._repo_root,
+                self._store,
+                project_id=project_id,
+                client_id=client_id,
+                workload=workload,
+                role=role,
+                available_bindings=bindings,
+                price_catalog_id=price_catalog_id,
+                now=now,
+                input_token_budget=input_budget,
+                output_token_budget=output_budget,
+                maximum_cost_microunits=maximum_cost,
+                maximum_latency_ms=maximum_latency,
+                excluded_model_refs=excluded,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {"decision": decision.as_dict()}
+
+    def _decide_task_plan_models(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={
+                "project_id",
+                "client_id",
+                "task_plan",
+                "step_workloads",
+                "available_bindings",
+                "now",
+                "input_token_budget",
+                "output_token_budget",
+            },
+            optional={
+                "price_catalog_id",
+                "maximum_cost_microunits",
+                "maximum_latency_ms",
+            },
+        )
+        if request.apply:
+            raise ApplicationServiceError("task model decision is read-only")
+        try:
+            task_plan = parse_task_plan(request.arguments["task_plan"])
+        except ValueError as exc:
+            raise ApplicationServiceError("task plan is invalid") from exc
+        step_workloads = request.arguments.get("step_workloads")
+        bindings = request.arguments.get("available_bindings")
+        if not isinstance(step_workloads, dict) or any(
+            not isinstance(key, str) or not isinstance(value, str)
+            for key, value in step_workloads.items()
+        ):
+            raise ApplicationServiceError("step_workloads must be a string map")
+        if not isinstance(bindings, dict) or any(
+            not isinstance(key, str) or not isinstance(value, str)
+            for key, value in bindings.items()
+        ):
+            raise ApplicationServiceError("available_bindings must be a string map")
+        now_value = _string_argument(request.arguments, "now")
+        try:
+            now = datetime.fromisoformat(now_value.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise ApplicationServiceError("now must be an ISO 8601 timestamp") from exc
+        if now.tzinfo is None:
+            raise ApplicationServiceError("now must carry a timezone")
+        input_budget = request.arguments.get("input_token_budget")
+        output_budget = request.arguments.get("output_token_budget")
+        if any(
+            not isinstance(value, int) or isinstance(value, bool) or value < 0
+            for value in (input_budget, output_budget)
+        ):
+            raise ApplicationServiceError("model token budgets are invalid")
+        price_catalog_id = request.arguments.get("price_catalog_id")
+        if price_catalog_id is not None:
+            price_catalog_id = _identifier_argument(
+                request.arguments,
+                "price_catalog_id",
+            )
+        try:
+            assignments = decide_task_plan_model_assignments_from_store(
+                self._repo_root,
+                self._store,
+                project_id=_identifier_argument(request.arguments, "project_id"),
+                client_id=_identifier_argument(request.arguments, "client_id"),
+                task_plan=task_plan,
+                step_workloads=step_workloads,
+                available_bindings=bindings,
+                price_catalog_id=price_catalog_id,
+                now=now,
+                input_token_budget=input_budget,
+                output_token_budget=output_budget,
+                maximum_cost_microunits=request.arguments.get(
+                    "maximum_cost_microunits"
+                ),
+                maximum_latency_ms=request.arguments.get("maximum_latency_ms"),
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {
+            "assignments": assignments.as_dict(),
+            "decisions": [
+                decision.as_dict() for decision in assignments.decisions
+            ],
         }
 
     def _onboard_project(

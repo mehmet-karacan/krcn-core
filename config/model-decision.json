@@ -1,0 +1,42 @@
+{
+  "schema_ref": "schemas/model-decision-policy.schema.json",
+  "schema_version": 1,
+  "policy_revision": 1,
+  "maximum_health_age_seconds": 86400,
+  "maximum_benchmark_age_seconds": 604800,
+  "minimum_benchmark_score_basis_points": 7000,
+  "minimum_runtime_observations": 3,
+  "default_success_basis_points": 7500,
+  "latency_reference_ms": 120000,
+  "cost_reference_microunits": 1000000,
+  "score_weights": {
+    "benchmark": 45,
+    "success": 35,
+    "latency": 10,
+    "cost": 10
+  },
+  "workload_route_map": {
+    "analysis": "planning",
+    "architecture": "planning",
+    "code-review": "verification",
+    "database-analysis": "planning",
+    "discovery": "discovery",
+    "embedding": "embedding",
+    "general": "general",
+    "implementation": "implementation",
+    "performance-analysis": "planning",
+    "planning": "planning",
+    "reranking": "embedding",
+    "security-review": "verification",
+    "verification": "verification"
+  },
+  "invariants": {
+    "stale_evidence_allowed": false,
+    "quarantined_model_allowed": false,
+    "static_price_embedded_in_core": false,
+    "provider_call_during_decision": false,
+    "verifier_model_reuse_allowed": false,
+    "unknown_client_default_blocks_assignment": false,
+    "model_decision_grants_authority": false
+  }
+}

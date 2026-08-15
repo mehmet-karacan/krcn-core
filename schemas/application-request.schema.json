@@ -41,6 +41,8 @@
         "model.health-list",
         "model.benchmark-suite",
         "model.benchmark-list",
+        "model.decide",
+        "model.decide-plan",
         "project.learn",
         "project.integrate",
         "project.index-source-code",

@@ -123,6 +123,14 @@
         "model_capability_golden_set",
         "model_capability_golden_set_schema",
         "model_capability_evaluation_schema",
+        "model_decision_boundary",
+        "model_decision_policy",
+        "model_decision_policy_schema",
+        "model_price_catalog_schema",
+        "model_benchmark_result_schema",
+        "model_runtime_observation_schema",
+        "model_decision_schema",
+        "task_model_assignments_schema",
         "independent_verifier_identity_boundary",
         "agent_execution_identity_schema",
         "generic_dag_executor_boundary",
@@ -399,6 +407,30 @@
           "$ref": "#/$defs/repoPath"
         },
         "model_capability_evaluation_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "model_decision_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "model_decision_policy": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "model_decision_policy_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "model_price_catalog_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "model_benchmark_result_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "model_runtime_observation_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "model_decision_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "task_model_assignments_schema": {
           "$ref": "#/$defs/repoPath"
         },
         "independent_verifier_identity_boundary": {

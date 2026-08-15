@@ -273,6 +273,14 @@
           ]
         },
         {
+          "kind": "module-symbol",
+          "module": "krcn_core.model_decision",
+          "symbols": [
+            "decide_model_assignment",
+            "parse_model_decision"
+          ]
+        },
+        {
           "kind": "document-phrase",
           "document": "docs/specifications/MODEL-CAPABILITY-PRESERVATION.md",
           "phrase": "Hard constraints are blocking and cannot be weakened by a model, client, route, or benchmark."

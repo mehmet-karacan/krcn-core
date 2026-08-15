@@ -154,6 +154,23 @@ class RepositoryContextTests(unittest.TestCase):
                     resolve_repo_reference(REPO_ROOT, canonical[key]).is_file()
                 )
 
+    def test_model_decision_contract_is_canonical(self) -> None:
+        canonical = resolve_repository_context(REPO_ROOT).manifest["canonical"]
+        for key in (
+            "model_decision_boundary",
+            "model_decision_policy",
+            "model_decision_policy_schema",
+            "model_price_catalog_schema",
+            "model_benchmark_result_schema",
+            "model_runtime_observation_schema",
+            "model_decision_schema",
+            "task_model_assignments_schema",
+        ):
+            with self.subTest(key=key):
+                self.assertTrue(
+                    resolve_repo_reference(REPO_ROOT, canonical[key]).is_file()
+                )
+
     def test_execution_coordinator_contract_is_canonical(self) -> None:
         canonical = resolve_repository_context(REPO_ROOT).manifest["canonical"]
         for key in (

@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:model-benchmark-result:1",
+  "title": "KRCN project model benchmark result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "result_id",
+    "project_id",
+    "model_ref",
+    "inventory_digest",
+    "suite_digest",
+    "workload_id",
+    "case_digest",
+    "observed_at",
+    "quality_score_basis_points",
+    "reliability_score_basis_points",
+    "latency_ms",
+    "passed",
+    "result_digest",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/model-benchmark-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "result_id": {
+      "$ref": "#/$defs/id"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "model_ref": {
+      "$ref": "#/$defs/id"
+    },
+    "inventory_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "suite_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "workload_id": {
+      "$ref": "#/$defs/id"
+    },
+    "case_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "observed_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "quality_score_basis_points": {
+      "$ref": "#/$defs/basisPoints"
+    },
+    "reliability_score_basis_points": {
+      "$ref": "#/$defs/basisPoints"
+    },
+    "latency_ms": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3600000
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "result_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "invariants": {
+      "const": {
+        "prompt_content_included": false,
+        "response_content_included": false,
+        "source_content_included": false,
+        "grants_authority": false
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "basisPoints": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10000
+    }
+  }
+}

@@ -44,6 +44,9 @@ PROJECT_COLLECTION_PATHS = {
     "model-inventory": "models",
     "model-health": "derived/model-health",
     "model-benchmark-suites": "derived/model-benchmark-suites",
+    "model-price-catalogs": "models/pricing",
+    "model-benchmark-results": "derived/model-benchmark-results",
+    "model-runtime-observations": "derived/model-runtime-observations",
 }
 
 GLOBAL_COLLECTION_PATHS = {
