@@ -170,6 +170,10 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 
 - `PHASE-22-KICKOFF.md`
 - `PHASE-22-35-ARASTIRMA-KANIT-MATRIKSI.md`
+- `PHASE-22-MEASURED-LOOP.md`
+- `PHASE-22-MODEL-BENCHMARK-RUNNER.md`
+- `PHASE-22-LEARNING-GOVERNANCE.md`
+- `PHASE-22-EXECUTION-GOVERNANCE.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 

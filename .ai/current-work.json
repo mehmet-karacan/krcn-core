@@ -9,13 +9,17 @@
   "progress_refs": [
     "docs/progress/PROGRESS-KATALOGU.md",
     "docs/progress/PHASE-22-KICKOFF.md",
-    "docs/progress/PHASE-22-35-ARASTIRMA-KANIT-MATRIKSI.md"
+    "docs/progress/PHASE-22-35-ARASTIRMA-KANIT-MATRIKSI.md",
+    "docs/progress/PHASE-22-MEASURED-LOOP.md",
+    "docs/progress/PHASE-22-MODEL-BENCHMARK-RUNNER.md",
+    "docs/progress/PHASE-22-LEARNING-GOVERNANCE.md",
+    "docs/progress/PHASE-22-EXECUTION-GOVERNANCE.md"
   ],
   "next_actions": [
-    "measured loop ve adaptive admission paketini uygula",
-    "model benchmark runner ve execution provenance paketini uygula",
-    "skill lifecycle, memory hygiene ve context effectiveness paketini uygula",
-    "application CLI entegrasyonu ile bagimsiz kapanis dogrulamasini tamamla"
+    "bagimsiz Phase 22 verifier bulgularini kapat",
+    "tam regresyon ve CLI smoke testlerini tamamla",
+    "phase kapanis checkpointini pushla",
+    "dogrulanmis dev mimarisini krcn-core uretim klonuna esitle ve CLI kurulumunu yenile"
   ],
   "baseline_commit": "293c13e",
   "approval_gates": {
