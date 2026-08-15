@@ -12,12 +12,13 @@
     "docs/progress/PHASE-21-ZORUNLU-KONTROL-VE-BASELINE-KANITI.md",
     "docs/progress/PHASE-21-V1-MIMARI-SOZLESMELERI.md",
     "docs/progress/PHASE-21-COMPACTION-DAYANIKLI-DEVAMLILIK.md",
-    "docs/progress/PHASE-21-KANONIK-IZLEME-VE-DURUM.md"
+    "docs/progress/PHASE-21-KANONIK-IZLEME-VE-DURUM.md",
+    "docs/progress/PHASE-21-TASINABILIR-PROJE-KIMLIGI.md"
   ],
   "next_actions": [
-    "proje relocation siniflandirmasini ve exact rebind kararlarini guclendir",
     "model yetenek koruma kapisini ve golden karsilastirmayi ekle",
-    "generic akista bagimsiz verifier execution identity zorunlulugunu guclendir"
+    "generic akista bagimsiz verifier execution identity zorunlulugunu guclendir",
+    "generic DAG executor ile hazir isleri guvenli ve olceklenebilir calistir"
   ],
   "baseline_commit": "2e4d23a",
   "approval_gates": {

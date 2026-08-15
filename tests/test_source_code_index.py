@@ -311,6 +311,13 @@ public class UserService {
                 },
             )
         )
+        self.assertEqual(
+            "relocated-same-source", rebind_plan.data["plan"]["classification"]
+        )
+        self.assertEqual(
+            "verify-current-manifest-and-reuse",
+            rebind_plan.data["plan"]["index_action"],
+        )
         rebound = self.service.execute(
             ServiceRequest(
                 "codex",

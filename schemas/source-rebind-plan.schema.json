@@ -12,6 +12,12 @@
     "previous_binding_revision",
     "next_binding_revision",
     "identity_verified",
+    "classification",
+    "rebind_allowed",
+    "integration_required",
+    "reconciliation_required",
+    "index_action",
+    "source_digest",
     "candidate_path_disclosed",
     "source_effect",
     "record_plans"
@@ -42,6 +48,25 @@
     },
     "identity_verified": {
       "const": true
+    },
+    "classification": {
+      "const": "relocated-same-source"
+    },
+    "rebind_allowed": {
+      "const": true
+    },
+    "integration_required": {
+      "const": false
+    },
+    "reconciliation_required": {
+      "const": false
+    },
+    "index_action": {
+      "const": "verify-current-manifest-and-reuse"
+    },
+    "source_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
     },
     "candidate_path_disclosed": {
       "const": false

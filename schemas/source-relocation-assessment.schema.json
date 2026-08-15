@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:source-relocation-assessment:1",
+  "title": "KRCN Core source relocation classification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "classification",
+    "source_id",
+    "binding_id",
+    "expected_digest",
+    "candidate_digest",
+    "rebind_allowed",
+    "integration_required",
+    "reconciliation_required",
+    "index_action",
+    "candidate_path_disclosed",
+    "source_effect",
+    "grants_authority"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/source-relocation-assessment.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "classification": {
+      "enum": [
+        "relocated-same-source",
+        "same-project-new-revision",
+        "diverged-clone",
+        "unrelated-source"
+      ]
+    },
+    "source_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "binding_id": {
+      "$ref": "#/$defs/identifier"
+    },
+    "expected_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "candidate_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "rebind_allowed": {
+      "type": "boolean"
+    },
+    "integration_required": {
+      "type": "boolean"
+    },
+    "reconciliation_required": {
+      "type": "boolean"
+    },
+    "index_action": {
+      "enum": [
+        "verify-current-manifest-and-reuse",
+        "mark-stale-and-rebuild",
+        "separate-revision-index",
+        "create-separate-project"
+      ]
+    },
+    "candidate_path_disclosed": {
+      "const": false
+    },
+    "source_effect": {
+      "const": "read-only"
+    },
+    "grants_authority": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

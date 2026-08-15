@@ -120,6 +120,14 @@
           "kind": "document-phrase",
           "document": "docs/specifications/EXTERNAL-SOURCE-NO-COPY.md",
           "phrase": "It does not import the project tree into the KRCN user home."
+        },
+        {
+          "kind": "module-symbol",
+          "module": "krcn_core.source_rebind",
+          "symbols": [
+            "classify_source_relocation",
+            "prepare_source_rebind"
+          ]
         }
       ]
     },

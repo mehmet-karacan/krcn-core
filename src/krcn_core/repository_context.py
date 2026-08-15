@@ -57,6 +57,8 @@ REQUIRED_CANONICAL_KEYS = {
     "execution_observability_boundary",
     "execution_trace_schema",
     "status_projection_schema",
+    "source_relocation_boundary",
+    "source_relocation_assessment_schema",
     "work_documents_boundary",
     "work_document_manifest_schema",
     "work_document_manifest_update_plan_schema",

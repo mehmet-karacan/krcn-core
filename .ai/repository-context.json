@@ -16,6 +16,8 @@
     "source_binding_schema": "schemas/source-binding.schema.json",
     "source_identity_schema": "schemas/source-identity.schema.json",
     "source_rebind_plan_schema": "schemas/source-rebind-plan.schema.json",
+    "source_relocation_boundary": "docs/specifications/SOURCE-RELOCATION.md",
+    "source_relocation_assessment_schema": "schemas/source-relocation-assessment.schema.json",
     "portable_backup_manifest_schema": "schemas/portable-backup-manifest.schema.json",
     "portable_restore_plan_schema": "schemas/portable-restore-plan.schema.json",
     "repo_local_migration_plan_schema": "schemas/repo-local-migration-plan.schema.json",

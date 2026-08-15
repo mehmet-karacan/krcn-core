@@ -7,6 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from jsonschema import Draft202012Validator
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
@@ -32,8 +34,10 @@ from krcn_core.source_rebind import (  # noqa: E402
     SourceRebindError,
     apply_source_rebind,
     candidate_binding,
+    classify_source_relocation,
     prepare_source_rebind,
 )
+from krcn_core.source_identity import SourceIdentity  # noqa: E402
 from krcn_core.source_state import source_state_from_discovery  # noqa: E402
 
 
@@ -159,7 +163,21 @@ class SourceRebindTests(unittest.TestCase):
             discovery,
         )
         self.assertTrue(plan.public_summary()["identity_verified"])
+        self.assertEqual("relocated-same-source", plan.public_summary()["classification"])
+        self.assertEqual(
+            "verify-current-manifest-and-reuse",
+            plan.public_summary()["index_action"],
+        )
         self.assertNotIn(str(self.new_source), json.dumps(plan.public_summary()))
+        schema = json.loads(
+            (REPO_ROOT / "schemas" / "source-rebind-plan.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(
+            [],
+            list(Draft202012Validator(schema).iter_errors(plan.public_summary())),
+        )
         result = apply_source_rebind(
             self.store,
             plan,
@@ -173,6 +191,9 @@ class SourceRebindTests(unittest.TestCase):
         self.assertEqual(2, rebound.payload["revision"])
         self.assertEqual(2, state.payload["binding_revision"])
         self.assertFalse(result.public_summary()["source_mutated"])
+        self.assertEqual(
+            "relocated-same-source", result.public_summary()["classification"]
+        )
         self.assertEqual(before_old, snapshot(self.old_source))
         self.assertEqual(before_new, snapshot(self.new_source))
         self.assertFalse((self.user_home / "restored-project").exists())
@@ -183,7 +204,7 @@ class SourceRebindTests(unittest.TestCase):
             encoding="utf-8",
         )
         candidate = candidate_binding(self.binding, self.new_source)
-        with self.assertRaisesRegex(SourceRebindError, "does not match"):
+        with self.assertRaisesRegex(SourceRebindError, "Git relationship evidence"):
             prepare_source_rebind(
                 self.store,
                 self.binding,
@@ -202,6 +223,91 @@ class SourceRebindTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(SourceRebindError, "every rebind write"):
             apply_source_rebind(self.store, plan, {}, candidate, discovery)
+
+    def test_rebind_rejects_the_already_active_locator(self) -> None:
+        with self.assertRaisesRegex(SourceRebindError, "already the active binding"):
+            prepare_source_rebind(
+                self.store,
+                self.binding,
+                self.old_source,
+                self._discover(self.binding),
+            )
+
+
+class SourceRelocationClassificationTests(unittest.TestCase):
+    @staticmethod
+    def identity(
+        *,
+        source_id: str = "portable-project",
+        binding_id: str = "portable-project-local",
+        digest: str = "a" * 64,
+        file_count: int = 2,
+    ) -> SourceIdentity:
+        return SourceIdentity(
+            source_id,
+            binding_id,
+            "krcn-discovery-tree-sha256-v1",
+            digest,
+            file_count,
+        )
+
+    def test_same_digest_is_locator_only_and_schema_valid(self) -> None:
+        assessment = classify_source_relocation(self.identity(), self.identity())
+        payload = assessment.public_summary()
+
+        self.assertEqual("relocated-same-source", assessment.classification)
+        self.assertTrue(assessment.rebind_allowed)
+        self.assertFalse(assessment.integration_required)
+        self.assertFalse(assessment.reconciliation_required)
+        schema = json.loads(
+            (
+                REPO_ROOT
+                / "schemas"
+                / "source-relocation-assessment.schema.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            [],
+            list(Draft202012Validator(schema).iter_errors(payload)),
+        )
+
+    def test_linear_diverged_and_unrelated_candidates_have_distinct_actions(self) -> None:
+        expected = self.identity()
+        changed = self.identity(digest="b" * 64)
+        linear = classify_source_relocation(
+            expected, changed, revision_relation="linear-history"
+        )
+        diverged = classify_source_relocation(
+            expected, changed, revision_relation="diverged-history"
+        )
+        unrelated = classify_source_relocation(
+            expected, changed, revision_relation="unrelated-history"
+        )
+
+        self.assertEqual("same-project-new-revision", linear.classification)
+        self.assertTrue(linear.integration_required)
+        self.assertEqual("mark-stale-and-rebuild", linear.index_action)
+        self.assertEqual("diverged-clone", diverged.classification)
+        self.assertTrue(diverged.reconciliation_required)
+        self.assertEqual("separate-revision-index", diverged.index_action)
+        self.assertEqual("unrelated-source", unrelated.classification)
+        self.assertEqual("create-separate-project", unrelated.index_action)
+        self.assertFalse(any(item.rebind_allowed for item in (linear, diverged, unrelated)))
+
+    def test_logical_identity_mismatch_is_unrelated_even_with_same_digest(self) -> None:
+        assessment = classify_source_relocation(
+            self.identity(),
+            self.identity(source_id="another-project"),
+        )
+        self.assertEqual("unrelated-source", assessment.classification)
+        self.assertFalse(assessment.rebind_allowed)
+
+    def test_changed_content_without_reviewed_history_evidence_fails_closed(self) -> None:
+        with self.assertRaisesRegex(SourceRebindError, "evidence is required"):
+            classify_source_relocation(
+                self.identity(),
+                self.identity(digest="b" * 64),
+            )
 
 
 if __name__ == "__main__":
