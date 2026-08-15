@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:measured-loop-policy:1",
+  "title": "KRCN Core measured loop policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "max_rounds_ceiling",
+    "max_wall_time_seconds_ceiling",
+    "max_input_tokens_ceiling",
+    "max_output_tokens_ceiling",
+    "max_cost_microunits_ceiling",
+    "max_attempts_ceiling",
+    "max_concurrency_ceiling",
+    "plateau_rounds",
+    "cooldown_seconds",
+    "zombie_after_seconds",
+    "default_allowed_effects",
+    "max_cpu_pressure_basis_points",
+    "max_ram_pressure_basis_points",
+    "min_provider_quota_basis_points",
+    "min_cost_headroom_microunits",
+    "max_failure_pressure_basis_points"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/measured-loop-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "max_rounds_ceiling": {
+      "$ref": "#/$defs/positive"
+    },
+    "max_wall_time_seconds_ceiling": {
+      "$ref": "#/$defs/positive"
+    },
+    "max_input_tokens_ceiling": {
+      "$ref": "#/$defs/positive"
+    },
+    "max_output_tokens_ceiling": {
+      "$ref": "#/$defs/positive"
+    },
+    "max_cost_microunits_ceiling": {
+      "$ref": "#/$defs/positive"
+    },
+    "max_attempts_ceiling": {
+      "$ref": "#/$defs/positive"
+    },
+    "max_concurrency_ceiling": {
+      "$ref": "#/$defs/positive"
+    },
+    "plateau_rounds": {
+      "$ref": "#/$defs/positive"
+    },
+    "cooldown_seconds": {
+      "$ref": "#/$defs/nonnegative"
+    },
+    "zombie_after_seconds": {
+      "$ref": "#/$defs/positive"
+    },
+    "default_allowed_effects": {
+      "const": [
+        "plan",
+        "read",
+        "research"
+      ]
+    },
+    "max_cpu_pressure_basis_points": {
+      "$ref": "#/$defs/basis-points"
+    },
+    "max_ram_pressure_basis_points": {
+      "$ref": "#/$defs/basis-points"
+    },
+    "min_provider_quota_basis_points": {
+      "$ref": "#/$defs/basis-points"
+    },
+    "min_cost_headroom_microunits": {
+      "$ref": "#/$defs/nonnegative"
+    },
+    "max_failure_pressure_basis_points": {
+      "$ref": "#/$defs/basis-points"
+    }
+  },
+  "$defs": {
+    "positive": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "nonnegative": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "basis-points": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10000
+    }
+  }
+}

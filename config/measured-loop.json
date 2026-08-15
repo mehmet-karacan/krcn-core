@@ -1,0 +1,24 @@
+{
+  "schema_ref": "schemas/measured-loop-policy.schema.json",
+  "schema_version": 1,
+  "max_rounds_ceiling": 100,
+  "max_wall_time_seconds_ceiling": 86400,
+  "max_input_tokens_ceiling": 10000000,
+  "max_output_tokens_ceiling": 2000000,
+  "max_cost_microunits_ceiling": 1000000000,
+  "max_attempts_ceiling": 100,
+  "max_concurrency_ceiling": 32,
+  "plateau_rounds": 3,
+  "cooldown_seconds": 300,
+  "zombie_after_seconds": 900,
+  "default_allowed_effects": [
+    "plan",
+    "read",
+    "research"
+  ],
+  "max_cpu_pressure_basis_points": 8500,
+  "max_ram_pressure_basis_points": 8500,
+  "min_provider_quota_basis_points": 1000,
+  "min_cost_headroom_microunits": 1000,
+  "max_failure_pressure_basis_points": 3000
+}

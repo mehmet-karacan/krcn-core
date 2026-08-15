@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:measured-loop-iteration:1",
+  "title": "KRCN Core measured loop iteration record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "run_id",
+    "plan_digest",
+    "iteration_number",
+    "previous_iteration_digest",
+    "started_at",
+    "ended_at",
+    "duration_ms",
+    "worker_execution_identity_id",
+    "verifier_execution_identity_id",
+    "metrics",
+    "improvement_observed",
+    "usage",
+    "decision",
+    "verification_passed",
+    "evidence_digest",
+    "checkpoint_digest",
+    "verifier_evidence_digest",
+    "grants_authority",
+    "iteration_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/measured-loop-iteration.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "run_id": {
+      "$ref": "#/$defs/id"
+    },
+    "plan_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "iteration_number": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "previous_iteration_digest": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/digest"
+        }
+      ]
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ended_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "duration_ms": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "worker_execution_identity_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "verifier_execution_identity_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "metrics": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/observation"
+      }
+    },
+    "improvement_observed": {
+      "type": "boolean"
+    },
+    "usage": {
+      "$ref": "#/$defs/usage"
+    },
+    "decision": {
+      "enum": [
+        "accept",
+        "continue",
+        "revert"
+      ]
+    },
+    "verification_passed": {
+      "type": "boolean"
+    },
+    "evidence_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "checkpoint_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "verifier_evidence_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "iteration_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,127}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$"
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metric_id",
+        "owner_ref",
+        "source_ref",
+        "direction",
+        "unit",
+        "value",
+        "delta_from_previous",
+        "minimum_delta_met",
+        "target_met"
+      ],
+      "properties": {
+        "metric_id": {
+          "$ref": "#/$defs/id"
+        },
+        "owner_ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "source_ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "direction": {
+          "enum": [
+            "maximize",
+            "minimize"
+          ]
+        },
+        "unit": {
+          "$ref": "#/$defs/id"
+        },
+        "value": {
+          "type": "integer"
+        },
+        "delta_from_previous": {
+          "type": "integer"
+        },
+        "minimum_delta_met": {
+          "type": "boolean"
+        },
+        "target_met": {
+          "type": "boolean"
+        }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_tokens",
+        "output_tokens",
+        "cost_microunits",
+        "attempts",
+        "peak_concurrency"
+      ],
+      "properties": {
+        "input_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cost_microunits": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "peak_concurrency": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}
