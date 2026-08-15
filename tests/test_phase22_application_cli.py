@@ -74,6 +74,7 @@ class Phase22ApplicationCliTests(unittest.TestCase):
                 {
                     "plan": plan,
                     "status": status,
+                    "iterations": [],
                     "observed_at": "2026-08-16T00:00:02Z",
                     "requested_claims": 3,
                     "active_claims": 0,
@@ -88,6 +89,24 @@ class Phase22ApplicationCliTests(unittest.TestCase):
         )
         self.assertEqual(2, admission.data["admission"]["admitted_claims"])
         self.assertFalse(admission.data["grants_authority"])
+
+        missing_iterations = {
+            "plan": plan,
+            "status": status,
+            "observed_at": "2026-08-16T00:00:02Z",
+            "requested_claims": 1,
+            "active_claims": 0,
+            "cpu_pressure_basis_points": 0,
+            "ram_pressure_basis_points": 0,
+            "provider_required": False,
+            "provider_quota_remaining_basis_points": None,
+            "cost_headroom_microunits": 5000,
+            "failure_pressure_basis_points": 0,
+        }
+        with self.assertRaises(ApplicationServiceError):
+            self.service.execute(
+                ServiceRequest("cli", "autonomy.admission", missing_iterations)
+            )
 
     def test_skill_evaluation_and_change_plan_never_mutate_registry(self) -> None:
         fixture = skill_fixtures.SkillLifecycleTests()

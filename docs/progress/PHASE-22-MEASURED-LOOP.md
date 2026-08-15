@@ -50,6 +50,8 @@ Testler su davranislari kapatir:
 - Tur, token, maliyet ve deneme butcesi dolu durumu calisiyor gosteren kaydin reddi
 - Tukenmis her butce icin ayri admission neden kodu ve sifir yeni is kabulu
 - Tarihsel tepe eszamanliligin plan tavanini asamamasinin dogrulanmasi
+- Admission oncesi status kaydinin tam iterasyon zincirinden yeniden uretilmesi
+- Daha buyuk butce, eksik kullanim, eksik iterasyon veya degistirilmis durum kaydinin ozeti gecerli olsa bile reddi
 - Tum kamusal kayitlarin strict JSON Schema dogrulamasi
 - Sabah ozetinin hassas icerik tasimamasi
 

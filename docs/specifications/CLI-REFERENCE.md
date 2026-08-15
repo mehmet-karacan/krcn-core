@@ -254,6 +254,14 @@ returns a prompt-free, output-free summary. `admission` may admit or defer new
 claims from bounded CPU, RAM, provider quota, cost, failure, and concurrency
 measurements; it never terminates active work.
 
+An `autonomy admission` request must include `plan`, `status`, and the complete
+`iterations` array used to derive that status. It may include the matching
+`cancellation_record`. Before evaluating pressure, KRCN validates the iteration
+chain, rebuilds status at the supplied status observation time, and requires an
+exact payload and digest match. A status with substituted budgets,
+under-reported usage, omitted iterations, or changed latest/state fields is
+rejected even when its own digest is structurally valid.
+
 Skill candidates are evaluated independently and registry changes remain a
 separate exact plan:
 

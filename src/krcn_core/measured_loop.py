@@ -1244,6 +1244,8 @@ def decide_admission(
     plan: Mapping[str, object] | MeasuredLoopRecord,
     status: Mapping[str, object],
     *,
+    iterations: Sequence[Mapping[str, object]],
+    cancellation_record: Mapping[str, object] | None = None,
     observed_at: str,
     requested_claims: int,
     active_claims: int,
@@ -1260,6 +1262,17 @@ def decide_admission(
     status_record = parse_measured_loop_status(status).payload
     if status_record["run_id"] != plan_record["run_id"] or status_record["plan_digest"] != plan_record["plan_digest"]:
         raise MeasuredLoopError("admission status does not match the measured loop")
+    canonical_status = build_measured_loop_status(
+        policy,
+        plan_record,
+        iterations,
+        observed_at=str(status_record["observed_at"]),
+        cancellation_record=cancellation_record,
+    ).payload
+    if canonical_status != status_record:
+        raise MeasuredLoopError(
+            "admission status does not match the verified iteration chain"
+        )
     observed, observation_time = _timestamp(observed_at, "admission observed at")
     _, plan_time = _timestamp(plan_record["created_at"], "plan created at")
     _, status_started = _timestamp(status_record["started_at"], "status started at")

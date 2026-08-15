@@ -3428,6 +3428,7 @@ class KrcnApplicationService:
             required={
                 "plan",
                 "status",
+                "iterations",
                 "observed_at",
                 "requested_claims",
                 "active_claims",
@@ -3438,6 +3439,7 @@ class KrcnApplicationService:
                 "cost_headroom_microunits",
                 "failure_pressure_basis_points",
             },
+            optional={"cancellation_record"},
         )
         if request.apply:
             raise ApplicationServiceError("autonomy admission is read-only")
@@ -3465,11 +3467,19 @@ class KrcnApplicationService:
             raise ApplicationServiceError(
                 "provider quota must be an integer or null"
             )
+        iterations = request.arguments.get("iterations")
+        if not isinstance(iterations, list):
+            raise ApplicationServiceError("iterations must be a list")
+        cancellation = request.arguments.get("cancellation_record")
+        if cancellation is not None and not isinstance(cancellation, Mapping):
+            raise ApplicationServiceError("cancellation_record must be an object")
         try:
             decision = decide_admission(
                 load_measured_loop_policy(self._repo_root),
                 _object_argument(request.arguments, "plan"),
                 _object_argument(request.arguments, "status"),
+                iterations=iterations,
+                cancellation_record=cancellation,
                 observed_at=_string_argument(request.arguments, "observed_at"),
                 requested_claims=values["requested_claims"],
                 active_claims=values["active_claims"],

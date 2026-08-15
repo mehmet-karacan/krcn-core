@@ -83,6 +83,8 @@ Admission binds the status start time to `plan.created_at` and requires the admi
 
 Persisted usage is checked against its embedded immutable budget before admission. Equal round, input-token, output-token, cost, or attempt limits require a terminal status; values over a limit are invalid. Peak concurrency may equal but cannot exceed its ceiling. Admission exposes exhausted limits with the exact `round-budget`, `input-token-budget`, `output-token-budget`, `cost-budget`, `attempt-budget`, and `wall-time-budget` reason codes and admits zero claims.
 
+Admission never trusts a standalone status record. The caller must supply the complete verified iteration chain and, when applicable, the cancellation record. `decide_admission` rebuilds status from the immutable plan and those records at the stored status observation time, then requires exact payload and digest equality. This rejects structurally valid, re-digested status records that substitute a larger budget, under-report usage, omit an iteration, or change latest/state fields.
+
 ## Safe projections
 
 Status and morning digest records are safe aggregate projections. They include identifiers, digests, state, stop reason, usage totals, metric values, and a safe next action. They omit prompts, generated output, physical paths, and secrets, with explicit false containment flags.
