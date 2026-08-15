@@ -39,6 +39,7 @@ LOGICAL_REF = re.compile(r"^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$")
 
 ENTRY_KINDS = {"assumption", "deviation", "known", "unknown"}
 SEVERITIES = {"critical", "high", "low", "medium"}
+SEVERITY_RANK = {"low": 0, "medium": 1, "high": 2, "critical": 3}
 DISPOSITIONS = {
     "accepted",
     "blocked",
@@ -401,6 +402,14 @@ def validate_register(
                     raise ExecutionGovernanceError(
                         "governance supersession must preserve kind, topic, and owner lineage"
                     )
+            if (
+                item.payload["disposition"] in {"open", "blocked"}
+                and SEVERITY_RANK[str(item.payload["severity"])]
+                < SEVERITY_RANK[str(prior.payload["severity"])]
+            ):
+                raise ExecutionGovernanceError(
+                    "unresolved governance supersession cannot lower severity"
+                )
             previous_time = _timestamp(prior.payload["recorded_at"], "recorded at")
             current_time = _timestamp(item.payload["recorded_at"], "recorded at")
             if current_time <= previous_time:
@@ -578,7 +587,16 @@ def _build_transition_plan(
         or worker.execution_identity_id == verifier.execution_identity_id
     ):
         raise ExecutionGovernanceError("independent verifier identity is required")
+    transition_created_at = _timestamp(created_at, "created at")
     entries = validate_register(plan, register_entries)
+    if any(
+        _timestamp(item.payload["recorded_at"], "recorded at")
+        > transition_created_at
+        for item in entries
+    ):
+        raise ExecutionGovernanceError(
+            "environment transition cannot use future register evidence"
+        )
     blockers = _blocking_entries(policy, entries)
     if blockers:
         raise ExecutionGovernanceError("unresolved high-severity register entries block transition")
@@ -612,7 +630,7 @@ def _build_transition_plan(
             if rollback_of_transition_digest is None
             else _sha(rollback_of_transition_digest, "rollback transition digest")
         ),
-        "created_at": _timestamp(created_at, "created at"),
+        "created_at": transition_created_at,
         "does_not_execute": True,
         "grants_authority": False,
     }
@@ -831,6 +849,12 @@ def authorize_environment_transition(
         )
     except MutationGateError as exc:
         raise ExecutionGovernanceError("exact mutation authorization is required") from exc
+    authorization_time = _timestamp(authorized_at, "authorized at")
+    transition_time = _timestamp(transition.payload["created_at"], "transition created at")
+    if authorization_time < transition_time:
+        raise ExecutionGovernanceError(
+            "environment transition authorization cannot predate its plan"
+        )
     payload: dict[str, object] = {
         "schema_ref": "schemas/execution-environment-transition-authorization.schema.json",
         "schema_version": 1,
@@ -838,7 +862,7 @@ def authorize_environment_transition(
         "transition_digest": str(transition.payload["transition_digest"]),
         "mutation_plan_id": mutation.plan_id,
         "decision": "gate-passed",
-        "authorized_at": _timestamp(authorized_at, "authorized at"),
+        "authorized_at": authorization_time,
         "dry_run_verified": authorization.dry_run_verified,
         "user_approval_verified": authorization.approval_verified,
         "does_not_execute": True,

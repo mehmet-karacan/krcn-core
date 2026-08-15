@@ -39,7 +39,8 @@ Each register entry is immutable and contentless. It records:
 An updated conclusion is a new entry that supersedes an earlier digest. The
 original record is not overwritten. Supersession must preserve the exact kind,
 topic, and owner lineage; an unrelated low-severity record cannot close a
-critical unknown. Duplicate identities, missing superseded records, records
+critical unknown. An unresolved successor also cannot lower the prior
+severity. Duplicate identities, missing superseded records, records
 from another plan, or digest changes fail closed.
 
 An active `unknown` or `deviation` with `high` or `critical` severity and an
@@ -63,6 +64,11 @@ chain, `test -> production`, or `dev -> production` promotion is rejected. Each 
 binds source and target environment digests, artifact digest, test digest,
 independent verifier evidence digest, rollback digest, the register snapshot,
 and the exact worker and verifier execution identities.
+
+Every register entry in the transition snapshot must exist no later than the
+transition creation time. Authorization must occur no earlier than the exact
+transition plan. Future evidence cannot be projected backward to authorize an
+older promotion.
 
 The worker and verifier must have different steps, actors, assignments, and
 execution identities while binding the same governed task and task plan.

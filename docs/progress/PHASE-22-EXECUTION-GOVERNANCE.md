@@ -18,6 +18,8 @@ Implemented as an isolated, transport-neutral foundation package.
   `ProviderAuthorization` adapter exists;
 - existing exact user-data `MutationPlan`, dry-run, and approval reuse;
 - stale-source, tamper, replay-idempotency, and rollback checks;
+- monotonic register, transition, and authorization chronology plus unresolved
+  severity preservation;
 - strict schemas for policy, plan, entry, transition, and authorization; and
 - explicit no-write, no-execution, and no-implicit-authority boundaries.
 

@@ -166,6 +166,16 @@ class ExecutionGovernanceTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(ExecutionGovernanceError, "lineage"):
             validate_register(self.plan, [first.as_dict(), unrelated.as_dict()])
+        critical = self.entry(
+            entry_id="critical-open", severity="critical", disposition="open"
+        )
+        downgraded = self.entry(
+            entry_id="critical-downgraded", severity="low", disposition="open",
+            recorded_at="2026-08-16T01:03:00Z",
+            supersedes_entry_digest=str(critical.payload["entry_digest"]),
+        )
+        with self.assertRaisesRegex(ExecutionGovernanceError, "lower severity"):
+            validate_register(self.plan, [critical.as_dict(), downgraded.as_dict()])
 
     def test_open_high_unknown_or_deviation_blocks_promotion(self) -> None:
         blocking = self.entry(
@@ -179,6 +189,13 @@ class ExecutionGovernanceTests(unittest.TestCase):
             disposition="resolved",
         )
         self.assertEqual("test", self.promotion(register_entries=[resolved.as_dict()]).payload["target_stage"])
+        future_resolution = self.entry(
+            entry_id="unknown-future-resolution", kind="unknown",
+            severity="critical", disposition="resolved",
+            recorded_at="2026-08-16T03:00:00Z",
+        )
+        with self.assertRaisesRegex(ExecutionGovernanceError, "future register"):
+            self.promotion(register_entries=[future_resolution.as_dict()])
 
     def test_promotions_cannot_skip_stages_or_enter_production_directly(self) -> None:
         with self.assertRaisesRegex(ExecutionGovernanceError, "adjacent"):
@@ -232,6 +249,8 @@ class ExecutionGovernanceTests(unittest.TestCase):
         authorized = self.authorization(transition)
         self.assertTrue(authorized.payload["does_not_execute"])
         self.assertFalse(authorized.payload["grants_implicit_authority"])
+        with self.assertRaisesRegex(ExecutionGovernanceError, "predate"):
+            self.authorization(transition, at="2026-08-16T00:00:00Z")
 
     def test_transition_and_authorization_tampering_fail_closed_and_replay_is_idempotent(self) -> None:
         transition = self.promotion()
