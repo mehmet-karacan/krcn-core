@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:queue-suitability-baseline:1",
+  "title": "KRCN Core measured runtime queue suitability baseline",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "benchmark_id",
+    "policy_id",
+    "runtime_source_digest",
+    "scheduler_policy_digest",
+    "measurement_scope",
+    "execution_mode",
+    "observed",
+    "correctness",
+    "candidate_decision",
+    "decision"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/queue-suitability-baseline.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "benchmark_id": {
+      "const": "runtime-queue-sqlite-v1"
+    },
+    "policy_id": {
+      "const": "queue-suitability-v1"
+    },
+    "runtime_source_digest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "scheduler_policy_digest": {
+      "$ref": "#/$defs/sha256"
+    },
+    "measurement_scope": {
+      "const": "local synthetic reference workload"
+    },
+    "execution_mode": {
+      "enum": [
+        "processes",
+        "threads"
+      ]
+    },
+    "observed": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "$ref": "#/$defs/observation"
+      }
+    },
+    "correctness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "lease_recovery_verified",
+        "stale_fencing_rejected",
+        "integrity_verified",
+        "backup_restore_verified"
+      ],
+      "properties": {
+        "lease_recovery_verified": {
+          "const": true
+        },
+        "stale_fencing_rejected": {
+          "const": true
+        },
+        "integrity_verified": {
+          "const": true
+        },
+        "backup_restore_verified": {
+          "const": true
+        }
+      }
+    },
+    "candidate_decision": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "backend_id",
+          "measurement_status",
+          "adoption_status"
+        ],
+        "properties": {
+          "backend_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "measurement_status": {
+            "enum": [
+              "measured",
+              "not-run"
+            ]
+          },
+          "adoption_status": {
+            "enum": [
+              "retained",
+              "deferred"
+            ]
+          }
+        }
+      }
+    },
+    "decision": {
+      "const": "retain-sqlite-for-v1"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile_id",
+        "item_count",
+        "project_count",
+        "worker_count",
+        "enqueue_p95_ms",
+        "claim_p50_ms",
+        "claim_p95_ms",
+        "throughput_per_second",
+        "state_retry_count",
+        "database_bytes",
+        "thresholds_passed"
+      ],
+      "properties": {
+        "profile_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "item_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "project_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "worker_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "enqueue_p95_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "claim_p50_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "claim_p95_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "throughput_per_second": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "state_retry_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "database_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "thresholds_passed": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

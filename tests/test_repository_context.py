@@ -139,6 +139,21 @@ class RepositoryContextTests(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertTrue(resolve_repo_reference(REPO_ROOT, canonical[key]).is_file())
 
+    def test_queue_suitability_contract_is_canonical(self) -> None:
+        canonical = resolve_repository_context(REPO_ROOT).manifest["canonical"]
+        for key in (
+            "queue_suitability_boundary",
+            "queue_suitability_decision",
+            "queue_suitability_policy",
+            "queue_suitability_policy_schema",
+            "queue_suitability_baseline",
+            "queue_suitability_baseline_schema",
+        ):
+            with self.subTest(key=key):
+                self.assertTrue(
+                    resolve_repo_reference(REPO_ROOT, canonical[key]).is_file()
+                )
+
     def test_current_work_references_exist(self) -> None:
         resolved = resolve_repository_context(REPO_ROOT)
         current = resolved.current_work

@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:queue-suitability-policy:1",
+  "title": "KRCN Core runtime queue suitability policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "policy_id",
+    "baseline_backend",
+    "profiles",
+    "candidates",
+    "migration_triggers",
+    "external_backend_adoption_allowed"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/queue-suitability-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "policy_id": {
+      "const": "queue-suitability-v1"
+    },
+    "baseline_backend": {
+      "const": "sqlite"
+    },
+    "profiles": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "profile_id",
+          "item_count",
+          "project_count",
+          "worker_count",
+          "maximum_claim_p95_ms",
+          "minimum_throughput_per_second"
+        ],
+        "properties": {
+          "profile_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "item_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "project_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 25
+          },
+          "worker_count": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 16
+          },
+          "maximum_claim_p95_ms": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "minimum_throughput_per_second": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
+        }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "backend_id",
+          "measurement_status",
+          "local_offline",
+          "external_service_required",
+          "multi_machine_writers",
+          "secret_management_required",
+          "portable_backup",
+          "adoption_status"
+        ],
+        "properties": {
+          "backend_id": {
+            "enum": [
+              "sqlite",
+              "redis-streams",
+              "nats-jetstream",
+              "postgresql-queue"
+            ]
+          },
+          "measurement_status": {
+            "enum": [
+              "measured",
+              "not-run"
+            ]
+          },
+          "local_offline": {
+            "type": "boolean"
+          },
+          "external_service_required": {
+            "type": "boolean"
+          },
+          "multi_machine_writers": {
+            "type": "boolean"
+          },
+          "secret_management_required": {
+            "type": "boolean"
+          },
+          "portable_backup": {
+            "type": "boolean"
+          },
+          "adoption_status": {
+            "enum": [
+              "retained",
+              "deferred"
+            ]
+          }
+        }
+      }
+    },
+    "migration_triggers": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    },
+    "external_backend_adoption_allowed": {
+      "const": false
+    }
+  }
+}

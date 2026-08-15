@@ -1,0 +1,74 @@
+{
+  "schema_ref": "schemas/queue-suitability-policy.schema.json",
+  "schema_version": 1,
+  "policy_id": "queue-suitability-v1",
+  "baseline_backend": "sqlite",
+  "profiles": [
+    {
+      "profile_id": "small-local",
+      "item_count": 100,
+      "project_count": 1,
+      "worker_count": 1,
+      "maximum_claim_p95_ms": 100,
+      "minimum_throughput_per_second": 10
+    },
+    {
+      "profile_id": "medium-local",
+      "item_count": 400,
+      "project_count": 8,
+      "worker_count": 4,
+      "maximum_claim_p95_ms": 150,
+      "minimum_throughput_per_second": 10
+    }
+  ],
+  "candidates": [
+    {
+      "backend_id": "sqlite",
+      "measurement_status": "measured",
+      "local_offline": true,
+      "external_service_required": false,
+      "multi_machine_writers": false,
+      "secret_management_required": false,
+      "portable_backup": true,
+      "adoption_status": "retained"
+    },
+    {
+      "backend_id": "redis-streams",
+      "measurement_status": "not-run",
+      "local_offline": false,
+      "external_service_required": true,
+      "multi_machine_writers": true,
+      "secret_management_required": true,
+      "portable_backup": false,
+      "adoption_status": "deferred"
+    },
+    {
+      "backend_id": "nats-jetstream",
+      "measurement_status": "not-run",
+      "local_offline": false,
+      "external_service_required": true,
+      "multi_machine_writers": true,
+      "secret_management_required": true,
+      "portable_backup": false,
+      "adoption_status": "deferred"
+    },
+    {
+      "backend_id": "postgresql-queue",
+      "measurement_status": "not-run",
+      "local_offline": false,
+      "external_service_required": true,
+      "multi_machine_writers": true,
+      "secret_management_required": true,
+      "portable_backup": false,
+      "adoption_status": "deferred"
+    }
+  ],
+  "migration_triggers": [
+    "claim-p95-threshold-repeatedly-exceeded",
+    "concurrent-multi-machine-writers-required",
+    "backup-restore-sla-not-met",
+    "runtime-storage-growth-unacceptable",
+    "central-team-access-required"
+  ],
+  "external_backend_adoption_allowed": false
+}

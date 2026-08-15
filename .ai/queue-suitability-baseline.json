@@ -1,0 +1,67 @@
+{
+  "schema_ref": "schemas/queue-suitability-baseline.schema.json",
+  "schema_version": 1,
+  "benchmark_id": "runtime-queue-sqlite-v1",
+  "policy_id": "queue-suitability-v1",
+  "runtime_source_digest": "bc0a83fe973f3199b84ff19a08a6f75220823af69310f5bca30c9c9ac25a3f45",
+  "scheduler_policy_digest": "1f93492fd9b46e0c57781ea9053e07cd546389fe679b4b38cb4c156a731aabef",
+  "measurement_scope": "local synthetic reference workload",
+  "execution_mode": "processes",
+  "observed": [
+    {
+      "profile_id": "small-local",
+      "item_count": 100,
+      "project_count": 1,
+      "worker_count": 1,
+      "enqueue_p95_ms": 39.85,
+      "claim_p50_ms": 39.417,
+      "claim_p95_ms": 46.174,
+      "throughput_per_second": 12.392,
+      "state_retry_count": 0,
+      "database_bytes": 233472,
+      "thresholds_passed": true
+    },
+    {
+      "profile_id": "medium-local",
+      "item_count": 400,
+      "project_count": 8,
+      "worker_count": 4,
+      "enqueue_p95_ms": 37.442,
+      "claim_p50_ms": 38.551,
+      "claim_p95_ms": 60.361,
+      "throughput_per_second": 46.26,
+      "state_retry_count": 13,
+      "database_bytes": 1224704,
+      "thresholds_passed": true
+    }
+  ],
+  "correctness": {
+    "lease_recovery_verified": true,
+    "stale_fencing_rejected": true,
+    "integrity_verified": true,
+    "backup_restore_verified": true
+  },
+  "candidate_decision": [
+    {
+      "backend_id": "sqlite",
+      "measurement_status": "measured",
+      "adoption_status": "retained"
+    },
+    {
+      "backend_id": "redis-streams",
+      "measurement_status": "not-run",
+      "adoption_status": "deferred"
+    },
+    {
+      "backend_id": "nats-jetstream",
+      "measurement_status": "not-run",
+      "adoption_status": "deferred"
+    },
+    {
+      "backend_id": "postgresql-queue",
+      "measurement_status": "not-run",
+      "adoption_status": "deferred"
+    }
+  ],
+  "decision": "retain-sqlite-for-v1"
+}

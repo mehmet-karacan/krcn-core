@@ -17,12 +17,13 @@
     "docs/progress/PHASE-21-MODEL-YETENEK-KORUMA.md",
     "docs/progress/PHASE-21-BAGIMSIZ-VERIFIER-KIMLIGI.md",
     "docs/progress/PHASE-21-GENERIC-DAG-EXECUTOR.md",
-    "docs/progress/PHASE-21-OKUNUR-IS-INDEKSI.md"
+    "docs/progress/PHASE-21-OKUNUR-IS-INDEKSI.md",
+    "docs/progress/PHASE-21-KUYRUK-ALTYAPISI-UYGUNLUK-OLCUMU.md"
   ],
   "next_actions": [
-    "kuyruk altyapisi uygunluk olcumunu tamamla",
     "Execution Coordinator ile servisleri tek akis altinda compose et",
-    "model karar servisini kapali dongu hale getir"
+    "model karar servisini kapali dongu hale getir",
+    "retrieval golden set ve olcek fixturelarini tamamla"
   ],
   "baseline_commit": "2e4d23a",
   "approval_gates": {
