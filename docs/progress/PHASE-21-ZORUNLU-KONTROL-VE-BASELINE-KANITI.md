@@ -29,9 +29,15 @@ Otomatik kontrol tetikleyicisi kullanıcı kararıyla kapalı kalmaya devam ediy
 - Repository doğrulaması ve JSON biçim kontrolü geçti.
 - `verify_baseline_attestation.py --commit <sha>` eski coverage baseline'ını eskimiş olarak raporladı; `--require-current` ile hata döndürdü.
 
-## Tespit
+## Baseline tazeleme
 
-Coverage baseline kaydı `50f6e35` commit'inde 466 test ile ölçülmüştü. Güncel HEAD üzerindeki gerçek koşu 838 testtir. Bu fark artık kayıtta görünür ve ölçüm tazelendiğinde `source_commit` ile birlikte güncellenir.
+Coverage baseline kaydı `50f6e35` commit'inde 466 test ve yüzde 64,01 kapsam ile ölçülmüştü. Ölçüm temiz çalışma ağacında `86065c8` commit'i üzerinde tekrarlandı:
+
+- 855 test çalıştı, 4 test ortam koşulu nedeniyle atlandı, hata yok.
+- Ölçülebilir satır: 40231, kapsanan satır: 26915, satır kapsamı yüzde 66,9.
+- Süre: 594,9 saniye.
+
+CLI baseline doğrulaması da aynı commit üzerinde tekrarlandı: doctor, offline wheel doğrulaması ve CLI kurulum planı geçti. Her iki baseline artık `86065c8` commit'ine bağlıdır ve `--require-current` kontrolü temiz sonuç veriyor.
 
 ## Bu aşamada değiştirilmeyen alanlar
 

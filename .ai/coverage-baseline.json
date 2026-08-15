@@ -3,12 +3,12 @@
   "method": "python-monitoring-line-events",
   "scope": "src/krcn_core",
   "python_minimum": "3.12",
-  "source_commit": "50f6e35",
-  "test_count": 466,
-  "skipped_test_count": 2,
-  "executable_lines": 17650,
-  "covered_lines": 11297,
-  "line_coverage_percent": 64.01,
+  "source_commit": "9e287ef",
+  "test_count": 855,
+  "skipped_test_count": 4,
+  "executable_lines": 40231,
+  "covered_lines": 26915,
+  "line_coverage_percent": 66.9,
   "minimum_line_coverage_percent": 60.0,
   "command": "python tools/measure_coverage.py --minimum 60 --summary-only"
 }
