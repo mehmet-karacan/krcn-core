@@ -51,6 +51,7 @@ from krcn_core.provider_gate import create_provider_request  # noqa: E402
 import test_orchestration_authorization as authorization_fixtures  # noqa: E402
 from test_orchestration_intent import extraction, value  # noqa: E402
 from test_orchestration_plan import read_only_steps  # noqa: E402
+from agent_identity_fixtures import digest, execution_identity  # noqa: E402
 import test_orchestration_services as service_fixtures  # noqa: E402
 
 
@@ -153,6 +154,8 @@ class PhaseFiveIntegrationTests(unittest.TestCase):
                         ),
                     ),
                 ),
+                identity_actor_digest=digest("worker-update-core-actor"),
+                runtime_kind="local-handler",
             )
         )
         execution = execute_worker_step(
@@ -164,6 +167,9 @@ class PhaseFiveIntegrationTests(unittest.TestCase):
                 step_id="update-core",
                 handler_id="synthetic-core-handler",
                 input_payload={"fixture": "core-effect"},
+                execution_identity=execution_identity(
+                    plan, "update-core", "worker"
+                ),
             ),
             workers,
         )
@@ -178,6 +184,9 @@ class PhaseFiveIntegrationTests(unittest.TestCase):
                         subject_kind=subject.kind,
                         subject_digest=subject.subject_digest,
                         verifier_step_id=context.verifier_step_id,
+                        verifier_execution_identity_id=(
+                            context.verifier_execution_identity.execution_identity_id
+                        ),
                         covered_worker_step_ids=("update-core",),
                         observed_digests=("d" * 64,),
                         passed=True,
@@ -192,6 +201,8 @@ class PhaseFiveIntegrationTests(unittest.TestCase):
                 ("evidence.verify",),
                 ("execute", "read"),
                 verify,
+                identity_actor_digest=digest("verifier-verify-core-actor"),
+                runtime_kind="local-handler",
             )
         )
         result = verify_task(
@@ -199,7 +210,13 @@ class PhaseFiveIntegrationTests(unittest.TestCase):
             plan,
             authorization,
             [execution],
-            [VerifierRequest("verify-core", "synthetic-core-verifier")],
+            [
+                VerifierRequest(
+                    "verify-core",
+                    "synthetic-core-verifier",
+                    execution_identity(plan, "verify-core", "verifier"),
+                )
+            ],
             verifiers,
         )
         self.assertTrue(result.completion_allowed)
@@ -303,6 +320,8 @@ class PhaseFiveIntegrationTests(unittest.TestCase):
                 lambda context, payload: (_ for _ in ()).throw(
                     RuntimeError("synthetic interruption")
                 ),
+                identity_actor_digest=digest("worker-inspect-policy-actor"),
+                runtime_kind="local-handler",
             )
         )
         store = LocalWorkspaceStore(
@@ -332,6 +351,9 @@ class PhaseFiveIntegrationTests(unittest.TestCase):
                     "step_id": "inspect-policy",
                     "handler_id": "inspect-handler",
                     "input": {"query": "synthetic-select"},
+                    "execution_identity": execution_identity(
+                        fixture.plan, "inspect-policy", "worker"
+                    ).as_dict(),
                 },
                 apply=True,
                 expected_plan_id=fixture.plan.plan_id,
@@ -357,6 +379,8 @@ class PhaseFiveIntegrationTests(unittest.TestCase):
                         ),
                     ),
                 ),
+                identity_actor_digest=digest("worker-inspect-policy-actor"),
+                runtime_kind="local-handler",
             )
         )
         resumed_verifiers = VerifierHandlerRegistry()
@@ -373,6 +397,9 @@ class PhaseFiveIntegrationTests(unittest.TestCase):
                             subject_kind=subject.kind,
                             subject_digest=subject.subject_digest,
                             verifier_step_id=context.verifier_step_id,
+                            verifier_execution_identity_id=(
+                                context.verifier_execution_identity.execution_identity_id
+                            ),
                             covered_worker_step_ids=("inspect-policy",),
                             observed_digests=("a" * 64,),
                             passed=True,
@@ -380,6 +407,8 @@ class PhaseFiveIntegrationTests(unittest.TestCase):
                         for index, subject in enumerate(context.subjects, start=1)
                     )
                 ),
+                identity_actor_digest=digest("verifier-verify-policy-actor"),
+                runtime_kind="local-handler",
             )
         )
         second = KrcnApplicationService(
@@ -408,6 +437,9 @@ class PhaseFiveIntegrationTests(unittest.TestCase):
                     "step_id": "inspect-policy",
                     "handler_id": "inspect-handler",
                     "input": {"query": "synthetic-select"},
+                    "execution_identity": execution_identity(
+                        fixture.plan, "inspect-policy", "worker"
+                    ).as_dict(),
                 },
                 apply=True,
                 expected_plan_id=fixture.plan.plan_id,
@@ -421,7 +453,13 @@ class PhaseFiveIntegrationTests(unittest.TestCase):
                 {
                     "context": fixture.context,
                     "verifier_requests": [
-                        {"step_id": "verify-policy", "handler_id": "policy-verifier"}
+                        {
+                            "step_id": "verify-policy",
+                            "handler_id": "policy-verifier",
+                            "execution_identity": execution_identity(
+                                fixture.plan, "verify-policy", "verifier"
+                            ).as_dict(),
+                        }
                     ],
                 },
                 apply=True,

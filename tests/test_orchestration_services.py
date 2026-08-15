@@ -39,6 +39,7 @@ from krcn_core.orchestration_worker import (  # noqa: E402
 )
 import test_orchestration_verifier as verifier_fixtures  # noqa: E402
 from test_policy_engine import policy_payload  # noqa: E402
+from agent_identity_fixtures import digest, execution_identity  # noqa: E402
 
 
 class OrchestrationServiceTests(unittest.TestCase):
@@ -106,6 +107,8 @@ class OrchestrationServiceTests(unittest.TestCase):
                         ),
                     ),
                 ),
+                identity_actor_digest=digest("worker-inspect-policy-actor"),
+                runtime_kind="local-handler",
             )
         )
         verifiers = VerifierHandlerRegistry()
@@ -119,6 +122,9 @@ class OrchestrationServiceTests(unittest.TestCase):
                         subject_kind=subject.kind,
                         subject_digest=subject.subject_digest,
                         verifier_step_id=context.verifier_step_id,
+                        verifier_execution_identity_id=(
+                            context.verifier_execution_identity.execution_identity_id
+                        ),
                         covered_worker_step_ids=("inspect-policy",),
                         observed_digests=("a" * 64,),
                         passed=True,
@@ -133,6 +139,8 @@ class OrchestrationServiceTests(unittest.TestCase):
                 ("evidence.verify",),
                 ("execute", "read"),
                 verify,
+                identity_actor_digest=digest("verifier-verify-policy-actor"),
+                runtime_kind="local-handler",
             )
         )
         store = LocalWorkspaceStore(
@@ -199,6 +207,9 @@ class OrchestrationServiceTests(unittest.TestCase):
                     "step_id": "inspect-policy",
                     "handler_id": "inspect-handler",
                     "input": {"query": "synthetic-select"},
+                    "execution_identity": execution_identity(
+                        self.plan, "inspect-policy", "worker"
+                    ).as_dict(),
                 },
                 apply=True,
                 expected_plan_id=self.plan.plan_id,
@@ -215,6 +226,9 @@ class OrchestrationServiceTests(unittest.TestCase):
                         {
                             "step_id": "verify-policy",
                             "handler_id": "policy-verifier",
+                            "execution_identity": execution_identity(
+                                self.plan, "verify-policy", "verifier"
+                            ).as_dict(),
                         }
                     ],
                 },
@@ -374,6 +388,9 @@ class OrchestrationServiceTests(unittest.TestCase):
                 "step_id": "inspect-policy",
                 "handler_id": "inspect-handler",
                 "input": {"query": "synthetic-select"},
+                "execution_identity": execution_identity(
+                    self.plan, "inspect-policy", "worker"
+                ).as_dict(),
             },
             apply=True,
             expected_plan_id=self.plan.plan_id,

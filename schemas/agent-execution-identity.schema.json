@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:agent-execution-identity:1",
+  "title": "KRCN Core agent execution identity",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "execution_identity_id",
+    "task_id",
+    "plan_id",
+    "step_id",
+    "role",
+    "actor_digest",
+    "session_digest",
+    "assignment_digest",
+    "runtime_kind",
+    "grants_authority"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/agent-execution-identity.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "execution_identity_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "task_id": {
+      "$ref": "#/$defs/id"
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "step_id": {
+      "$ref": "#/$defs/id"
+    },
+    "role": {
+      "enum": [
+        "worker",
+        "verifier"
+      ]
+    },
+    "actor_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "session_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "assignment_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "runtime_kind": {
+      "enum": [
+        "client-cli",
+        "isolated-role",
+        "local-handler",
+        "native-subagent"
+      ]
+    },
+    "grants_authority": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

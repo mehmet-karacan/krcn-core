@@ -14,12 +14,13 @@
     "docs/progress/PHASE-21-COMPACTION-DAYANIKLI-DEVAMLILIK.md",
     "docs/progress/PHASE-21-KANONIK-IZLEME-VE-DURUM.md",
     "docs/progress/PHASE-21-TASINABILIR-PROJE-KIMLIGI.md",
-    "docs/progress/PHASE-21-MODEL-YETENEK-KORUMA.md"
+    "docs/progress/PHASE-21-MODEL-YETENEK-KORUMA.md",
+    "docs/progress/PHASE-21-BAGIMSIZ-VERIFIER-KIMLIGI.md"
   ],
   "next_actions": [
-    "generic akista bagimsiz verifier execution identity zorunlulugunu guclendir",
     "generic DAG executor ile hazir isleri guvenli ve olceklenebilir calistir",
-    "Work Graph kaynakli okunur WORK-INDEX projection uret"
+    "Work Graph kaynakli okunur WORK-INDEX projection uret",
+    "kuyruk altyapisi uygunluk olcumunu tamamla"
   ],
   "baseline_commit": "2e4d23a",
   "approval_gates": {

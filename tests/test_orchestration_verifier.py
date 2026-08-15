@@ -6,6 +6,8 @@ import unittest
 from dataclasses import replace
 from pathlib import Path
 
+from jsonschema import Draft202012Validator
+from referencing import Registry, Resource
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
@@ -42,6 +44,7 @@ from krcn_core.orchestration_worker import (  # noqa: E402
 from test_database_policy import select_only_policy  # noqa: E402
 from test_orchestration_intent import extraction  # noqa: E402
 from test_orchestration_plan import read_only_steps  # noqa: E402
+from agent_identity_fixtures import digest, execution_identity  # noqa: E402
 
 
 class OrchestrationVerifierTests(unittest.TestCase):
@@ -91,6 +94,8 @@ class OrchestrationVerifierTests(unittest.TestCase):
                         ),
                     ),
                 ),
+                identity_actor_digest=digest("worker-inspect-policy-actor"),
+                runtime_kind="local-handler",
             )
         )
         request = create_work_request(
@@ -99,6 +104,9 @@ class OrchestrationVerifierTests(unittest.TestCase):
             step_id="inspect-policy",
             handler_id="inspect-handler",
             input_payload={"query": "synthetic-select"},
+            execution_identity=execution_identity(
+                self.plan, "inspect-policy", "worker"
+            ),
         )
         self.execution = execute_worker_step(
             self.plan,
@@ -115,6 +123,8 @@ class OrchestrationVerifierTests(unittest.TestCase):
                 ("evidence.verify",),
                 ("execute", "read"),
                 callback,
+                identity_actor_digest=digest("verifier-verify-policy-actor"),
+                runtime_kind="local-handler",
             )
         )
         return registry
@@ -130,6 +140,9 @@ class OrchestrationVerifierTests(unittest.TestCase):
                     subject_kind=subject.kind,
                     subject_digest=subject.subject_digest,
                     verifier_step_id=context.verifier_step_id,
+                    verifier_execution_identity_id=(
+                        context.verifier_execution_identity.execution_identity_id
+                    ),
                     covered_worker_step_ids=("inspect-policy",),
                     observed_digests=(observed,),
                     passed=passed,
@@ -144,7 +157,13 @@ class OrchestrationVerifierTests(unittest.TestCase):
             self.plan,
             self.authorization,
             [self.execution] if executions is None else executions,
-            [VerifierRequest("verify-policy", "policy-verifier")],
+            [
+                VerifierRequest(
+                    "verify-policy",
+                    "policy-verifier",
+                    execution_identity(self.plan, "verify-policy", "verifier"),
+                )
+            ],
             self.verifier_registry(callback),
         )
 
@@ -155,6 +174,27 @@ class OrchestrationVerifierTests(unittest.TestCase):
         self.assertEqual(3, len(result.subjects))
         self.assertTrue(all(item.passed for item in result.subjects))
         self.assertEqual((), result.failure_codes)
+        schema = json.loads(
+            (REPO_ROOT / "schemas" / "task-verification.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        identity_schema = json.loads(
+            (
+                REPO_ROOT / "schemas" / "agent-execution-identity.schema.json"
+            ).read_text(encoding="utf-8")
+        )
+        registry = Registry().with_resource(
+            identity_schema["$id"], Resource.from_contents(identity_schema)
+        )
+        self.assertEqual(
+            [],
+            list(
+                Draft202012Validator(schema, registry=registry).iter_errors(
+                    result.as_dict()
+                )
+            ),
+        )
 
     def test_missing_or_failed_evidence_blocks_completion(self) -> None:
         missing = self.verify(lambda context: VerifierHandlerResult(()))
@@ -182,6 +222,7 @@ class OrchestrationVerifierTests(unittest.TestCase):
             tampered_checkpoint,
             self.execution.journal,
             False,
+            self.execution.execution_identity,
         )
         with self.assertRaisesRegex(TaskVerificationError, "worker evidence"):
             self.verify(self.evidence_for_all, executions=[tampered])
@@ -210,7 +251,78 @@ class OrchestrationVerifierTests(unittest.TestCase):
                 encoding="utf-8"
             )
         )
-        self.assertEqual("urn:krcn:schemas:task-verification:1", schema["$id"])
+        self.assertEqual("urn:krcn:schemas:task-verification:2", schema["$id"])
+
+    def test_verifier_actor_and_assignment_must_be_independent(self) -> None:
+        worker_identity = self.execution.execution_identity
+        self.assertIsNotNone(worker_identity)
+        same_actor = execution_identity(
+            self.plan,
+            "verify-policy",
+            "verifier",
+            actor="worker-inspect-policy-actor",
+        )
+        with self.assertRaisesRegex(TaskVerificationError, "independent"):
+            verify_task(
+                self.intent,
+                self.plan,
+                self.authorization,
+                [self.execution],
+                [VerifierRequest("verify-policy", "policy-verifier", same_actor)],
+                self.verifier_registry(self.evidence_for_all),
+            )
+
+    def test_client_identity_cannot_override_registered_verifier_identity(self) -> None:
+        calls = []
+        identity = execution_identity(
+            self.plan,
+            "verify-policy",
+            "verifier",
+            actor="unregistered-verifier-actor",
+        )
+
+        with self.assertRaisesRegex(
+            TaskVerificationError, "does not match the registered handler"
+        ):
+            verify_task(
+                self.intent,
+                self.plan,
+                self.authorization,
+                [self.execution],
+                [VerifierRequest("verify-policy", "policy-verifier", identity)],
+                self.verifier_registry(lambda _: calls.append("called")),
+            )
+        self.assertEqual([], calls)
+
+        same_assignment = execution_identity(
+            self.plan,
+            "verify-policy",
+            "verifier",
+            assignment="worker-inspect-policy-assignment",
+        )
+        with self.assertRaisesRegex(TaskVerificationError, "independent"):
+            verify_task(
+                self.intent,
+                self.plan,
+                self.authorization,
+                [self.execution],
+                [
+                    VerifierRequest(
+                        "verify-policy", "policy-verifier", same_assignment
+                    )
+                ],
+                self.verifier_registry(self.evidence_for_all),
+            )
+
+    def test_legacy_worker_without_execution_identity_cannot_be_verified(self) -> None:
+        legacy = WorkerExecution(
+            self.execution.checkpoint,
+            self.execution.journal,
+            False,
+            None,
+        )
+        with self.assertRaisesRegex(TaskVerificationError, "identity is required"):
+            self.verify(self.evidence_for_all, executions=[legacy])
 
 
 if __name__ == "__main__":

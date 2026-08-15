@@ -224,6 +224,8 @@
     "model_capability_golden_set": "config/model-capability-golden-set.json",
     "model_capability_golden_set_schema": "schemas/model-capability-golden-set.schema.json",
     "model_capability_evaluation_schema": "schemas/model-capability-evaluation.schema.json",
+    "independent_verifier_identity_boundary": "docs/specifications/INDEPENDENT-VERIFIER-IDENTITY.md",
+    "agent_execution_identity_schema": "schemas/agent-execution-identity.schema.json",
     "model_inventory_schema": "schemas/model-inventory-record.schema.json",
     "model_health_policy": "config/model-health-policy.json",
     "model_health_policy_schema": "schemas/model-health-policy.schema.json",

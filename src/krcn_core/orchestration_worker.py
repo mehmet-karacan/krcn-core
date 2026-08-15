@@ -7,6 +7,11 @@ import re
 from dataclasses import dataclass
 from typing import Callable, Mapping, Sequence
 
+from .agent_execution_identity import (
+    AgentExecutionIdentity,
+    RUNTIME_KINDS,
+    parse_agent_execution_identity,
+)
 from .information_records import canonical_json
 from .orchestration_authorization import (
     OperationAuthorization,
@@ -59,6 +64,8 @@ class WorkerHandlerSpec:
     capabilities: tuple[str, ...]
     side_effects: tuple[str, ...]
     callback: Callable[["WorkerContext", Mapping[str, object]], WorkerHandlerResult]
+    identity_actor_digest: str | None = None
+    runtime_kind: str | None = None
 
 
 @dataclass(frozen=True)
@@ -66,6 +73,7 @@ class TaskWorkRequest:
     task_id: str
     plan_id: str
     authorization_id: str
+    execution_identity: AgentExecutionIdentity | None
     step_id: str
     handler_id: str
     input_payload: Mapping[str, object]
@@ -78,6 +86,7 @@ class WorkerContext:
     task_id: str
     plan_id: str
     authorization_id: str
+    execution_identity: AgentExecutionIdentity
     step_id: str
     idempotency_key: str
     operations: tuple[OperationAuthorization, ...]
@@ -94,6 +103,7 @@ class WorkerCheckpoint:
     step_id: str
     step_digest: str
     idempotency_key: str
+    execution_identity_id: str | None
     status: str
     result_digest: str | None
     failure_digest: str | None
@@ -107,6 +117,11 @@ class WorkerCheckpoint:
             "step_id": self.step_id,
             "step_digest": self.step_digest,
             "idempotency_key": self.idempotency_key,
+            **(
+                {"execution_identity_id": self.execution_identity_id}
+                if self.execution_identity_id is not None
+                else {}
+            ),
             "status": self.status,
             "result_digest": self.result_digest,
             "failure_digest": self.failure_digest,
@@ -123,6 +138,7 @@ class WorkerEffectJournal:
     handler_id: str
     input_digest: str
     idempotency_key: str
+    execution_identity_id: str | None
     status: str
     effects: tuple[WorkerEffect, ...]
     result_digest: str | None
@@ -138,6 +154,11 @@ class WorkerEffectJournal:
             "handler_id": self.handler_id,
             "input_digest": self.input_digest,
             "idempotency_key": self.idempotency_key,
+            **(
+                {"execution_identity_id": self.execution_identity_id}
+                if self.execution_identity_id is not None
+                else {}
+            ),
             "status": self.status,
             "effects": [effect.as_dict() for effect in self.effects],
             "result_digest": self.result_digest,
@@ -150,14 +171,20 @@ class WorkerExecution:
     checkpoint: WorkerCheckpoint
     journal: WorkerEffectJournal
     replayed: bool
+    execution_identity: AgentExecutionIdentity | None = None
 
     def as_dict(self) -> dict[str, object]:
         return {
             "schema_ref": "schemas/worker-execution.schema.json",
-            "schema_version": 1,
+            "schema_version": 2 if self.execution_identity is not None else 1,
             "checkpoint": self.checkpoint.as_dict(),
             "journal": self.journal.as_dict(),
             "replayed": self.replayed,
+            **(
+                {"execution_identity": self.execution_identity.as_dict()}
+                if self.execution_identity is not None
+                else {}
+            ),
         }
 
 
@@ -180,6 +207,12 @@ class WorkerHandlerRegistry:
             raise WorkerExecutionError("worker handler side effects must be unique")
         if not callable(spec.callback):
             raise WorkerExecutionError("worker handler callback is invalid")
+        if (
+            not isinstance(spec.identity_actor_digest, str)
+            or not SHA256.fullmatch(spec.identity_actor_digest)
+            or spec.runtime_kind not in RUNTIME_KINDS
+        ):
+            raise WorkerExecutionError("worker handler execution identity is invalid")
         self._handlers[spec.handler_id] = spec
 
     def get(self, handler_id: str) -> WorkerHandlerSpec | None:
@@ -189,20 +222,32 @@ class WorkerHandlerRegistry:
 def parse_worker_execution(payload: object) -> WorkerExecution:
     """Parse persisted worker records; plan-bound validation remains separate."""
 
-    if not isinstance(payload, dict) or set(payload) != {
+    base_fields = {
         "schema_ref",
         "schema_version",
         "checkpoint",
         "journal",
         "replayed",
-    }:
+    }
+    if not isinstance(payload, dict) or payload.get("schema_version") not in {1, 2}:
+        raise WorkerExecutionError("worker execution fields are invalid")
+    version = int(payload["schema_version"])
+    expected_fields = base_fields | ({"execution_identity"} if version == 2 else set())
+    if set(payload) != expected_fields:
         raise WorkerExecutionError("worker execution fields are invalid")
     if (
         payload.get("schema_ref") != "schemas/worker-execution.schema.json"
-        or payload.get("schema_version") != 1
         or not isinstance(payload.get("replayed"), bool)
     ):
         raise WorkerExecutionError("worker execution header is invalid")
+    execution_identity = None
+    if version == 2:
+        try:
+            execution_identity = parse_agent_execution_identity(
+                payload.get("execution_identity")
+            )
+        except ValueError as exc:
+            raise WorkerExecutionError("worker execution identity is invalid") from exc
     checkpoint_payload = payload.get("checkpoint")
     journal_payload = payload.get("journal")
     checkpoint_fields = {
@@ -217,6 +262,8 @@ def parse_worker_execution(payload: object) -> WorkerExecution:
         "result_digest",
         "failure_digest",
     }
+    if version == 2:
+        checkpoint_fields.add("execution_identity_id")
     journal_fields = {
         "journal_id",
         "task_id",
@@ -231,6 +278,8 @@ def parse_worker_execution(payload: object) -> WorkerExecution:
         "result_digest",
         "failure_digest",
     }
+    if version == 2:
+        journal_fields.add("execution_identity_id")
     if not isinstance(checkpoint_payload, dict) or set(checkpoint_payload) != checkpoint_fields:
         raise WorkerExecutionError("worker checkpoint fields are invalid")
     if not isinstance(journal_payload, dict) or set(journal_payload) != journal_fields:
@@ -311,6 +360,9 @@ def parse_worker_execution(payload: object) -> WorkerExecution:
         str(checkpoint_payload["step_id"]),
         str(checkpoint_payload["step_digest"]),
         str(checkpoint_payload["idempotency_key"]),
+        str(checkpoint_payload["execution_identity_id"])
+        if version == 2
+        else None,
         str(checkpoint_payload["status"]),
         checkpoint_payload["result_digest"] if isinstance(checkpoint_payload["result_digest"], str) else None,
         checkpoint_payload["failure_digest"] if isinstance(checkpoint_payload["failure_digest"], str) else None,
@@ -324,12 +376,27 @@ def parse_worker_execution(payload: object) -> WorkerExecution:
         str(journal_payload["handler_id"]),
         str(journal_payload["input_digest"]),
         str(journal_payload["idempotency_key"]),
+        str(journal_payload["execution_identity_id"])
+        if version == 2
+        else None,
         str(journal_payload["status"]),
         tuple(effects),
         journal_payload["result_digest"] if isinstance(journal_payload["result_digest"], str) else None,
         journal_payload["failure_digest"] if isinstance(journal_payload["failure_digest"], str) else None,
     )
-    return WorkerExecution(checkpoint, journal, bool(payload["replayed"]))
+    if version == 2 and (
+        execution_identity is None
+        or checkpoint.execution_identity_id
+        != execution_identity.execution_identity_id
+        or journal.execution_identity_id != execution_identity.execution_identity_id
+    ):
+        raise WorkerExecutionError("worker execution identity binding is invalid")
+    return WorkerExecution(
+        checkpoint,
+        journal,
+        bool(payload["replayed"]),
+        execution_identity,
+    )
 
 
 def _contains_sensitive_value(value: object) -> bool:
@@ -352,6 +419,7 @@ def create_work_request(
     step_id: str,
     handler_id: str,
     input_payload: Mapping[str, object],
+    execution_identity: AgentExecutionIdentity,
 ) -> TaskWorkRequest:
     """Bind handler input to one exact authorized step and idempotency key."""
 
@@ -359,6 +427,17 @@ def create_work_request(
         raise WorkerExecutionError("worker request identifiers are invalid")
     if not isinstance(input_payload, Mapping):
         raise WorkerExecutionError("worker input must be an object")
+    try:
+        checked_identity = parse_agent_execution_identity(execution_identity.as_dict())
+    except (AttributeError, ValueError) as exc:
+        raise WorkerExecutionError("worker execution identity is invalid") from exc
+    if (
+        checked_identity.task_id != plan.task_id
+        or checked_identity.plan_id != plan.plan_id
+        or checked_identity.step_id != step_id
+        or checked_identity.role != "worker"
+    ):
+        raise WorkerExecutionError("worker execution identity does not match the step")
     try:
         encoded = canonical_json(dict(input_payload))
     except (TypeError, ValueError) as exc:
@@ -370,6 +449,7 @@ def create_work_request(
         "task_id": plan.task_id,
         "plan_id": plan.plan_id,
         "authorization_id": authorization.authorization_id,
+        "execution_identity_id": checked_identity.execution_identity_id,
         "step_id": step_id,
         "handler_id": handler_id,
         "input_digest": input_digest,
@@ -378,6 +458,7 @@ def create_work_request(
         plan.task_id,
         plan.plan_id,
         authorization.authorization_id,
+        checked_identity,
         step_id,
         handler_id,
         dict(input_payload),
@@ -408,6 +489,11 @@ def _step_authorization(
         or request.task_id != plan.task_id
         or request.plan_id != plan.plan_id
         or request.authorization_id != authorization.authorization_id
+        or request.execution_identity is None
+        or request.execution_identity.task_id != plan.task_id
+        or request.execution_identity.plan_id != plan.plan_id
+        or request.execution_identity.step_id != request.step_id
+        or request.execution_identity.role != "worker"
     ):
         raise WorkerExecutionError("worker authorization does not match the exact task plan")
     step = next((item for item in plan.steps if item.step_id == request.step_id), None)
@@ -502,6 +588,7 @@ def _execution_records(
         "handler_id": request.handler_id,
         "input_digest": request.input_digest,
         "idempotency_key": request.idempotency_key,
+        "execution_identity_id": request.execution_identity.execution_identity_id,
         "status": status,
         "effects": [item.as_dict() for item in effects],
         "result_digest": result_digest,
@@ -515,6 +602,7 @@ def _execution_records(
         "step_id": request.step_id,
         "step_digest": step.step_digest,
         "idempotency_key": request.idempotency_key,
+        "execution_identity_id": request.execution_identity.execution_identity_id,
         "status": status,
         "result_digest": result_digest,
         "failure_digest": failure_digest,
@@ -529,6 +617,7 @@ def _execution_records(
         request.step_id,
         step.step_digest,
         request.idempotency_key,
+        request.execution_identity.execution_identity_id,
         status,
         result_digest,
         failure_digest,
@@ -542,12 +631,13 @@ def _execution_records(
         request.handler_id,
         request.input_digest,
         request.idempotency_key,
+        request.execution_identity.execution_identity_id,
         status,
         effects,
         result_digest,
         failure_digest,
     )
-    return WorkerExecution(checkpoint, journal, False)
+    return WorkerExecution(checkpoint, journal, False, request.execution_identity)
 
 
 def validate_worker_execution(
@@ -559,10 +649,20 @@ def validate_worker_execution(
 
     checkpoint = execution.checkpoint
     journal = execution.journal
+    if execution.execution_identity is not None:
+        try:
+            checked_identity = parse_agent_execution_identity(
+                execution.execution_identity.as_dict()
+            )
+        except (AttributeError, ValueError) as exc:
+            raise WorkerExecutionError("worker execution identity is invalid") from exc
+        if checked_identity.execution_identity_id != checkpoint.execution_identity_id:
+            raise WorkerExecutionError("worker execution identity binding is invalid")
     request = TaskWorkRequest(
         checkpoint.task_id,
         checkpoint.plan_id,
         checkpoint.authorization_id,
+        execution.execution_identity,
         checkpoint.step_id,
         journal.handler_id,
         {},
@@ -576,10 +676,16 @@ def validate_worker_execution(
         or journal.authorization_id != checkpoint.authorization_id
         or journal.step_id != checkpoint.step_id
         or journal.idempotency_key != checkpoint.idempotency_key
+        or journal.execution_identity_id != checkpoint.execution_identity_id
         or journal.status != checkpoint.status
         or journal.result_digest != checkpoint.result_digest
         or journal.failure_digest != checkpoint.failure_digest
         or checkpoint.step_digest != step.step_digest
+        or (
+            execution.execution_identity is not None
+            and checkpoint.execution_identity_id
+            != execution.execution_identity.execution_identity_id
+        )
     ):
         raise WorkerExecutionError("worker checkpoint and journal do not match")
     if checkpoint.status not in {"completed", "failed"}:
@@ -631,7 +737,12 @@ def execute_worker_step(
         ):
             if previous.checkpoint.idempotency_key != request.idempotency_key:
                 raise WorkerExecutionError("completed worker step cannot be rebound to new input")
-            return WorkerExecution(previous.checkpoint, previous.journal, True)
+            return WorkerExecution(
+                previous.checkpoint,
+                previous.journal,
+                True,
+                previous.execution_identity,
+            )
     _validate_dependencies(plan, step, history)
     handler = handlers.get(request.handler_id)
     if handler is None:
@@ -640,10 +751,18 @@ def execute_worker_step(
         raise WorkerExecutionError("worker handler lacks required capabilities")
     if not set(handler.side_effects).issubset(step.side_effects):
         raise WorkerExecutionError("worker handler side effects exceed the task step")
+    if (
+        request.execution_identity.actor_digest != handler.identity_actor_digest
+        or request.execution_identity.runtime_kind != handler.runtime_kind
+    ):
+        raise WorkerExecutionError(
+            "worker execution identity does not match the registered handler"
+        )
     context = WorkerContext(
         request.task_id,
         request.plan_id,
         request.authorization_id,
+        request.execution_identity,
         request.step_id,
         request.idempotency_key,
         step_auth.operations,

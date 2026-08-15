@@ -187,6 +187,19 @@
             "VerifierHandlerRegistry",
             "create_verification_evidence"
           ]
+        },
+        {
+          "kind": "module-symbol",
+          "module": "krcn_core.agent_execution_identity",
+          "symbols": [
+            "create_agent_execution_identity",
+            "parse_agent_execution_identity"
+          ]
+        },
+        {
+          "kind": "document-phrase",
+          "document": "docs/specifications/INDEPENDENT-VERIFIER-IDENTITY.md",
+          "phrase": "A verifier actor and assignment must be independent from every worker it can complete."
         }
       ]
     },

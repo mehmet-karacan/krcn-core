@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import sys
 import unittest
 from dataclasses import replace
 from pathlib import Path
+
+from jsonschema import Draft202012Validator
+from referencing import Registry, Resource
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -30,10 +34,13 @@ from krcn_core.orchestration_worker import (  # noqa: E402
     WorkerHandlerSpec,
     create_work_request,
     execute_worker_step,
+    parse_worker_execution,
 )
+from krcn_core.information_records import canonical_json  # noqa: E402
 from test_database_policy import select_only_policy  # noqa: E402
 from test_orchestration_intent import extraction  # noqa: E402
 from test_orchestration_plan import read_only_steps  # noqa: E402
+from agent_identity_fixtures import digest, execution_identity  # noqa: E402
 
 
 class OrchestrationWorkerTests(unittest.TestCase):
@@ -84,6 +91,8 @@ class OrchestrationWorkerTests(unittest.TestCase):
                 ("plan.execute", "record.read"),
                 side_effects,
                 callback,
+                identity_actor_digest=digest("worker-inspect-policy-actor"),
+                runtime_kind="local-handler",
             )
         )
         return registry
@@ -108,6 +117,7 @@ class OrchestrationWorkerTests(unittest.TestCase):
             step_id="inspect-policy",
             handler_id="inspect-handler",
             input_payload={"query": "synthetic-select"},
+            execution_identity=execution_identity(plan, "inspect-policy", "worker"),
         )
         first = execute_worker_step(plan, authorization, request, self.registry(handler))
         second = execute_worker_step(
@@ -122,6 +132,44 @@ class OrchestrationWorkerTests(unittest.TestCase):
         self.assertTrue(second.replayed)
         self.assertEqual(first.checkpoint, second.checkpoint)
         self.assertEqual(1, len(calls))
+        payload = first.as_dict()
+        schema = json.loads(
+            (REPO_ROOT / "schemas" / "worker-execution.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        identity_schema = json.loads(
+            (
+                REPO_ROOT / "schemas" / "agent-execution-identity.schema.json"
+            ).read_text(encoding="utf-8")
+        )
+        registry = Registry().with_resource(
+            identity_schema["$id"], Resource.from_contents(identity_schema)
+        )
+        self.assertEqual(
+            [],
+            list(Draft202012Validator(schema, registry=registry).iter_errors(payload)),
+        )
+
+        legacy = copy.deepcopy(payload)
+        legacy["schema_version"] = 1
+        legacy.pop("execution_identity")
+        legacy["checkpoint"].pop("execution_identity_id")
+        legacy["journal"].pop("execution_identity_id")
+        journal_identity = dict(legacy["journal"])
+        journal_identity.pop("journal_id")
+        legacy["journal"]["journal_id"] = hashlib.sha256(
+            canonical_json(journal_identity)
+        ).hexdigest()
+        checkpoint_identity = dict(legacy["checkpoint"])
+        checkpoint_identity.pop("checkpoint_id")
+        checkpoint_identity["journal_id"] = legacy["journal"]["journal_id"]
+        legacy["checkpoint"]["checkpoint_id"] = hashlib.sha256(
+            canonical_json(checkpoint_identity)
+        ).hexdigest()
+        parsed_legacy = parse_worker_execution(legacy)
+        self.assertIsNone(parsed_legacy.execution_identity)
+        self.assertEqual(legacy, parsed_legacy.as_dict())
 
     def test_failed_checkpoint_can_retry_with_the_same_idempotency_key(self) -> None:
         plan, authorization = self.plan_and_authorization()
@@ -142,6 +190,7 @@ class OrchestrationWorkerTests(unittest.TestCase):
             step_id="inspect-policy",
             handler_id="inspect-handler",
             input_payload={"query": "synthetic-select"},
+            execution_identity=execution_identity(plan, "inspect-policy", "worker"),
         )
         first = execute_worker_step(plan, authorization, request, self.registry(handler))
         second = execute_worker_step(
@@ -179,6 +228,12 @@ class OrchestrationWorkerTests(unittest.TestCase):
             step_id="summarize-policy",
             handler_id="inspect-handler",
             input_payload={"query": "synthetic-select"},
+            execution_identity=execution_identity(
+                plan,
+                "summarize-policy",
+                "worker",
+                actor="worker-inspect-policy-actor",
+            ),
         )
         with self.assertRaisesRegex(WorkerExecutionError, "dependencies"):
             execute_worker_step(plan, authorization, second_request, registry)
@@ -188,6 +243,7 @@ class OrchestrationWorkerTests(unittest.TestCase):
             step_id="inspect-policy",
             handler_id="inspect-handler",
             input_payload={"query": "synthetic-select"},
+            execution_identity=execution_identity(plan, "inspect-policy", "worker"),
         )
         first = execute_worker_step(plan, authorization, first_request, registry)
         second = execute_worker_step(
@@ -205,6 +261,12 @@ class OrchestrationWorkerTests(unittest.TestCase):
             step_id="summarize-policy",
             handler_id="inspect-handler",
             input_payload={"query": "changed-input"},
+            execution_identity=execution_identity(
+                plan,
+                "summarize-policy",
+                "worker",
+                actor="worker-inspect-policy-actor",
+            ),
         )
         with self.assertRaisesRegex(WorkerExecutionError, "cannot be rebound"):
             execute_worker_step(
@@ -223,6 +285,7 @@ class OrchestrationWorkerTests(unittest.TestCase):
             step_id="inspect-policy",
             handler_id="inspect-handler",
             input_payload={"query": "synthetic-select"},
+            execution_identity=execution_identity(plan, "inspect-policy", "worker"),
         )
         with self.assertRaisesRegex(WorkerExecutionError, "not explicitly registered"):
             execute_worker_step(
@@ -251,6 +314,34 @@ class OrchestrationWorkerTests(unittest.TestCase):
         self.assertEqual("failed", failed.checkpoint.status)
         self.assertEqual((), failed.journal.effects)
 
+    def test_client_identity_cannot_override_registered_handler_identity(self) -> None:
+        plan, authorization = self.plan_and_authorization()
+        request = create_work_request(
+            plan,
+            authorization,
+            step_id="inspect-policy",
+            handler_id="inspect-handler",
+            input_payload={"query": "synthetic-select"},
+            execution_identity=execution_identity(
+                plan,
+                "inspect-policy",
+                "worker",
+                actor="unregistered-worker-actor",
+            ),
+        )
+        calls = []
+
+        with self.assertRaisesRegex(
+            WorkerExecutionError, "does not match the registered handler"
+        ):
+            execute_worker_step(
+                plan,
+                authorization,
+                request,
+                self.registry(lambda *_: calls.append("called")),
+            )
+        self.assertEqual([], calls)
+
     def test_sensitive_input_is_rejected_and_schema_is_versioned(self) -> None:
         plan, authorization = self.plan_and_authorization()
         with self.assertRaisesRegex(WorkerExecutionError, "sensitive"):
@@ -260,13 +351,14 @@ class OrchestrationWorkerTests(unittest.TestCase):
                 step_id="inspect-policy",
                 handler_id="inspect-handler",
                 input_payload={"token": "synthetic-value"},
+                execution_identity=execution_identity(plan, "inspect-policy", "worker"),
             )
         schema = json.loads(
             (REPO_ROOT / "schemas" / "worker-execution.schema.json").read_text(
                 encoding="utf-8"
             )
         )
-        self.assertEqual("urn:krcn:schemas:worker-execution:1", schema["$id"])
+        self.assertEqual("urn:krcn:schemas:worker-execution:2", schema["$id"])
 
 
 if __name__ == "__main__":

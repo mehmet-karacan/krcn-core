@@ -7,6 +7,11 @@ import re
 from dataclasses import dataclass
 from typing import Callable, Sequence
 
+from .agent_execution_identity import (
+    AgentExecutionIdentity,
+    RUNTIME_KINDS,
+    parse_agent_execution_identity,
+)
 from .information_records import canonical_json
 from .orchestration_authorization import TaskAuthorization
 from .orchestration_intent import TaskIntent
@@ -48,6 +53,7 @@ class VerificationEvidence:
     subject_kind: str
     subject_digest: str
     verifier_step_id: str
+    verifier_execution_identity_id: str
     covered_worker_step_ids: tuple[str, ...]
     observed_digests: tuple[str, ...]
     passed: bool
@@ -60,6 +66,7 @@ class VerificationEvidence:
             "subject_kind": self.subject_kind,
             "subject_digest": self.subject_digest,
             "verifier_step_id": self.verifier_step_id,
+            "verifier_execution_identity_id": self.verifier_execution_identity_id,
             "covered_worker_step_ids": list(self.covered_worker_step_ids),
             "observed_digests": list(self.observed_digests),
             "passed": self.passed,
@@ -78,6 +85,7 @@ class VerifierContext:
     plan_id: str
     authorization_id: str
     verifier_step_id: str
+    verifier_execution_identity: AgentExecutionIdentity
     subjects: tuple[VerificationSubject, ...]
     worker_executions: tuple[WorkerExecution, ...]
     allowed_evidence_digests: tuple[str, ...]
@@ -89,12 +97,15 @@ class VerifierHandlerSpec:
     capabilities: tuple[str, ...]
     side_effects: tuple[str, ...]
     callback: Callable[[VerifierContext], VerifierHandlerResult]
+    identity_actor_digest: str | None = None
+    runtime_kind: str | None = None
 
 
 @dataclass(frozen=True)
 class VerifierRequest:
     step_id: str
     handler_id: str
+    execution_identity: AgentExecutionIdentity
 
 
 @dataclass(frozen=True)
@@ -119,6 +130,8 @@ class TaskVerification:
     plan_id: str
     authorization_id: str
     worker_checkpoint_ids: tuple[str, ...]
+    worker_execution_identity_ids: tuple[str, ...]
+    verifier_execution_identities: tuple[AgentExecutionIdentity, ...]
     evidence: tuple[VerificationEvidence, ...]
     subjects: tuple[SubjectVerification, ...]
     failure_codes: tuple[str, ...]
@@ -129,11 +142,17 @@ class TaskVerification:
     def as_dict(self) -> dict[str, object]:
         return {
             "schema_ref": "schemas/task-verification.schema.json",
-            "schema_version": 1,
+            "schema_version": 2,
             "task_id": self.task_id,
             "plan_id": self.plan_id,
             "authorization_id": self.authorization_id,
             "worker_checkpoint_ids": list(self.worker_checkpoint_ids),
+            "worker_execution_identity_ids": list(
+                self.worker_execution_identity_ids
+            ),
+            "verifier_execution_identities": [
+                item.as_dict() for item in self.verifier_execution_identities
+            ],
             "evidence": [item.as_dict() for item in self.evidence],
             "subjects": [item.as_dict() for item in self.subjects],
             "failure_codes": list(self.failure_codes),
@@ -162,6 +181,12 @@ class VerifierHandlerRegistry:
             raise TaskVerificationError("verifier side effects must be unique")
         if not callable(spec.callback):
             raise TaskVerificationError("verifier callback is invalid")
+        if (
+            not isinstance(spec.identity_actor_digest, str)
+            or not SHA256.fullmatch(spec.identity_actor_digest)
+            or spec.runtime_kind not in RUNTIME_KINDS
+        ):
+            raise TaskVerificationError("verifier handler execution identity is invalid")
         self._handlers[spec.handler_id] = spec
 
     def get(self, handler_id: str) -> VerifierHandlerSpec | None:
@@ -181,6 +206,7 @@ def create_verification_evidence(
     subject_kind: str,
     subject_digest: str,
     verifier_step_id: str,
+    verifier_execution_identity_id: str,
     covered_worker_step_ids: Sequence[str],
     observed_digests: Sequence[str],
     passed: bool,
@@ -191,7 +217,13 @@ def create_verification_evidence(
         raise TaskVerificationError("evidence id is invalid")
     if evidence_type not in EVIDENCE_TYPES or subject_kind not in SUBJECT_KINDS:
         raise TaskVerificationError("evidence classification is invalid")
-    if not SHA256.fullmatch(subject_digest) or not IDENTIFIER.fullmatch(verifier_step_id):
+    if (
+        not isinstance(subject_digest, str)
+        or not SHA256.fullmatch(subject_digest)
+        or not IDENTIFIER.fullmatch(verifier_step_id)
+        or not isinstance(verifier_execution_identity_id, str)
+        or not SHA256.fullmatch(verifier_execution_identity_id)
+    ):
         raise TaskVerificationError("evidence subject or verifier is invalid")
     workers = tuple(sorted(set(covered_worker_step_ids)))
     observed = tuple(sorted(set(observed_digests)))
@@ -215,6 +247,7 @@ def create_verification_evidence(
         "subject_kind": subject_kind,
         "subject_digest": subject_digest,
         "verifier_step_id": verifier_step_id,
+        "verifier_execution_identity_id": verifier_execution_identity_id,
         "covered_worker_step_ids": list(workers),
         "observed_digests": list(observed),
         "passed": passed,
@@ -225,6 +258,7 @@ def create_verification_evidence(
         subject_kind,
         subject_digest,
         verifier_step_id,
+        verifier_execution_identity_id,
         workers,
         observed,
         passed,
@@ -316,6 +350,10 @@ def verify_task(
     completed: dict[str, WorkerExecution] = {}
     failure_codes: set[str] = set()
     for execution in executions:
+        if execution.execution_identity is None:
+            raise TaskVerificationError(
+                "worker execution identity is required for independent verification"
+            )
         try:
             validate_worker_execution(plan, authorization, execution)
         except ValueError as exc:
@@ -327,16 +365,53 @@ def verify_task(
             completed[execution.checkpoint.step_id] = execution
     if set(completed) != worker_ids:
         failure_codes.add("worker-checkpoint-incomplete")
+    worker_identities = tuple(
+        sorted(
+            (item.execution_identity for item in completed.values()),
+            key=lambda item: item.execution_identity_id,
+        )
+    )
 
     request_by_step: dict[str, VerifierRequest] = {}
     for request in requests:
-        if request.step_id not in verifier_ids or not IDENTIFIER.fullmatch(request.handler_id):
+        try:
+            identity = parse_agent_execution_identity(
+                request.execution_identity.as_dict()
+            )
+        except (AttributeError, ValueError) as exc:
+            raise TaskVerificationError("verifier execution identity is invalid") from exc
+        if (
+            request.step_id not in verifier_ids
+            or not IDENTIFIER.fullmatch(request.handler_id)
+            or identity.task_id != plan.task_id
+            or identity.plan_id != plan.plan_id
+            or identity.step_id != request.step_id
+            or identity.role != "verifier"
+        ):
             raise TaskVerificationError("verifier request is invalid")
         if request.step_id in request_by_step:
             raise TaskVerificationError("verifier request is duplicated")
         request_by_step[request.step_id] = request
     if set(request_by_step) != verifier_ids:
         raise TaskVerificationError("every verifier step requires an explicit handler")
+    verifier_identities = tuple(
+        request_by_step[step_id].execution_identity
+        for step_id in sorted(request_by_step)
+    )
+    if len({item.execution_identity_id for item in verifier_identities}) != len(
+        verifier_identities
+    ):
+        raise TaskVerificationError("verifier execution identities must be unique")
+    worker_actor_digests = {item.actor_digest for item in worker_identities}
+    worker_assignment_digests = {item.assignment_digest for item in worker_identities}
+    if any(
+        item.actor_digest in worker_actor_digests
+        or item.assignment_digest in worker_assignment_digests
+        for item in verifier_identities
+    ):
+        raise TaskVerificationError(
+            "verifier execution identity must be independent from every worker"
+        )
 
     subjects = _subjects(intent)
     subject_map = {(item.kind, item.subject_digest): item for item in subjects}
@@ -351,6 +426,13 @@ def verify_task(
             raise TaskVerificationError("verifier handler lacks required capabilities")
         if not set(handler.side_effects).issubset(step.side_effects):
             raise TaskVerificationError("verifier handler side effects exceed the task step")
+        if (
+            request.execution_identity.actor_digest != handler.identity_actor_digest
+            or request.execution_identity.runtime_kind != handler.runtime_kind
+        ):
+            raise TaskVerificationError(
+                "verifier execution identity does not match the registered handler"
+            )
         covered_workers = worker_ids & _ancestors(step_id, steps)
         available = tuple(
             sorted(
@@ -364,6 +446,7 @@ def verify_task(
             plan.plan_id,
             authorization.authorization_id,
             step_id,
+            request.execution_identity,
             subjects,
             available,
             allowed,
@@ -381,6 +464,13 @@ def verify_task(
                 raise TaskVerificationError("verification evidence digest does not match")
             if evidence.verifier_step_id != step_id:
                 raise TaskVerificationError("verification evidence is bound to another step")
+            if (
+                evidence.verifier_execution_identity_id
+                != request.execution_identity.execution_identity_id
+            ):
+                raise TaskVerificationError(
+                    "verification evidence is bound to another execution identity"
+                )
             subject = subject_map.get((evidence.subject_kind, evidence.subject_digest))
             if subject is None:
                 raise TaskVerificationError("verification evidence subject is not planned")
@@ -440,6 +530,12 @@ def verify_task(
         "worker_checkpoint_ids": sorted(
             item.checkpoint.checkpoint_id for item in completed.values()
         ),
+        "worker_execution_identity_ids": sorted(
+            item.execution_identity_id for item in worker_identities
+        ),
+        "verifier_execution_identities": [
+            item.as_dict() for item in verifier_identities
+        ],
         "evidence": [item.as_dict() for item in ordered_evidence],
         "subjects": [item.as_dict() for item in subject_results],
         "failure_codes": list(failures),
@@ -452,6 +548,8 @@ def verify_task(
         plan.plan_id,
         authorization.authorization_id,
         tuple(identity["worker_checkpoint_ids"]),
+        tuple(identity["worker_execution_identity_ids"]),
+        verifier_identities,
         ordered_evidence,
         tuple(subject_results),
         failures,

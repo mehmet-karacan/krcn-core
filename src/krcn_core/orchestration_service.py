@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 from typing import Mapping, Sequence
 
+from .agent_execution_identity import parse_agent_execution_identity
 from .capability_registry import load_capability_registry, select_capability_records
 from .local_store import LocalWorkspaceStore
 from .mutation_gate import DryRunEvidence, MutationPlan, OwnershipResolver, plan_mutation
@@ -318,7 +319,7 @@ class OrchestrationApplicationService:
         operation_required = {"context"}
         optional = {
             "step_id", "handler_id", "input", "verifier_requests",
-            "project_id", "work_item_id",
+            "execution_identity", "project_id", "work_item_id",
         }
         _fields(arguments, required=operation_required, optional=optional, label="orchestration request")
         context = _object(arguments, "context")
@@ -380,6 +381,14 @@ class OrchestrationApplicationService:
             step_id = _string(arguments, "step_id")
             handler_id = _string(arguments, "handler_id")
             input_payload = _object(arguments, "input")
+            try:
+                execution_identity = parse_agent_execution_identity(
+                    _object(arguments, "execution_identity")
+                )
+            except ValueError as exc:
+                raise OrchestrationServiceError(
+                    "worker execution identity is invalid"
+                ) from exc
             resumed = self._states.resume(plan.task_id, plan, authorization)
             state = resumed.state
             if state.status in {"authorized", "failed", "interrupted"}:
@@ -400,6 +409,7 @@ class OrchestrationApplicationService:
                 step_id=step_id,
                 handler_id=handler_id,
                 input_payload=input_payload,
+                execution_identity=execution_identity,
             )
             execution = execute_worker_step(
                 plan,
@@ -447,9 +457,27 @@ class OrchestrationApplicationService:
             requests_payload = _list(arguments, "verifier_requests")
             requests = []
             for item in requests_payload:
-                if not isinstance(item, dict) or set(item) != {"step_id", "handler_id"}:
+                if not isinstance(item, dict) or set(item) != {
+                    "step_id",
+                    "handler_id",
+                    "execution_identity",
+                }:
                     raise OrchestrationServiceError("verifier request fields are invalid")
-                requests.append(VerifierRequest(_string(item, "step_id"), _string(item, "handler_id")))
+                try:
+                    execution_identity = parse_agent_execution_identity(
+                        _object(item, "execution_identity")
+                    )
+                except ValueError as exc:
+                    raise OrchestrationServiceError(
+                        "verifier execution identity is invalid"
+                    ) from exc
+                requests.append(
+                    VerifierRequest(
+                        _string(item, "step_id"),
+                        _string(item, "handler_id"),
+                        execution_identity,
+                    )
+                )
             resumed = self._states.resume(plan.task_id, plan, authorization)
             if resumed.state.status != "verifying":
                 raise OrchestrationServiceError("orchestration state is not ready for verification")

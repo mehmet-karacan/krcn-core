@@ -156,6 +156,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 - `PHASE-21-KANONIK-IZLEME-VE-DURUM.md`
 - `PHASE-21-TASINABILIR-PROJE-KIMLIGI.md`
 - `PHASE-21-MODEL-YETENEK-KORUMA.md`
+- `PHASE-21-BAGIMSIZ-VERIFIER-KIMLIGI.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 

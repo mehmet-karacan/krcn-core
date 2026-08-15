@@ -65,6 +65,8 @@ REQUIRED_CANONICAL_KEYS = {
     "model_capability_golden_set",
     "model_capability_golden_set_schema",
     "model_capability_evaluation_schema",
+    "independent_verifier_identity_boundary",
+    "agent_execution_identity_schema",
     "work_documents_boundary",
     "work_document_manifest_schema",
     "work_document_manifest_update_plan_schema",

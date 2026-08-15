@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:krcn:schemas:worker-execution:1",
+  "$id": "urn:krcn:schemas:worker-execution:2",
   "title": "KRCN Core worker checkpoint and effect journal",
   "type": "object",
   "additionalProperties": false,
@@ -9,14 +9,15 @@
     "schema_version",
     "checkpoint",
     "journal",
-    "replayed"
+    "replayed",
+    "execution_identity"
   ],
   "properties": {
     "schema_ref": {
       "const": "schemas/worker-execution.schema.json"
     },
     "schema_version": {
-      "const": 1
+      "const": 2
     },
     "checkpoint": {
       "$ref": "#/$defs/checkpoint"
@@ -26,6 +27,9 @@
     },
     "replayed": {
       "type": "boolean"
+    },
+    "execution_identity": {
+      "$ref": "urn:krcn:schemas:agent-execution-identity:1"
     }
   },
   "$defs": {
@@ -95,6 +99,7 @@
         "step_id",
         "step_digest",
         "idempotency_key",
+        "execution_identity_id",
         "status",
         "result_digest",
         "failure_digest"
@@ -119,6 +124,9 @@
           "$ref": "#/$defs/digest"
         },
         "idempotency_key": {
+          "$ref": "#/$defs/digest"
+        },
+        "execution_identity_id": {
           "$ref": "#/$defs/digest"
         },
         "status": {
@@ -147,6 +155,7 @@
         "handler_id",
         "input_digest",
         "idempotency_key",
+        "execution_identity_id",
         "status",
         "effects",
         "result_digest",
@@ -175,6 +184,9 @@
           "$ref": "#/$defs/digest"
         },
         "idempotency_key": {
+          "$ref": "#/$defs/digest"
+        },
+        "execution_identity_id": {
           "$ref": "#/$defs/digest"
         },
         "status": {
