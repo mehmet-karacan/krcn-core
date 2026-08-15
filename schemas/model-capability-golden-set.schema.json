@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:model-capability-golden-set:1",
+  "title": "KRCN Core model capability golden set",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "revision",
+    "cases",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/model-capability-golden-set.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "case_id",
+          "critical",
+          "hard_constraint_refs",
+          "soft_guidance_refs",
+          "evaluation_traits"
+        ],
+        "properties": {
+          "case_id": {
+            "$ref": "#/$defs/identifier"
+          },
+          "critical": {
+            "type": "boolean"
+          },
+          "hard_constraint_refs": {
+            "$ref": "#/$defs/identifierList"
+          },
+          "soft_guidance_refs": {
+            "$ref": "#/$defs/identifierList"
+          },
+          "evaluation_traits": {
+            "$ref": "#/$defs/identifierList"
+          }
+        }
+      }
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "prompt_content_included",
+        "source_content_included",
+        "secret_values_included",
+        "absolute_paths_included",
+        "grants_authority"
+      ],
+      "properties": {
+        "prompt_content_included": {
+          "const": false
+        },
+        "source_content_included": {
+          "const": false
+        },
+        "secret_values_included": {
+          "const": false
+        },
+        "absolute_paths_included": {
+          "const": false
+        },
+        "grants_authority": {
+          "const": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "identifierList": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    }
+  }
+}

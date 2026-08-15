@@ -13,12 +13,13 @@
     "docs/progress/PHASE-21-V1-MIMARI-SOZLESMELERI.md",
     "docs/progress/PHASE-21-COMPACTION-DAYANIKLI-DEVAMLILIK.md",
     "docs/progress/PHASE-21-KANONIK-IZLEME-VE-DURUM.md",
-    "docs/progress/PHASE-21-TASINABILIR-PROJE-KIMLIGI.md"
+    "docs/progress/PHASE-21-TASINABILIR-PROJE-KIMLIGI.md",
+    "docs/progress/PHASE-21-MODEL-YETENEK-KORUMA.md"
   ],
   "next_actions": [
-    "model yetenek koruma kapisini ve golden karsilastirmayi ekle",
     "generic akista bagimsiz verifier execution identity zorunlulugunu guclendir",
-    "generic DAG executor ile hazir isleri guvenli ve olceklenebilir calistir"
+    "generic DAG executor ile hazir isleri guvenli ve olceklenebilir calistir",
+    "Work Graph kaynakli okunur WORK-INDEX projection uret"
   ],
   "baseline_commit": "2e4d23a",
   "approval_gates": {

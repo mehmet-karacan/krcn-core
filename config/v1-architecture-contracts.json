@@ -236,6 +236,19 @@
           "kind": "document-phrase",
           "document": "docs/specifications/MODEL-ROUTING.md",
           "phrase": "never grants access or approval"
+        },
+        {
+          "kind": "module-symbol",
+          "module": "krcn_core.model_capability_gate",
+          "symbols": [
+            "evaluate_model_capability",
+            "parse_model_capability_evaluation"
+          ]
+        },
+        {
+          "kind": "document-phrase",
+          "document": "docs/specifications/MODEL-CAPABILITY-PRESERVATION.md",
+          "phrase": "Hard constraints are blocking and cannot be weakened by a model, client, route, or benchmark."
         }
       ]
     },

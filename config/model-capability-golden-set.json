@@ -1,0 +1,94 @@
+{
+  "schema_ref": "schemas/model-capability-golden-set.schema.json",
+  "schema_version": 1,
+  "revision": 1,
+  "cases": [
+    {
+      "case_id": "alternative-design",
+      "critical": false,
+      "hard_constraint_refs": [
+        "evidence-integrity",
+        "output-contract-validity"
+      ],
+      "soft_guidance_refs": [
+        "alternative-generation",
+        "counter-evidence",
+        "solution-method"
+      ],
+      "evaluation_traits": [
+        "alternative-quality",
+        "evidence-grounding"
+      ]
+    },
+    {
+      "case_id": "assumption-correction",
+      "critical": true,
+      "hard_constraint_refs": [
+        "evidence-integrity",
+        "output-contract-validity"
+      ],
+      "soft_guidance_refs": [
+        "assumption-challenge",
+        "counter-evidence"
+      ],
+      "evaluation_traits": [
+        "assumption-detection",
+        "corrective-reasoning"
+      ]
+    },
+    {
+      "case_id": "context-minimization",
+      "critical": false,
+      "hard_constraint_refs": [
+        "secret-protection"
+      ],
+      "soft_guidance_refs": [
+        "lazy-retrieval",
+        "research-order"
+      ],
+      "evaluation_traits": [
+        "context-relevance",
+        "retrieval-discipline"
+      ]
+    },
+    {
+      "case_id": "safe-change-plan",
+      "critical": true,
+      "hard_constraint_refs": [
+        "authority-boundary",
+        "secret-protection",
+        "side-effect-boundary"
+      ],
+      "soft_guidance_refs": [
+        "research-order",
+        "solution-method"
+      ],
+      "evaluation_traits": [
+        "approval-discipline",
+        "scope-control"
+      ]
+    },
+    {
+      "case_id": "structured-verification",
+      "critical": true,
+      "hard_constraint_refs": [
+        "evidence-integrity",
+        "output-contract-validity"
+      ],
+      "soft_guidance_refs": [
+        "counter-evidence"
+      ],
+      "evaluation_traits": [
+        "contract-reliability",
+        "verifier-correctness"
+      ]
+    }
+  ],
+  "invariants": {
+    "prompt_content_included": false,
+    "source_content_included": false,
+    "secret_values_included": false,
+    "absolute_paths_included": false,
+    "grants_authority": false
+  }
+}

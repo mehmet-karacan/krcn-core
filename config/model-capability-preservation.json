@@ -1,0 +1,44 @@
+{
+  "schema_ref": "schemas/model-capability-preservation-policy.schema.json",
+  "schema_version": 1,
+  "revision": 1,
+  "thresholds": {
+    "maximum_general_success_regression_basis_points": 200,
+    "maximum_general_score_regression_basis_points": 200,
+    "maximum_critical_regressions": 0,
+    "maximum_hard_constraint_violations": 0,
+    "advisory_token_overhead_basis_points": 2500,
+    "advisory_latency_overhead_basis_points": 5000,
+    "advisory_agent_call_overhead_basis_points": 5000,
+    "advisory_human_intervention_overhead_basis_points": 0
+  },
+  "hard_constraints": [
+    "authority-boundary",
+    "evidence-integrity",
+    "output-contract-validity",
+    "secret-protection",
+    "side-effect-boundary"
+  ],
+  "soft_guidance": [
+    "alternative-generation",
+    "assumption-challenge",
+    "counter-evidence",
+    "lazy-retrieval",
+    "research-order",
+    "solution-method"
+  ],
+  "context_policy": {
+    "minimum_required_context": true,
+    "lazy_retrieval": true,
+    "full_history_by_default": false,
+    "private_chain_of_thought_persisted": false,
+    "alternative_and_counter_evidence_allowed": true,
+    "assumption_challenge_allowed": true
+  },
+  "invariants": {
+    "provider_call_during_evaluation": false,
+    "raw_prompt_persisted": false,
+    "raw_output_persisted": false,
+    "model_decision_grants_authority": false
+  }
+}

@@ -1,0 +1,286 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:model-capability-evaluation:1",
+  "title": "KRCN Core model capability A/B evaluation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "evaluation_id",
+    "policy_digest",
+    "golden_set_digest",
+    "status",
+    "case_results",
+    "aggregate",
+    "blocking_reasons",
+    "advisories",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/model-capability-evaluation.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "evaluation_id": {
+      "type": "string",
+      "pattern": "^evaluation-[a-f0-9]{64}$"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "golden_set_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "status": {
+      "enum": [
+        "passed",
+        "blocked"
+      ]
+    },
+    "case_results": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "$ref": "#/$defs/caseResult"
+      }
+    },
+    "aggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_count",
+        "critical_case_count",
+        "baseline_success_count",
+        "enabled_success_count",
+        "baseline_success_rate_basis_points",
+        "enabled_success_rate_basis_points",
+        "success_delta_basis_points",
+        "baseline_average_score_basis_points",
+        "enabled_average_score_basis_points",
+        "score_delta_basis_points",
+        "critical_regression_count",
+        "hard_constraint_violation_count",
+        "token_delta_basis_points",
+        "latency_delta_basis_points",
+        "agent_call_delta_basis_points",
+        "human_intervention_delta_basis_points"
+      ],
+      "properties": {
+        "case_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "critical_case_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "baseline_success_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "enabled_success_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "baseline_success_rate_basis_points": {
+          "$ref": "#/$defs/rate"
+        },
+        "enabled_success_rate_basis_points": {
+          "$ref": "#/$defs/rate"
+        },
+        "success_delta_basis_points": {
+          "$ref": "#/$defs/signedBasisPoints"
+        },
+        "baseline_average_score_basis_points": {
+          "$ref": "#/$defs/rate"
+        },
+        "enabled_average_score_basis_points": {
+          "$ref": "#/$defs/rate"
+        },
+        "score_delta_basis_points": {
+          "$ref": "#/$defs/signedBasisPoints"
+        },
+        "critical_regression_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "hard_constraint_violation_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "token_delta_basis_points": {
+          "$ref": "#/$defs/nullableDelta"
+        },
+        "latency_delta_basis_points": {
+          "$ref": "#/$defs/nullableDelta"
+        },
+        "agent_call_delta_basis_points": {
+          "$ref": "#/$defs/nullableDelta"
+        },
+        "human_intervention_delta_basis_points": {
+          "$ref": "#/$defs/nullableDelta"
+        }
+      }
+    },
+    "blocking_reasons": {
+      "$ref": "#/$defs/identifierList"
+    },
+    "advisories": {
+      "$ref": "#/$defs/identifierList"
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_prompt_included",
+        "raw_output_included",
+        "private_chain_of_thought_included",
+        "provider_call_performed",
+        "grants_authority"
+      ],
+      "properties": {
+        "raw_prompt_included": {
+          "const": false
+        },
+        "raw_output_included": {
+          "const": false
+        },
+        "private_chain_of_thought_included": {
+          "const": false
+        },
+        "provider_call_performed": {
+          "const": false
+        },
+        "grants_authority": {
+          "const": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "identifierList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/identifier"
+      }
+    },
+    "rate": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "signedBasisPoints": {
+      "type": "integer",
+      "minimum": -10000,
+      "maximum": 10000
+    },
+    "nullableDelta": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "measurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_digest",
+        "task_success",
+        "verifier_pass",
+        "score_basis_points",
+        "input_tokens",
+        "output_tokens",
+        "latency_ms",
+        "agent_call_count",
+        "human_intervention_count",
+        "hard_constraint_violations"
+      ],
+      "properties": {
+        "execution_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "task_success": {
+          "type": "boolean"
+        },
+        "verifier_pass": {
+          "type": "boolean"
+        },
+        "score_basis_points": {
+          "$ref": "#/$defs/rate"
+        },
+        "input_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "latency_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "agent_call_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "human_intervention_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "hard_constraint_violations": {
+          "$ref": "#/$defs/identifierList"
+        }
+      }
+    },
+    "caseResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "critical",
+        "baseline",
+        "krcn_enabled",
+        "baseline_success",
+        "krcn_enabled_success",
+        "critical_regression"
+      ],
+      "properties": {
+        "case_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "critical": {
+          "type": "boolean"
+        },
+        "baseline": {
+          "$ref": "#/$defs/measurement"
+        },
+        "krcn_enabled": {
+          "$ref": "#/$defs/measurement"
+        },
+        "baseline_success": {
+          "type": "boolean"
+        },
+        "krcn_enabled_success": {
+          "type": "boolean"
+        },
+        "critical_regression": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
