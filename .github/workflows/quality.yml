@@ -1,15 +1,61 @@
 name: KRCN Core quality
 
-# Automatic runs are temporarily disabled to prevent Actions minute usage.
-# Restore push and pull_request triggers when automatic CI is enabled again.
+# Required gate: every pull request and every push to a development branch runs
+# the fast Linux gate. The full cross-platform matrix stays on demand and on
+# release tags so that automatic runs keep a predictable Actions cost.
 on:
+  push:
+    branches:
+      - main
+      - "mimari-**"
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  fast-gate:
+    name: Fast Linux gate
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Verify repository
+        run: python tools/verify_repository.py
+      - name: Run full tests
+        run: python tools/run_tests.py
+      - name: Run doctor
+        run: python tools/krcn.py doctor
+
+  coverage-baseline:
+    name: Coverage baseline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Measure dependency-free line coverage
+        run: python tools/measure_coverage.py --minimum 60 --summary-only
+      - name: Report measured commit
+        run: python tools/verify_baseline_attestation.py --commit "${{ github.sha }}"
+
   cross-platform:
+    name: Cross-platform matrix
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || startsWith(github.ref, 'refs/tags/')
     strategy:
       fail-fast: false
       matrix:
@@ -40,13 +86,3 @@ jobs:
         run: |
           python tools/install_cli.py
           "$HOME/.local/share/krcn/cli/bin/krcn" context --validate-only
-
-  coverage-baseline:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-      - name: Measure dependency-free line coverage
-        run: python tools/measure_coverage.py --minimum 60 --summary-only

@@ -7,6 +7,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from .baseline_attestation import resolve_baseline_attestations
 from .cli.registry import compatibility_registry
 from .foundation import load_json, validate_foundation, verify_repository
 from .home_layout import home_layout_version
@@ -83,6 +84,11 @@ def _coverage_baseline(repo_root: Path) -> list[str]:
         errors.append("coverage threshold")
     if not (repo_root / "tools" / "measure_coverage.py").is_file():
         errors.append("coverage tool")
+    return errors
+
+
+def _baseline_attestation(repo_root: Path) -> list[str]:
+    _, errors = resolve_baseline_attestations(repo_root)
     return errors
 
 
@@ -276,6 +282,13 @@ def run_doctor(
             "coverage-baseline",
             _coverage_baseline(repo_root),
             "versioned line coverage remains above its baseline threshold",
+        )
+    )
+    checks.append(
+        _check(
+            "baseline-attestation",
+            _baseline_attestation(repo_root),
+            "quality baselines name the commit they were measured on",
         )
     )
     if data_root is not None:

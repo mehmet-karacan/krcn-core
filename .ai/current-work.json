@@ -8,12 +8,13 @@
   "plan_ref": "docs/plans/PLAN-021-MIMARI-DEVAMLILIK-VE-TASINABILIRLIK.md",
   "progress_refs": [
     "docs/progress/PROGRESS-KATALOGU.md",
-    "docs/progress/PHASE-21-KICKOFF.md"
+    "docs/progress/PHASE-21-KICKOFF.md",
+    "docs/progress/PHASE-21-ZORUNLU-KONTROL-VE-BASELINE-KANITI.md"
   ],
   "next_actions": [
-    "guncel HEAD icin zorunlu kontrol tetikleyicisini ve release attestation alanlarini ekle",
-    "baseline kayitlarini olcum commit'ine bagla",
-    "V1 degismez mimari sozlesmelerini ADR ile dondur"
+    "coverage baseline olcumunu guncel commit uzerinde tazele",
+    "V1 degismez mimari sozlesmelerini ADR ile dondur",
+    "sinirli devamlilik snapshot, calisma gunlugu ve devir kaydi sozlesmelerini ekle"
   ],
   "baseline_commit": "2e4d23a",
   "approval_gates": {

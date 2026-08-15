@@ -2,6 +2,7 @@
   "schema_ref": "schemas/cli-baseline.schema.json",
   "schema_version": 1,
   "baseline_id": "krcn-cli-0.1.0",
+  "source_commit": "2e4d23a",
   "status": "ready",
   "legacy_source_imported": false,
   "entrypoint": "krcn_core.cli.app:main",

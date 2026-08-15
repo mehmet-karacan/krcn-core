@@ -150,6 +150,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 ## Faz 21 - Mimari devamlılık ve taşınabilirlik
 
 - `PHASE-21-KICKOFF.md`
+- `PHASE-21-ZORUNLU-KONTROL-VE-BASELINE-KANITI.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 

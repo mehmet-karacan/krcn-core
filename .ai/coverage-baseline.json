@@ -3,7 +3,7 @@
   "method": "python-monitoring-line-events",
   "scope": "src/krcn_core",
   "python_minimum": "3.12",
-  "measurement_parent_commit": "50f6e35",
+  "source_commit": "50f6e35",
   "test_count": 466,
   "skipped_test_count": 2,
   "executable_lines": 17650,

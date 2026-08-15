@@ -29,6 +29,7 @@ class DoctorTests(unittest.TestCase):
                 "release-quality",
                 "sqlite-runtime",
                 "coverage-baseline",
+                "baseline-attestation",
                 "phase-one-baseline",
                 "phase-two-baseline",
                 "phase-three-baseline",
