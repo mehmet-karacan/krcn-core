@@ -11,6 +11,11 @@
     "candidate_id",
     "candidate_digest",
     "evaluation_digest",
+    "proposed_by_ref",
+    "proposer_identity_digest",
+    "evaluator_identity_digest",
+    "verifier_identity_digest",
+    "approver_identity_digest",
     "state",
     "previous_state",
     "registry_record_digest",
@@ -38,6 +43,21 @@
       "$ref": "#/$defs/digest"
     },
     "evaluation_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "proposed_by_ref": {
+      "$ref": "#/$defs/ref"
+    },
+    "proposer_identity_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "evaluator_identity_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "verifier_identity_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "approver_identity_digest": {
       "$ref": "#/$defs/digest"
     },
     "state": {

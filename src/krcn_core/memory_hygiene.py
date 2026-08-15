@@ -360,43 +360,97 @@ def parse_research_evidence_metadata(payload: object) -> ResearchEvidenceMetadat
 
 
 def group_research_evidence_duplicates(evidence: Iterable[ResearchEvidenceMetadata]) -> tuple[dict[str, object], ...]:
-    """Return deterministic duplicate-of suggestions with a single group weight."""
+    """Group exact content duplicates; canonical source equality is insufficient."""
 
     checked = [parse_research_evidence_metadata(item.as_payload()) for item in evidence]
     if len({item.evidence_id for item in checked}) != len(checked):
         raise MemoryHygieneError("research evidence contains duplicate identities")
-    parent = {item.evidence_id: item.evidence_id for item in checked}
-
-    def root(item_id: str) -> str:
-        while parent[item_id] != item_id:
-            parent[item_id] = parent[parent[item_id]]
-            item_id = parent[item_id]
-        return item_id
-
-    def union(left: str, right: str) -> None:
-        left_root, right_root = root(left), root(right)
-        if left_root != right_root:
-            parent[max(left_root, right_root)] = min(left_root, right_root)
-
-    for index, left in enumerate(checked):
-        for right in checked[index + 1:]:
-            if left.canonical_source_ref == right.canonical_source_ref or left.content_digest == right.content_digest:
-                union(left.evidence_id, right.evidence_id)
-    groups: dict[str, list[str]] = {}
+    groups: dict[str, list[ResearchEvidenceMetadata]] = {}
     for item in checked:
-        groups.setdefault(root(item.evidence_id), []).append(item.evidence_id)
-    return tuple(
-        {
-            "canonical_evidence_id": sorted(ids)[0],
+        groups.setdefault(item.content_digest, []).append(item)
+    duplicate_groups = []
+    for content_digest, items in groups.items():
+        ordered = sorted(
+            items,
+            key=lambda item: (
+                _datetime(item.observed_at, "observed_at"),
+                item.evidence_id,
+            ),
+        )
+        if len(ordered) < 2:
+            continue
+        canonical = ordered[0]
+        duplicate_groups.append({
+            "canonical_evidence_id": canonical.evidence_id,
+            "canonical_observed_at": canonical.observed_at,
+            "content_digest": content_digest,
             "duplicate_of_suggestions": [
-                {"evidence_id": item_id, "duplicate_of": sorted(ids)[0], "evidence_weight": 0}
-                for item_id in sorted(ids)[1:]
+                {
+                    "evidence_id": item.evidence_id,
+                    "duplicate_of": canonical.evidence_id,
+                    "observed_at": item.observed_at,
+                    "evidence_weight": 0,
+                }
+                for item in ordered[1:]
             ],
             "canonical_evidence_weight": 1,
-        }
-        for ids in sorted(groups.values(), key=lambda group: sorted(group)[0])
-        if len(ids) > 1
+        })
+    return tuple(
+        sorted(
+            duplicate_groups,
+            key=lambda group: (
+                _datetime(group["canonical_observed_at"], "canonical_observed_at"),
+                group["canonical_evidence_id"],
+            ),
+        )
     )
+
+
+def group_research_evidence_versions(evidence: Iterable[ResearchEvidenceMetadata]) -> tuple[dict[str, object], ...]:
+    """Surface same-source, different-content versions without reducing weight."""
+
+    checked = [parse_research_evidence_metadata(item.as_payload()) for item in evidence]
+    if len({item.evidence_id for item in checked}) != len(checked):
+        raise MemoryHygieneError("research evidence contains duplicate identities")
+    by_source: dict[str, list[ResearchEvidenceMetadata]] = {}
+    for item in checked:
+        by_source.setdefault(item.canonical_source_ref, []).append(item)
+    results = []
+    for source_ref, items in sorted(by_source.items()):
+        by_content: dict[str, list[ResearchEvidenceMetadata]] = {}
+        for item in items:
+            by_content.setdefault(item.content_digest, []).append(item)
+        if len(by_content) < 2:
+            continue
+        versions = []
+        for content_digest, content_items in by_content.items():
+            canonical = min(
+                content_items,
+                key=lambda item: (
+                    _datetime(item.observed_at, "observed_at"),
+                    item.evidence_id,
+                ),
+            )
+            versions.append({
+                "content_digest": content_digest,
+                "evidence_id": canonical.evidence_id,
+                "observed_at": canonical.observed_at,
+                "evidence_weight": 1,
+            })
+        versions.sort(
+            key=lambda item: (
+                _datetime(item["observed_at"], "observed_at"),
+                item["evidence_id"],
+            )
+        )
+        results.append({
+            "canonical_source_ref": source_ref,
+            "relation": "source-version-conflict",
+            "observed_from": versions[0]["observed_at"],
+            "observed_until": versions[-1]["observed_at"],
+            "versions": versions,
+        })
+    return tuple(results)
 
 
 @dataclass(frozen=True)
@@ -730,6 +784,7 @@ def build_memory_hygiene_report(
         "retention_candidate_ids": sorted(retention),
         "not_yet_valid_memory_ids": sorted(not_yet_valid),
         "research_duplicate_groups": list(group_research_evidence_duplicates(evidence)),
+        "research_source_version_groups": list(group_research_evidence_versions(evidence)),
         "context_effectiveness": [item.as_payload() for item in sorted(contexts, key=lambda item: item.evaluation_id)],
         "action_suggestions": [item.as_payload() for item in suggestions],
         "invariants": PUBLIC_INVARIANTS,
@@ -750,6 +805,7 @@ def parse_memory_hygiene_report(payload: object) -> dict[str, object]:
         "context_evaluation_digests", "stale_memory_ids", "conflict_memory_ids",
         "duplicate_groups", "unused_memory_ids", "retention_candidate_ids",
         "not_yet_valid_memory_ids", "research_duplicate_groups",
+        "research_source_version_groups",
         "context_effectiveness", "action_suggestions", "invariants", "report_digest",
     }
     data = _strict(payload, expected, "memory hygiene report")
@@ -775,7 +831,12 @@ def parse_memory_hygiene_report(payload: object) -> dict[str, object]:
         _sorted_unique_ids(data.get(field), field)
     duplicate_groups = data.get("duplicate_groups")
     research_groups = data.get("research_duplicate_groups")
-    if not isinstance(duplicate_groups, list) or not isinstance(research_groups, list):
+    source_version_groups = data.get("research_source_version_groups")
+    if (
+        not isinstance(duplicate_groups, list)
+        or not isinstance(research_groups, list)
+        or not isinstance(source_version_groups, list)
+    ):
         raise MemoryHygieneError("memory hygiene duplicate groups are invalid")
     previous_canonical = None
     seen_memory_ids: set[str] = set()
@@ -798,39 +859,92 @@ def parse_memory_hygiene_report(payload: object) -> dict[str, object]:
             raise MemoryHygieneError("memory duplicate groups must be sorted")
         previous_canonical = canonical
         seen_memory_ids.update((canonical, *duplicates))
-    previous_evidence = None
+    previous_evidence_key = None
     seen_evidence_ids: set[str] = set()
     for group in research_groups:
         checked_group = _strict(
             group,
-            {"canonical_evidence_id", "duplicate_of_suggestions", "canonical_evidence_weight"},
+            {
+                "canonical_evidence_id", "canonical_observed_at", "content_digest",
+                "duplicate_of_suggestions", "canonical_evidence_weight",
+            },
             "research duplicate group",
         )
         canonical = _identifier(checked_group.get("canonical_evidence_id"), "canonical_evidence_id")
+        canonical_observed_at = _timestamp(checked_group.get("canonical_observed_at"), "canonical_observed_at")
+        _sha256(checked_group.get("content_digest"), "research content_digest")
         if checked_group.get("canonical_evidence_weight") != 1:
             raise MemoryHygieneError("canonical research evidence weight must be one")
         suggestions_payload = checked_group.get("duplicate_of_suggestions")
         if not isinstance(suggestions_payload, list) or not suggestions_payload:
             raise MemoryHygieneError("research duplicate suggestions are invalid")
         suggestion_ids: list[str] = []
+        suggestion_keys = []
         for suggestion in suggestions_payload:
             checked_suggestion = _strict(
                 suggestion,
-                {"evidence_id", "duplicate_of", "evidence_weight"},
+                {"evidence_id", "duplicate_of", "observed_at", "evidence_weight"},
                 "research duplicate suggestion",
             )
             evidence_id = _identifier(checked_suggestion.get("evidence_id"), "evidence_id")
+            observed_at = _timestamp(checked_suggestion.get("observed_at"), "observed_at")
             if checked_suggestion.get("duplicate_of") != canonical or checked_suggestion.get("evidence_weight") != 0:
                 raise MemoryHygieneError("research duplicate suggestion is inconsistent")
+            if _datetime(observed_at, "observed_at") < _datetime(canonical_observed_at, "canonical_observed_at"):
+                raise MemoryHygieneError("research duplicate canonical must be earliest observed evidence")
             suggestion_ids.append(evidence_id)
-        if suggestion_ids != sorted(set(suggestion_ids)) or canonical in suggestion_ids:
+            suggestion_keys.append((_datetime(observed_at, "observed_at"), evidence_id))
+        if len(set(suggestion_ids)) != len(suggestion_ids) or suggestion_keys != sorted(suggestion_keys) or canonical in suggestion_ids:
             raise MemoryHygieneError("research duplicate suggestion identities are invalid")
         if canonical in seen_evidence_ids or any(item in seen_evidence_ids for item in suggestion_ids):
             raise MemoryHygieneError("research duplicate groups overlap")
-        if previous_evidence is not None and canonical <= previous_evidence:
+        evidence_key = (_datetime(canonical_observed_at, "canonical_observed_at"), canonical)
+        if previous_evidence_key is not None and evidence_key <= previous_evidence_key:
             raise MemoryHygieneError("research duplicate groups must be sorted")
-        previous_evidence = canonical
+        previous_evidence_key = evidence_key
         seen_evidence_ids.update((canonical, *suggestion_ids))
+    previous_source = None
+    for group in source_version_groups:
+        checked_group = _strict(
+            group,
+            {"canonical_source_ref", "relation", "observed_from", "observed_until", "versions"},
+            "research source version group",
+        )
+        source_ref = _logical_ref(checked_group.get("canonical_source_ref"), "canonical_source_ref")
+        if checked_group.get("relation") != "source-version-conflict":
+            raise MemoryHygieneError("research source version relation is invalid")
+        observed_from = _timestamp(checked_group.get("observed_from"), "observed_from")
+        observed_until = _timestamp(checked_group.get("observed_until"), "observed_until")
+        versions_payload = checked_group.get("versions")
+        if not isinstance(versions_payload, list) or len(versions_payload) < 2:
+            raise MemoryHygieneError("research source versions are incomplete")
+        version_keys = []
+        content_digests: set[str] = set()
+        for version in versions_payload:
+            checked_version = _strict(
+                version,
+                {"content_digest", "evidence_id", "observed_at", "evidence_weight"},
+                "research source version",
+            )
+            content_digest = _sha256(checked_version.get("content_digest"), "version content_digest")
+            evidence_id = _identifier(checked_version.get("evidence_id"), "version evidence_id")
+            observed_at = _timestamp(checked_version.get("observed_at"), "version observed_at")
+            if checked_version.get("evidence_weight") != 1:
+                raise MemoryHygieneError("different source versions must retain evidence weight")
+            if content_digest in content_digests:
+                raise MemoryHygieneError("source version content digests must be unique")
+            content_digests.add(content_digest)
+            version_keys.append((_datetime(observed_at, "version observed_at"), evidence_id))
+        if version_keys != sorted(version_keys):
+            raise MemoryHygieneError("research source versions must be observed-time ordered")
+        if (
+            _datetime(observed_from, "observed_from") != version_keys[0][0]
+            or _datetime(observed_until, "observed_until") != version_keys[-1][0]
+        ):
+            raise MemoryHygieneError("research source version observation bounds do not match")
+        if previous_source is not None and source_ref <= previous_source:
+            raise MemoryHygieneError("research source version groups must be sorted")
+        previous_source = source_ref
     context_payloads = data.get("context_effectiveness")
     if not isinstance(context_payloads, list):
         raise MemoryHygieneError("context effectiveness list is invalid")

@@ -16,6 +16,8 @@ work, capability registry, or storage layouts:
 - Project fixture, evaluation run, verifier, model, and environment binding
 - Minimum trials, minimum passed trials, and score threshold
 - Independent evaluator/verifier identity and model requirements
+- Stable, pairwise-distinct proposer/evaluator/verifier/approver identity
+  digests that reject actor-reference alias bypass
 - Candidate self-promotion rejection
 - Approval-required reversible registry Mutation Plan
 - Explicit rollback and supersession metadata
@@ -25,6 +27,8 @@ work, capability registry, or storage layouts:
 - Read-only, deterministic, digest-bound hygiene report
 - Existing Memory Gate composition for reviewed supersede/revoke actions
 - Canonical research source/content dedupe with a single evidence weight
+- Same-source different-content version conflicts with observed-time ordering
+  and full evidence weight per distinct version
 - Required evidence recall, context use, stale/duplicate/omitted rates,
   downstream success, and compaction rehydration measurement
 - Strict versioned configs and JSON schemas

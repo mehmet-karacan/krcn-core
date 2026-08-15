@@ -67,8 +67,16 @@ and apply remain separate operations.
 
 `schemas/research-evidence-metadata.schema.json` stores a canonical logical
 source reference and a content digest without source content. Evidence records
-sharing either value are grouped. Each group has one canonical evidence weight;
-duplicates receive `duplicate-of` suggestions and zero additional weight.
+sharing the exact content digest are grouped. Each group has one canonical
+evidence weight; duplicates receive `duplicate-of` suggestions and zero
+additional weight. The earliest `observed_at` record is canonical, with the
+evidence ID as deterministic tie breaker.
+
+Canonical source equality alone never proves duplication. When one source is
+observed with different content digests, the report emits a time-ordered
+`source-version-conflict` group. Every distinct content version retains evidence
+weight one; no version is silently superseded or treated as corroboration of
+another.
 
 Duplicates are not deleted. This preserves provenance while preventing two
 copies of the same video, paper, or report from being mistaken for independent
@@ -108,6 +116,7 @@ graph layer.
 - `build_research_evidence_metadata` /
   `parse_research_evidence_metadata`
 - `group_research_evidence_duplicates`
+- `group_research_evidence_versions`
 - `build_context_effectiveness` / `parse_context_effectiveness`
 - `build_memory_hygiene_report` / `parse_memory_hygiene_report`
 - `parse_hygiene_action_suggestion`

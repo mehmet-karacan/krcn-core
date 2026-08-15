@@ -28,6 +28,13 @@ source references, source/repetition digests, proposer identity, proposer model
 digest, and the candidate digest. It forbids code, skill content, physical
 paths, secret values, and authority.
 
+Human-readable actor references are labels, not security identities. Candidate,
+evaluation, approval plan, and lifecycle records bind stable SHA-256 actor
+identity digests. Proposer, evaluator, verifier, and approver digests must be
+pairwise distinct. Changing a reference to an alias therefore cannot bypass
+self-promotion or independent-verification checks. Finalization must present the
+exact approver identity digest already bound into the approved plan.
+
 Candidate dedupe groups records when they share either their reviewed source
 digest or at least one repetition digest. The canonical candidate is selected
 deterministically. Duplicate candidates are preserved; their evidence is not
@@ -83,6 +90,7 @@ authorizes a later lifecycle transition.
 
 - Candidate, evaluation, plan, and lifecycle records are strict and
   digest-bound.
+- Actor alias strings never replace stable identity digest comparison.
 - Unknown fields and digest tampering fail closed.
 - Public records contain no skill code, skill content, physical path, secret,
   provider payload, or private reasoning.

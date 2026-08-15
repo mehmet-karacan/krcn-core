@@ -11,6 +11,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT / "tests"))
 
 from krcn_core.application import KrcnApplicationService  # noqa: E402
 from krcn_core.application_contract import ServiceRequest  # noqa: E402
@@ -19,9 +20,9 @@ from krcn_core.cli.app import build_parser, main as cli_main  # noqa: E402
 from krcn_core.home_layout import user_home_layout_bytes  # noqa: E402
 from krcn_core.local_store import LocalWorkspaceStore  # noqa: E402
 from krcn_core.mutation_gate import OwnershipResolver  # noqa: E402
-import tests.test_measured_loop as measured_fixtures  # noqa: E402
-import tests.test_model_benchmark_runner as benchmark_fixtures  # noqa: E402
-import tests.test_skill_lifecycle as skill_fixtures  # noqa: E402
+import test_measured_loop as measured_fixtures  # noqa: E402
+import test_model_benchmark_runner as benchmark_fixtures  # noqa: E402
+import test_skill_lifecycle as skill_fixtures  # noqa: E402
 
 
 class Phase22ApplicationCliTests(unittest.TestCase):
@@ -97,7 +98,9 @@ class Phase22ApplicationCliTests(unittest.TestCase):
             "project_fixture_digest": "e" * 64,
             "evaluation_run_digest": "f" * 64,
             "evaluator_ref": "actor:evaluator",
+            "evaluator_identity_digest": "5" * 64,
             "verifier_ref": "actor:verifier",
+            "verifier_identity_digest": "6" * 64,
             "tested_model_digest": "1" * 64,
             "verifier_model_digest": "2" * 64,
             "environment_digest": "3" * 64,
@@ -123,6 +126,7 @@ class Phase22ApplicationCliTests(unittest.TestCase):
                     "evaluation": evaluated.data["evaluation"],
                     "expected_registry_digest": None,
                     "rollback_target_ref": "registry:empty",
+                    "approver_identity_digest": "7" * 64,
                 },
             )
         )

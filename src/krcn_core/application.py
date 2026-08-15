@@ -4907,7 +4907,9 @@ class KrcnApplicationService:
             "project_fixture_digest",
             "evaluation_run_digest",
             "evaluator_ref",
+            "evaluator_identity_digest",
             "verifier_ref",
+            "verifier_identity_digest",
             "tested_model_digest",
             "verifier_model_digest",
             "environment_digest",
@@ -4953,6 +4955,7 @@ class KrcnApplicationService:
                         "evaluation",
                         "expected_registry_digest",
                         "rollback_target_ref",
+                        "approver_identity_digest",
                     },
                     optional={"supersedes_ref"},
                 )
@@ -4983,6 +4986,9 @@ class KrcnApplicationService:
                     rollback_target_ref=_string_argument(
                         request.arguments, "rollback_target_ref"
                     ),
+                    approver_identity_digest=_string_argument(
+                        request.arguments, "approver_identity_digest"
+                    ),
                     supersedes_ref=supersedes,
                 )
             elif change_kind == "transition":
@@ -4993,6 +4999,7 @@ class KrcnApplicationService:
                         "current",
                         "to_state",
                         "rollback_target_ref",
+                        "approver_identity_digest",
                     },
                     optional={"supersedes_ref"},
                 )
@@ -5009,6 +5016,9 @@ class KrcnApplicationService:
                     to_state=_string_argument(request.arguments, "to_state"),
                     rollback_target_ref=_string_argument(
                         request.arguments, "rollback_target_ref"
+                    ),
+                    approver_identity_digest=_string_argument(
+                        request.arguments, "approver_identity_digest"
                     ),
                     supersedes_ref=supersedes,
                 )

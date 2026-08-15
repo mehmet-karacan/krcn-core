@@ -10,11 +10,14 @@
     "evaluation_id",
     "candidate_id",
     "candidate_digest",
+    "proposer_identity_digest",
     "state",
     "project_fixture_digest",
     "evaluation_run_digest",
     "evaluator_ref",
     "verifier_ref",
+    "evaluator_identity_digest",
+    "verifier_identity_digest",
     "tested_model_digest",
     "verifier_model_digest",
     "environment_digest",
@@ -42,6 +45,9 @@
     "candidate_digest": {
       "$ref": "#/$defs/digest"
     },
+    "proposer_identity_digest": {
+      "$ref": "#/$defs/digest"
+    },
     "state": {
       "const": "evaluated"
     },
@@ -56,6 +62,12 @@
     },
     "verifier_ref": {
       "$ref": "#/$defs/ref"
+    },
+    "evaluator_identity_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "verifier_identity_digest": {
+      "$ref": "#/$defs/digest"
     },
     "tested_model_digest": {
       "$ref": "#/$defs/digest"

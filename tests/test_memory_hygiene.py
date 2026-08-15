@@ -25,6 +25,7 @@ from krcn_core.memory_hygiene import (  # noqa: E402
     build_memory_metadata_overlay,
     build_research_evidence_metadata,
     group_research_evidence_duplicates,
+    group_research_evidence_versions,
     load_memory_hygiene_policy,
     parse_context_effectiveness,
     parse_memory_hygiene_report,
@@ -141,6 +142,51 @@ class MemoryHygieneTests(unittest.TestCase):
         self.assertEqual(1, groups[0]["canonical_evidence_weight"])
         self.assertEqual(0, groups[0]["duplicate_of_suggestions"][0]["evidence_weight"])
         self.assertEqual("avenox-video-28", groups[0]["duplicate_of_suggestions"][0]["duplicate_of"])
+        self.assertEqual("2026-08-15T00:00:00Z", groups[0]["canonical_observed_at"])
+
+    def test_observed_time_selects_duplicate_canonical_not_alias_order(self) -> None:
+        later_alias = build_research_evidence_metadata(
+            evidence_id="aaa-later-alias",
+            canonical_source_ref="video:shared-source",
+            content_digest="a" * 64,
+            observed_at="2026-08-16T09:00:00Z",
+        )
+        earlier_alias = build_research_evidence_metadata(
+            evidence_id="zzz-earlier-alias",
+            canonical_source_ref="mirror:other-source",
+            content_digest="a" * 64,
+            observed_at="2026-08-16T08:00:00Z",
+        )
+        group = group_research_evidence_duplicates([later_alias, earlier_alias])[0]
+        self.assertEqual("zzz-earlier-alias", group["canonical_evidence_id"])
+        self.assertEqual("aaa-later-alias", group["duplicate_of_suggestions"][0]["evidence_id"])
+
+    def test_same_source_different_content_is_version_conflict_with_full_weight(self) -> None:
+        original = build_research_evidence_metadata(
+            evidence_id="source-version-one",
+            canonical_source_ref="video:versioned-source",
+            content_digest="a" * 64,
+            observed_at="2026-08-15T08:00:00Z",
+        )
+        changed = build_research_evidence_metadata(
+            evidence_id="source-version-two",
+            canonical_source_ref="video:versioned-source",
+            content_digest="b" * 64,
+            observed_at="2026-08-16T08:00:00Z",
+        )
+        self.assertEqual((), group_research_evidence_duplicates([changed, original]))
+        versions = group_research_evidence_versions([changed, original])
+        self.assertEqual(1, len(versions))
+        self.assertEqual("source-version-conflict", versions[0]["relation"])
+        self.assertEqual("2026-08-15T08:00:00Z", versions[0]["observed_from"])
+        self.assertEqual("2026-08-16T08:00:00Z", versions[0]["observed_until"])
+        self.assertEqual([1, 1], [item["evidence_weight"] for item in versions[0]["versions"]])
+        report = build_memory_hygiene_report(
+            self.policy, [], [changed, original], [],
+            report_id="version-report", as_of="2026-08-16T09:00:00Z",
+        )
+        self.assertEqual([], report["research_duplicate_groups"])
+        self.assertEqual(list(versions), report["research_source_version_groups"])
 
     def test_context_effectiveness_measures_recall_use_noise_success_and_compaction(self) -> None:
         passed = self.context()

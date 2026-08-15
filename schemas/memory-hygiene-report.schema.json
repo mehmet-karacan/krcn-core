@@ -20,6 +20,7 @@
     "retention_candidate_ids",
     "not_yet_valid_memory_ids",
     "research_duplicate_groups",
+    "research_source_version_groups",
     "context_effectiveness",
     "action_suggestions",
     "invariants",
@@ -76,6 +77,12 @@
       "type": "array",
       "items": {
         "$ref": "#/$defs/researchDuplicateGroup"
+      }
+    },
+    "research_source_version_groups": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/researchSourceVersionGroup"
       }
     },
     "context_effectiveness": {
@@ -209,12 +216,21 @@
       "additionalProperties": false,
       "required": [
         "canonical_evidence_id",
+        "canonical_observed_at",
+        "content_digest",
         "duplicate_of_suggestions",
         "canonical_evidence_weight"
       ],
       "properties": {
         "canonical_evidence_id": {
           "$ref": "#/$defs/id"
+        },
+        "canonical_observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "content_digest": {
+          "$ref": "#/$defs/digest"
         },
         "duplicate_of_suggestions": {
           "type": "array",
@@ -234,6 +250,7 @@
       "required": [
         "evidence_id",
         "duplicate_of",
+        "observed_at",
         "evidence_weight"
       ],
       "properties": {
@@ -243,8 +260,71 @@
         "duplicate_of": {
           "$ref": "#/$defs/id"
         },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
         "evidence_weight": {
           "const": 0
+        }
+      }
+    },
+    "researchSourceVersionGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_source_ref",
+        "relation",
+        "observed_from",
+        "observed_until",
+        "versions"
+      ],
+      "properties": {
+        "canonical_source_ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "relation": {
+          "const": "source-version-conflict"
+        },
+        "observed_from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "observed_until": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "versions": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "#/$defs/researchSourceVersion"
+          }
+        }
+      }
+    },
+    "researchSourceVersion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "content_digest",
+        "evidence_id",
+        "observed_at",
+        "evidence_weight"
+      ],
+      "properties": {
+        "content_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "evidence_id": {
+          "$ref": "#/$defs/id"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "evidence_weight": {
+          "const": 1
         }
       }
     },

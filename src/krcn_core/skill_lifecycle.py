@@ -191,6 +191,7 @@ class SkillCandidate:
     candidate_id: str
     skill_id: str
     proposed_by_ref: str
+    proposer_identity_digest: str
     source_refs: tuple[str, ...]
     source_digest: str
     repetition_digests: tuple[str, ...]
@@ -205,6 +206,7 @@ class SkillCandidate:
             "skill_id": self.skill_id,
             "state": "candidate",
             "proposed_by_ref": self.proposed_by_ref,
+            "proposer_identity_digest": self.proposer_identity_digest,
             "source_refs": list(self.source_refs),
             "source_digest": self.source_digest,
             "repetition_digests": list(self.repetition_digests),
@@ -218,6 +220,7 @@ def skill_candidate_digest(
     candidate_id: str,
     skill_id: str,
     proposed_by_ref: str,
+    proposer_identity_digest: str,
     source_refs: tuple[str, ...],
     source_digest: str,
     repetition_digests: tuple[str, ...],
@@ -229,6 +232,7 @@ def skill_candidate_digest(
             "skill_id": skill_id,
             "state": "candidate",
             "proposed_by_ref": proposed_by_ref,
+            "proposer_identity_digest": proposer_identity_digest,
             "source_refs": list(source_refs),
             "source_digest": source_digest,
             "repetition_digests": list(repetition_digests),
@@ -243,6 +247,7 @@ def build_skill_candidate(
     candidate_id: str,
     skill_id: str,
     proposed_by_ref: str,
+    proposer_identity_digest: str,
     source_refs: Iterable[str],
     source_digest: str,
     repetition_digests: Iterable[str],
@@ -257,6 +262,7 @@ def build_skill_candidate(
         "skill_id": skill_id,
         "state": "candidate",
         "proposed_by_ref": proposed_by_ref,
+        "proposer_identity_digest": proposer_identity_digest,
         "source_refs": list(refs),
         "source_digest": source_digest,
         "repetition_digests": list(repetitions),
@@ -265,6 +271,7 @@ def build_skill_candidate(
             candidate_id,
             skill_id,
             proposed_by_ref,
+            proposer_identity_digest,
             refs,
             source_digest,
             repetitions,
@@ -278,7 +285,7 @@ def build_skill_candidate(
 def parse_skill_candidate(payload: object) -> SkillCandidate:
     expected = {
         "schema_ref", "schema_version", "candidate_id", "skill_id", "state",
-        "proposed_by_ref", "source_refs", "source_digest", "repetition_digests",
+        "proposed_by_ref", "proposer_identity_digest", "source_refs", "source_digest", "repetition_digests",
         "proposer_model_digest", "candidate_digest", "invariants",
     }
     data = _strict(payload, expected, "skill candidate")
@@ -292,19 +299,20 @@ def parse_skill_candidate(payload: object) -> SkillCandidate:
     candidate_id = _identifier(data.get("candidate_id"), "candidate_id")
     skill_id = _identifier(data.get("skill_id"), "skill_id")
     proposed_by_ref = _logical_ref(data.get("proposed_by_ref"), "proposed_by_ref")
+    proposer_identity_digest = _sha256(data.get("proposer_identity_digest"), "proposer_identity_digest")
     source_refs = _sorted_unique_refs(data.get("source_refs"), "source_refs")
     source_digest = _sha256(data.get("source_digest"), "source_digest")
     repetitions = _sorted_unique_digests(data.get("repetition_digests"), "repetition_digests")
     proposer_model_digest = _sha256(data.get("proposer_model_digest"), "proposer_model_digest")
     candidate_digest = _sha256(data.get("candidate_digest"), "candidate_digest")
     expected_digest = skill_candidate_digest(
-        candidate_id, skill_id, proposed_by_ref, source_refs, source_digest,
+        candidate_id, skill_id, proposed_by_ref, proposer_identity_digest, source_refs, source_digest,
         repetitions, proposer_model_digest,
     )
     if candidate_digest != expected_digest:
         raise SkillLifecycleError("skill candidate digest does not match")
     return SkillCandidate(
-        candidate_id, skill_id, proposed_by_ref, source_refs, source_digest,
+        candidate_id, skill_id, proposed_by_ref, proposer_identity_digest, source_refs, source_digest,
         repetitions, proposer_model_digest, candidate_digest,
     )
 
@@ -351,10 +359,13 @@ class SkillEvaluation:
     evaluation_id: str
     candidate_id: str
     candidate_digest: str
+    proposer_identity_digest: str
     project_fixture_digest: str
     evaluation_run_digest: str
     evaluator_ref: str
     verifier_ref: str
+    evaluator_identity_digest: str
+    verifier_identity_digest: str
     tested_model_digest: str
     verifier_model_digest: str
     environment_digest: str
@@ -372,11 +383,14 @@ class SkillEvaluation:
             "evaluation_id": self.evaluation_id,
             "candidate_id": self.candidate_id,
             "candidate_digest": self.candidate_digest,
+            "proposer_identity_digest": self.proposer_identity_digest,
             "state": "evaluated",
             "project_fixture_digest": self.project_fixture_digest,
             "evaluation_run_digest": self.evaluation_run_digest,
             "evaluator_ref": self.evaluator_ref,
             "verifier_ref": self.verifier_ref,
+            "evaluator_identity_digest": self.evaluator_identity_digest,
+            "verifier_identity_digest": self.verifier_identity_digest,
             "tested_model_digest": self.tested_model_digest,
             "verifier_model_digest": self.verifier_model_digest,
             "environment_digest": self.environment_digest,
@@ -403,6 +417,8 @@ def build_skill_evaluation(
     evaluation_run_digest: str,
     evaluator_ref: str,
     verifier_ref: str,
+    evaluator_identity_digest: str,
+    verifier_identity_digest: str,
     tested_model_digest: str,
     verifier_model_digest: str,
     environment_digest: str,
@@ -412,8 +428,15 @@ def build_skill_evaluation(
     evaluated_at: str,
 ) -> SkillEvaluation:
     candidate = parse_skill_candidate(candidate.as_payload())
-    if evaluator_ref == verifier_ref:
+    evaluator_identity_digest = _sha256(evaluator_identity_digest, "evaluator_identity_digest")
+    verifier_identity_digest = _sha256(verifier_identity_digest, "verifier_identity_digest")
+    if evaluator_ref == verifier_ref or evaluator_identity_digest == verifier_identity_digest:
         raise SkillLifecycleError("independent verifier identity is required")
+    if candidate.proposer_identity_digest in {
+        evaluator_identity_digest,
+        verifier_identity_digest,
+    }:
+        raise SkillLifecycleError("proposer, evaluator, and verifier identities must be distinct")
     if tested_model_digest == verifier_model_digest:
         raise SkillLifecycleError("independent verifier model is required")
     outcome = "passed" if (
@@ -428,11 +451,14 @@ def build_skill_evaluation(
         "evaluation_id": evaluation_id,
         "candidate_id": candidate.candidate_id,
         "candidate_digest": candidate.candidate_digest,
+        "proposer_identity_digest": candidate.proposer_identity_digest,
         "state": "evaluated",
         "project_fixture_digest": project_fixture_digest,
         "evaluation_run_digest": evaluation_run_digest,
         "evaluator_ref": evaluator_ref,
         "verifier_ref": verifier_ref,
+        "evaluator_identity_digest": evaluator_identity_digest,
+        "verifier_identity_digest": verifier_identity_digest,
         "tested_model_digest": tested_model_digest,
         "verifier_model_digest": verifier_model_digest,
         "environment_digest": environment_digest,
@@ -450,8 +476,9 @@ def build_skill_evaluation(
 def parse_skill_evaluation(payload: object) -> SkillEvaluation:
     expected = {
         "schema_ref", "schema_version", "evaluation_id", "candidate_id",
-        "candidate_digest", "state", "project_fixture_digest",
+        "candidate_digest", "proposer_identity_digest", "state", "project_fixture_digest",
         "evaluation_run_digest", "evaluator_ref", "verifier_ref",
+        "evaluator_identity_digest", "verifier_identity_digest",
         "tested_model_digest", "verifier_model_digest", "environment_digest",
         "trial_count", "passed_trials", "score_basis_points", "outcome",
         "evaluated_at", "evaluation_digest", "invariants",
@@ -468,6 +495,7 @@ def parse_skill_evaluation(payload: object) -> SkillEvaluation:
     evaluation_id = _identifier(data.get("evaluation_id"), "evaluation_id")
     candidate_id = _identifier(data.get("candidate_id"), "candidate_id")
     candidate_digest = _sha256(data.get("candidate_digest"), "candidate_digest")
+    proposer_identity_digest = _sha256(data.get("proposer_identity_digest"), "proposer_identity_digest")
     digests = [
         _sha256(data.get(name), name)
         for name in (
@@ -477,8 +505,12 @@ def parse_skill_evaluation(payload: object) -> SkillEvaluation:
     ]
     evaluator_ref = _logical_ref(data.get("evaluator_ref"), "evaluator_ref")
     verifier_ref = _logical_ref(data.get("verifier_ref"), "verifier_ref")
-    if evaluator_ref == verifier_ref:
+    evaluator_identity_digest = _sha256(data.get("evaluator_identity_digest"), "evaluator_identity_digest")
+    verifier_identity_digest = _sha256(data.get("verifier_identity_digest"), "verifier_identity_digest")
+    if evaluator_ref == verifier_ref or evaluator_identity_digest == verifier_identity_digest:
         raise SkillLifecycleError("independent verifier identity is required")
+    if len({proposer_identity_digest, evaluator_identity_digest, verifier_identity_digest}) != 3:
+        raise SkillLifecycleError("proposer, evaluator, and verifier identities must be distinct")
     if digests[2] == digests[3]:
         raise SkillLifecycleError("independent verifier model is required")
     trial_count = data.get("trial_count")
@@ -496,8 +528,10 @@ def parse_skill_evaluation(payload: object) -> SkillEvaluation:
     if evaluation_digest != _digest(_evaluation_identity(data)):
         raise SkillLifecycleError("skill evaluation digest does not match")
     return SkillEvaluation(
-        evaluation_id, candidate_id, candidate_digest, digests[0], digests[1],
-        evaluator_ref, verifier_ref, digests[2], digests[3], digests[4],
+        evaluation_id, candidate_id, candidate_digest, proposer_identity_digest,
+        digests[0], digests[1],
+        evaluator_ref, verifier_ref, evaluator_identity_digest,
+        verifier_identity_digest, digests[2], digests[3], digests[4],
         trial_count, passed_trials, score, str(data["outcome"]), evaluated_at,
         evaluation_digest,
     )
@@ -510,6 +544,10 @@ class SkillRegistryChangePlan:
     candidate_digest: str
     evaluation_digest: str
     proposed_by_ref: str
+    proposer_identity_digest: str
+    evaluator_identity_digest: str
+    verifier_identity_digest: str
+    approver_identity_digest: str
     from_state: str
     to_state: str
     expected_registry_digest: str | None
@@ -528,6 +566,10 @@ class SkillRegistryChangePlan:
             "candidate_digest": self.candidate_digest,
             "evaluation_digest": self.evaluation_digest,
             "proposed_by_ref": self.proposed_by_ref,
+            "proposer_identity_digest": self.proposer_identity_digest,
+            "evaluator_identity_digest": self.evaluator_identity_digest,
+            "verifier_identity_digest": self.verifier_identity_digest,
+            "approver_identity_digest": self.approver_identity_digest,
             "state": "approval-required",
             "from_state": self.from_state,
             "to_state": self.to_state,
@@ -553,6 +595,7 @@ def prepare_skill_activation(
     *,
     expected_registry_digest: str | None,
     rollback_target_ref: str,
+    approver_identity_digest: str,
     supersedes_ref: str | None = None,
 ) -> SkillRegistryChangePlan:
     """Prepare, but never apply, an exact registry mutation plan."""
@@ -561,6 +604,8 @@ def prepare_skill_activation(
     evaluation = parse_skill_evaluation(evaluation.as_payload())
     if evaluation.candidate_id != candidate.candidate_id or evaluation.candidate_digest != candidate.candidate_digest:
         raise SkillLifecycleError("evaluation does not bind the candidate")
+    if evaluation.proposer_identity_digest != candidate.proposer_identity_digest:
+        raise SkillLifecycleError("evaluation proposer identity does not bind the candidate")
     if evaluation.outcome != "passed":
         raise SkillLifecycleError("failed evaluation cannot request approval")
     if (
@@ -573,6 +618,14 @@ def prepare_skill_activation(
         raise SkillLifecycleError("insufficient evaluation evidence")
     rollback = _logical_ref(rollback_target_ref, "rollback_target_ref")
     supersedes = None if supersedes_ref is None else _logical_ref(supersedes_ref, "supersedes_ref")
+    approver_identity_digest = _sha256(approver_identity_digest, "approver_identity_digest")
+    if len({
+        candidate.proposer_identity_digest,
+        evaluation.evaluator_identity_digest,
+        evaluation.verifier_identity_digest,
+        approver_identity_digest,
+    }) != 4:
+        raise SkillLifecycleError("proposer, evaluator, verifier, and approver identities must be distinct")
     previous = None if expected_registry_digest is None else _sha256(expected_registry_digest, "expected_registry_digest")
     registry_identity = {
         "skill_id": candidate.skill_id,
@@ -601,6 +654,10 @@ def prepare_skill_activation(
         "candidate_digest": candidate.candidate_digest,
         "evaluation_digest": evaluation.evaluation_digest,
         "proposed_by_ref": candidate.proposed_by_ref,
+        "proposer_identity_digest": candidate.proposer_identity_digest,
+        "evaluator_identity_digest": evaluation.evaluator_identity_digest,
+        "verifier_identity_digest": evaluation.verifier_identity_digest,
+        "approver_identity_digest": approver_identity_digest,
         "state": "approval-required",
         "from_state": "evaluated",
         "to_state": "active",
@@ -659,7 +716,9 @@ def _parse_mutation(payload: object) -> MutationPlan:
 def parse_skill_registry_change_plan(payload: object) -> SkillRegistryChangePlan:
     expected = {
         "schema_ref", "schema_version", "skill_id", "candidate_id",
-        "candidate_digest", "evaluation_digest", "proposed_by_ref", "state",
+        "candidate_digest", "evaluation_digest", "proposed_by_ref",
+        "proposer_identity_digest", "evaluator_identity_digest",
+        "verifier_identity_digest", "approver_identity_digest", "state",
         "from_state", "to_state", "expected_registry_digest",
         "registry_record_digest", "rollback_target_ref", "supersedes_ref",
         "mutation", "plan_digest", "invariants",
@@ -677,6 +736,15 @@ def parse_skill_registry_change_plan(payload: object) -> SkillRegistryChangePlan
     candidate_digest = _sha256(data.get("candidate_digest"), "candidate_digest")
     evaluation_digest = _sha256(data.get("evaluation_digest"), "evaluation_digest")
     proposed_by_ref = _logical_ref(data.get("proposed_by_ref"), "proposed_by_ref")
+    identity_digests = tuple(
+        _sha256(data.get(name), name)
+        for name in (
+            "proposer_identity_digest", "evaluator_identity_digest",
+            "verifier_identity_digest", "approver_identity_digest",
+        )
+    )
+    if len(set(identity_digests)) != 4:
+        raise SkillLifecycleError("proposer, evaluator, verifier, and approver identities must be distinct")
     from_state, to_state = data.get("from_state"), data.get("to_state")
     if from_state not in STATES or to_state not in STATES or (from_state, to_state) not in {
         ("evaluated", "active"), ("active", "deprecated"),
@@ -702,7 +770,8 @@ def parse_skill_registry_change_plan(payload: object) -> SkillRegistryChangePlan
         raise SkillLifecycleError("skill registry plan digest does not match")
     return SkillRegistryChangePlan(
         skill_id, candidate_id, candidate_digest, evaluation_digest,
-        proposed_by_ref, str(from_state), str(to_state), previous,
+        proposed_by_ref, identity_digests[0], identity_digests[1],
+        identity_digests[2], identity_digests[3], str(from_state), str(to_state), previous,
         registry_digest, rollback, supersedes, mutation, plan_digest,
     )
 
@@ -713,6 +782,11 @@ class SkillLifecycleRecord:
     candidate_id: str
     candidate_digest: str
     evaluation_digest: str
+    proposed_by_ref: str
+    proposer_identity_digest: str
+    evaluator_identity_digest: str
+    verifier_identity_digest: str
+    approver_identity_digest: str
     state: str
     previous_state: str
     registry_record_digest: str
@@ -730,6 +804,11 @@ class SkillLifecycleRecord:
             "candidate_id": self.candidate_id,
             "candidate_digest": self.candidate_digest,
             "evaluation_digest": self.evaluation_digest,
+            "proposed_by_ref": self.proposed_by_ref,
+            "proposer_identity_digest": self.proposer_identity_digest,
+            "evaluator_identity_digest": self.evaluator_identity_digest,
+            "verifier_identity_digest": self.verifier_identity_digest,
+            "approver_identity_digest": self.approver_identity_digest,
             "state": self.state,
             "previous_state": self.previous_state,
             "registry_record_digest": self.registry_record_digest,
@@ -751,13 +830,15 @@ def finalize_skill_registry_change(
     authorization: MutationAuthorization,
     *,
     changed_by_ref: str,
+    changed_by_identity_digest: str,
 ) -> SkillLifecycleRecord:
     """Finalize lifecycle metadata only; the registry owner performs the write."""
 
     plan = parse_skill_registry_change_plan(plan.as_payload())
     actor = _logical_ref(changed_by_ref, "changed_by_ref")
-    if actor == plan.proposed_by_ref:
-        raise SkillLifecycleError("candidate proposer cannot self-promote or retire a skill")
+    actor_identity_digest = _sha256(changed_by_identity_digest, "changed_by_identity_digest")
+    if actor_identity_digest != plan.approver_identity_digest:
+        raise SkillLifecycleError("finalizing actor does not match the approved stable identity")
     if (
         authorization.plan != plan.mutation
         or not authorization.dry_run_verified
@@ -771,6 +852,11 @@ def finalize_skill_registry_change(
         "candidate_id": plan.candidate_id,
         "candidate_digest": plan.candidate_digest,
         "evaluation_digest": plan.evaluation_digest,
+        "proposed_by_ref": plan.proposed_by_ref,
+        "proposer_identity_digest": plan.proposer_identity_digest,
+        "evaluator_identity_digest": plan.evaluator_identity_digest,
+        "verifier_identity_digest": plan.verifier_identity_digest,
+        "approver_identity_digest": plan.approver_identity_digest,
         "state": plan.to_state,
         "previous_state": plan.from_state,
         "registry_record_digest": plan.registry_record_digest,
@@ -787,7 +873,9 @@ def finalize_skill_registry_change(
 def parse_skill_lifecycle_record(payload: object) -> SkillLifecycleRecord:
     expected = {
         "schema_ref", "schema_version", "skill_id", "candidate_id",
-        "candidate_digest", "evaluation_digest", "state", "previous_state",
+        "candidate_digest", "evaluation_digest", "proposed_by_ref",
+        "proposer_identity_digest", "evaluator_identity_digest",
+        "verifier_identity_digest", "approver_identity_digest", "state", "previous_state",
         "registry_record_digest", "registry_plan_id", "changed_by_ref",
         "rollback_target_ref", "supersedes_ref", "lifecycle_digest", "invariants",
     }
@@ -809,11 +897,21 @@ def parse_skill_lifecycle_record(payload: object) -> SkillLifecycleRecord:
         _identifier(data.get("candidate_id"), "candidate_id"),
         _sha256(data.get("candidate_digest"), "candidate_digest"),
         _sha256(data.get("evaluation_digest"), "evaluation_digest"),
+        _logical_ref(data.get("proposed_by_ref"), "proposed_by_ref"),
         _sha256(data.get("registry_record_digest"), "registry_record_digest"),
         _sha256(data.get("registry_plan_id"), "registry_plan_id"),
         _logical_ref(data.get("changed_by_ref"), "changed_by_ref"),
         _logical_ref(data.get("rollback_target_ref"), "rollback_target_ref"),
     )
+    identity_digests = tuple(
+        _sha256(data.get(name), name)
+        for name in (
+            "proposer_identity_digest", "evaluator_identity_digest",
+            "verifier_identity_digest", "approver_identity_digest",
+        )
+    )
+    if len(set(identity_digests)) != 4:
+        raise SkillLifecycleError("lifecycle actor identities must be distinct")
     supersedes = data.get("supersedes_ref")
     if supersedes is not None:
         supersedes = _logical_ref(supersedes, "supersedes_ref")
@@ -821,8 +919,10 @@ def parse_skill_lifecycle_record(payload: object) -> SkillLifecycleRecord:
     if lifecycle_digest != _digest(_lifecycle_identity(data)):
         raise SkillLifecycleError("skill lifecycle digest does not match")
     return SkillLifecycleRecord(
-        values[0], values[1], values[2], values[3], str(state), str(previous),
-        values[4], values[5], values[6], values[7], supersedes, lifecycle_digest,
+        values[0], values[1], values[2], values[3], values[4],
+        identity_digests[0], identity_digests[1], identity_digests[2],
+        identity_digests[3], str(state), str(previous), values[5], values[6],
+        values[7], values[8], supersedes, lifecycle_digest,
     )
 
 
@@ -832,6 +932,7 @@ def prepare_skill_state_change(
     *,
     to_state: str,
     rollback_target_ref: str,
+    approver_identity_digest: str,
     supersedes_ref: str | None = None,
 ) -> SkillRegistryChangePlan:
     current = parse_skill_lifecycle_record(current.as_payload())
@@ -841,6 +942,13 @@ def prepare_skill_state_change(
         raise SkillLifecycleError("skill lifecycle transition is invalid")
     rollback = _logical_ref(rollback_target_ref, "rollback_target_ref")
     supersedes = None if supersedes_ref is None else _logical_ref(supersedes_ref, "supersedes_ref")
+    approver_identity_digest = _sha256(approver_identity_digest, "approver_identity_digest")
+    if approver_identity_digest in {
+        current.proposer_identity_digest,
+        current.evaluator_identity_digest,
+        current.verifier_identity_digest,
+    }:
+        raise SkillLifecycleError("proposer, evaluator, verifier, and approver identities must be distinct")
     registry_digest = _digest(
         {
             "skill_id": current.skill_id,
@@ -868,7 +976,11 @@ def prepare_skill_state_change(
         "candidate_id": current.candidate_id,
         "candidate_digest": current.candidate_digest,
         "evaluation_digest": current.evaluation_digest,
-        "proposed_by_ref": current.changed_by_ref,
+        "proposed_by_ref": current.proposed_by_ref,
+        "proposer_identity_digest": current.proposer_identity_digest,
+        "evaluator_identity_digest": current.evaluator_identity_digest,
+        "verifier_identity_digest": current.verifier_identity_digest,
+        "approver_identity_digest": approver_identity_digest,
         "state": "approval-required",
         "from_state": current.state,
         "to_state": to_state,

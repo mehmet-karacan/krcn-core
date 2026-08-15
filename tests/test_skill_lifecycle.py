@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import sys
 import unittest
@@ -19,6 +20,7 @@ from krcn_core.mutation_gate import (  # noqa: E402
     OwnershipResolver,
     authorize_mutation,
 )
+from krcn_core.information_records import canonical_json  # noqa: E402
 from krcn_core.skill_lifecycle import (  # noqa: E402
     SkillLifecycleError,
     build_skill_candidate,
@@ -46,6 +48,7 @@ class SkillLifecycleTests(unittest.TestCase):
             candidate_id=candidate_id,
             skill_id="context-curator",
             proposed_by_ref=f"actor:{candidate_id}",
+            proposer_identity_digest="4" * 64,
             source_refs=["research:report-one", "work:repeat-one"],
             source_digest=source * 64,
             repetition_digests=["b" * 64, "c" * 64],
@@ -62,6 +65,8 @@ class SkillLifecycleTests(unittest.TestCase):
             evaluation_run_digest="f" * 64,
             evaluator_ref="actor:evaluator",
             verifier_ref="actor:verifier",
+            evaluator_identity_digest="5" * 64,
+            verifier_identity_digest="6" * 64,
             tested_model_digest="1" * 64,
             verifier_model_digest="2" * 64,
             environment_digest="3" * 64,
@@ -81,6 +86,7 @@ class SkillLifecycleTests(unittest.TestCase):
             evaluation,
             expected_registry_digest=None,
             rollback_target_ref="registry:empty",
+            approver_identity_digest="7" * 64,
         )
         return candidate, evaluation, plan
 
@@ -123,6 +129,7 @@ class SkillLifecycleTests(unittest.TestCase):
                 candidate_id="bad-candidate",
                 skill_id="context-curator",
                 proposed_by_ref="actor:C:" + chr(92) + "private" + chr(92) + "file",
+                proposer_identity_digest="4" * 64,
                 source_refs=["research:one"],
                 source_digest="a" * 64,
                 repetition_digests=["b" * 64],
@@ -133,6 +140,7 @@ class SkillLifecycleTests(unittest.TestCase):
                 candidate_id="bad-candidate",
                 skill_id="context-curator",
                 proposed_by_ref="actor:token=abcdefgh",
+                proposer_identity_digest="4" * 64,
                 source_refs=["research:one"],
                 source_digest="a" * 64,
                 repetition_digests=["b" * 64],
@@ -146,6 +154,7 @@ class SkillLifecycleTests(unittest.TestCase):
             candidate_id="candidate-three",
             skill_id="context-curator",
             proposed_by_ref="actor:three",
+            proposer_identity_digest="4" * 64,
             source_refs=["research:other"],
             source_digest="9" * 64,
             repetition_digests=["8" * 64],
@@ -169,6 +178,8 @@ class SkillLifecycleTests(unittest.TestCase):
             tested_model_digest="1" * 64,
             verifier_model_digest="2" * 64,
             environment_digest="3" * 64,
+            evaluator_identity_digest="5" * 64,
+            verifier_identity_digest="6" * 64,
             trial_count=3,
             passed_trials=3,
             score_basis_points=9500,
@@ -181,6 +192,16 @@ class SkillLifecycleTests(unittest.TestCase):
                 evaluator_ref="actor:same",
                 verifier_ref="actor:same",
                 **arguments,
+            )
+        alias_arguments = dict(arguments)
+        alias_arguments["evaluator_identity_digest"] = candidate.proposer_identity_digest
+        with self.assertRaisesRegex(SkillLifecycleError, "must be distinct"):
+            build_skill_evaluation(
+                self.policy,
+                candidate,
+                evaluator_ref="actor:proposer-alias",
+                verifier_ref="actor:verifier",
+                **alias_arguments,
             )
         arguments["verifier_model_digest"] = arguments["tested_model_digest"]
         with self.assertRaisesRegex(SkillLifecycleError, "verifier model"):
@@ -209,10 +230,11 @@ class SkillLifecycleTests(unittest.TestCase):
                     evaluation,
                     expected_registry_digest=None,
                     rollback_target_ref="registry:empty",
+                    approver_identity_digest="7" * 64,
                 )
 
     def test_activation_is_exact_approved_and_candidate_cannot_self_promote(self) -> None:
-        candidate, _, plan = self.plan()
+        candidate, evaluation, plan = self.plan()
         self.assertEqual("approval-required", plan.as_payload()["state"])
         self.assertTrue(plan.mutation.approval_required)
         self.assertEqual("user-data", plan.mutation.ownership)
@@ -222,12 +244,37 @@ class SkillLifecycleTests(unittest.TestCase):
                 dry_run=DryRunEvidence(plan.mutation.plan_id, verified=True),
             )
         authorization = self.authorize(plan)
-        with self.assertRaisesRegex(SkillLifecycleError, "self-promote"):
+        with self.assertRaisesRegex(SkillLifecycleError, "stable identity"):
             finalize_skill_registry_change(
-                plan, authorization, changed_by_ref=candidate.proposed_by_ref
+                plan,
+                authorization,
+                changed_by_ref="actor:proposer-alias",
+                changed_by_identity_digest=candidate.proposer_identity_digest,
             )
+        with self.assertRaisesRegex(SkillLifecycleError, "must be distinct"):
+            prepare_skill_activation(
+                self.resolver,
+                self.policy,
+                candidate,
+                evaluation,
+                expected_registry_digest=None,
+                rollback_target_ref="registry:empty",
+                approver_identity_digest=candidate.proposer_identity_digest,
+            )
+        alias_plan = copy.deepcopy(plan.as_payload())
+        alias_plan["approver_identity_digest"] = candidate.proposer_identity_digest
+        identity = {
+            key: value for key, value in alias_plan.items()
+            if key not in {"schema_ref", "schema_version", "plan_digest"}
+        }
+        alias_plan["plan_digest"] = hashlib.sha256(canonical_json(identity)).hexdigest()
+        with self.assertRaisesRegex(SkillLifecycleError, "must be distinct"):
+            parse_skill_registry_change_plan(alias_plan)
         active = finalize_skill_registry_change(
-            plan, authorization, changed_by_ref="actor:registry-owner"
+            plan,
+            authorization,
+            changed_by_ref="actor:registry-owner",
+            changed_by_identity_digest="7" * 64,
         )
         self.assertEqual("active", active.state)
         self.assertFalse(active.as_payload()["invariants"]["grants_authority"])
@@ -239,7 +286,10 @@ class SkillLifecycleTests(unittest.TestCase):
         with self.assertRaisesRegex(SkillLifecycleError, "digest"):
             parse_skill_registry_change_plan(tampered)
         active = finalize_skill_registry_change(
-            plan, self.authorize(plan), changed_by_ref="actor:registry-owner"
+            plan,
+            self.authorize(plan),
+            changed_by_ref="actor:registry-owner",
+            changed_by_identity_digest="7" * 64,
         )
         tampered_record = copy.deepcopy(active.as_payload())
         tampered_record["state"] = "retired"
@@ -252,18 +302,21 @@ class SkillLifecycleTests(unittest.TestCase):
             activation,
             self.authorize(activation),
             changed_by_ref="actor:registry-owner",
+            changed_by_identity_digest="7" * 64,
         )
         deprecation = prepare_skill_state_change(
             self.resolver,
             active,
             to_state="deprecated",
             rollback_target_ref="skill:context-curator@active",
+            approver_identity_digest="7" * 64,
             supersedes_ref="skill:context-curator-v2",
         )
         deprecated = finalize_skill_registry_change(
             deprecation,
             self.authorize(deprecation),
             changed_by_ref="actor:lifecycle-reviewer",
+            changed_by_identity_digest="7" * 64,
         )
         self.assertEqual("deprecated", deprecated.state)
         retirement = prepare_skill_state_change(
@@ -271,18 +324,23 @@ class SkillLifecycleTests(unittest.TestCase):
             deprecated,
             to_state="retired",
             rollback_target_ref="skill:context-curator@deprecated",
+            approver_identity_digest="7" * 64,
         )
         retired = finalize_skill_registry_change(
             retirement,
             self.authorize(retirement),
             changed_by_ref="actor:registry-owner",
+            changed_by_identity_digest="7" * 64,
         )
         self.assertEqual("retired", retired.state)
 
     def test_public_contracts_match_strict_json_schemas(self) -> None:
         candidate, evaluation, plan = self.plan()
         active = finalize_skill_registry_change(
-            plan, self.authorize(plan), changed_by_ref="actor:registry-owner"
+            plan,
+            self.authorize(plan),
+            changed_by_ref="actor:registry-owner",
+            changed_by_identity_digest="7" * 64,
         )
         payloads = (
             ("skill-lifecycle-policy.schema.json", json.loads((REPO_ROOT / "config" / "skill-lifecycle-policy.json").read_text(encoding="utf-8"))),

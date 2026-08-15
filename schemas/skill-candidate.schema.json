@@ -11,6 +11,7 @@
     "skill_id",
     "state",
     "proposed_by_ref",
+    "proposer_identity_digest",
     "source_refs",
     "source_digest",
     "repetition_digests",
@@ -36,6 +37,9 @@
     },
     "proposed_by_ref": {
       "$ref": "#/$defs/ref"
+    },
+    "proposer_identity_digest": {
+      "$ref": "#/$defs/digest"
     },
     "source_refs": {
       "type": "array",
