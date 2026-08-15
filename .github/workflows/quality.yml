@@ -1,14 +1,17 @@
 name: KRCN Core quality
 
-# Required gate: every pull request and every push to a development branch runs
-# the fast Linux gate. The full cross-platform matrix stays on demand and on
-# release tags so that automatic runs keep a predictable Actions cost.
+# Automatic runs stay disabled while Actions minutes are held back. The gate
+# structure below is ready: `fast-gate` is the intended required check and
+# `cross-platform` is the release matrix. To enable automatic verification,
+# restore the `push` and `pull_request` triggers below and remove the
+# `cross-platform` job condition if the full matrix should also run per push.
+#
+#  push:
+#    branches:
+#      - main
+#      - "mimari-**"
+#  pull_request:
 on:
-  push:
-    branches:
-      - main
-      - "mimari-**"
-  pull_request:
   workflow_dispatch:
 
 permissions:

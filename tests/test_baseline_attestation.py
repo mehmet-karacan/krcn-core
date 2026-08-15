@@ -147,19 +147,30 @@ class BaselineAttestationTests(unittest.TestCase):
         self.assertTrue(by_id["baseline-attestation"].passed)
 
 
-class RequiredQualityGateTests(unittest.TestCase):
+class QualityGateStructureTests(unittest.TestCase):
     def setUp(self) -> None:
         self.workflow = (REPO_ROOT / ".github" / "workflows" / "quality.yml").read_text(
             encoding="utf-8"
         )
+        self.triggers = self.workflow.split("\njobs:", 1)[0]
 
-    def test_pull_requests_and_branch_pushes_run_the_required_gate(self) -> None:
-        self.assertIn("pull_request:", self.workflow)
-        self.assertIn("push:", self.workflow)
-        self.assertIn("workflow_dispatch:", self.workflow)
+    def test_automatic_triggers_stay_disabled(self) -> None:
+        active = [
+            line
+            for line in self.triggers.splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        ]
+        self.assertIn("on:", active)
+        self.assertIn("  workflow_dispatch:", active)
+        self.assertNotIn("  pull_request:", active)
+        self.assertNotIn("  push:", active)
+
+    def test_gate_structure_is_ready_to_enable(self) -> None:
         self.assertIn("fast-gate:", self.workflow)
+        self.assertIn("pull_request:", self.triggers)
+        self.assertIn("push:", self.triggers)
 
-    def test_full_matrix_stays_on_demand(self) -> None:
+    def test_full_matrix_stays_separate_from_the_fast_gate(self) -> None:
         self.assertIn("cross-platform:", self.workflow)
         self.assertIn("github.event_name == 'workflow_dispatch'", self.workflow)
         self.assertIn("refs/tags/", self.workflow)

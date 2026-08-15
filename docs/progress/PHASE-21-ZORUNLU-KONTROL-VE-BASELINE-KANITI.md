@@ -6,22 +6,25 @@ Tamamlandı.
 
 ## Amaç
 
-Güncel HEAD için yayınlanabilirlik kanıtını görünür kılmak. Otomatik kontrol tetikleyicisi kapalıyken hiçbir commit için başarılı veya başarısız kontrol kaydı üretilmiyordu; kalite baseline kayıtları da hangi commit üzerinde ölçüldüklerini söylemiyordu.
+Güncel HEAD için yayınlanabilirlik kanıtını görünür kılmak. Kalite baseline kayıtları hangi commit üzerinde ölçüldüklerini söylemiyordu; kalite kapısı da hızlı doğrulama ile release matrisini ayırmıyordu.
+
+Otomatik kontrol tetikleyicisi kullanıcı kararıyla kapalı kalmaya devam ediyor. Bu nedenle bu paket, tetikleyici açıldığı anda zorunlu kontrolün hazır olmasını sağlar ve baseline kanıtını tetikleyiciden bağımsız biçimde doğrulanabilir hale getirir.
 
 ## Tamamlananlar
 
-1. Zorunlu hızlı Linux kapısı eklendi. Pull request ve geliştirme branch'i push'ları artık repository doğrulaması, tam test paketi ve doctor kontrollerini otomatik çalıştırıyor.
-2. Çok platformlu tam matris, offline wheel ve CLI kurulum doğrulamaları istek üzerine ve release etiketlerinde çalışacak biçimde ayrıldı. Otomatik koşuların dakika maliyeti bu ayrımla sınırlı tutuldu.
+1. Hızlı Linux kapısı ayrı bir iş olarak tanımlandı: repository doğrulaması, tam test paketi ve doctor. Bu iş, otomatik doğrulama açıldığında zorunlu kontrol olacak biçimde hazırlandı.
+2. Çok platformlu tam matris, offline wheel ve CLI kurulum doğrulamaları ayrı bir işe alındı. Böylece hızlı kapı ile release matrisi birbirinden bağımsız çalışabiliyor.
 3. Aynı referans için eş zamanlı koşuları iptal eden concurrency grubu eklendi.
-4. Kalite baseline kayıtlarına ölçüm commit'i bağlandı. `.ai/coverage-baseline.json` ve `.ai/cli-baseline.json` artık `source_commit` alanı taşıyor.
-5. Baseline attestation modülü eklendi. Eksik veya geçersiz ölçüm commit'i, düşük kapsam değeri ve eski commit üzerinde ölçülmüş baseline durumları makinece raporlanıyor.
-6. Doctor kontrol listesine `baseline-attestation` eklendi.
-7. `tools/verify_baseline_attestation.py` aracı eklendi ve coverage işine bağlandı. Olağan geliştirme koşusu eskimeyi rapor eder, `--require-current` seçeneği release koşusunda eski baseline'ı hata olarak döndürür.
-8. Release kalite kapıları belgesi zorunlu kapı ve baseline attestation kuralıyla güncellendi.
+4. Otomatik tetikleyiciler kullanıcı kararıyla kapalı bırakıldı. `push` ve `pull_request` girdileri workflow içinde yorum olarak duruyor; otomatik doğrulama açılacağı zaman yalnız tetikleyici satırları geri alınır, iş yapısı değişmez.
+5. Kalite baseline kayıtlarına ölçüm commit'i bağlandı. `.ai/coverage-baseline.json` ve `.ai/cli-baseline.json` artık `source_commit` alanı taşıyor.
+6. Baseline attestation modülü eklendi. Eksik veya geçersiz ölçüm commit'i, düşük kapsam değeri ve eski commit üzerinde ölçülmüş baseline durumları makinece raporlanıyor.
+7. Doctor kontrol listesine `baseline-attestation` eklendi.
+8. `tools/verify_baseline_attestation.py` aracı eklendi ve coverage işine bağlandı. Olağan geliştirme koşusu eskimeyi rapor eder, `--require-current` seçeneği release koşusunda eski baseline'ı hata olarak döndürür.
+9. Release kalite kapıları belgesi zorunlu kapı ve baseline attestation kuralıyla güncellendi.
 
 ## Doğrulama
 
-- Yeni attestation testleri ve etkilenen doctor, kalite ve faz testleri geçti.
+- Yeni attestation ve kalite kapısı yapısı testleri ile etkilenen doctor, kalite ve faz testleri geçti.
 - Tam test paketi geçti.
 - Repository doğrulaması ve JSON biçim kontrolü geçti.
 - `verify_baseline_attestation.py --commit <sha>` eski coverage baseline'ını eskimiş olarak raporladı; `--require-current` ile hata döndürdü.

@@ -24,8 +24,10 @@ Core release manifests still contain only managed core payload. User data, porta
 
 The required CI matrix covers Linux, Windows, and macOS. The full suite, repository scan, doctor, and offline wheel validation run without downloading product dependencies. A separate Linux job measures dependency-free line coverage with Python monitoring events and enforces the versioned 60 percent starting threshold in `.ai/coverage-baseline.json`.
 
-## Required gate and baseline attestation
+## Quality gate structure and baseline attestation
 
-Every pull request and every push to a development branch runs the required Linux gate: repository verification, the full test suite, and doctor on the supported Python versions. The cross-platform matrix and the offline installation checks run on demand and on release tags, so automatic verification stays affordable without losing platform coverage before a release.
+The workflow separates a fast Linux gate from the cross-platform release matrix. The fast gate runs repository verification, the full test suite, and doctor on the supported Python versions; the matrix adds Windows, macOS, offline wheel verification, and CLI installation checks.
+
+Automatic triggers are held back while Actions usage is restricted, so both jobs currently run on demand. Enabling automatic verification is a trigger change only: restoring the commented `push` and `pull_request` entries makes the fast gate the required check for every pull request and development-branch push, while the matrix stays on demand and on release tags.
 
 A versioned quality baseline is evidence only while it names the commit it was measured on. `.ai/coverage-baseline.json` and `.ai/cli-baseline.json` therefore carry a `source_commit` field. Doctor rejects a baseline without a usable measurement commit, and `tools/verify_baseline_attestation.py` reports which baselines were measured on an earlier commit. Ordinary development runs report that drift; a release run uses `--require-current` so that a stale baseline cannot be published as current evidence.
