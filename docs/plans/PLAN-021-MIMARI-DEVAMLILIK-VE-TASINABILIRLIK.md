@@ -1,5 +1,9 @@
 # Plan 021 - Mimari devamlılık ve taşınabilirlik
 
+## Durum
+
+Tamamlandı.
+
 ## Amaç
 
 Mevcut KRCN Core bileşenlerini yeni bir platform eklemeden tek yürütme kimliği, tek plan, tek status ve tek trace altında birleştirmek; model, istemci, oturum ve cihaz değişiminde çalışma durumunun kanıta bağlı biçimde yaşamasını sağlamak.
@@ -17,8 +21,8 @@ Bu faz yeni bir temel mimari kurmaz. Çalışan güvenlik ve kalıcılık omurga
 
 - Kaynak branch: `main`
 - Baseline commit: `2e4d23a`
-- Çalışma branch'i: `mimari-devamlilik-ve-tasinabilirlik`
-- Ayrı çalışma kopyası kullanılır; `main` üzerinde doğrudan geliştirme commit'i yapılmaz.
+- Çalışma branch'i: kullanıcının açık kararıyla ayrı `krcn-core-dev` kopyasındaki `main`
+- Üretim `krcn-core` ve `schema-transform-platform` çalışma kopyaları korunur; her tamamlanan paket doğrulanıp doğrudan dev `origin/main` dalına gönderilir.
 
 ## İş paketleri
 
