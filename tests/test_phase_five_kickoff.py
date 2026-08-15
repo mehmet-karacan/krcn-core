@@ -9,6 +9,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
+sys.path.insert(0, str(REPO_ROOT / "tests"))
 
 from krcn_core.foundation import validate_orchestration_boundary  # noqa: E402
 from progress_evidence import assert_progress_evidence  # noqa: E402
