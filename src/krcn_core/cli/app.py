@@ -1351,6 +1351,19 @@ def _print_service_response(
     return exit_code
 
 
+def _configure_cli_stream_encoding() -> None:
+    """Keep CLI output UTF-8 on Windows and other legacy consoles."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if not callable(reconfigure):
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="strict")
+        except (OSError, ValueError):
+            # Redirected or already-closed streams may not be reconfigurable.
+            continue
+
+
 def _active_project_data_root(explicit_data_root: Path | None) -> Path:
     if explicit_data_root is not None or os.environ.get("KRCN_HOME"):
         return resolve_user_home(explicit_data_root).path
@@ -2106,6 +2119,7 @@ def _run_model_command(args: argparse.Namespace) -> int:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    _configure_cli_stream_encoding()
     parser = build_parser()
     args = parser.parse_args(argv)
     if args.command == "context":

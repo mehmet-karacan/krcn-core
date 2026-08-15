@@ -7,11 +7,13 @@ import tempfile
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
+from krcn_core.cli import app as cli_app  # noqa: E402
 from krcn_core.cli.app import main  # noqa: E402
 
 
@@ -46,6 +48,28 @@ class CliServiceTests(unittest.TestCase):
     def tearDown(self) -> None:
         self.source_temp.cleanup()
         self.data_temp.cleanup()
+
+    def test_cli_configures_utf8_output_for_legacy_windows_consoles(self) -> None:
+        class ReconfigurableStream:
+            def __init__(self) -> None:
+                self.calls: list[dict[str, str]] = []
+
+            def reconfigure(self, **kwargs: str) -> None:
+                self.calls.append(kwargs)
+
+        output = ReconfigurableStream()
+        error = ReconfigurableStream()
+        with patch.object(cli_app.sys, "stdout", output), patch.object(
+            cli_app.sys,
+            "stderr",
+            error,
+        ):
+            cli_app._configure_cli_stream_encoding()
+        self.assertEqual(
+            [{"encoding": "utf-8", "errors": "strict"}],
+            output.calls,
+        )
+        self.assertEqual(output.calls, error.calls)
 
     @staticmethod
     def _run(arguments: list[str]) -> tuple[int, str, str]:
