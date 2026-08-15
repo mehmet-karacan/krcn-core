@@ -163,6 +163,20 @@
           ]
         },
         {
+          "kind": "module-symbol",
+          "module": "krcn_core.generic_dag_executor",
+          "symbols": [
+            "prepare_generic_dag_execution",
+            "dispatch_generic_dag_execution",
+            "create_generic_dag_step_result"
+          ]
+        },
+        {
+          "kind": "document-phrase",
+          "document": "docs/specifications/GENERIC-DAG-EXECUTOR.md",
+          "phrase": "Queue control operations are serialized because every mutation is bound to the latest queue state digest."
+        },
+        {
           "kind": "policy-flag",
           "policy": "config/runtime-scheduler.json",
           "key": "heartbeat_interval_seconds"

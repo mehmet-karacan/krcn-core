@@ -256,6 +256,11 @@ class AgentRuntimeTests(unittest.TestCase):
                 "enqueue",
                 self.enqueue_args("task-two", effects=["write"], role="verifier"),
             )
+        _, execute_plan = self.prepare(
+            "enqueue",
+            self.enqueue_args("task-two", effects=["execute"], role="verifier"),
+        )
+        self.assertEqual("enqueue", execute_plan.action)
 
     def test_nonportable_resource_refs_and_owner_tokens_are_rejected(self) -> None:
         with self.assertRaises(AgentRuntimeError):

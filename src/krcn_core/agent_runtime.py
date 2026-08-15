@@ -71,6 +71,12 @@ def _resource_ref(value: object, project_id: str) -> str:
     raise AgentRuntimeError("runtime resource ref is not portable")
 
 
+def validate_runtime_resource_ref(value: object, project_id: str) -> str:
+    """Return one canonical project-scoped resource reference."""
+
+    return _resource_ref(value, project_id)
+
+
 def _resource_conflicts(left: str, right: str) -> bool:
     if left == right:
         return True
@@ -96,6 +102,12 @@ def _resource_conflicts(left: str, right: str) -> bool:
     left_path = PurePosixPath(left_parts[2])
     right_path = PurePosixPath(right_parts[2])
     return left_path in right_path.parents or right_path in left_path.parents
+
+
+def runtime_resource_refs_conflict(left: str, right: str) -> bool:
+    """Report whether two canonical runtime resource references overlap."""
+
+    return _resource_conflicts(left, right)
 
 
 @dataclass(frozen=True)
@@ -534,7 +546,7 @@ class AgentRuntimeQueue:
             if connection.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
                 raise AgentRuntimeError("runtime queue integrity check failed")
             items = [dict(row) for row in connection.execute(
-                "SELECT queue_id,work_item_id,task_id,step_id,required_role,status,attempts,max_attempts,current_fence,result_digest FROM queue_items ORDER BY queue_id"
+                "SELECT queue_id,work_item_id,work_item_revision,work_item_digest,task_id,plan_id,step_id,required_role,status,attempts,max_attempts,current_fence,result_digest FROM queue_items ORDER BY queue_id"
             )]
             counts = {row["status"]: row["count"] for row in connection.execute("SELECT status,COUNT(*) AS count FROM queue_items GROUP BY status")}
             active = connection.execute("SELECT COUNT(*) FROM leases").fetchone()[0]
@@ -629,8 +641,8 @@ def prepare_runtime_queue_action(
         effects = arguments.get("side_effects")
         if not isinstance(effects, list) or len(set(effects)) != len(effects) or not set(effects).issubset(SIDE_EFFECTS):
             raise AgentRuntimeError("runtime side effects are invalid")
-        if role == "verifier" and not set(effects).issubset({"read"}):
-            raise AgentRuntimeError("verifier queue item may only read")
+        if role == "verifier" and not set(effects).issubset({"read", "execute"}):
+            raise AgentRuntimeError("verifier queue item may only read or execute")
         resources_value = arguments.get("resource_refs")
         if not isinstance(resources_value, list) or len(set(resources_value)) != len(resources_value):
             raise AgentRuntimeError("runtime resources are invalid")

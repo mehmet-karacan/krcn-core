@@ -54,7 +54,7 @@ Absolute paths, backslashes, and parent traversal are rejected. A project lock c
 
 ## Delegation and verification
 
-An agent or subagent is a worker or verifier role, not a new trust class. Verifier queue items are read-only. Project-scoped orchestration must identify both `project_id` and `work_item_id`, and its state, event, checkpoint, and handoff records are placed in the matching project capsule.
+An agent or subagent is a worker or verifier role, not a new trust class. Verifier queue items may read or execute verification tools, but may not write or use the network. Project-scoped orchestration must identify both `project_id` and `work_item_id`, and its state, event, checkpoint, and handoff records are placed in the matching project capsule.
 
 ## Completion reconciliation
 

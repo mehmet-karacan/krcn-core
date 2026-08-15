@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:generic-dag-execution-plan:1",
+  "title": "KRCN Core generic DAG execution plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "project_id",
+    "work_item_id",
+    "task_id",
+    "task_plan_id",
+    "authorization_id",
+    "assignments",
+    "max_concurrency",
+    "queue_state_sha256",
+    "queue_control_serial",
+    "handler_execution_parallel",
+    "grants_authority",
+    "mutation"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/generic-dag-execution-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "authorization_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "assignments": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "step_id",
+          "handler_id",
+          "execution_identity",
+          "resource_refs"
+        ],
+        "properties": {
+          "step_id": {
+            "$ref": "#/$defs/id"
+          },
+          "handler_id": {
+            "$ref": "#/$defs/id"
+          },
+          "execution_identity": {
+            "$ref": "urn:krcn:schemas:agent-execution-identity:1"
+          },
+          "resource_refs": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "max_concurrency": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 32
+    },
+    "queue_state_sha256": {
+      "$ref": "#/$defs/digest"
+    },
+    "queue_control_serial": {
+      "const": true
+    },
+    "handler_execution_parallel": {
+      "const": true
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "mutation": {
+      "$ref": "mutation-plan.schema.json"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

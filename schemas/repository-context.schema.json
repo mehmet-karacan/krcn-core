@@ -122,6 +122,9 @@
         "model_capability_evaluation_schema",
         "independent_verifier_identity_boundary",
         "agent_execution_identity_schema",
+        "generic_dag_executor_boundary",
+        "generic_dag_execution_plan_schema",
+        "generic_dag_execution_result_schema",
         "work_documents_boundary",
         "work_document_manifest_schema",
         "work_document_manifest_update_plan_schema",
@@ -379,6 +382,15 @@
           "$ref": "#/$defs/repoPath"
         },
         "agent_execution_identity_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "generic_dag_executor_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "generic_dag_execution_plan_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "generic_dag_execution_result_schema": {
           "$ref": "#/$defs/repoPath"
         },
         "work_documents_boundary": {

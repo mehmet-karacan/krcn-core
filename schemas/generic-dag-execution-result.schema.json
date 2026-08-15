@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:generic-dag-execution-result:1",
+  "title": "KRCN Core generic DAG execution result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "status",
+    "project_id",
+    "work_item_id",
+    "task_id",
+    "task_plan_id",
+    "execution_plan_id",
+    "step_results",
+    "executed_step_ids",
+    "resumed",
+    "max_concurrency",
+    "queue_control_serial",
+    "handler_execution_parallel",
+    "runtime_completion",
+    "grants_authority"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/generic-dag-execution-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "status": {
+      "enum": [
+        "completed",
+        "already-completed"
+      ]
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "execution_plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "step_results": {
+      "type": "array",
+      "minItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/stepSummary"
+      }
+    },
+    "executed_step_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "resumed": {
+      "type": "boolean"
+    },
+    "max_concurrency": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 32
+    },
+    "queue_control_serial": {
+      "const": true
+    },
+    "handler_execution_parallel": {
+      "const": true
+    },
+    "runtime_completion": {
+      "const": true
+    },
+    "grants_authority": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "stepSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "step_id",
+        "execution_identity_id",
+        "evidence_digest",
+        "status"
+      ],
+      "properties": {
+        "step_id": {
+          "$ref": "#/$defs/id"
+        },
+        "execution_identity_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "evidence_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "status": {
+          "const": "completed"
+        }
+      }
+    },
+    "adapterResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_ref",
+        "schema_version",
+        "status",
+        "task_id",
+        "plan_id",
+        "step_id",
+        "execution_identity_id",
+        "evidence_digest",
+        "grants_authority"
+      ],
+      "properties": {
+        "schema_ref": {
+          "const": "schemas/generic-dag-execution-result.schema.json#/$defs/adapterResult"
+        },
+        "schema_version": {
+          "const": 1
+        },
+        "status": {
+          "const": "completed"
+        },
+        "task_id": {
+          "$ref": "#/$defs/id"
+        },
+        "plan_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "step_id": {
+          "$ref": "#/$defs/id"
+        },
+        "execution_identity_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "evidence_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "grants_authority": {
+          "const": false
+        }
+      }
+    }
+  }
+}

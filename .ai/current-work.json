@@ -15,12 +15,13 @@
     "docs/progress/PHASE-21-KANONIK-IZLEME-VE-DURUM.md",
     "docs/progress/PHASE-21-TASINABILIR-PROJE-KIMLIGI.md",
     "docs/progress/PHASE-21-MODEL-YETENEK-KORUMA.md",
-    "docs/progress/PHASE-21-BAGIMSIZ-VERIFIER-KIMLIGI.md"
+    "docs/progress/PHASE-21-BAGIMSIZ-VERIFIER-KIMLIGI.md",
+    "docs/progress/PHASE-21-GENERIC-DAG-EXECUTOR.md"
   ],
   "next_actions": [
-    "generic DAG executor ile hazir isleri guvenli ve olceklenebilir calistir",
     "Work Graph kaynakli okunur WORK-INDEX projection uret",
-    "kuyruk altyapisi uygunluk olcumunu tamamla"
+    "kuyruk altyapisi uygunluk olcumunu tamamla",
+    "Execution Coordinator ile servisleri tek akis altinda compose et"
   ],
   "baseline_commit": "2e4d23a",
   "approval_gates": {
