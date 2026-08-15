@@ -20,11 +20,15 @@
     "inventory_digest",
     "health_result_digest",
     "execution_profile_digest",
+    "execution_host_digest",
     "model_assignment_id",
     "repetitions",
     "timeout_ms",
     "provider_request_id",
+    "provider_session_digest",
+    "provider_approval_digest",
     "provider_authorization_ref",
+    "provider_authorization_digest",
     "trial_ids",
     "plan_id",
     "plan_digest",
@@ -80,6 +84,9 @@
     "execution_profile_digest": {
       "$ref": "#/$defs/digest"
     },
+    "execution_host_digest": {
+      "$ref": "#/$defs/digest"
+    },
     "model_assignment_id": {
       "$ref": "#/$defs/id"
     },
@@ -112,6 +119,36 @@
         }
       ]
     },
+    "provider_session_digest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "provider_approval_digest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "provider_authorization_digest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "trial_ids": {
       "type": "array",
       "minItems": 5,
@@ -129,6 +166,9 @@
     "invariants": {
       "const": {
         "adapter_discovered": false,
+        "execution_host_discovered": false,
+        "durable_claim_required": true,
+        "durable_receipt_required": true,
         "provider_call_performed": false,
         "prompt_content_included": false,
         "source_content_included": false,

@@ -173,91 +173,122 @@ class Phase22ApplicationCliTests(unittest.TestCase):
 
     def test_benchmark_prepare_and_injected_execution_use_exact_digest(self) -> None:
         fixture = benchmark_fixtures.ModelBenchmarkRunnerTests()
-        model = fixture.model()
-        selected_suite = benchmark_fixtures.suite()
-        health = fixture.health(model)
-        profile = fixture.profile(model)
-        common = {
-            "suite": selected_suite,
-            "model": model,
-            "health_record": health,
-            "execution_profile": profile,
-            "current_source_digest": selected_suite["source_digest"],
-        }
-        prepared = self.service.execute(
-            ServiceRequest(
-                "cli",
-                "model.benchmark-prepare",
-                {
-                    **common,
-                    "workload_id": "analysis-primary",
-                    "repetitions": 5,
-                    "model_assignment_id": "analysis-assignment",
-                    "timeout_ms": 5000,
-                    "now": "2026-08-16T00:00:00Z",
-                },
+        temporary, _, store, _ = fixture.authoritative_store()
+        try:
+            resolved = benchmark_fixtures.resolve_authoritative_benchmark_inputs(
+                REPO_ROOT,
+                store,
+                project_id="authoritative-project",
+                suite_id="authoritative-project-micro-benchmark",
+                model_ref="runner-model",
             )
-        )
-        calls = []
+            workload = next(
+                item
+                for item in resolved.suite["cases"]
+                if item["workload_kind"] == "analysis"
+            )
+            profile = fixture.profile(dict(resolved.model))
+            calls = []
 
-        def adapter(payload):
-            calls.append(payload)
-            return fixture.outcome(int(payload["repetition"]))
+            def adapter(payload):
+                calls.append(payload)
+                return fixture.outcome(int(payload["repetition"]))
 
-        service = KrcnApplicationService(
-            REPO_ROOT,
-            self.store,
-            model_benchmark_adapters={"runner-model": adapter},
-        )
-        with self.assertRaisesRegex(ApplicationServiceError, "exact plan digest"):
-            service.execute(
+            host = benchmark_fixtures.DurableFakeBenchmarkHost(adapter)
+            service = KrcnApplicationService(
+                REPO_ROOT,
+                store,
+                model_benchmark_hosts={"runner-model": host},
+            )
+            common = {
+                "project_id": "authoritative-project",
+                "suite_id": "authoritative-project-micro-benchmark",
+                "model_ref": "runner-model",
+                "execution_profile": profile,
+            }
+            prepared = service.execute(
+                ServiceRequest(
+                    "cli",
+                    "model.benchmark-prepare",
+                    {
+                        **common,
+                        "workload_id": workload["workload_id"],
+                        "repetitions": 5,
+                        "model_assignment_id": "analysis-assignment",
+                        "timeout_ms": 5000,
+                        "now": "2026-08-16T00:00:00Z",
+                    },
+                )
+            )
+            execution = {
+                **common,
+                "plan": prepared.data["plan"],
+                "observed_at": "2026-08-16T00:00:00Z",
+            }
+            with self.assertRaisesRegex(ApplicationServiceError, "exact plan digest"):
+                service.execute(
+                    ServiceRequest(
+                        "cli",
+                        "model.benchmark-execute",
+                        execution,
+                        apply=True,
+                        expected_plan_id="0" * 64,
+                        approval_id="benchmark-approval",
+                    )
+                )
+            result = service.execute(
                 ServiceRequest(
                     "cli",
                     "model.benchmark-execute",
-                    {
-                        **common,
-                        "plan": prepared.data["plan"],
-                        "observed_at": "2026-08-16T00:00:00Z",
-                    },
+                    execution,
                     apply=True,
-                    expected_plan_id="0" * 64,
+                    expected_plan_id=prepared.data["expected_plan_id"],
                     approval_id="benchmark-approval",
                 )
             )
-        result = service.execute(
-            ServiceRequest(
-                "cli",
-                "model.benchmark-execute",
-                {
-                    **common,
-                    "plan": prepared.data["plan"],
-                    "observed_at": "2026-08-16T00:00:00Z",
-                },
-                apply=True,
-                expected_plan_id=prepared.data["expected_plan_id"],
-                approval_id="benchmark-approval",
-            )
-        )
-        self.assertEqual("applied", result.status)
-        self.assertEqual(5, len(calls))
-        self.assertFalse(result.data["persisted"])
+            self.assertEqual("applied", result.status)
+            self.assertEqual(5, len(calls))
+            self.assertFalse(result.data["persisted"])
+            with self.assertRaisesRegex(ApplicationServiceError, "claim"):
+                service.execute(
+                    ServiceRequest(
+                        "cli",
+                        "model.benchmark-execute",
+                        execution,
+                        apply=True,
+                        expected_plan_id=prepared.data["expected_plan_id"],
+                        approval_id="benchmark-approval",
+                    )
+                )
+            self.assertEqual(5, len(calls))
+        finally:
+            temporary.cleanup()
 
     def test_remote_benchmark_preparation_requires_exact_provider_approval(self) -> None:
         fixture = benchmark_fixtures.ModelBenchmarkRunnerTests()
-        model = fixture.model(remote=True)
-        selected_suite = benchmark_fixtures.suite()
-        arguments = {
-            "suite": selected_suite,
-            "model": model,
-            "health_record": fixture.health(model),
-            "execution_profile": fixture.profile(model),
-            "current_source_digest": selected_suite["source_digest"],
-            "workload_id": "analysis-primary",
-            "repetitions": 5,
-            "model_assignment_id": "analysis-assignment",
-            "timeout_ms": 5000,
-            "now": "2026-08-16T00:00:00Z",
-            "provider_disclosure": {
+        temporary, _, store, _ = fixture.authoritative_store(remote=True)
+        try:
+            resolved = benchmark_fixtures.resolve_authoritative_benchmark_inputs(
+                REPO_ROOT,
+                store,
+                project_id="authoritative-project",
+                suite_id="authoritative-project-micro-benchmark",
+                model_ref="runner-model",
+            )
+            workload = next(
+                item
+                for item in resolved.suite["cases"]
+                if item["workload_kind"] == "analysis"
+            )
+            host = benchmark_fixtures.DurableFakeBenchmarkHost(
+                lambda payload: fixture.outcome(int(payload["repetition"]))
+            )
+            service = KrcnApplicationService(
+                REPO_ROOT,
+                store,
+                model_benchmark_hosts={"runner-model": host},
+            )
+            disclosure = {
                 "provider": "remote-provider",
                 "endpoint": "https://provider.invalid/v1",
                 "data_categories": ["synthetic-fixture"],
@@ -266,23 +297,56 @@ class Phase22ApplicationCliTests(unittest.TestCase):
                 "session_id": "benchmark-session",
                 "remote": True,
                 "authorization_ref": "benchmark-authorization",
-            },
-        }
-        with self.assertRaisesRegex(ApplicationServiceError, "approval"):
-            self.service.execute(
-                ServiceRequest("cli", "model.benchmark-prepare", arguments)
+            }
+            common = {
+                "project_id": "authoritative-project",
+                "suite_id": "authoritative-project-micro-benchmark",
+                "model_ref": "runner-model",
+                "execution_profile": fixture.profile(dict(resolved.model)),
+            }
+            arguments = {
+                **common,
+                "workload_id": workload["workload_id"],
+                "repetitions": 5,
+                "model_assignment_id": "analysis-assignment",
+                "timeout_ms": 5000,
+                "now": "2026-08-16T00:00:00Z",
+                "provider_disclosure": disclosure,
+            }
+            with self.assertRaisesRegex(ApplicationServiceError, "approval"):
+                service.execute(
+                    ServiceRequest("cli", "model.benchmark-prepare", arguments)
+                )
+            prepared = service.execute(
+                ServiceRequest(
+                    "cli",
+                    "model.benchmark-prepare",
+                    arguments,
+                    approval_id="provider-approval-a",
+                )
             )
-        prepared = self.service.execute(
-            ServiceRequest(
-                "cli",
-                "model.benchmark-prepare",
-                arguments,
-                approval_id="provider-approval",
-            )
-        )
-        serialized = json.dumps(prepared.as_dict())
-        self.assertNotIn("provider.invalid", serialized)
-        self.assertFalse(prepared.data["provider_call_performed"])
+            serialized = json.dumps(prepared.as_dict())
+            self.assertNotIn("provider.invalid", serialized)
+            self.assertFalse(prepared.data["provider_call_performed"])
+            with self.assertRaisesRegex(ApplicationServiceError, "changed"):
+                service.execute(
+                    ServiceRequest(
+                        "cli",
+                        "model.benchmark-execute",
+                        {
+                            **common,
+                            "plan": prepared.data["plan"],
+                            "observed_at": "2026-08-16T00:00:00Z",
+                            "provider_disclosure": disclosure,
+                        },
+                        apply=True,
+                        expected_plan_id=prepared.data["expected_plan_id"],
+                        approval_id="provider-approval-b",
+                    )
+                )
+            self.assertEqual(0, host.trial_calls)
+        finally:
+            temporary.cleanup()
 
     def test_default_cli_benchmark_execute_is_explicitly_blocked_and_readable(self) -> None:
         parser = build_parser()
@@ -290,42 +354,78 @@ class Phase22ApplicationCliTests(unittest.TestCase):
             ["models", "benchmark", "prepare", "--request-file", "request.json"]
         )
         self.assertEqual("prepare", parsed.benchmark_command)
-        request_path = Path(self.temporary.name) / "execute.json"
-        request_path.write_text(
-            json.dumps(
-                {
-                    "plan": {},
-                    "suite": {},
-                    "model": {"model_ref": "runner-model"},
-                    "health_record": {},
-                    "execution_profile": {},
-                    "current_source_digest": "a" * 64,
-                    "observed_at": "2026-08-16T00:00:00Z",
-                }
-            ),
-            encoding="utf-8",
-        )
-        output = StringIO()
-        with redirect_stdout(output):
-            exit_code = cli_main(
-                [
-                    "models",
-                    "benchmark",
-                    "execute",
-                    "--repo",
-                    str(REPO_ROOT),
-                    "--data-root",
-                    str(self.home),
-                    "--request-file",
-                    str(request_path),
-                    "--apply",
-                    "--approval-id",
-                    "benchmark-approval",
-                ]
+        fixture = benchmark_fixtures.ModelBenchmarkRunnerTests()
+        temporary, _, store, _ = fixture.authoritative_store()
+        try:
+            resolved = benchmark_fixtures.resolve_authoritative_benchmark_inputs(
+                REPO_ROOT,
+                store,
+                project_id="authoritative-project",
+                suite_id="authoritative-project-micro-benchmark",
+                model_ref="runner-model",
             )
-        self.assertEqual(3, exit_code)
-        self.assertIn("benchmark-adapter-unavailable", output.getvalue())
-        self.assertIn("Çalıştırıldı", output.getvalue())
+            request_path = Path(temporary.name) / "execute.json"
+            request_path.write_text(
+                json.dumps(
+                    {
+                        "plan": {},
+                        "project_id": "authoritative-project",
+                        "suite_id": "authoritative-project-micro-benchmark",
+                        "model_ref": "runner-model",
+                        "execution_profile": fixture.profile(dict(resolved.model)),
+                        "observed_at": "2026-08-16T00:00:00Z",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            output = StringIO()
+            with redirect_stdout(output):
+                exit_code = cli_main(
+                    [
+                        "models",
+                        "benchmark",
+                        "execute",
+                        "--repo",
+                        str(REPO_ROOT),
+                        "--data-root",
+                        str(store.data_root),
+                        "--request-file",
+                        str(request_path),
+                        "--apply",
+                        "--approval-id",
+                        "benchmark-approval",
+                    ]
+                )
+            self.assertEqual(3, exit_code)
+            self.assertIn("benchmark-execution-host-unavailable", output.getvalue())
+            self.assertIn("Çalıştırıldı", output.getvalue())
+        finally:
+            temporary.cleanup()
+
+    def test_benchmark_route_rejects_empty_store_and_incomplete_host(self) -> None:
+        with self.assertRaisesRegex(ApplicationServiceError, "authoritative"):
+            self.service.execute(
+                ServiceRequest(
+                    "cli",
+                    "model.benchmark-prepare",
+                    {
+                        "project_id": "authoritative-project",
+                        "suite_id": "authoritative-project-micro-benchmark",
+                        "model_ref": "runner-model",
+                        "execution_profile": {},
+                        "workload_id": "analysis-primary",
+                        "repetitions": 5,
+                        "model_assignment_id": "analysis-assignment",
+                        "now": "2026-08-16T00:00:00Z",
+                    },
+                )
+            )
+        with self.assertRaisesRegex(ApplicationServiceError, "incomplete"):
+            KrcnApplicationService(
+                REPO_ROOT,
+                self.store,
+                model_benchmark_hosts={"runner-model": object()},
+            )
 
 
 if __name__ == "__main__":

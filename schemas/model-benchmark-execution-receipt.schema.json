@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:model-benchmark-execution-receipt:1",
+  "title": "KRCN durable model benchmark execution receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "receipt_id",
+    "claim_id",
+    "claim_digest",
+    "plan_digest",
+    "execution_host_digest",
+    "aggregate_digest",
+    "output_digest",
+    "receipt_request_digest",
+    "status",
+    "receipt_digest",
+    "grants_authority"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/model-benchmark-execution-receipt.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "receipt_id": {
+      "$ref": "#/$defs/id"
+    },
+    "claim_id": {
+      "$ref": "#/$defs/id"
+    },
+    "claim_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "plan_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "execution_host_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "aggregate_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "output_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "receipt_request_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "status": {
+      "const": "completed"
+    },
+    "receipt_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "grants_authority": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

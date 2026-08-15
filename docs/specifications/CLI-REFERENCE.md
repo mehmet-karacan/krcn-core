@@ -222,11 +222,16 @@ krcn models benchmark prepare --request-file <benchmark-prepare.json>
 krcn models benchmark execute --request-file <benchmark-execute.json> --apply --expected-plan <plan-digest> --approval-id <approval-id>
 ```
 
-Preparation performs no adapter or provider call. Execution requires the exact
-prepared digest, an explicit approval, and a benchmark adapter injected by the
-host for the selected model. The normal CLI host injects no adapter and returns
-`blocked` instead of pretending to execute a model. Remote models additionally
-require an exact session-bound provider disclosure and authorization. Results
+Both request files identify `project_id`, `suite_id`, and `model_ref`; they do
+not supply suite, inventory, health, capability-profile, or source records.
+KRCN resolves those authoritative inputs from the current local store and
+rejects an empty, stale, or mismatched store. Preparation performs no execution
+host or provider call. Execution requires the exact prepared digest, an explicit
+approval, and an injected durable exactly-once host for the selected model. The
+normal CLI host injects no execution host and returns `blocked` instead of
+pretending to execute a model. Remote models additionally require the exact
+same session-bound provider request, authorization reference, and approval
+identity used by the prepared plan. Results
 contain measurements and provenance only; prompts, responses, credentials,
 endpoints, physical paths, and source content are not returned or persisted.
 

@@ -11,7 +11,7 @@
   "require_all_trials_verifier_approved": true,
   "invariants": {
     "offline_by_default": true,
-    "injected_adapter_only": true,
+    "injected_execution_host_only": true,
     "store_mutation": false,
     "raw_content_persisted": false
   }

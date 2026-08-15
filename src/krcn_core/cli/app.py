@@ -1426,9 +1426,15 @@ def _phase22_text(response: ServiceResponse) -> str:
               ", ".join(reasons) if isinstance(reasons, list) else "-"]],
         )
     if operation == "model.benchmark-prepare":
+        if response.status == "blocked":
+            return _text_table(
+                ["Durum", "Neden", "Model", "Kalıcı host"],
+                [["engelli", data.get("reason_code", "-"),
+                  data.get("model_ref", "-"), "hayır"]],
+            )
         plan = data.get("plan", {})
         return _text_table(
-            ["Plan", "Model", "İş yükü", "Tekrar", "Adapter çağrıldı"],
+            ["Plan", "Model", "İş yükü", "Tekrar", "Host claim"],
             [[_shorten(data.get("expected_plan_id", "-"), 20), plan.get("model_ref", "-"),
               plan.get("workload_id", "-"), plan.get("repetitions", 0), "hayır"]],
         )

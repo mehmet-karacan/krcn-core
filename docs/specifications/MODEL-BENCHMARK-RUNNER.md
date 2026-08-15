@@ -3,7 +3,7 @@
 ## Purpose
 
 The model benchmark runner executes an existing project micro benchmark suite
-through one explicitly injected adapter. It adds repeated-run evidence and
+through one explicitly injected durable execution host. It adds repeated-run evidence and
 execution provenance without discovering a provider, calling a provider during
 planning, persisting records, or granting authority.
 
@@ -17,8 +17,11 @@ It reuses these authoritative inputs:
 - `model-benchmark-result.schema.json` and
   `model-runtime-observation.schema.json` as compatibility outputs.
 
-The runner does not replace suite construction, model health, provider policy,
-model assignment, or evidence persistence.
+The application route accepts only project, suite, and model identities. It
+resolves the suite, model inventory, model health, current capability profile,
+and source state from `LocalWorkspaceStore`; caller payloads cannot substitute
+those records. The runner does not replace suite construction, model health,
+provider policy, model assignment, or evidence persistence.
 
 ## Contracts
 
@@ -40,7 +43,7 @@ also differ. A profile digest covers every comparison-relevant field.
 
 ### Exact run plan
 
-`prepare_model_benchmark_run` is read-only. It performs no adapter discovery and
+`prepare_model_benchmark_run` is read-only. It performs no host discovery and
 no provider call. It rejects:
 
 - disabled or non-`health-passed` models;
@@ -53,14 +56,18 @@ no provider call. It rejects:
 - local runs carrying irrelevant provider authorization;
 - timeout or repetition limits outside policy.
 
-The plan binds a deterministic repetition identity for every trial. A caller
-must pass the exact `plan_id` back at execution. The runner reparses the plan and
-all current inputs, including the explicitly supplied current source digest,
-before invoking the adapter, so stale or modified state fails closed.
+The plan binds a deterministic repetition identity for every trial. The
+application requires the exact `plan_digest`; the bound runner additionally
+checks its deterministic `plan_id`. The runner reparses the plan and
+all store-resolved current inputs before invoking the host, so stale or modified
+state fails closed. The plan also binds the durable host digest and, for remote
+models, request, session, approval, authorization-reference, and combined
+authorization digests.
 
 ### Trial result
 
-The injected adapter receives a source-content-free structural request. It must
+The injected host receives a source-content-free structural request. Its
+model-specific trial adapter must
 return only the strict outcome fields accepted by the runner. The persisted form
 contains metrics and provenance, never prompt, response, source text, endpoint,
 credential, secret, or physical path values.
@@ -76,10 +83,10 @@ Each repetition records:
 - deterministic plan, profile, suite, source, workload, case, inventory, and
   trial digests.
 
-An adapter may raise `TimeoutError`, which becomes a sanitized timeout result.
-Other adapter exceptions become sanitized `adapter-error` trials and do not
+The host may report `TimeoutError`, which becomes a sanitized timeout result.
+Other host/adapter exceptions become sanitized `adapter-error` trials and do not
 reflect exception text or prevent the remaining planned repetitions.
-Adapters that invoke an external process or provider remain responsible for
+Hosts that invoke an external process or provider remain responsible for
 enforcing a hard cancellation deadline; the runner also rejects a returned
 latency beyond the reviewed plan timeout.
 
@@ -99,15 +106,25 @@ A benchmark passes only when every trial is verifier-approved and every trial
 meets the configured quality and reliability floors. This deliberately prevents
 a high average from hiding an unsafe failed trial.
 
-## Adapter boundary
+## Durable execution host and replay boundary
 
-The runner accepts a callable at execution time. It never imports, scans for, or
-selects adapters. Local execution is therefore the default. A remote inventory
-record is not authority: the caller must supply an already verified
+Plain callables are rejected because they cannot prove replay protection. An
+execution host must expose a content-free descriptor declaring durable,
+exactly-once claim-before-execution and receipt-after-execution semantics, plus
+strict `claim`, `run_trial`, and `complete` operations. The host atomically
+claims the plan digest before the first model call. A duplicate or incomplete
+claim fails closed before another trial can run. After all sanitized records are
+built, the host durably stores a receipt bound to the claim, plan, aggregate,
+host, and output digests. A failed receipt leaves the claim occupied, preventing
+unsafe retry.
+
+KRCN never imports, scans for, or selects hosts. The default CLI has no host and
+returns `blocked`. A remote inventory record is not authority: the caller must supply an already verified
 `ProviderAuthorization` whose provider, operation scope (`model-benchmark`),
-request identity, and approval reference exactly match the plan.
+request, session, approval identity, and authorization reference exactly match
+the plan. Swapping only the approval at execution is rejected before host claim.
 
-The adapter request contains identifiers, digests, output section names, fixture
+The host request contains identifiers, digests, output section names, fixture
 policy, timeout, and the sanitized execution profile. It contains no prompt,
 source content, output content, endpoint, credential, secret, or physical path.
 
@@ -120,6 +137,7 @@ source content, output content, endpoint, credential, secret, or physical path.
 - a legacy-compatible model benchmark result using aggregate mean quality,
   mean reliability, p95 latency, and aggregate pass status;
 - one legacy-compatible runtime observation per trial using actual cost only.
+- the durable execution claim and completion receipt.
 
 The runner does not write any of these records to a store. Existing exact-plan
 evidence persistence remains a separate approval boundary. Estimated cost is
@@ -128,15 +146,26 @@ never presented as actual cost in compatibility observations.
 ## Public Python API
 
 - `load_model_benchmark_runner_policy`
+- `resolve_authoritative_benchmark_inputs`
+- `build_benchmark_execution_host_descriptor`
+- `validate_benchmark_execution_host`
+- `build_benchmark_execution_claim`
+- `parse_benchmark_execution_claim`
+- `build_benchmark_execution_receipt`
+- `parse_benchmark_execution_receipt`
+- `build_execution_authorization_digest`
 - `build_benchmark_execution_profile`
 - `parse_benchmark_execution_profile`
 - `prepare_model_benchmark_run`
+- `prepare_model_benchmark_run_from_store`
 - `parse_model_benchmark_run_plan`
 - `execute_model_benchmark_run`
+- `execute_model_benchmark_run_from_store`
 - `parse_model_benchmark_trial_result`
 - `aggregate_model_benchmark_trials`
 - `parse_model_benchmark_aggregate_result`
 - `BenchmarkRunOutput.as_dict`
 
-No CLI or application-service route is added in this phase. That integration
-requires a separate reviewed change to the shared command surface.
+The application and request-file CLI routes are integrated. They resolve all
+authoritative benchmark inputs from the store and remain blocked when a durable
+execution host is unavailable.

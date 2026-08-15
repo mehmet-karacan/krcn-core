@@ -1,15 +1,18 @@
 # Phase 22: Model benchmark runner
 
-Status: implementation complete in isolated package; shared application/CLI
-integration intentionally deferred.
+Status: implementation and fail-closed application/CLI integration complete.
 
 ## Delivered
 
-- offline-first injected-adapter benchmark execution;
+- offline-first injected durable-host benchmark execution;
+- store-only authoritative suite, inventory, health, capability-profile, and
+  source-state resolution;
+- durable exactly-once claim before any trial and digest-bound receipt after it;
 - strict execution profile with harness/model/provider-route/reasoning/
   quantization/environment and independent-verifier provenance;
 - exact run plan bound to suite, source, workload, case, inventory, health,
-  profile, repetition, timeout, and provider authorization identities;
+  profile, host, repetition, timeout, and provider request/session/approval/
+  authorization identities;
 - health-passed, workload, fixture policy, provider, and confidence-safe sample
   gates;
 - five-or-more repeated trials with deterministic identities;
@@ -28,6 +31,8 @@ integration intentionally deferred.
 - `src/krcn_core/model_benchmark_runner.py`
 - `config/model-benchmark-runner.json`
 - `schemas/model-benchmark-execution-profile.schema.json`
+- `schemas/model-benchmark-execution-claim.schema.json`
+- `schemas/model-benchmark-execution-receipt.schema.json`
 - `schemas/model-benchmark-run-plan.schema.json`
 - `schemas/model-benchmark-trial-result.schema.json`
 - `schemas/model-benchmark-aggregate-result.schema.json`
@@ -38,7 +43,10 @@ integration intentionally deferred.
 
 The focused tests cover:
 
-- deterministic local fake-adapter execution and statistics;
+- deterministic local durable fake-host execution and statistics;
+- empty authoritative store and stale source/profile rejection;
+- replay rejection without a second trial call;
+- provider approval swap rejection before host claim;
 - one-shot and sub-threshold sample rejection;
 - mandatory current `health-passed` evidence;
 - remote execution without approval rejection;
@@ -49,6 +57,7 @@ The focused tests cover:
 - independent verifier execution and model-family requirements;
 - compatibility benchmark/runtime observation generation without persistence.
 
-Application routing, CLI commands, repository-context catalog registration, and
-durable record writes are not part of this isolated package. They remain behind
-their own exact-plan review and were not modified.
+Application and request-file CLI routing use only authoritative record identities.
+The default CLI and incomplete hosts fail closed. Execution claims and receipts
+are owned by the injected durable host; benchmark results remain non-persisted
+until the existing evidence-write exact-plan boundary is invoked separately.

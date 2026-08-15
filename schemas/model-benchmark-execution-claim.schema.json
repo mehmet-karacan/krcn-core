@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:model-benchmark-execution-claim:1",
+  "title": "KRCN durable model benchmark execution claim",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "claim_id",
+    "plan_digest",
+    "execution_authorization_digest",
+    "provider_authorization_digest",
+    "execution_host_digest",
+    "claim_request_digest",
+    "status",
+    "claim_digest",
+    "grants_authority"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/model-benchmark-execution-claim.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "claim_id": {
+      "$ref": "#/$defs/id"
+    },
+    "plan_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "execution_authorization_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "provider_authorization_digest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "execution_host_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "claim_request_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "status": {
+      "const": "claimed"
+    },
+    "claim_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "grants_authority": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

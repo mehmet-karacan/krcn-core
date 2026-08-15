@@ -108,9 +108,12 @@ from .model_benchmark import (
     prepare_project_benchmark_suite,
 )
 from .model_benchmark_runner import (
-    BenchmarkAdapter,
-    execute_model_benchmark_run,
-    prepare_model_benchmark_run,
+    BenchmarkExecutionHost,
+    build_execution_authorization_digest,
+    execute_model_benchmark_run_from_store,
+    prepare_model_benchmark_run_from_store,
+    resolve_authoritative_benchmark_inputs,
+    validate_benchmark_execution_host,
 )
 from .model_inventory import (
     apply_model_inventory,
@@ -366,7 +369,8 @@ class KrcnApplicationService:
         sqlite_runtime: SqliteReferenceRuntime | None = None,
         oracle_metadata_transports: Mapping[str, OracleMetadataTransport] | None = None,
         model_health_probes: Mapping[str, ModelHealthProbe] | None = None,
-        model_benchmark_adapters: Mapping[str, BenchmarkAdapter] | None = None,
+        model_benchmark_hosts: Mapping[str, BenchmarkExecutionHost] | None = None,
+        model_benchmark_adapters: Mapping[str, Callable[..., object]] | None = None,
         research_execution_adapters: Mapping[
             str, Callable[[ResearchWorkUnit], Mapping[str, object]]
         ] | None = None,
@@ -421,15 +425,21 @@ class KrcnApplicationService:
         ):
             raise ApplicationServiceError("model health probes are invalid")
         self._model_health_probes = health_probes
-        benchmark_adapters = dict(model_benchmark_adapters or {})
-        if any(
-            not isinstance(model_ref, str)
-            or not IDENTIFIER.fullmatch(model_ref)
-            or not callable(adapter)
-            for model_ref, adapter in benchmark_adapters.items()
-        ):
-            raise ApplicationServiceError("model benchmark adapters are invalid")
-        self._model_benchmark_adapters = benchmark_adapters
+        if model_benchmark_adapters:
+            raise ApplicationServiceError(
+                "plain model benchmark adapters are replay-unsafe and unsupported"
+            )
+        benchmark_hosts = dict(model_benchmark_hosts or {})
+        try:
+            for model_ref, host in benchmark_hosts.items():
+                if not isinstance(model_ref, str) or not IDENTIFIER.fullmatch(model_ref):
+                    raise ApplicationServiceError(
+                        "model benchmark host identity is invalid"
+                    )
+                validate_benchmark_execution_host(host, model_ref=model_ref)
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        self._model_benchmark_hosts = benchmark_hosts
         research_adapters = dict(research_execution_adapters or {})
         if research_adapters and (
             set(research_adapters) != set(RESEARCH_DAG)
@@ -3181,11 +3191,10 @@ class KrcnApplicationService:
         _check_arguments(
             request.arguments,
             required={
-                "suite",
-                "model",
-                "health_record",
+                "project_id",
+                "suite_id",
+                "model_ref",
                 "execution_profile",
-                "current_source_digest",
                 "workload_id",
                 "repetitions",
                 "model_assignment_id",
@@ -3195,7 +3204,37 @@ class KrcnApplicationService:
         )
         if request.apply:
             raise ApplicationServiceError("benchmark preparation is read-only")
-        model = _object_argument(request.arguments, "model")
+        project_id = _identifier_argument(request.arguments, "project_id")
+        suite_id = _identifier_argument(request.arguments, "suite_id")
+        model_ref = _identifier_argument(request.arguments, "model_ref")
+        try:
+            authoritative = resolve_authoritative_benchmark_inputs(
+                self._repo_root,
+                self._store,
+                project_id=project_id,
+                suite_id=suite_id,
+                model_ref=model_ref,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        host = self._model_benchmark_hosts.get(model_ref)
+        if host is None:
+            return "blocked", {
+                "reason_code": "benchmark-execution-host-unavailable",
+                "model_ref": model_ref,
+                "durable_exactly_once_host": False,
+                "execution_performed": False,
+                "provider_call_performed": False,
+                "grants_authority": False,
+            }
+        try:
+            host_descriptor = validate_benchmark_execution_host(
+                host,
+                model_ref=model_ref,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        model = authoritative.model
         authorization, authorization_ref = self._benchmark_provider_authorization(
             request, model
         )
@@ -3208,17 +3247,16 @@ class KrcnApplicationService:
         ):
             raise ApplicationServiceError("timeout_ms must be an integer or null")
         try:
-            plan = prepare_model_benchmark_run(
+            plan = prepare_model_benchmark_run_from_store(
                 self._repo_root,
-                suite=_object_argument(request.arguments, "suite"),
-                model=model,
-                health_record=_object_argument(request.arguments, "health_record"),
+                self._store,
+                project_id=project_id,
+                suite_id=suite_id,
+                model_ref=model_ref,
                 execution_profile=_object_argument(
                     request.arguments, "execution_profile"
                 ),
-                current_source_digest=_string_argument(
-                    request.arguments, "current_source_digest"
-                ),
+                execution_host_descriptor=host_descriptor,
                 workload_id=_identifier_argument(request.arguments, "workload_id"),
                 repetitions=repetitions,
                 model_assignment_id=_identifier_argument(
@@ -3228,13 +3266,17 @@ class KrcnApplicationService:
                 now=self._benchmark_timestamp(request.arguments.get("now"), "now"),
                 provider_authorization=authorization,
                 provider_authorization_ref=authorization_ref,
+                provider_approval_id=(
+                    request.approval_id if model["remote"] is True else None
+                ),
             )
         except ValueError as exc:
             raise ApplicationServiceError(str(exc)) from exc
         return "planned", {
             "plan": plan,
             "expected_plan_id": plan["plan_digest"],
-            "adapter_called": False,
+            "execution_host_digest": plan["execution_host_digest"],
+            "host_claimed": False,
             "provider_call_performed": False,
             "execution_performed": False,
             "grants_authority": False,
@@ -3248,25 +3290,34 @@ class KrcnApplicationService:
             request.arguments,
             required={
                 "plan",
-                "suite",
-                "model",
-                "health_record",
+                "project_id",
+                "suite_id",
+                "model_ref",
                 "execution_profile",
-                "current_source_digest",
                 "observed_at",
             },
             optional={"provider_disclosure"},
         )
-        model = _object_argument(request.arguments, "model")
-        model_ref = model.get("model_ref")
-        if not isinstance(model_ref, str) or not IDENTIFIER.fullmatch(model_ref):
-            raise ApplicationServiceError("model_ref must be a portable identifier")
-        adapter = self._model_benchmark_adapters.get(model_ref)
-        if adapter is None:
+        project_id = _identifier_argument(request.arguments, "project_id")
+        suite_id = _identifier_argument(request.arguments, "suite_id")
+        model_ref = _identifier_argument(request.arguments, "model_ref")
+        try:
+            authoritative = resolve_authoritative_benchmark_inputs(
+                self._repo_root,
+                self._store,
+                project_id=project_id,
+                suite_id=suite_id,
+                model_ref=model_ref,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        model = authoritative.model
+        host = self._model_benchmark_hosts.get(model_ref)
+        if host is None:
             return "blocked", {
-                "reason_code": "benchmark-adapter-unavailable",
+                "reason_code": "benchmark-execution-host-unavailable",
                 "model_ref": model_ref,
-                "adapter_injected": False,
+                "durable_exactly_once_host": False,
                 "execution_performed": False,
                 "provider_call_performed": False,
                 "grants_authority": False,
@@ -3288,31 +3339,36 @@ class KrcnApplicationService:
             request, model
         )
         try:
-            output = execute_model_benchmark_run(
+            output = execute_model_benchmark_run_from_store(
                 self._repo_root,
+                self._store,
                 plan,
+                project_id=project_id,
+                suite_id=suite_id,
+                model_ref=model_ref,
                 expected_plan_id=str(plan.get("plan_id", "")),
-                suite=_object_argument(request.arguments, "suite"),
-                model=model,
-                health_record=_object_argument(request.arguments, "health_record"),
                 execution_profile=_object_argument(
                     request.arguments, "execution_profile"
                 ),
-                current_source_digest=_string_argument(
-                    request.arguments, "current_source_digest"
+                execution_host=host,
+                execution_authorization_digest=build_execution_authorization_digest(
+                    plan_digest=str(plan.get("plan_digest", "")),
+                    approval_id=request.approval_id,
                 ),
-                adapter=adapter,
                 observed_at=self._benchmark_timestamp(
                     request.arguments.get("observed_at"), "observed_at"
                 ),
                 provider_authorization=authorization,
                 provider_authorization_ref=authorization_ref,
+                provider_approval_id=(
+                    request.approval_id if model["remote"] is True else None
+                ),
             )
         except ValueError as exc:
             raise ApplicationServiceError(str(exc)) from exc
         return "applied", {
             "result": output.as_dict(),
-            "adapter_injected": True,
+            "durable_exactly_once_host": True,
             "execution_performed": True,
             "persisted": False,
             "grants_authority": False,

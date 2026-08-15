@@ -18,7 +18,11 @@ from pathlib import Path
 from typing import Mapping, Protocol, Sequence
 
 from .information_records import canonical_json
-from .model_benchmark import parse_model_benchmark_suite
+from .local_store import LocalWorkspaceStore
+from .model_benchmark import (
+    build_project_benchmark_suite,
+    parse_model_benchmark_suite,
+)
 from .model_decision import (
     build_model_benchmark_result,
     build_model_runtime_observation,
@@ -50,6 +54,9 @@ PROFILE_INVARIANTS = {
 }
 PLAN_INVARIANTS = {
     "adapter_discovered": False,
+    "execution_host_discovered": False,
+    "durable_claim_required": True,
+    "durable_receipt_required": True,
     "provider_call_performed": False,
     "prompt_content_included": False,
     "source_content_included": False,
@@ -71,10 +78,24 @@ class ModelBenchmarkRunnerError(ValueError):
     """Raised when execution provenance is unsafe, stale, or inconsistent."""
 
 
-class BenchmarkAdapter(Protocol):
-    """A caller-injected adapter; the runner never discovers one implicitly."""
+class BenchmarkExecutionHost(Protocol):
+    """Injected durable ledger and execution boundary for exactly-once runs."""
 
-    def __call__(self, request: Mapping[str, object]) -> Mapping[str, object]: ...
+    def describe(self) -> Mapping[str, object]: ...
+
+    def claim(self, request: Mapping[str, object]) -> Mapping[str, object]: ...
+
+    def run_trial(
+        self,
+        claim: Mapping[str, object],
+        request: Mapping[str, object],
+    ) -> Mapping[str, object]: ...
+
+    def complete(
+        self,
+        claim: Mapping[str, object],
+        receipt: Mapping[str, object],
+    ) -> Mapping[str, object]: ...
 
 
 @dataclass(frozen=True)
@@ -100,6 +121,8 @@ class BenchmarkRunOutput:
     aggregate: Mapping[str, object]
     benchmark_records: tuple[Mapping[str, object], ...]
     runtime_observations: tuple[Mapping[str, object], ...]
+    execution_claim: Mapping[str, object]
+    execution_receipt: Mapping[str, object]
 
     def as_dict(self) -> dict[str, object]:
         return {
@@ -108,9 +131,19 @@ class BenchmarkRunOutput:
             "aggregate": dict(self.aggregate),
             "benchmark_records": [dict(item) for item in self.benchmark_records],
             "runtime_observations": [dict(item) for item in self.runtime_observations],
+            "execution_claim": dict(self.execution_claim),
+            "execution_receipt": dict(self.execution_receipt),
             "store_mutated": False,
             "grants_authority": False,
         }
+
+
+@dataclass(frozen=True)
+class AuthoritativeBenchmarkInputs:
+    suite: Mapping[str, object]
+    model: Mapping[str, object]
+    health_record: Mapping[str, object]
+    current_source_digest: str
 
 
 def _digest(payload: object) -> str:
@@ -185,6 +218,178 @@ def _safe(payload: object, label: str) -> None:
         raise ModelBenchmarkRunnerError(f"{label} contains prohibited sensitive or path data")
 
 
+def build_benchmark_execution_host_descriptor(
+    *,
+    host_id: str,
+    ledger_ref: str,
+    model_ref: str,
+) -> dict[str, object]:
+    """Build the content-free descriptor an injected durable host must expose."""
+
+    semantic = {
+        "host_id": _id(host_id, "host id"),
+        "ledger_ref": _id(ledger_ref, "ledger ref"),
+        "model_ref": _id(model_ref, "model ref"),
+        "durable": True,
+        "exactly_once": True,
+        "claim_before_execution": True,
+        "receipt_after_execution": True,
+    }
+    return {
+        "schema_version": 1,
+        **semantic,
+        "host_digest": _digest(semantic),
+        "grants_authority": False,
+    }
+
+
+def parse_benchmark_execution_host_descriptor(payload: object) -> dict[str, object]:
+    fields = {
+        "schema_version",
+        "host_id",
+        "ledger_ref",
+        "model_ref",
+        "durable",
+        "exactly_once",
+        "claim_before_execution",
+        "receipt_after_execution",
+        "host_digest",
+        "grants_authority",
+    }
+    if not isinstance(payload, Mapping) or set(payload) != fields:
+        raise ModelBenchmarkRunnerError("benchmark execution host descriptor is incomplete")
+    if (
+        payload.get("schema_version") != 1
+        or payload.get("durable") is not True
+        or payload.get("exactly_once") is not True
+        or payload.get("claim_before_execution") is not True
+        or payload.get("receipt_after_execution") is not True
+        or payload.get("grants_authority") is not False
+    ):
+        raise ModelBenchmarkRunnerError("benchmark execution host is not durable exactly-once")
+    for key in ("host_id", "ledger_ref", "model_ref"):
+        _id(payload.get(key), key)
+    _sha(payload.get("host_digest"), "host digest")
+    semantic = {
+        key: payload[key]
+        for key in fields - {"schema_version", "host_digest", "grants_authority"}
+    }
+    if payload["host_digest"] != _digest(semantic):
+        raise ModelBenchmarkRunnerError("benchmark execution host digest is invalid")
+    _safe(payload, "benchmark execution host")
+    return dict(payload)
+
+
+def validate_benchmark_execution_host(
+    host: object,
+    *,
+    model_ref: str,
+) -> dict[str, object]:
+    """Fail closed unless every durable host operation is explicitly present."""
+
+    if any(
+        not callable(getattr(host, method, None))
+        for method in ("describe", "claim", "run_trial", "complete")
+    ):
+        raise ModelBenchmarkRunnerError("benchmark execution host is incomplete")
+    descriptor = parse_benchmark_execution_host_descriptor(host.describe())
+    if descriptor["model_ref"] != _id(model_ref, "model ref"):
+        raise ModelBenchmarkRunnerError("benchmark execution host model is mismatched")
+    return descriptor
+
+
+def build_execution_authorization_digest(
+    *,
+    plan_digest: str,
+    approval_id: str,
+) -> str:
+    """Bind one explicit execution approval to one exact benchmark plan."""
+
+    if not isinstance(approval_id, str) or not approval_id.strip():
+        raise ModelBenchmarkRunnerError("benchmark execution approval id is required")
+    _safe(approval_id, "benchmark execution approval")
+    return _digest(
+        {
+            "plan_digest": _sha(plan_digest, "plan digest"),
+            "approval_id_digest": hashlib.sha256(approval_id.encode("utf-8")).hexdigest(),
+        }
+    )
+
+
+def _provider_authorization_binding(
+    *,
+    request_id: str,
+    session_id: str,
+    approval_id: str,
+    authorization_ref: str,
+) -> dict[str, str]:
+    session_digest = hashlib.sha256(session_id.encode("utf-8")).hexdigest()
+    approval_digest = hashlib.sha256(approval_id.encode("utf-8")).hexdigest()
+    authorization_digest = _digest(
+        {
+            "request_id": _sha(request_id, "provider request id"),
+            "session_digest": session_digest,
+            "approval_digest": approval_digest,
+            "authorization_ref": _id(authorization_ref, "provider authorization ref"),
+        }
+    )
+    return {
+        "request_id": request_id,
+        "session_digest": session_digest,
+        "approval_digest": approval_digest,
+        "authorization_ref": authorization_ref,
+        "authorization_digest": authorization_digest,
+    }
+
+
+def resolve_authoritative_benchmark_inputs(
+    repo_root: Path,
+    store: LocalWorkspaceStore,
+    *,
+    project_id: str,
+    suite_id: str,
+    model_ref: str,
+) -> AuthoritativeBenchmarkInputs:
+    """Resolve current benchmark inputs from the durable store only."""
+
+    project_id = _id(project_id, "project id")
+    suite_id = _id(suite_id, "suite id")
+    model_ref = _id(model_ref, "model ref")
+    if suite_id != f"{project_id}-micro-benchmark":
+        raise ModelBenchmarkRunnerError("benchmark suite and project identity mismatch")
+    suite_record = store.read("model-benchmark-suites", suite_id)
+    model_record = store.read("model-inventory", model_ref)
+    health_record = store.read("model-health", model_ref)
+    if suite_record is None or model_record is None or health_record is None:
+        raise ModelBenchmarkRunnerError(
+            "authoritative benchmark suite, model inventory, and health are required"
+        )
+    suite = parse_model_benchmark_suite(suite_record.payload)
+    model = parse_model_inventory_record(dict(model_record.payload))
+    health = parse_model_health_record(dict(health_record.payload))
+    if suite["project_id"] != project_id:
+        raise ModelBenchmarkRunnerError("stored benchmark suite project is mismatched")
+    if health["model_ref"] != model_ref or health["inventory_digest"] != model["inventory_digest"]:
+        raise ModelBenchmarkRunnerError("stored model health is stale or mismatched")
+    try:
+        rebuilt = build_project_benchmark_suite(
+            repo_root,
+            store,
+            project_id,
+            suite_revision=int(suite["suite_revision"]),
+        )
+    except ValueError as exc:
+        raise ModelBenchmarkRunnerError("current project capability profile is unavailable") from exc
+    if rebuilt != suite:
+        raise ModelBenchmarkRunnerError("stored benchmark suite or project source/profile is stale")
+    return AuthoritativeBenchmarkInputs(
+        suite=suite,
+        model=model,
+        health_record=health,
+        current_source_digest=str(suite["source_digest"]),
+    )
+
+
 def load_model_benchmark_runner_policy(repo_root: Path) -> ModelBenchmarkRunnerPolicy:
     path = repo_root / "config" / "model-benchmark-runner.json"
     try:
@@ -208,7 +413,7 @@ def load_model_benchmark_runner_policy(repo_root: Path) -> ModelBenchmarkRunnerP
         raise ModelBenchmarkRunnerError("model benchmark runner policy fields are invalid")
     if payload.get("schema_version") != 1 or payload.get("invariants") != {
         "offline_by_default": True,
-        "injected_adapter_only": True,
+        "injected_execution_host_only": True,
         "store_mutation": False,
         "raw_content_persisted": False,
     }:
@@ -362,12 +567,19 @@ def _authorization_binding(
     profile: Mapping[str, object],
     authorization: ProviderAuthorization | None,
     authorization_ref: str | None,
-) -> tuple[str | None, str | None]:
+    approval_id: str | None,
+) -> Mapping[str, str | None]:
     if not model["remote"]:
-        if authorization is not None or authorization_ref is not None:
+        if authorization is not None or authorization_ref is not None or approval_id is not None:
             raise ModelBenchmarkRunnerError("local benchmark accepts no provider authorization")
-        return None, None
-    if authorization is None or authorization_ref is None:
+        return {
+            "request_id": None,
+            "session_digest": None,
+            "approval_digest": None,
+            "authorization_ref": None,
+            "authorization_digest": None,
+        }
+    if authorization is None or authorization_ref is None or approval_id is None:
         raise ModelBenchmarkRunnerError("remote benchmark requires exact provider authorization")
     request = authorization.request
     if (
@@ -378,7 +590,12 @@ def _authorization_binding(
         or request.session_id.strip() == ""
     ):
         raise ModelBenchmarkRunnerError("remote provider authorization does not match benchmark")
-    return _sha(request.request_id, "provider request id"), _id(authorization_ref, "provider authorization ref")
+    return _provider_authorization_binding(
+        request_id=request.request_id,
+        session_id=request.session_id,
+        approval_id=approval_id,
+        authorization_ref=authorization_ref,
+    )
 
 
 def prepare_model_benchmark_run(
@@ -389,6 +606,7 @@ def prepare_model_benchmark_run(
     health_record: Mapping[str, object],
     execution_profile: Mapping[str, object],
     current_source_digest: str,
+    execution_host_descriptor: Mapping[str, object],
     workload_id: str,
     repetitions: int,
     model_assignment_id: str,
@@ -396,6 +614,7 @@ def prepare_model_benchmark_run(
     now: datetime,
     provider_authorization: ProviderAuthorization | None = None,
     provider_authorization_ref: str | None = None,
+    provider_approval_id: str | None = None,
 ) -> dict[str, object]:
     """Prepare an exact run without discovering/calling an adapter or provider."""
 
@@ -404,6 +623,9 @@ def prepare_model_benchmark_run(
     model = parse_model_inventory_record(dict(model))
     health = parse_model_health_record(dict(health_record))
     profile = parse_benchmark_execution_profile(execution_profile)
+    host_descriptor = parse_benchmark_execution_host_descriptor(
+        execution_host_descriptor
+    )
     current_source_digest = _sha(current_source_digest, "current source digest")
     if suite["source_digest"] != current_source_digest:
         raise ModelBenchmarkRunnerError("benchmark suite source is stale")
@@ -431,6 +653,7 @@ def prepare_model_benchmark_run(
         or profile["inventory_digest"] != model["inventory_digest"]
         or profile["provider_ref"] != model["provider_ref"]
         or profile["remote"] is not model["remote"]
+        or host_descriptor["model_ref"] != model["model_ref"]
     ):
         raise ModelBenchmarkRunnerError("model is not health-passed for this execution profile")
     if workload_id not in model["supported_workloads"]:
@@ -442,8 +665,12 @@ def prepare_model_benchmark_run(
         raise ModelBenchmarkRunnerError("fixture policy is invalid")
     if model["remote"] and (fixture_policy == "local-only" or case["remote_eligible"] is not True):
         raise ModelBenchmarkRunnerError("local-only benchmark fixture cannot use a remote model")
-    request_id, authorization_ref = _authorization_binding(
-        model, profile, provider_authorization, provider_authorization_ref
+    provider_binding = _authorization_binding(
+        model,
+        profile,
+        provider_authorization,
+        provider_authorization_ref,
+        provider_approval_id,
     )
     identity = {
         "policy_digest": policy.policy_digest,
@@ -459,11 +686,15 @@ def prepare_model_benchmark_run(
         "inventory_digest": model["inventory_digest"],
         "health_result_digest": health["result_digest"],
         "execution_profile_digest": profile["profile_digest"],
+        "execution_host_digest": host_descriptor["host_digest"],
         "model_assignment_id": _id(model_assignment_id, "model assignment id"),
         "repetitions": repetitions,
         "timeout_ms": selected_timeout,
-        "provider_request_id": request_id,
-        "provider_authorization_ref": authorization_ref,
+        "provider_request_id": provider_binding["request_id"],
+        "provider_session_digest": provider_binding["session_digest"],
+        "provider_approval_digest": provider_binding["approval_digest"],
+        "provider_authorization_ref": provider_binding["authorization_ref"],
+        "provider_authorization_digest": provider_binding["authorization_digest"],
     }
     seed = _digest(identity)
     trial_ids = [f"benchmark-trial-{_digest({'plan_seed': seed, 'repetition': index})[:24]}" for index in range(1, repetitions + 1)]
@@ -488,9 +719,11 @@ def parse_model_benchmark_run_plan(
         "schema_ref", "schema_version", "policy_digest", "project_id", "suite_digest",
         "source_digest", "workload_id", "workload_kind", "workload_digest", "case_digest",
         "fixture_policy", "model_ref", "inventory_digest", "health_result_digest",
-        "execution_profile_digest", "model_assignment_id", "repetitions", "timeout_ms",
-        "provider_request_id", "provider_authorization_ref", "trial_ids", "plan_id",
-        "plan_digest", "invariants",
+        "execution_profile_digest", "execution_host_digest", "model_assignment_id",
+        "repetitions", "timeout_ms", "provider_request_id", "provider_session_digest",
+        "provider_approval_digest", "provider_authorization_ref",
+        "provider_authorization_digest", "trial_ids", "plan_id", "plan_digest",
+        "invariants",
     }
     if not isinstance(payload, Mapping) or set(payload) != fields:
         raise ModelBenchmarkRunnerError("benchmark run plan fields are invalid")
@@ -505,7 +738,8 @@ def parse_model_benchmark_run_plan(
         _id(payload.get(key), key)
     for key in (
         "policy_digest", "suite_digest", "source_digest", "workload_digest", "case_digest",
-        "inventory_digest", "health_result_digest", "execution_profile_digest", "plan_digest",
+        "inventory_digest", "health_result_digest", "execution_profile_digest",
+        "execution_host_digest", "plan_digest",
     ):
         _sha(payload.get(key), key)
     repetitions = _integer(payload.get("repetitions"), "repetitions", minimum=5)
@@ -518,13 +752,34 @@ def parse_model_benchmark_run_plan(
         or any(not isinstance(item, str) or not IDENTIFIER.fullmatch(item) for item in trial_ids)
     ):
         raise ModelBenchmarkRunnerError("benchmark trial identities are invalid")
-    request_id = payload.get("provider_request_id")
-    auth_ref = payload.get("provider_authorization_ref")
-    if (request_id is None) != (auth_ref is None):
+    provider_fields = (
+        "provider_request_id",
+        "provider_session_digest",
+        "provider_approval_digest",
+        "provider_authorization_ref",
+        "provider_authorization_digest",
+    )
+    provider_values = tuple(payload.get(key) for key in provider_fields)
+    if any(value is None for value in provider_values) and any(
+        value is not None for value in provider_values
+    ):
         raise ModelBenchmarkRunnerError("provider authorization binding is incomplete")
-    if request_id is not None:
-        _sha(request_id, "provider request id")
-        _id(auth_ref, "provider authorization ref")
+    if provider_values[0] is not None:
+        for key in provider_fields:
+            if key == "provider_authorization_ref":
+                _id(payload[key], key)
+            else:
+                _sha(payload[key], key)
+        expected_provider_digest = _digest(
+            {
+                "request_id": payload["provider_request_id"],
+                "session_digest": payload["provider_session_digest"],
+                "approval_digest": payload["provider_approval_digest"],
+                "authorization_ref": payload["provider_authorization_ref"],
+            }
+        )
+        if payload["provider_authorization_digest"] != expected_provider_digest:
+            raise ModelBenchmarkRunnerError("provider authorization digest is invalid")
     semantic = {key: payload[key] for key in fields - {"schema_ref", "schema_version", "plan_id", "plan_digest", "invariants"}}
     if payload["plan_digest"] != _digest(semantic) or payload["plan_id"] != "benchmark-run-" + _digest(semantic)[:24]:
         raise ModelBenchmarkRunnerError("benchmark run plan digest is invalid")
@@ -872,6 +1127,192 @@ def parse_model_benchmark_aggregate_result(payload: object, *, minimum_samples: 
     return json.loads(json.dumps(payload, ensure_ascii=False))
 
 
+def build_benchmark_execution_claim(
+    request: Mapping[str, object],
+    *,
+    claim_id: str,
+) -> dict[str, object]:
+    """Helper for durable hosts to build one strict claimed ledger record."""
+
+    expected = {
+        "schema_version",
+        "plan_digest",
+        "execution_authorization_digest",
+        "provider_authorization_digest",
+        "execution_host_digest",
+        "claim_request_digest",
+    }
+    if not isinstance(request, Mapping) or set(request) != expected or request.get("schema_version") != 1:
+        raise ModelBenchmarkRunnerError("benchmark execution claim request is invalid")
+    for key in ("plan_digest", "execution_authorization_digest", "execution_host_digest", "claim_request_digest"):
+        _sha(request.get(key), key)
+    provider_digest = request.get("provider_authorization_digest")
+    if provider_digest is not None:
+        _sha(provider_digest, "provider authorization digest")
+    request_semantic = {
+        key: request[key] for key in expected - {"schema_version", "claim_request_digest"}
+    }
+    if request["claim_request_digest"] != _digest(request_semantic):
+        raise ModelBenchmarkRunnerError("benchmark execution claim request was tampered")
+    semantic = {
+        "claim_id": _id(claim_id, "claim id"),
+        **request_semantic,
+        "claim_request_digest": request["claim_request_digest"],
+        "status": "claimed",
+    }
+    return parse_benchmark_execution_claim(
+        {
+            "schema_ref": "schemas/model-benchmark-execution-claim.schema.json",
+            "schema_version": 1,
+            **semantic,
+            "claim_digest": _digest(semantic),
+            "grants_authority": False,
+        }
+    )
+
+
+def parse_benchmark_execution_claim(payload: object) -> dict[str, object]:
+    fields = {
+        "schema_ref",
+        "schema_version",
+        "claim_id",
+        "plan_digest",
+        "execution_authorization_digest",
+        "provider_authorization_digest",
+        "execution_host_digest",
+        "claim_request_digest",
+        "status",
+        "claim_digest",
+        "grants_authority",
+    }
+    if not isinstance(payload, Mapping) or set(payload) != fields:
+        raise ModelBenchmarkRunnerError("benchmark execution claim fields are invalid")
+    if (
+        payload.get("schema_ref") != "schemas/model-benchmark-execution-claim.schema.json"
+        or payload.get("schema_version") != 1
+        or payload.get("status") != "claimed"
+        or payload.get("grants_authority") is not False
+    ):
+        raise ModelBenchmarkRunnerError("benchmark execution claim contract is invalid")
+    _id(payload.get("claim_id"), "claim id")
+    for key in (
+        "plan_digest",
+        "execution_authorization_digest",
+        "execution_host_digest",
+        "claim_request_digest",
+        "claim_digest",
+    ):
+        _sha(payload.get(key), key)
+    if payload.get("provider_authorization_digest") is not None:
+        _sha(payload["provider_authorization_digest"], "provider authorization digest")
+    semantic = {
+        key: payload[key]
+        for key in fields - {"schema_ref", "schema_version", "claim_digest", "grants_authority"}
+    }
+    if payload["claim_digest"] != _digest(semantic):
+        raise ModelBenchmarkRunnerError("benchmark execution claim digest is invalid")
+    _safe(payload, "benchmark execution claim")
+    return dict(payload)
+
+
+def build_benchmark_execution_receipt(
+    request: Mapping[str, object],
+    *,
+    receipt_id: str,
+) -> dict[str, object]:
+    """Helper for durable hosts to persist one completed execution receipt."""
+
+    expected = {
+        "schema_version",
+        "claim_id",
+        "claim_digest",
+        "plan_digest",
+        "execution_host_digest",
+        "aggregate_digest",
+        "output_digest",
+        "receipt_request_digest",
+    }
+    if not isinstance(request, Mapping) or set(request) != expected or request.get("schema_version") != 1:
+        raise ModelBenchmarkRunnerError("benchmark execution receipt request is invalid")
+    _id(request.get("claim_id"), "claim id")
+    for key in (
+        "claim_digest",
+        "plan_digest",
+        "execution_host_digest",
+        "aggregate_digest",
+        "output_digest",
+        "receipt_request_digest",
+    ):
+        _sha(request.get(key), key)
+    request_semantic = {
+        key: request[key] for key in expected - {"schema_version", "receipt_request_digest"}
+    }
+    if request["receipt_request_digest"] != _digest(request_semantic):
+        raise ModelBenchmarkRunnerError("benchmark execution receipt request was tampered")
+    semantic = {
+        "receipt_id": _id(receipt_id, "receipt id"),
+        **request_semantic,
+        "receipt_request_digest": request["receipt_request_digest"],
+        "status": "completed",
+    }
+    return parse_benchmark_execution_receipt(
+        {
+            "schema_ref": "schemas/model-benchmark-execution-receipt.schema.json",
+            "schema_version": 1,
+            **semantic,
+            "receipt_digest": _digest(semantic),
+            "grants_authority": False,
+        }
+    )
+
+
+def parse_benchmark_execution_receipt(payload: object) -> dict[str, object]:
+    fields = {
+        "schema_ref",
+        "schema_version",
+        "receipt_id",
+        "claim_id",
+        "claim_digest",
+        "plan_digest",
+        "execution_host_digest",
+        "aggregate_digest",
+        "output_digest",
+        "receipt_request_digest",
+        "status",
+        "receipt_digest",
+        "grants_authority",
+    }
+    if not isinstance(payload, Mapping) or set(payload) != fields:
+        raise ModelBenchmarkRunnerError("benchmark execution receipt fields are invalid")
+    if (
+        payload.get("schema_ref") != "schemas/model-benchmark-execution-receipt.schema.json"
+        or payload.get("schema_version") != 1
+        or payload.get("status") != "completed"
+        or payload.get("grants_authority") is not False
+    ):
+        raise ModelBenchmarkRunnerError("benchmark execution receipt contract is invalid")
+    for key in ("receipt_id", "claim_id"):
+        _id(payload.get(key), key)
+    for key in (
+        "claim_digest",
+        "plan_digest",
+        "execution_host_digest",
+        "aggregate_digest",
+        "output_digest",
+        "receipt_request_digest",
+        "receipt_digest",
+    ):
+        _sha(payload.get(key), key)
+    semantic = {
+        key: payload[key]
+        for key in fields - {"schema_ref", "schema_version", "receipt_digest", "grants_authority"}
+    }
+    if payload["receipt_digest"] != _digest(semantic):
+        raise ModelBenchmarkRunnerError("benchmark execution receipt digest is invalid")
+    _safe(payload, "benchmark execution receipt")
+    return dict(payload)
+
+
 def execute_model_benchmark_run(
     repo_root: Path,
     plan: Mapping[str, object],
@@ -882,15 +1323,15 @@ def execute_model_benchmark_run(
     health_record: Mapping[str, object],
     execution_profile: Mapping[str, object],
     current_source_digest: str,
-    adapter: BenchmarkAdapter,
+    execution_host: BenchmarkExecutionHost,
+    execution_authorization_digest: str,
     observed_at: datetime,
     provider_authorization: ProviderAuthorization | None = None,
     provider_authorization_ref: str | None = None,
+    provider_approval_id: str | None = None,
 ) -> BenchmarkRunOutput:
-    """Execute every planned repetition through the explicitly injected adapter."""
+    """Claim once, execute through a durable host, then persist a receipt."""
 
-    if not callable(adapter):
-        raise ModelBenchmarkRunnerError("an injected benchmark adapter is required")
     policy = load_model_benchmark_runner_policy(repo_root)
     plan = parse_model_benchmark_run_plan(plan, policy=policy)
     if expected_plan_id != plan["plan_id"]:
@@ -899,6 +1340,14 @@ def execute_model_benchmark_run(
     model = parse_model_inventory_record(dict(model))
     health = parse_model_health_record(dict(health_record))
     profile = parse_benchmark_execution_profile(execution_profile)
+    host_descriptor = validate_benchmark_execution_host(
+        execution_host,
+        model_ref=str(model["model_ref"]),
+    )
+    execution_authorization_digest = _sha(
+        execution_authorization_digest,
+        "execution authorization digest",
+    )
     current_source_digest = _sha(current_source_digest, "current source digest")
     case = _case(suite, str(plan["workload_id"]))
     if (
@@ -910,12 +1359,53 @@ def execute_model_benchmark_run(
         or plan["inventory_digest"] != model["inventory_digest"]
         or plan["health_result_digest"] != health["result_digest"]
         or plan["execution_profile_digest"] != profile["profile_digest"]
+        or plan["execution_host_digest"] != host_descriptor["host_digest"]
         or health_effective_state(health, _utc(observed_at)) != "health-passed"
     ):
         raise ModelBenchmarkRunnerError("benchmark inputs changed after plan preparation")
-    request_id, auth_ref = _authorization_binding(model, profile, provider_authorization, provider_authorization_ref)
-    if request_id != plan["provider_request_id"] or auth_ref != plan["provider_authorization_ref"]:
+    provider_binding = _authorization_binding(
+        model,
+        profile,
+        provider_authorization,
+        provider_authorization_ref,
+        provider_approval_id,
+    )
+    expected_provider_binding = {
+        "request_id": plan["provider_request_id"],
+        "session_digest": plan["provider_session_digest"],
+        "approval_digest": plan["provider_approval_digest"],
+        "authorization_ref": plan["provider_authorization_ref"],
+        "authorization_digest": plan["provider_authorization_digest"],
+    }
+    if provider_binding != expected_provider_binding:
         raise ModelBenchmarkRunnerError("provider authorization changed after preparation")
+    claim_semantic = {
+        "plan_digest": plan["plan_digest"],
+        "execution_authorization_digest": execution_authorization_digest,
+        "provider_authorization_digest": plan["provider_authorization_digest"],
+        "execution_host_digest": host_descriptor["host_digest"],
+    }
+    claim_request = {
+        "schema_version": 1,
+        **claim_semantic,
+        "claim_request_digest": _digest(claim_semantic),
+    }
+    try:
+        claim = parse_benchmark_execution_claim(execution_host.claim(claim_request))
+    except ModelBenchmarkRunnerError:
+        raise
+    except Exception as exc:
+        raise ModelBenchmarkRunnerError(
+            "benchmark execution host rejected or could not durably claim the plan"
+        ) from exc
+    if any(
+        claim[key] != value
+        for key, value in {
+            **claim_semantic,
+            "claim_request_digest": claim_request["claim_request_digest"],
+        }.items()
+    ):
+        raise ModelBenchmarkRunnerError("benchmark execution claim does not match the plan")
     trials = []
     timestamp = _utc(observed_at).isoformat().replace("+00:00", "Z")
     for repetition in range(1, int(plan["repetitions"]) + 1):
@@ -941,9 +1431,9 @@ def execute_model_benchmark_run(
             "raw_content_included": False,
             "grants_authority": False,
         }
-        _safe(request, "adapter request")
+        _safe(request, "execution host request")
         try:
-            raw_outcome = adapter(request)
+            raw_outcome = execution_host.run_trial(claim, request)
         except TimeoutError:
             outcome = {
                 "quality_score_basis_points": 0,
@@ -1018,4 +1508,142 @@ def execute_model_benchmark_run(
     parse_model_benchmark_result(benchmark_record)
     for item in runtime:
         parse_model_runtime_observation(item)
-    return BenchmarkRunOutput(plan, tuple(trials), aggregate, (benchmark_record,), runtime)
+    output_semantic = {
+        "plan_digest": plan["plan_digest"],
+        "trial_digests": [item["trial_digest"] for item in trials],
+        "aggregate_digest": aggregate["aggregate_digest"],
+        "benchmark_result_digests": [benchmark_record["result_digest"]],
+        "runtime_observation_digests": [
+            item["observation_digest"] for item in runtime
+        ],
+    }
+    receipt_semantic = {
+        "claim_id": claim["claim_id"],
+        "claim_digest": claim["claim_digest"],
+        "plan_digest": plan["plan_digest"],
+        "execution_host_digest": host_descriptor["host_digest"],
+        "aggregate_digest": aggregate["aggregate_digest"],
+        "output_digest": _digest(output_semantic),
+    }
+    receipt_request = {
+        "schema_version": 1,
+        **receipt_semantic,
+        "receipt_request_digest": _digest(receipt_semantic),
+    }
+    try:
+        receipt = parse_benchmark_execution_receipt(
+            execution_host.complete(claim, receipt_request)
+        )
+    except ModelBenchmarkRunnerError:
+        raise
+    except Exception as exc:
+        raise ModelBenchmarkRunnerError(
+            "benchmark execution host could not durably complete the receipt"
+        ) from exc
+    if any(
+        receipt[key] != value
+        for key, value in {
+            **receipt_semantic,
+            "receipt_request_digest": receipt_request["receipt_request_digest"],
+        }.items()
+    ):
+        raise ModelBenchmarkRunnerError("benchmark execution receipt does not match the result")
+    return BenchmarkRunOutput(
+        plan,
+        tuple(trials),
+        aggregate,
+        (benchmark_record,),
+        runtime,
+        claim,
+        receipt,
+    )
+
+
+def prepare_model_benchmark_run_from_store(
+    repo_root: Path,
+    store: LocalWorkspaceStore,
+    *,
+    project_id: str,
+    suite_id: str,
+    model_ref: str,
+    execution_profile: Mapping[str, object],
+    execution_host_descriptor: Mapping[str, object],
+    workload_id: str,
+    repetitions: int,
+    model_assignment_id: str,
+    timeout_ms: int | None,
+    now: datetime,
+    provider_authorization: ProviderAuthorization | None = None,
+    provider_authorization_ref: str | None = None,
+    provider_approval_id: str | None = None,
+) -> dict[str, object]:
+    """Prepare only from current authoritative records resolved by identity."""
+
+    inputs = resolve_authoritative_benchmark_inputs(
+        repo_root,
+        store,
+        project_id=project_id,
+        suite_id=suite_id,
+        model_ref=model_ref,
+    )
+    return prepare_model_benchmark_run(
+        repo_root,
+        suite=inputs.suite,
+        model=inputs.model,
+        health_record=inputs.health_record,
+        execution_profile=execution_profile,
+        current_source_digest=inputs.current_source_digest,
+        execution_host_descriptor=execution_host_descriptor,
+        workload_id=workload_id,
+        repetitions=repetitions,
+        model_assignment_id=model_assignment_id,
+        timeout_ms=timeout_ms,
+        now=now,
+        provider_authorization=provider_authorization,
+        provider_authorization_ref=provider_authorization_ref,
+        provider_approval_id=provider_approval_id,
+    )
+
+
+def execute_model_benchmark_run_from_store(
+    repo_root: Path,
+    store: LocalWorkspaceStore,
+    plan: Mapping[str, object],
+    *,
+    project_id: str,
+    suite_id: str,
+    model_ref: str,
+    expected_plan_id: str,
+    execution_profile: Mapping[str, object],
+    execution_host: BenchmarkExecutionHost,
+    execution_authorization_digest: str,
+    observed_at: datetime,
+    provider_authorization: ProviderAuthorization | None = None,
+    provider_authorization_ref: str | None = None,
+    provider_approval_id: str | None = None,
+) -> BenchmarkRunOutput:
+    """Execute only after re-resolving every authoritative current record."""
+
+    inputs = resolve_authoritative_benchmark_inputs(
+        repo_root,
+        store,
+        project_id=project_id,
+        suite_id=suite_id,
+        model_ref=model_ref,
+    )
+    return execute_model_benchmark_run(
+        repo_root,
+        plan,
+        expected_plan_id=expected_plan_id,
+        suite=inputs.suite,
+        model=inputs.model,
+        health_record=inputs.health_record,
+        execution_profile=execution_profile,
+        current_source_digest=inputs.current_source_digest,
+        execution_host=execution_host,
+        execution_authorization_digest=execution_authorization_digest,
+        observed_at=observed_at,
+        provider_authorization=provider_authorization,
+        provider_authorization_ref=provider_authorization_ref,
+        provider_approval_id=provider_approval_id,
+    )
