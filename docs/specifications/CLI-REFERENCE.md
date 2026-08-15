@@ -231,7 +231,10 @@ approval, and an injected durable exactly-once host for the selected model. The
 normal CLI host injects no execution host and returns `blocked` instead of
 pretending to execute a model. Remote models additionally require the exact
 same session-bound provider request, authorization reference, and approval
-identity used by the prepared plan. Results
+identity used by the prepared plan. An injected host persists successful and
+terminal-failure receipts. Malformed-output replay returns the same sanitized
+failed result without a new provider call; a claim without a terminal receipt
+returns recovery-required and is never retried silently. Results
 contain measurements and provenance only; prompts, responses, credentials,
 endpoints, physical paths, and source content are not returned or persisted.
 

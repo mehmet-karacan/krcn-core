@@ -8,6 +8,8 @@ Status: implementation and fail-closed application/CLI integration complete.
 - store-only authoritative suite, inventory, health, capability-profile, and
   source-state resolution;
 - durable exactly-once claim before any trial and digest-bound receipt after it;
+- terminal failure receipts for malformed outcomes/runner validation, canonical
+  cost-free failure replay, and explicit recovery-required pending claims;
 - strict execution profile with harness/model/provider-route/reasoning/
   quantization/environment and independent-verifier provenance;
 - exact run plan bound to suite, source, workload, case, inventory, health,
@@ -46,6 +48,9 @@ The focused tests cover:
 - deterministic local durable fake-host execution and statistics;
 - empty authoritative store and stale source/profile rejection;
 - replay rejection without a second trial call;
+- malformed first outcome recorded as one terminal failure receipt, with a
+  deterministic second-call no-op and no additional trial/cost;
+- interrupted pending claim rejection with explicit recovery required;
 - provider approval swap rejection before host claim;
 - one-shot and sub-threshold sample rejection;
 - mandatory current `health-passed` evidence;

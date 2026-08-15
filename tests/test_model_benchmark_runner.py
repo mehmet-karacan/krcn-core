@@ -75,6 +75,17 @@ class DurableFakeBenchmarkHost:
     def describe(self) -> dict[str, object]:
         return dict(self.descriptor)
 
+    def get_claim(self, plan_digest: str) -> dict[str, object] | None:
+        claim = self.claims.get(plan_digest)
+        return None if claim is None else dict(claim)
+
+    def get_receipt(
+        self,
+        claim: dict[str, object],
+    ) -> dict[str, object] | None:
+        receipt = self.receipts.get(str(claim["plan_digest"]))
+        return None if receipt is None else dict(receipt)
+
     def claim(self, request: dict[str, object]) -> dict[str, object]:
         plan_digest = str(request["plan_digest"])
         if plan_digest in self.claims:
@@ -102,6 +113,18 @@ class DurableFakeBenchmarkHost:
         receipt = build_benchmark_execution_receipt(
             request,
             receipt_id="receipt-" + str(request["plan_digest"])[:24],
+        )
+        self.receipts[str(request["plan_digest"])] = receipt
+        return receipt
+
+    def complete_failure(
+        self,
+        claim: dict[str, object],
+        request: dict[str, object],
+    ) -> dict[str, object]:
+        receipt = build_benchmark_execution_receipt(
+            request,
+            receipt_id="failure-receipt-" + str(request["plan_digest"])[:16],
         )
         self.receipts[str(request["plan_digest"])] = receipt
         return receipt
@@ -753,7 +776,63 @@ class ModelBenchmarkRunnerTests(unittest.TestCase):
             execution_host=host,
         )
 
-        with self.assertRaises(ModelBenchmarkRunnerError) as caught:
+        arguments = {
+            "expected_plan_id": str(plan["plan_id"]),
+            "suite": selected_suite,
+            "model": model,
+            "health_record": health,
+            "execution_profile": profile,
+            "current_source_digest": str(selected_suite["source_digest"]),
+            "execution_host": host,
+            "execution_authorization_digest": build_execution_authorization_digest(
+                plan_digest=str(plan["plan_digest"]),
+                approval_id="execution-approval",
+            ),
+            "observed_at": self.now,
+        }
+        first = execute_model_benchmark_run(REPO_ROOT, plan, **arguments)
+        self.assertEqual("failed", first.as_dict()["status"])
+        self.assertEqual("outcome-validation-failed", first.as_dict()["failure_category"])
+        self.assertEqual(1, host.trial_calls)
+        self.assertEqual(1, len(host.claims))
+        self.assertEqual(1, len(host.receipts))
+        replay = execute_model_benchmark_run(REPO_ROOT, plan, **arguments)
+        self.assertEqual(first.as_dict(), replay.as_dict())
+        self.assertFalse(replay.execution_performed)
+        self.assertEqual(1, host.trial_calls)
+        self.assertNotIn("supersecret", str(first.as_dict()))
+        self.assertNotIn("Users", str(first.as_dict()))
+        with self.assertRaises(ModelBenchmarkRunnerError):
+            self.profile(model, revision=physical_path)
+
+    def test_pending_claim_requires_explicit_recovery_without_trial(self) -> None:
+        model = self.model()
+        host = DurableFakeBenchmarkHost(
+            lambda request: self.outcome(int(request["repetition"]))
+        )
+        plan, selected_suite, health, profile = self.plan(
+            model=model,
+            execution_host=host,
+        )
+        execution_digest = build_execution_authorization_digest(
+            plan_digest=str(plan["plan_digest"]),
+            approval_id="execution-approval",
+        )
+        claim_semantic = {
+            "plan_digest": plan["plan_digest"],
+            "execution_authorization_digest": execution_digest,
+            "provider_authorization_digest": plan["provider_authorization_digest"],
+            "execution_host_digest": host.descriptor["host_digest"],
+        }
+        host.claim(
+            {
+                "schema_version": 1,
+                **claim_semantic,
+                "claim_request_digest": digest(claim_semantic),
+            }
+        )
+
+        with self.assertRaisesRegex(ModelBenchmarkRunnerError, "recovery is required"):
             execute_model_benchmark_run(
                 REPO_ROOT,
                 plan,
@@ -764,16 +843,11 @@ class ModelBenchmarkRunnerTests(unittest.TestCase):
                 execution_profile=profile,
                 current_source_digest=str(selected_suite["source_digest"]),
                 execution_host=host,
-                execution_authorization_digest=build_execution_authorization_digest(
-                    plan_digest=str(plan["plan_digest"]),
-                    approval_id="execution-approval",
-                ),
+                execution_authorization_digest=execution_digest,
                 observed_at=self.now,
             )
-        self.assertNotIn("supersecret", str(caught.exception))
-        self.assertNotIn("Users", str(caught.exception))
-        with self.assertRaises(ModelBenchmarkRunnerError):
-            self.profile(model, revision=physical_path)
+        self.assertEqual(0, host.trial_calls)
+        self.assertEqual(0, len(host.receipts))
 
     def test_strict_parsers_round_trip_and_verifier_must_be_independent(self) -> None:
         model = self.model()

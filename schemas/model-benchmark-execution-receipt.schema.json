@@ -14,6 +14,8 @@
     "execution_host_digest",
     "aggregate_digest",
     "output_digest",
+    "failure_category",
+    "failure_digest",
     "receipt_request_digest",
     "status",
     "receipt_digest",
@@ -42,16 +44,56 @@
       "$ref": "#/$defs/digest"
     },
     "aggregate_digest": {
-      "$ref": "#/$defs/digest"
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "output_digest": {
-      "$ref": "#/$defs/digest"
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "failure_category": {
+      "oneOf": [
+        {
+          "enum": [
+            "outcome-validation-failed",
+            "runner-validation-failed"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "failure_digest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "receipt_request_digest": {
       "$ref": "#/$defs/digest"
     },
     "status": {
-      "const": "completed"
+      "enum": [
+        "completed",
+        "failed"
+      ]
     },
     "receipt_digest": {
       "$ref": "#/$defs/digest"
@@ -60,6 +102,52 @@
       "const": false
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "completed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "aggregate_digest": {
+            "$ref": "#/$defs/digest"
+          },
+          "output_digest": {
+            "$ref": "#/$defs/digest"
+          },
+          "failure_category": {
+            "type": "null"
+          },
+          "failure_digest": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "aggregate_digest": {
+            "type": "null"
+          },
+          "output_digest": {
+            "type": "null"
+          },
+          "failure_category": {
+            "enum": [
+              "outcome-validation-failed",
+              "runner-validation-failed"
+            ]
+          },
+          "failure_digest": {
+            "$ref": "#/$defs/digest"
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "id": {
       "type": "string",

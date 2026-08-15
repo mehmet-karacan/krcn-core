@@ -348,6 +348,75 @@ class Phase22ApplicationCliTests(unittest.TestCase):
         finally:
             temporary.cleanup()
 
+    def test_benchmark_terminal_failure_replay_is_public_and_cost_free(self) -> None:
+        fixture = benchmark_fixtures.ModelBenchmarkRunnerTests()
+        temporary, _, store, _ = fixture.authoritative_store()
+        try:
+            resolved = benchmark_fixtures.resolve_authoritative_benchmark_inputs(
+                REPO_ROOT,
+                store,
+                project_id="authoritative-project",
+                suite_id="authoritative-project-micro-benchmark",
+                model_ref="runner-model",
+            )
+            workload = next(
+                item
+                for item in resolved.suite["cases"]
+                if item["workload_kind"] == "analysis"
+            )
+            host = benchmark_fixtures.DurableFakeBenchmarkHost(
+                lambda payload: {"malformed": True}
+            )
+            service = KrcnApplicationService(
+                REPO_ROOT,
+                store,
+                model_benchmark_hosts={"runner-model": host},
+            )
+            common = {
+                "project_id": "authoritative-project",
+                "suite_id": "authoritative-project-micro-benchmark",
+                "model_ref": "runner-model",
+                "execution_profile": fixture.profile(dict(resolved.model)),
+            }
+            prepared = service.execute(
+                ServiceRequest(
+                    "cli",
+                    "model.benchmark-prepare",
+                    {
+                        **common,
+                        "workload_id": workload["workload_id"],
+                        "repetitions": 5,
+                        "model_assignment_id": "analysis-assignment",
+                        "timeout_ms": 5000,
+                        "now": "2026-08-16T00:00:00Z",
+                    },
+                )
+            )
+            execution = {
+                **common,
+                "plan": prepared.data["plan"],
+                "observed_at": "2026-08-16T00:00:00Z",
+            }
+            request = ServiceRequest(
+                "cli",
+                "model.benchmark-execute",
+                execution,
+                apply=True,
+                expected_plan_id=prepared.data["expected_plan_id"],
+                approval_id="benchmark-approval",
+            )
+            first = service.execute(request)
+            replay = service.execute(request)
+            self.assertTrue(first.data["execution_performed"])
+            self.assertFalse(replay.data["execution_performed"])
+            self.assertEqual("ok", replay.status)
+            self.assertEqual(first.data["result"], replay.data["result"])
+            self.assertEqual("failed", replay.data["result"]["status"])
+            self.assertEqual(1, host.trial_calls)
+            self.assertEqual(1, len(host.receipts))
+        finally:
+            temporary.cleanup()
+
     def test_default_cli_benchmark_execute_is_explicitly_blocked_and_readable(self) -> None:
         parser = build_parser()
         parsed = parser.parse_args(

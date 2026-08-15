@@ -111,12 +111,22 @@ a high average from hiding an unsafe failed trial.
 Plain callables are rejected because they cannot prove replay protection. An
 execution host must expose a content-free descriptor declaring durable,
 exactly-once claim-before-execution and receipt-after-execution semantics, plus
-strict `claim`, `run_trial`, and `complete` operations. The host atomically
+terminal-failure receipts, explicit pending-claim recovery, and no silent retry.
+It exposes strict `get_claim`, `get_receipt`, `claim`, `run_trial`, `complete`,
+and `complete_failure` operations. The host atomically
 claims the plan digest before the first model call. A duplicate or incomplete
-claim fails closed before another trial can run. After all sanitized records are
+claim is resolved from the ledger before another trial can run. After all sanitized records are
 built, the host durably stores a receipt bound to the claim, plan, aggregate,
-host, and output digests. A failed receipt leaves the claim occupied, preventing
-unsafe retry.
+host, and output digests.
+
+If adapter output cannot pass strict parsing or subsequent runner validation,
+the host records a terminal `failed` receipt bound to the claim, plan, host,
+sanitized failure category, and deterministic failure digest. Replaying that
+same plan returns the canonical failure record without another trial or cost.
+A claimed plan with no terminal receipt is treated as an interrupted execution:
+it returns `recovery-required` and cannot silently resume or retry. A retry must
+therefore be represented by a separately reviewed plan identity rather than by
+discarding or overwriting the original claim.
 
 KRCN never imports, scans for, or selects hosts. The default CLI has no host and
 returns `blocked`. A remote inventory record is not authority: the caller must supply an already verified
@@ -130,7 +140,7 @@ source content, output content, endpoint, credential, secret, or physical path.
 
 ## Compatibility and persistence
 
-`execute_model_benchmark_run` returns `BenchmarkRunOutput` with:
+Successful `execute_model_benchmark_run` calls return `BenchmarkRunOutput` with:
 
 - strict trial records;
 - one strict aggregate record;
@@ -138,6 +148,11 @@ source content, output content, endpoint, credential, secret, or physical path.
   mean reliability, p95 latency, and aggregate pass status;
 - one legacy-compatible runtime observation per trial using actual cost only.
 - the durable execution claim and completion receipt.
+
+A terminal validation failure returns a sanitized `BenchmarkRunFailure` with
+the plan, claim, failure receipt, empty result collections, and explicit
+incomplete cost accounting. Application responses expose whether execution was
+performed in the current call; durable failure replay reports `false`.
 
 The runner does not write any of these records to a store. Existing exact-plan
 evidence persistence remains a separate approval boundary. Estimated cost is
@@ -165,6 +180,7 @@ never presented as actual cost in compatibility observations.
 - `aggregate_model_benchmark_trials`
 - `parse_model_benchmark_aggregate_result`
 - `BenchmarkRunOutput.as_dict`
+- `BenchmarkRunFailure.as_dict`
 
 The application and request-file CLI routes are integrated. They resolve all
 authoritative benchmark inputs from the store and remain blocked when a durable

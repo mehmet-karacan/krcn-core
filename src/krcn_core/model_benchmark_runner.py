@@ -83,6 +83,13 @@ class BenchmarkExecutionHost(Protocol):
 
     def describe(self) -> Mapping[str, object]: ...
 
+    def get_claim(self, plan_digest: str) -> Mapping[str, object] | None: ...
+
+    def get_receipt(
+        self,
+        claim: Mapping[str, object],
+    ) -> Mapping[str, object] | None: ...
+
     def claim(self, request: Mapping[str, object]) -> Mapping[str, object]: ...
 
     def run_trial(
@@ -92,6 +99,12 @@ class BenchmarkExecutionHost(Protocol):
     ) -> Mapping[str, object]: ...
 
     def complete(
+        self,
+        claim: Mapping[str, object],
+        receipt: Mapping[str, object],
+    ) -> Mapping[str, object]: ...
+
+    def complete_failure(
         self,
         claim: Mapping[str, object],
         receipt: Mapping[str, object],
@@ -124,6 +137,10 @@ class BenchmarkRunOutput:
     execution_claim: Mapping[str, object]
     execution_receipt: Mapping[str, object]
 
+    @property
+    def execution_performed(self) -> bool:
+        return True
+
     def as_dict(self) -> dict[str, object]:
         return {
             "plan": dict(self.plan),
@@ -133,6 +150,36 @@ class BenchmarkRunOutput:
             "runtime_observations": [dict(item) for item in self.runtime_observations],
             "execution_claim": dict(self.execution_claim),
             "execution_receipt": dict(self.execution_receipt),
+            "store_mutated": False,
+            "grants_authority": False,
+        }
+
+
+@dataclass(frozen=True)
+class BenchmarkRunFailure:
+    """Sanitized terminal failure returned identically on durable replay."""
+
+    plan: Mapping[str, object]
+    execution_claim: Mapping[str, object]
+    execution_receipt: Mapping[str, object]
+    performed_now: bool
+
+    @property
+    def execution_performed(self) -> bool:
+        return self.performed_now
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "status": "failed",
+            "failure_category": self.execution_receipt["failure_category"],
+            "plan": dict(self.plan),
+            "trials": [],
+            "aggregate": None,
+            "benchmark_records": [],
+            "runtime_observations": [],
+            "execution_claim": dict(self.execution_claim),
+            "execution_receipt": dict(self.execution_receipt),
+            "cost_accounting_complete": False,
             "store_mutated": False,
             "grants_authority": False,
         }
@@ -234,6 +281,9 @@ def build_benchmark_execution_host_descriptor(
         "exactly_once": True,
         "claim_before_execution": True,
         "receipt_after_execution": True,
+        "terminal_failure_receipt": True,
+        "pending_claim_requires_recovery": True,
+        "silent_retry_allowed": False,
     }
     return {
         "schema_version": 1,
@@ -253,6 +303,9 @@ def parse_benchmark_execution_host_descriptor(payload: object) -> dict[str, obje
         "exactly_once",
         "claim_before_execution",
         "receipt_after_execution",
+        "terminal_failure_receipt",
+        "pending_claim_requires_recovery",
+        "silent_retry_allowed",
         "host_digest",
         "grants_authority",
     }
@@ -264,6 +317,9 @@ def parse_benchmark_execution_host_descriptor(payload: object) -> dict[str, obje
         or payload.get("exactly_once") is not True
         or payload.get("claim_before_execution") is not True
         or payload.get("receipt_after_execution") is not True
+        or payload.get("terminal_failure_receipt") is not True
+        or payload.get("pending_claim_requires_recovery") is not True
+        or payload.get("silent_retry_allowed") is not False
         or payload.get("grants_authority") is not False
     ):
         raise ModelBenchmarkRunnerError("benchmark execution host is not durable exactly-once")
@@ -289,7 +345,15 @@ def validate_benchmark_execution_host(
 
     if any(
         not callable(getattr(host, method, None))
-        for method in ("describe", "claim", "run_trial", "complete")
+        for method in (
+            "describe",
+            "get_claim",
+            "get_receipt",
+            "claim",
+            "run_trial",
+            "complete",
+            "complete_failure",
+        )
     ):
         raise ModelBenchmarkRunnerError("benchmark execution host is incomplete")
     descriptor = parse_benchmark_execution_host_descriptor(host.describe())
@@ -414,6 +478,9 @@ def load_model_benchmark_runner_policy(repo_root: Path) -> ModelBenchmarkRunnerP
     if payload.get("schema_version") != 1 or payload.get("invariants") != {
         "offline_by_default": True,
         "injected_execution_host_only": True,
+        "terminal_failure_receipt_required": True,
+        "pending_claim_requires_explicit_recovery": True,
+        "silent_retry": False,
         "store_mutation": False,
         "raw_content_persisted": False,
     }:
@@ -1230,6 +1297,9 @@ def build_benchmark_execution_receipt(
         "execution_host_digest",
         "aggregate_digest",
         "output_digest",
+        "failure_category",
+        "failure_digest",
+        "terminal_status",
         "receipt_request_digest",
     }
     if not isinstance(request, Mapping) or set(request) != expected or request.get("schema_version") != 1:
@@ -1239,11 +1309,27 @@ def build_benchmark_execution_receipt(
         "claim_digest",
         "plan_digest",
         "execution_host_digest",
-        "aggregate_digest",
-        "output_digest",
         "receipt_request_digest",
     ):
         _sha(request.get(key), key)
+    terminal_status = request.get("terminal_status")
+    aggregate_digest = request.get("aggregate_digest")
+    output_digest = request.get("output_digest")
+    failure_category = request.get("failure_category")
+    failure_digest = request.get("failure_digest")
+    if terminal_status == "completed":
+        _sha(aggregate_digest, "aggregate digest")
+        _sha(output_digest, "output digest")
+        if failure_category is not None or failure_digest is not None:
+            raise ModelBenchmarkRunnerError("completed receipt cannot contain failure data")
+    elif terminal_status == "failed":
+        if aggregate_digest is not None or output_digest is not None:
+            raise ModelBenchmarkRunnerError("failed receipt cannot contain result digests")
+        if failure_category not in {"outcome-validation-failed", "runner-validation-failed"}:
+            raise ModelBenchmarkRunnerError("benchmark terminal failure category is invalid")
+        _sha(failure_digest, "failure digest")
+    else:
+        raise ModelBenchmarkRunnerError("benchmark receipt terminal status is invalid")
     request_semantic = {
         key: request[key] for key in expected - {"schema_version", "receipt_request_digest"}
     }
@@ -1251,9 +1337,13 @@ def build_benchmark_execution_receipt(
         raise ModelBenchmarkRunnerError("benchmark execution receipt request was tampered")
     semantic = {
         "receipt_id": _id(receipt_id, "receipt id"),
-        **request_semantic,
+        **{
+            key: value
+            for key, value in request_semantic.items()
+            if key != "terminal_status"
+        },
         "receipt_request_digest": request["receipt_request_digest"],
-        "status": "completed",
+        "status": terminal_status,
     }
     return parse_benchmark_execution_receipt(
         {
@@ -1277,6 +1367,8 @@ def parse_benchmark_execution_receipt(payload: object) -> dict[str, object]:
         "execution_host_digest",
         "aggregate_digest",
         "output_digest",
+        "failure_category",
+        "failure_digest",
         "receipt_request_digest",
         "status",
         "receipt_digest",
@@ -1287,7 +1379,7 @@ def parse_benchmark_execution_receipt(payload: object) -> dict[str, object]:
     if (
         payload.get("schema_ref") != "schemas/model-benchmark-execution-receipt.schema.json"
         or payload.get("schema_version") != 1
-        or payload.get("status") != "completed"
+        or payload.get("status") not in {"completed", "failed"}
         or payload.get("grants_authority") is not False
     ):
         raise ModelBenchmarkRunnerError("benchmark execution receipt contract is invalid")
@@ -1297,12 +1389,24 @@ def parse_benchmark_execution_receipt(payload: object) -> dict[str, object]:
         "claim_digest",
         "plan_digest",
         "execution_host_digest",
-        "aggregate_digest",
-        "output_digest",
         "receipt_request_digest",
         "receipt_digest",
     ):
         _sha(payload.get(key), key)
+    if payload["status"] == "completed":
+        _sha(payload.get("aggregate_digest"), "aggregate digest")
+        _sha(payload.get("output_digest"), "output digest")
+        if payload.get("failure_category") is not None or payload.get("failure_digest") is not None:
+            raise ModelBenchmarkRunnerError("completed receipt contains failure data")
+    else:
+        if payload.get("aggregate_digest") is not None or payload.get("output_digest") is not None:
+            raise ModelBenchmarkRunnerError("failed receipt contains result digests")
+        if payload.get("failure_category") not in {
+            "outcome-validation-failed",
+            "runner-validation-failed",
+        }:
+            raise ModelBenchmarkRunnerError("benchmark terminal failure category is invalid")
+        _sha(payload.get("failure_digest"), "failure digest")
     semantic = {
         key: payload[key]
         for key in fields - {"schema_ref", "schema_version", "receipt_digest", "grants_authority"}
@@ -1311,6 +1415,129 @@ def parse_benchmark_execution_receipt(payload: object) -> dict[str, object]:
         raise ModelBenchmarkRunnerError("benchmark execution receipt digest is invalid")
     _safe(payload, "benchmark execution receipt")
     return dict(payload)
+
+
+def _validate_execution_claim_binding(
+    claim: Mapping[str, object],
+    expected: Mapping[str, object],
+) -> dict[str, object]:
+    parsed = parse_benchmark_execution_claim(claim)
+    if any(parsed[key] != value for key, value in expected.items()):
+        raise ModelBenchmarkRunnerError("benchmark execution claim does not match the plan")
+    return parsed
+
+
+def _validate_execution_receipt_binding(
+    receipt: Mapping[str, object],
+    *,
+    claim: Mapping[str, object],
+    plan_digest: str,
+    execution_host_digest: str,
+) -> dict[str, object]:
+    parsed = parse_benchmark_execution_receipt(receipt)
+    if (
+        parsed["claim_id"] != claim["claim_id"]
+        or parsed["claim_digest"] != claim["claim_digest"]
+        or parsed["plan_digest"] != plan_digest
+        or parsed["execution_host_digest"] != execution_host_digest
+    ):
+        raise ModelBenchmarkRunnerError("benchmark execution receipt does not match the claim")
+    return parsed
+
+
+def _terminal_failure_output(
+    execution_host: BenchmarkExecutionHost,
+    *,
+    plan: Mapping[str, object],
+    claim: Mapping[str, object],
+    execution_host_digest: str,
+    failure_category: str,
+    performed_now: bool,
+) -> BenchmarkRunFailure:
+    failure_digest = _digest(
+        {
+            "claim_digest": claim["claim_digest"],
+            "plan_digest": plan["plan_digest"],
+            "execution_host_digest": execution_host_digest,
+            "failure_category": failure_category,
+        }
+    )
+    receipt_semantic = {
+        "claim_id": claim["claim_id"],
+        "claim_digest": claim["claim_digest"],
+        "plan_digest": plan["plan_digest"],
+        "execution_host_digest": execution_host_digest,
+        "aggregate_digest": None,
+        "output_digest": None,
+        "failure_category": failure_category,
+        "failure_digest": failure_digest,
+        "terminal_status": "failed",
+    }
+    receipt_request = {
+        "schema_version": 1,
+        **receipt_semantic,
+        "receipt_request_digest": _digest(receipt_semantic),
+    }
+    try:
+        receipt = _validate_execution_receipt_binding(
+            execution_host.complete_failure(claim, receipt_request),
+            claim=claim,
+            plan_digest=str(plan["plan_digest"]),
+            execution_host_digest=execution_host_digest,
+        )
+    except Exception as exc:
+        raise ModelBenchmarkRunnerError(
+            "benchmark execution claim is pending; explicit recovery is required"
+        ) from exc
+    if (
+        receipt["status"] != "failed"
+        or receipt["failure_category"] != failure_category
+        or receipt["failure_digest"] != failure_digest
+        or receipt["receipt_request_digest"] != receipt_request["receipt_request_digest"]
+    ):
+        raise ModelBenchmarkRunnerError("benchmark terminal failure receipt is invalid")
+    return BenchmarkRunFailure(plan, claim, receipt, performed_now)
+
+
+def _existing_execution_result(
+    execution_host: BenchmarkExecutionHost,
+    *,
+    plan: Mapping[str, object],
+    claim_expected: Mapping[str, object],
+    execution_host_digest: str,
+) -> BenchmarkRunFailure | None:
+    """Resolve durable replay without ever re-entering the execution boundary."""
+
+    try:
+        existing = execution_host.get_claim(str(plan["plan_digest"]))
+    except Exception as exc:
+        raise ModelBenchmarkRunnerError(
+            "benchmark execution host could not read durable claim state"
+        ) from exc
+    if existing is None:
+        return None
+    claim = _validate_execution_claim_binding(existing, claim_expected)
+    try:
+        existing_receipt = execution_host.get_receipt(claim)
+    except Exception as exc:
+        raise ModelBenchmarkRunnerError(
+            "benchmark execution host could not read durable receipt state"
+        ) from exc
+    if existing_receipt is None:
+        raise ModelBenchmarkRunnerError(
+            "benchmark execution claim is pending; explicit recovery is required"
+        )
+    receipt = _validate_execution_receipt_binding(
+        existing_receipt,
+        claim=claim,
+        plan_digest=str(plan["plan_digest"]),
+        execution_host_digest=execution_host_digest,
+    )
+    if receipt["status"] == "failed":
+        return BenchmarkRunFailure(plan, claim, receipt, False)
+    raise ModelBenchmarkRunnerError(
+        "benchmark execution claim is already completed; provider replay is prohibited"
+    )
 
 
 def execute_model_benchmark_run(
@@ -1329,7 +1556,7 @@ def execute_model_benchmark_run(
     provider_authorization: ProviderAuthorization | None = None,
     provider_authorization_ref: str | None = None,
     provider_approval_id: str | None = None,
-) -> BenchmarkRunOutput:
+) -> BenchmarkRunOutput | BenchmarkRunFailure:
     """Claim once, execute through a durable host, then persist a receipt."""
 
     policy = load_model_benchmark_runner_policy(repo_root)
@@ -1390,6 +1617,18 @@ def execute_model_benchmark_run(
         **claim_semantic,
         "claim_request_digest": _digest(claim_semantic),
     }
+    claim_expected = {
+        **claim_semantic,
+        "claim_request_digest": claim_request["claim_request_digest"],
+    }
+    existing_result = _existing_execution_result(
+        execution_host,
+        plan=plan,
+        claim_expected=claim_expected,
+        execution_host_digest=str(host_descriptor["host_digest"]),
+    )
+    if existing_result is not None:
+        return existing_result
     try:
         claim = parse_benchmark_execution_claim(execution_host.claim(claim_request))
     except ModelBenchmarkRunnerError:
@@ -1398,14 +1637,7 @@ def execute_model_benchmark_run(
         raise ModelBenchmarkRunnerError(
             "benchmark execution host rejected or could not durably claim the plan"
         ) from exc
-    if any(
-        claim[key] != value
-        for key, value in {
-            **claim_semantic,
-            "claim_request_digest": claim_request["claim_request_digest"],
-        }.items()
-    ):
-        raise ModelBenchmarkRunnerError("benchmark execution claim does not match the plan")
+    claim = _validate_execution_claim_binding(claim, claim_expected)
     trials = []
     timestamp = _utc(observed_at).isoformat().replace("+00:00", "Z")
     for repetition in range(1, int(plan["repetitions"]) + 1):
@@ -1475,39 +1707,79 @@ def execute_model_benchmark_run(
                 "verifier_model_family": profile["verifier_model_family"],
             }
         else:
-            outcome = _adapter_outcome(raw_outcome)
-        trials.append(_trial_result(plan, profile, repetition=repetition, observed_at=timestamp, outcome=outcome))
-    aggregate = aggregate_model_benchmark_trials(repo_root, plan, trials, observed_at=timestamp)
-    benchmark_record = build_model_benchmark_result(
-        suite,
-        model,
-        workload_id=str(plan["workload_id"]),
-        observed_at=timestamp,
-        quality_score_basis_points=int(aggregate["statistics"]["quality_score_basis_points"]["mean"]),
-        reliability_score_basis_points=int(aggregate["statistics"]["reliability_score_basis_points"]["mean"]),
-        latency_ms=int(aggregate["statistics"]["latency_ms"]["p95"]),
-        passed=bool(aggregate["passed"]),
-    )
-    runtime = tuple(
-        build_model_runtime_observation(
-            model,
-            project_id=str(plan["project_id"]),
-            workload=str(plan["workload_kind"]),
-            model_assignment_id=str(plan["model_assignment_id"]),
-            trace_digest=str(trial["trial_digest"]),
-            observed_at=str(trial["observed_at"]),
-            successful=bool(trial["failure_category"] is None),
-            verifier_passed=bool(trial["verifier_passed"]),
-            latency_ms=int(trial["latency_ms"]),
-            input_tokens=int(trial["input_tokens"]),
-            output_tokens=int(trial["output_tokens"]),
-            actual_cost_microunits=int(trial["actual_cost_microunits"]),
+            try:
+                outcome = _adapter_outcome(raw_outcome)
+            except Exception:
+                return _terminal_failure_output(
+                    execution_host,
+                    plan=plan,
+                    claim=claim,
+                    execution_host_digest=str(host_descriptor["host_digest"]),
+                    failure_category="outcome-validation-failed",
+                    performed_now=True,
+                )
+        try:
+            trials.append(
+                _trial_result(
+                    plan,
+                    profile,
+                    repetition=repetition,
+                    observed_at=timestamp,
+                    outcome=outcome,
+                )
+            )
+        except Exception:
+            return _terminal_failure_output(
+                execution_host,
+                plan=plan,
+                claim=claim,
+                execution_host_digest=str(host_descriptor["host_digest"]),
+                failure_category="runner-validation-failed",
+                performed_now=True,
+            )
+    try:
+        aggregate = aggregate_model_benchmark_trials(
+            repo_root, plan, trials, observed_at=timestamp
         )
-        for trial in trials
-    )
-    parse_model_benchmark_result(benchmark_record)
-    for item in runtime:
-        parse_model_runtime_observation(item)
+        benchmark_record = build_model_benchmark_result(
+            suite,
+            model,
+            workload_id=str(plan["workload_id"]),
+            observed_at=timestamp,
+            quality_score_basis_points=int(aggregate["statistics"]["quality_score_basis_points"]["mean"]),
+            reliability_score_basis_points=int(aggregate["statistics"]["reliability_score_basis_points"]["mean"]),
+            latency_ms=int(aggregate["statistics"]["latency_ms"]["p95"]),
+            passed=bool(aggregate["passed"]),
+        )
+        runtime = tuple(
+            build_model_runtime_observation(
+                model,
+                project_id=str(plan["project_id"]),
+                workload=str(plan["workload_kind"]),
+                model_assignment_id=str(plan["model_assignment_id"]),
+                trace_digest=str(trial["trial_digest"]),
+                observed_at=str(trial["observed_at"]),
+                successful=bool(trial["failure_category"] is None),
+                verifier_passed=bool(trial["verifier_passed"]),
+                latency_ms=int(trial["latency_ms"]),
+                input_tokens=int(trial["input_tokens"]),
+                output_tokens=int(trial["output_tokens"]),
+                actual_cost_microunits=int(trial["actual_cost_microunits"]),
+            )
+            for trial in trials
+        )
+        parse_model_benchmark_result(benchmark_record)
+        for item in runtime:
+            parse_model_runtime_observation(item)
+    except Exception:
+        return _terminal_failure_output(
+            execution_host,
+            plan=plan,
+            claim=claim,
+            execution_host_digest=str(host_descriptor["host_digest"]),
+            failure_category="runner-validation-failed",
+            performed_now=True,
+        )
     output_semantic = {
         "plan_digest": plan["plan_digest"],
         "trial_digests": [item["trial_digest"] for item in trials],
@@ -1524,6 +1796,9 @@ def execute_model_benchmark_run(
         "execution_host_digest": host_descriptor["host_digest"],
         "aggregate_digest": aggregate["aggregate_digest"],
         "output_digest": _digest(output_semantic),
+        "failure_category": None,
+        "failure_digest": None,
+        "terminal_status": "completed",
     }
     receipt_request = {
         "schema_version": 1,
@@ -1540,12 +1815,13 @@ def execute_model_benchmark_run(
         raise ModelBenchmarkRunnerError(
             "benchmark execution host could not durably complete the receipt"
         ) from exc
-    if any(
+    if receipt["status"] != "completed" or any(
         receipt[key] != value
         for key, value in {
             **receipt_semantic,
             "receipt_request_digest": receipt_request["receipt_request_digest"],
         }.items()
+        if key != "terminal_status"
     ):
         raise ModelBenchmarkRunnerError("benchmark execution receipt does not match the result")
     return BenchmarkRunOutput(
@@ -1621,7 +1897,7 @@ def execute_model_benchmark_run_from_store(
     provider_authorization: ProviderAuthorization | None = None,
     provider_authorization_ref: str | None = None,
     provider_approval_id: str | None = None,
-) -> BenchmarkRunOutput:
+) -> BenchmarkRunOutput | BenchmarkRunFailure:
     """Execute only after re-resolving every authoritative current record."""
 
     inputs = resolve_authoritative_benchmark_inputs(

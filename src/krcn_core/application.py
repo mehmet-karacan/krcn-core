@@ -3366,10 +3366,10 @@ class KrcnApplicationService:
             )
         except ValueError as exc:
             raise ApplicationServiceError(str(exc)) from exc
-        return "applied", {
+        return ("applied" if output.execution_performed else "ok"), {
             "result": output.as_dict(),
             "durable_exactly_once_host": True,
-            "execution_performed": True,
+            "execution_performed": output.execution_performed,
             "persisted": False,
             "grants_authority": False,
         }

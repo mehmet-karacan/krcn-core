@@ -12,6 +12,9 @@
   "invariants": {
     "offline_by_default": true,
     "injected_execution_host_only": true,
+    "terminal_failure_receipt_required": true,
+    "pending_claim_requires_explicit_recovery": true,
+    "silent_retry": false,
     "store_mutation": false,
     "raw_content_persisted": false
   }
