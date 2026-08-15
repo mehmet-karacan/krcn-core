@@ -21,10 +21,10 @@
     "docs/progress/PHASE-21-KUYRUK-ALTYAPISI-UYGUNLUK-OLCUMU.md",
     "docs/progress/PHASE-21-EXECUTION-COORDINATOR.md",
     "docs/progress/PHASE-21-MODEL-KARAR-SERVISI.md",
-    "docs/progress/PHASE-21-RETRIEVAL-GOLDEN-VE-OLCEK.md"
+    "docs/progress/PHASE-21-RETRIEVAL-GOLDEN-VE-OLCEK.md",
+    "docs/progress/PHASE-21-APPLICATION-CLI-IC-BOLUNME.md"
   ],
   "next_actions": [
-    "application ve CLI ic bolunmesini tamamla",
     "Faz 21 kapanis dogrulamasini tamamla"
   ],
   "baseline_commit": "2e4d23a",

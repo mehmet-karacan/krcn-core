@@ -11,11 +11,11 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Mapping
 
-from krcn_core.application import (
+from krcn_core.application import create_application_service
+from krcn_core.application_contract import (
     ApplicationServiceError,
     ServiceRequest,
     ServiceResponse,
-    create_application_service,
 )
 from krcn_core.doctor import run_doctor
 from krcn_core.intent_routing import (
@@ -44,6 +44,14 @@ from krcn_core.work_intent import (
 )
 
 from .registry import compatibility_registry
+from .renderers.service_response import render_service_response
+from .renderers.table import (
+    display_status as _display_status,
+    display_timestamp as _display_timestamp,
+    shorten as _shorten,
+    text_table as _text_table,
+    work_count_pair as _work_count_pair,
+)
 
 
 KRCN_CORE_HOME_ENV = "KRCN_CORE_HOME"
@@ -937,76 +945,6 @@ def _project_service_request(args: argparse.Namespace) -> ServiceRequest:
     )
 
 
-def _text_table(headers: list[str], rows: list[list[object]]) -> str:
-    values = [[str(value) for value in row] for row in rows]
-    widths = [len(header) for header in headers]
-    for row in values:
-        for index, value in enumerate(row):
-            widths[index] = max(widths[index], len(value))
-    lines = [
-        " | ".join(
-            header.ljust(widths[index])
-            for index, header in enumerate(headers)
-        ),
-        "-+-".join("-" * width for width in widths),
-    ]
-    lines.extend(
-        " | ".join(
-            value.ljust(widths[index])
-            for index, value in enumerate(row)
-        )
-        for row in values
-    )
-    return "\n".join(lines)
-
-
-def _display_status(value: object) -> str:
-    translations = {
-        "active": "aktif",
-        "archived": "arşiv",
-        "complete": "tamam",
-        "incomplete": "eksik",
-        "invalid": "geçersiz",
-        "not-integrated": "entegre değil",
-        "stale": "güncel değil",
-        "planned": "planlandı",
-        "blocked": "engelli",
-        "request": "talep",
-        "defect": "defect",
-        "task": "görev",
-        "subtask": "alt görev",
-        "decision": "karar",
-    }
-    text = str(value or "-")
-    return translations.get(text, text)
-
-
-def _display_timestamp(value: object) -> str:
-    text = str(value or "")
-    if len(text) >= 16 and "T" in text:
-        return text[:16].replace("T", " ")
-    return text or "-"
-
-
-def _shorten(value: object, limit: int) -> str:
-    text = str(value or "-")
-    if len(text) <= limit:
-        return text
-    suffix_length = min(12, limit // 3)
-    prefix_length = limit - suffix_length - 3
-    return text[:prefix_length] + "..." + text[-suffix_length:]
-
-
-def _work_count_pair(project: Mapping[str, object], group: str) -> str:
-    work_counts = project.get("work_counts")
-    if not isinstance(work_counts, dict):
-        return "0/0"
-    counts = work_counts.get(group)
-    if not isinstance(counts, dict):
-        return "0/0"
-    return f"{counts.get('active', 0)}/{counts.get('historical', 0)}"
-
-
 def _project_menu_text(data: Mapping[str, object]) -> str:
     projects = data.get("projects")
     if not isinstance(projects, list) or not projects:
@@ -1396,27 +1334,21 @@ def _print_service_response(
     response: ServiceResponse,
     output_format: str | None,
 ) -> int:
-    payload = response.as_dict()
-    if output_format == "json":
-        print(json.dumps(payload, ensure_ascii=False, indent=2))
-    elif response.operation == "project.list":
-        print(_project_menu_text(response.data))
-    elif response.operation == "project.resume":
-        print(_project_resume_text(response.data))
-    elif response.operation == "work.list":
-        print(_work_list_text(response.data))
-    elif response.operation == "work.documents.migrate-layout":
-        print(_work_document_migration_text(response.status, response.data))
-    elif response.operation == "work.documents.process":
-        print(_work_document_processing_text(response.status, response.data))
-    elif response.operation == "work.index-readable":
-        print(_work_index_text(response.status, response.data))
-    elif response.operation == "research.action":
-        print(_research_action_text(response.status, response.data))
-    else:
-        print(f"{response.status}\t{response.operation}")
-        print(json.dumps(response.data, ensure_ascii=False, indent=2))
-    return 3 if response.status in {"blocked", "unavailable"} else 0
+    rendered, exit_code = render_service_response(
+        response,
+        output_format,
+        {
+            "project_menu": _project_menu_text,
+            "project_resume": _project_resume_text,
+            "work_list": _work_list_text,
+            "work_document_migration": _work_document_migration_text,
+            "work_document_processing": _work_document_processing_text,
+            "work_index": _work_index_text,
+            "research_action": _research_action_text,
+        },
+    )
+    print(rendered)
+    return exit_code
 
 
 def _active_project_data_root(explicit_data_root: Path | None) -> Path:

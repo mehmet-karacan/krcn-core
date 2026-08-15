@@ -115,6 +115,7 @@
         "execution_coordinator_boundary",
         "execution_coordination_plan_schema",
         "execution_coordination_result_schema",
+        "application_modularity_boundary",
         "source_relocation_boundary",
         "source_relocation_assessment_schema",
         "model_capability_boundary",
@@ -390,6 +391,9 @@
           "$ref": "#/$defs/repoPath"
         },
         "execution_coordination_result_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "application_modularity_boundary": {
           "$ref": "#/$defs/repoPath"
         },
         "source_relocation_boundary": {

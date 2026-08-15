@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from .application import OPERATIONS
+from .application_contract import OPERATIONS
 from .foundation import load_json
 
 

@@ -163,6 +163,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 - `PHASE-21-EXECUTION-COORDINATOR.md`
 - `PHASE-21-MODEL-KARAR-SERVISI.md`
 - `PHASE-21-RETRIEVAL-GOLDEN-VE-OLCEK.md`
+- `PHASE-21-APPLICATION-CLI-IC-BOLUNME.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 

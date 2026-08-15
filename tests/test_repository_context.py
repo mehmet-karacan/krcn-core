@@ -184,6 +184,7 @@ class RepositoryContextTests(unittest.TestCase):
             "execution_coordinator_boundary",
             "execution_coordination_plan_schema",
             "execution_coordination_result_schema",
+            "application_modularity_boundary",
         ):
             with self.subTest(key=key):
                 self.assertTrue(

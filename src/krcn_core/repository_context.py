@@ -60,6 +60,7 @@ REQUIRED_CANONICAL_KEYS = {
     "execution_coordinator_boundary",
     "execution_coordination_plan_schema",
     "execution_coordination_result_schema",
+    "application_modularity_boundary",
     "source_relocation_boundary",
     "source_relocation_assessment_schema",
     "model_capability_boundary",
