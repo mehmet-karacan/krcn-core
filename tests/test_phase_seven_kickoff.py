@@ -4,6 +4,8 @@ import json
 import unittest
 from pathlib import Path
 
+from progress_evidence import assert_progress_evidence
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -15,7 +17,7 @@ def load_json(path: Path) -> dict:
 class PhaseSevenKickoffTests(unittest.TestCase):
     def test_phase_seven_was_started_with_explicit_user_approval(self) -> None:
         current = load_json(REPO_ROOT / ".ai" / "current-work.json")
-        self.assertIn("docs/progress/PHASE-7-KICKOFF.md", current["progress_refs"])
+        assert_progress_evidence(self, "docs/progress/PHASE-7-KICKOFF.md")
         baseline = load_json(REPO_ROOT / ".ai" / "phase-7-baseline.json")
         self.assertEqual("phase-7", baseline["phase_id"])
         self.assertEqual("ready", baseline["status"])

@@ -11,6 +11,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from krcn_core.application import OPERATIONS  # noqa: E402
 from krcn_core.doctor import run_doctor  # noqa: E402
+from progress_evidence import assert_progress_evidence  # noqa: E402
 
 
 def load_json(path: Path) -> dict[str, object]:
@@ -27,7 +28,7 @@ class PhaseThirteenCompletionTests(unittest.TestCase):
         self.assertTrue(set(baseline["safe_operations"]).issubset(OPERATIONS))
         self.assertGreaterEqual(int(str(current["phase_id"]).split("-")[1]), 13)
         self.assertIn(current["status"], {"active", "completed"})
-        self.assertIn("docs/progress/PHASE-13-COMPLETION.md", current["progress_refs"])
+        assert_progress_evidence(self, "docs/progress/PHASE-13-COMPLETION.md")
 
     def test_phase_thirteen_guarantees_reject_stale_ownership(self) -> None:
         guarantees = load_json(REPO_ROOT / ".ai" / "phase-13-baseline.json")["guarantees"]

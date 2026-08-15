@@ -11,6 +11,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from krcn_core.application import OPERATIONS  # noqa: E402
 from krcn_core.doctor import run_doctor  # noqa: E402
+from progress_evidence import assert_progress_evidence  # noqa: E402
 
 
 def load_json(path: Path) -> dict:
@@ -40,7 +41,7 @@ class PhaseSixCompletionTests(unittest.TestCase):
             "docs/progress/PHASE-6-INTEGRATION-TESTS.md",
             "docs/progress/PHASE-6-COMPLETION.md",
         ):
-            self.assertIn(reference, current["progress_refs"])
+            assert_progress_evidence(self, reference)
         completion = (
             REPO_ROOT / "docs" / "progress" / "PHASE-6-COMPLETION.md"
         ).read_text(encoding="utf-8")

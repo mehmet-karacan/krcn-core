@@ -16,6 +16,7 @@ sys.path.insert(0, str(REPO_ROOT / "build_backend"))
 import krcn_build_backend  # noqa: E402
 from krcn_core.application import OPERATIONS  # noqa: E402
 from krcn_core.doctor import run_doctor  # noqa: E402
+from progress_evidence import assert_progress_evidence  # noqa: E402
 
 
 def load_json(path: Path) -> dict:
@@ -60,8 +61,8 @@ class PhaseFourCompletionTests(unittest.TestCase):
         current = load_json(REPO_ROOT / ".ai" / "current-work.json")
         completion_ref = "docs/progress/PHASE-4-COMPLETION.md"
         integration_ref = "docs/progress/PHASE-4-INTEGRATION-TESTS.md"
-        self.assertIn(completion_ref, current["progress_refs"])
-        self.assertIn(integration_ref, current["progress_refs"])
+        assert_progress_evidence(self, completion_ref)
+        assert_progress_evidence(self, integration_ref)
         completion = (REPO_ROOT / completion_ref).read_text(encoding="utf-8")
         self.assertIn(
             "Faz 4 - context, knowledge ve memory tamamlandı",

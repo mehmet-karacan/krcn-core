@@ -11,6 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from krcn_core.foundation import validate_orchestration_boundary  # noqa: E402
+from progress_evidence import assert_progress_evidence  # noqa: E402
 
 
 def load_json(path: Path) -> dict:
@@ -20,14 +21,8 @@ def load_json(path: Path) -> dict:
 class PhaseFiveKickoffTests(unittest.TestCase):
     def test_phase_five_artifacts_preserve_kickoff_and_completed_plan(self) -> None:
         current = load_json(REPO_ROOT / ".ai" / "current-work.json")
-        self.assertIn(
-            "docs/progress/PHASE-5-KICKOFF.md",
-            current["progress_refs"],
-        )
-        self.assertIn(
-            "docs/progress/PHASE-5-COMPLETION.md",
-            current["progress_refs"],
-        )
+        assert_progress_evidence(self, "docs/progress/PHASE-5-KICKOFF.md")
+        assert_progress_evidence(self, "docs/progress/PHASE-5-COMPLETION.md")
         phase_five = load_json(REPO_ROOT / ".ai" / "phase-5-baseline.json")
         self.assertEqual("phase-5", phase_five["phase_id"])
         self.assertEqual("ready", phase_five["status"])
