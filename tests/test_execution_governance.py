@@ -158,6 +158,14 @@ class ExecutionGovernanceTests(unittest.TestCase):
             supersedes_entry_digest=str(first.payload["entry_digest"]),
         )
         self.assertEqual(2, len(validate_register(self.plan, [first.as_dict(), later.as_dict()])))
+        unrelated = self.entry(
+            entry_id="unrelated-resolution", kind="known", topic_ref="topic:other",
+            severity="low", disposition="resolved", owner_ref="role:other",
+            recorded_at="2026-08-16T01:03:00Z",
+            supersedes_entry_digest=str(first.payload["entry_digest"]),
+        )
+        with self.assertRaisesRegex(ExecutionGovernanceError, "lineage"):
+            validate_register(self.plan, [first.as_dict(), unrelated.as_dict()])
 
     def test_open_high_unknown_or_deviation_blocks_promotion(self) -> None:
         blocking = self.entry(
@@ -179,11 +187,11 @@ class ExecutionGovernanceTests(unittest.TestCase):
             self.promotion(source_stage="dev", target_stage="production")
         with self.assertRaisesRegex(ExecutionGovernanceError, "digests"):
             self.promotion(target_environment_digest=digest("5"))
-        pilot = self.promotion(
-            transition_id="promote-pilot-production", source_stage="pilot",
-            target_stage="production",
-        )
-        self.assertEqual(("pilot", "production"), (pilot.payload["source_stage"], pilot.payload["target_stage"]))
+        with self.assertRaisesRegex(ExecutionGovernanceError, "predecessor"):
+            self.promotion(
+                transition_id="promote-pilot-production", source_stage="pilot",
+                target_stage="production",
+            )
 
     def test_worker_and_verifier_must_be_independent(self) -> None:
         nonindependent = create_agent_execution_identity(
@@ -198,11 +206,10 @@ class ExecutionGovernanceTests(unittest.TestCase):
         with self.assertRaisesRegex(ExecutionGovernanceError, "provider"):
             self.promotion(provider_gate={"required": True, "provider_ref": "provider:remote",
                 "approval_ref": None, "authorization_digest": None})
-        transition = self.promotion(provider_gate={"required": True,
-            "provider_ref": "provider:remote", "approval_ref": "approval:session-one",
-            "authorization_digest": digest("b")})
-        self.assertTrue(transition.payload["provider_gate"]["required"])
-        self.assertFalse(transition.payload["grants_authority"])
+        with self.assertRaisesRegex(ExecutionGovernanceError, "typed provider"):
+            self.promotion(provider_gate={"required": True,
+                "provider_ref": "provider:remote", "approval_ref": "approval:session-one",
+                "authorization_digest": digest("b")})
 
     def test_exact_mutation_approval_and_fresh_source_are_required(self) -> None:
         transition = self.promotion()

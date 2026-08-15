@@ -37,8 +37,10 @@ Each register entry is immutable and contentless. It records:
 - its own tamper-evident digest.
 
 An updated conclusion is a new entry that supersedes an earlier digest. The
-original record is not overwritten. Duplicate identities, missing superseded
-records, records from another plan, or digest changes fail closed.
+original record is not overwritten. Supersession must preserve the exact kind,
+topic, and owner lineage; an unrelated low-severity record cannot close a
+critical unknown. Duplicate identities, missing superseded records, records
+from another plan, or digest changes fail closed.
 
 An active `unknown` or `deviation` with `high` or `critical` severity and an
 `open` or `blocked` disposition prevents an environment transition. A later
@@ -53,8 +55,11 @@ The only promotion sequence is:
 dev -> test -> pilot -> production
 ```
 
-Every plan moves exactly one adjacent stage. Direct `dev -> pilot`,
-`test -> production`, or `dev -> production` promotion is rejected. Each plan
+Every plan moves exactly one adjacent stage. In this foundation slice only the
+first `dev -> test` promotion can be prepared. Later promotions fail closed
+until an adapter supplies an authoritative predecessor transition and
+authorization chain. Direct `dev -> pilot`, `pilot -> production` without that
+chain, `test -> production`, or `dev -> production` promotion is rejected. Each plan
 binds source and target environment digests, artifact digest, test digest,
 independent verifier evidence digest, rollback digest, the register snapshot,
 and the exact worker and verifier execution identities.
@@ -63,9 +68,11 @@ The worker and verifier must have different steps, actors, assignments, and
 execution identities while binding the same governed task and task plan.
 Model or client selection never relaxes this rule.
 
-If an external provider is required, its logical provider reference, approval
-reference, and existing authorization digest must be supplied together. The
-record does not call the provider and cannot manufacture provider approval.
+Provider-backed transition mappings are rejected in this foundation slice.
+A later adapter must accept and verify a typed `ProviderAuthorization` bound to
+the exact request and session; a self-declared provider reference or digest is
+not authorization. The record does not call the provider and cannot
+manufacture provider approval.
 
 ## Exact mutation and approval
 

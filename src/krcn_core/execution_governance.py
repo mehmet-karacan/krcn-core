@@ -395,7 +395,13 @@ def validate_register(
         if previous == item.payload["entry_digest"]:
             raise ExecutionGovernanceError("governance entry cannot supersede itself")
         if previous is not None:
-            previous_time = _timestamp(by_digest[str(previous)].payload["recorded_at"], "recorded at")
+            prior = by_digest[str(previous)]
+            for field in ("kind", "topic_ref", "owner_ref"):
+                if item.payload[field] != prior.payload[field]:
+                    raise ExecutionGovernanceError(
+                        "governance supersession must preserve kind, topic, and owner lineage"
+                    )
+            previous_time = _timestamp(prior.payload["recorded_at"], "recorded at")
             current_time = _timestamp(item.payload["recorded_at"], "recorded at")
             if current_time <= previous_time:
                 raise ExecutionGovernanceError("governance supersession must move forward in time")
@@ -432,9 +438,9 @@ def _provider_gate(payload: object) -> dict[str, object]:
     required = bool(data["required"])
     values = (data.get("provider_ref"), data.get("approval_ref"), data.get("authorization_digest"))
     if required:
-        provider_ref = _ref(values[0], "provider ref")
-        approval_ref = _ref(values[1], "provider approval ref")
-        authorization_digest = _sha(values[2], "provider authorization digest")
+        raise ExecutionGovernanceError(
+            "provider-backed transitions require a typed provider authorization adapter"
+        )
     else:
         if any(value is not None for value in values):
             raise ExecutionGovernanceError("unused provider gate values must be null")
@@ -553,6 +559,10 @@ def _build_transition_plan(
     source_index, target_index = stages.index(source_stage), stages.index(target_stage)
     if transition_kind == "promotion" and target_index != source_index + 1:
         raise ExecutionGovernanceError("environment promotion must use adjacent stages")
+    if transition_kind == "promotion" and source_index != 0:
+        raise ExecutionGovernanceError(
+            "later environment promotion requires an authoritative predecessor chain"
+        )
     if transition_kind == "rollback" and target_index != source_index - 1:
         raise ExecutionGovernanceError("environment rollback must return one adjacent stage")
     worker = _identity(worker_execution_identity, "worker")

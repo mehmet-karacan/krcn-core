@@ -10,10 +10,12 @@ Implemented as an isolated, transport-neutral foundation package.
 - contentless `known`, `unknown`, `assumption`, and `deviation` entries;
 - evidence, severity, disposition, owner, related-work, and supersession binding;
 - high-severity unresolved unknown/deviation promotion blocker;
-- strict `dev -> test -> pilot -> production` adjacent-stage promotion;
+- strict adjacent-stage policy with `dev -> test` enabled and later stages
+  fail-closed until an authoritative predecessor-chain adapter exists;
 - independent worker and verifier execution identities;
 - artifact, test, verifier, rollback, source, and target environment digests;
-- optional existing provider-approval binding without provider execution;
+- provider-backed mappings rejected until a typed exact
+  `ProviderAuthorization` adapter exists;
 - existing exact user-data `MutationPlan`, dry-run, and approval reuse;
 - stale-source, tamper, replay-idempotency, and rollback checks;
 - strict schemas for policy, plan, entry, transition, and authorization; and
