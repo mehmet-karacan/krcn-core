@@ -8,7 +8,8 @@
   "plan_ref": "docs/plans/PLAN-022-OLCUMLU-OTONOMI-VE-OGRENME-DONGUSU.md",
   "progress_refs": [
     "docs/progress/PROGRESS-KATALOGU.md",
-    "docs/progress/PHASE-22-KICKOFF.md"
+    "docs/progress/PHASE-22-KICKOFF.md",
+    "docs/progress/PHASE-22-35-ARASTIRMA-KANIT-MATRIKSI.md"
   ],
   "next_actions": [
     "measured loop ve adaptive admission paketini uygula",

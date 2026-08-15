@@ -169,6 +169,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 ## Faz 22 - Olcumlu otonomi ve ogrenme dongusu
 
 - `PHASE-22-KICKOFF.md`
+- `PHASE-22-35-ARASTIRMA-KANIT-MATRIKSI.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 
