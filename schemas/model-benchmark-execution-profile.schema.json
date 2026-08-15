@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:model-benchmark-execution-profile:1",
+  "title": "KRCN model benchmark execution profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "model_ref",
+    "inventory_digest",
+    "client_id",
+    "harness_id",
+    "harness_revision",
+    "model_revision",
+    "model_family",
+    "execution_ref",
+    "provider_ref",
+    "provider_route_ref",
+    "remote",
+    "quantization",
+    "reasoning",
+    "environment_digest",
+    "verifier_execution_ref",
+    "verifier_model_family",
+    "profile_digest",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/model-benchmark-execution-profile.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "model_ref": {
+      "$ref": "#/$defs/id"
+    },
+    "inventory_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "client_id": {
+      "$ref": "#/$defs/id"
+    },
+    "harness_id": {
+      "$ref": "#/$defs/id"
+    },
+    "harness_revision": {
+      "$ref": "#/$defs/revision"
+    },
+    "model_revision": {
+      "$ref": "#/$defs/revision"
+    },
+    "model_family": {
+      "$ref": "#/$defs/id"
+    },
+    "execution_ref": {
+      "$ref": "#/$defs/id"
+    },
+    "provider_ref": {
+      "$ref": "#/$defs/id"
+    },
+    "provider_route_ref": {
+      "$ref": "#/$defs/id"
+    },
+    "remote": {
+      "type": "boolean"
+    },
+    "quantization": {
+      "$ref": "#/$defs/revision"
+    },
+    "reasoning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "effort",
+        "budget_tokens"
+      ],
+      "properties": {
+        "effort": {
+          "$ref": "#/$defs/revision"
+        },
+        "budget_tokens": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "environment_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "verifier_execution_ref": {
+      "$ref": "#/$defs/id"
+    },
+    "verifier_model_family": {
+      "$ref": "#/$defs/id"
+    },
+    "profile_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "invariants": {
+      "const": {
+        "credential_values_included": false,
+        "endpoint_included": false,
+        "physical_paths_included": false,
+        "grants_authority": false
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "revision": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

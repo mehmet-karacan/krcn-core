@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:model-benchmark-run-plan:1",
+  "title": "KRCN exact model benchmark run plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "policy_digest",
+    "project_id",
+    "suite_digest",
+    "source_digest",
+    "workload_id",
+    "workload_kind",
+    "workload_digest",
+    "case_digest",
+    "fixture_policy",
+    "model_ref",
+    "inventory_digest",
+    "health_result_digest",
+    "execution_profile_digest",
+    "model_assignment_id",
+    "repetitions",
+    "timeout_ms",
+    "provider_request_id",
+    "provider_authorization_ref",
+    "trial_ids",
+    "plan_id",
+    "plan_digest",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/model-benchmark-run-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "suite_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "source_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "workload_id": {
+      "$ref": "#/$defs/id"
+    },
+    "workload_kind": {
+      "$ref": "#/$defs/id"
+    },
+    "workload_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "case_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "fixture_policy": {
+      "enum": [
+        "synthetic-only",
+        "sanitized-derived",
+        "local-only"
+      ]
+    },
+    "model_ref": {
+      "$ref": "#/$defs/id"
+    },
+    "inventory_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "health_result_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "execution_profile_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "model_assignment_id": {
+      "$ref": "#/$defs/id"
+    },
+    "repetitions": {
+      "type": "integer",
+      "minimum": 5
+    },
+    "timeout_ms": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3600000
+    },
+    "provider_request_id": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "provider_authorization_ref": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "trial_ids": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "plan_id": {
+      "$ref": "#/$defs/id"
+    },
+    "plan_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "invariants": {
+      "const": {
+        "adapter_discovered": false,
+        "provider_call_performed": false,
+        "prompt_content_included": false,
+        "source_content_included": false,
+        "credential_values_included": false,
+        "physical_paths_included": false,
+        "grants_authority": false
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

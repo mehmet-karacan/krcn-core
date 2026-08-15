@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "policy_revision": 1,
+  "minimum_repetitions": 2,
+  "maximum_repetitions": 50,
+  "minimum_confidence_samples": 5,
+  "default_timeout_ms": 120000,
+  "maximum_timeout_ms": 3600000,
+  "minimum_quality_basis_points": 7000,
+  "minimum_reliability_basis_points": 7000,
+  "require_all_trials_verifier_approved": true,
+  "invariants": {
+    "offline_by_default": true,
+    "injected_adapter_only": true,
+    "store_mutation": false,
+    "raw_content_persisted": false
+  }
+}

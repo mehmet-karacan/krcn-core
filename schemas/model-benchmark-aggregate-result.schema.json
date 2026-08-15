@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:model-benchmark-aggregate-result:1",
+  "title": "KRCN comparable repeated model benchmark aggregate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_digest",
+    "execution_profile_digest",
+    "project_id",
+    "suite_digest",
+    "source_digest",
+    "workload_id",
+    "workload_digest",
+    "case_digest",
+    "model_ref",
+    "inventory_digest",
+    "aggregate_id",
+    "observed_at",
+    "sample_count",
+    "confidence_safe",
+    "verifier_approved_count",
+    "passed",
+    "statistics",
+    "totals",
+    "cost_per_verifier_approved_result_microunits",
+    "trial_digests",
+    "aggregate_digest",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/model-benchmark-aggregate-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "execution_profile_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "suite_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "source_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "workload_id": {
+      "$ref": "#/$defs/id"
+    },
+    "workload_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "case_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "model_ref": {
+      "$ref": "#/$defs/id"
+    },
+    "inventory_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "aggregate_id": {
+      "$ref": "#/$defs/id"
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sample_count": {
+      "type": "integer",
+      "minimum": 5
+    },
+    "confidence_safe": {
+      "const": true
+    },
+    "verifier_approved_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "statistics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "quality_score_basis_points",
+        "reliability_score_basis_points",
+        "latency_ms",
+        "total_tokens",
+        "estimated_cost_microunits"
+      ],
+      "properties": {
+        "quality_score_basis_points": {
+          "$ref": "#/$defs/statistic"
+        },
+        "reliability_score_basis_points": {
+          "$ref": "#/$defs/statistic"
+        },
+        "latency_ms": {
+          "$ref": "#/$defs/statistic"
+        },
+        "total_tokens": {
+          "$ref": "#/$defs/statistic"
+        },
+        "estimated_cost_microunits": {
+          "$ref": "#/$defs/statistic"
+        }
+      }
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_tokens",
+        "output_tokens",
+        "retries",
+        "human_corrections",
+        "estimated_cost_microunits",
+        "actual_cost_microunits"
+      ],
+      "properties": {
+        "input_tokens": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "output_tokens": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "retries": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "human_corrections": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "estimated_cost_microunits": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "actual_cost_microunits": {
+          "$ref": "#/$defs/nonnegative"
+        }
+      }
+    },
+    "cost_per_verifier_approved_result_microunits": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/nonnegative"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "trial_digests": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/digest"
+      }
+    },
+    "aggregate_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "invariants": {
+      "const": {
+        "prompt_content_included": false,
+        "response_content_included": false,
+        "source_content_included": false,
+        "credential_values_included": false,
+        "physical_paths_included": false,
+        "grants_authority": false
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "nonnegative": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "statistic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mean",
+        "median",
+        "p95",
+        "variance"
+      ],
+      "properties": {
+        "mean": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "median": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "p95": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "variance": {
+          "$ref": "#/$defs/nonnegative"
+        }
+      }
+    }
+  }
+}
