@@ -44,6 +44,9 @@ Testler su davranislari kapatir:
 - Yalnizca dogrulanmis zincirden devam
 - Iptalin surec sinyali veya oldurme iddiasi tasimamasi
 - Kaynak baskisinda aktif isi koruyarak yeni isi erteleme
+- Plan oncesi, duvar saati sonrasi ve birbiriyle cakisan iterasyon zamanlarinin reddi
+- Durum ve devam zamanlarinin son dogrulanmis kayittan geriye gidememesi
+- Eski durumla yeni is kabulunun ertelenmesi ve duvar saati biten kosunun butce ile kapanmasi
 - Tum kamusal kayitlarin strict JSON Schema dogrulamasi
 - Sabah ozetinin hassas icerik tasimamasi
 

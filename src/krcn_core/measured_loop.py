@@ -736,6 +736,10 @@ def validate_iteration_chain(
     previous_end: datetime | None = None
     totals = {"input_tokens": 0, "output_tokens": 0, "cost_microunits": 0, "attempts": 0}
     budget = plan_record["budget"]
+    _, plan_time = _timestamp(plan_record["created_at"], "plan created at")
+    deadline = plan_time + timedelta(
+        seconds=int(plan_record["budget"]["max_wall_time_seconds"])
+    )
     for index, raw in enumerate(iterations, start=1):
         record = parse_iteration_record(raw)
         item = record.payload
@@ -759,6 +763,8 @@ def validate_iteration_chain(
             raise MeasuredLoopError("iteration metric evidence is invalid")
         _, current_start = _timestamp(item["started_at"], "iteration started at")
         _, current_end = _timestamp(item["ended_at"], "iteration ended at")
+        if current_start < plan_time or current_end > deadline:
+            raise MeasuredLoopError("iteration is outside the immutable wall-time window")
         if previous_end is not None and current_start < previous_end:
             raise MeasuredLoopError("iteration chronology overlaps a previous record")
         previous_end = current_end
@@ -961,6 +967,10 @@ def build_measured_loop_status(
     _, created_time = _timestamp(plan_record["created_at"], "plan created at")
     if observed_time < created_time:
         raise MeasuredLoopError("status predates the plan")
+    if chain:
+        _, latest_end = _timestamp(chain[-1].payload["ended_at"], "latest iteration ended at")
+        if observed_time < latest_end:
+            raise MeasuredLoopError("status predates the latest verified iteration")
     cancellation = None
     if cancellation_record is not None:
         cancellation = parse_cancellation_record(cancellation_record).payload
@@ -1169,6 +1179,12 @@ def resume_measured_loop(
         plan.payload if isinstance(plan, MeasuredLoopRecord) else plan, policy
     ).payload
     chain = validate_iteration_chain(plan_record, iterations)
+    _, requested_observation = _timestamp(observed_at, "resume observed at")
+    _, persisted_observation = _timestamp(
+        persisted["observed_at"], "persisted status observed at"
+    )
+    if requested_observation < persisted_observation:
+        raise MeasuredLoopError("resume observation predates persisted status")
     latest = chain[-1].payload["iteration_digest"] if chain else None
     if (
         persisted["run_id"] != plan_record["run_id"]
@@ -1208,7 +1224,19 @@ def decide_admission(
     status_record = parse_measured_loop_status(status).payload
     if status_record["run_id"] != plan_record["run_id"] or status_record["plan_digest"] != plan_record["plan_digest"]:
         raise MeasuredLoopError("admission status does not match the measured loop")
-    observed, _ = _timestamp(observed_at, "admission observed at")
+    observed, observation_time = _timestamp(observed_at, "admission observed at")
+    _, plan_time = _timestamp(plan_record["created_at"], "plan created at")
+    _, status_started = _timestamp(status_record["started_at"], "status started at")
+    _, status_observed = _timestamp(status_record["observed_at"], "status observed at")
+    if status_started != plan_time or status_observed < plan_time:
+        raise MeasuredLoopError("admission status timeline does not match the plan")
+    if observation_time < status_observed:
+        raise MeasuredLoopError("admission observation predates status")
+    deadline = plan_time + timedelta(
+        seconds=int(plan_record["budget"]["max_wall_time_seconds"])
+    )
+    if status_observed >= deadline and status_record["stop_reason"] != "budget":
+        raise MeasuredLoopError("admission status does not reflect the wall-time budget")
     requested = _integer(requested_claims, "requested claims", minimum=1)
     active = _integer(active_claims, "active claims")
     cpu = _integer(cpu_pressure_basis_points, "CPU pressure", maximum=10_000)
@@ -1229,6 +1257,12 @@ def decide_admission(
     reasons = []
     if status_record["terminal"]:
         reasons.append("run-terminal")
+    if observation_time >= deadline:
+        reasons.append("wall-time-budget")
+    if (
+        observation_time - status_observed
+    ).total_seconds() >= int(policy.payload["zombie_after_seconds"]):
+        reasons.append("status-stale")
     if active >= ceiling:
         reasons.append("concurrency-ceiling")
     if cpu >= int(policy.payload["max_cpu_pressure_basis_points"]):

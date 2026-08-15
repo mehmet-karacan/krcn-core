@@ -44,6 +44,8 @@ The objective has its own digest. The complete plan has a canonical JSON SHA-256
 
 An `accept` or `continue` decision requires successful independent verification. `accept` additionally requires every target to be met. `validate_iteration_chain` recomputes digests, metric deltas, identity bindings, ordering, and cumulative budgets. It rejects records after `accept` or `revert`.
 
+Iteration time is also part of the fail-closed binding. An iteration cannot start before `plan.created_at`, end after the immutable wall-time deadline, or overlap the previous verified iteration. A hash-valid imported record outside that window is still invalid.
+
 ## Status and stop reasons
 
 `build_measured_loop_status` derives state from the verified plan and iteration chain. It uses these stop reasons:
@@ -62,6 +64,8 @@ Zombie status is `recovery-required`. It does not infer that a process is alive 
 
 `resume_measured_loop` accepts only a plan, hash-valid iteration chain, and matching persisted status. Terminal runs are returned unchanged. Nonterminal runs are reprojected from the verified records at the new observation time.
 
+Status time is monotonic. A status observation cannot predate the plan or the latest verified iteration. A resume observation cannot predate its persisted status. Reaching the wall-time deadline always projects a terminal `budget` result, including a run with no completed iterations.
+
 ## Adaptive admission
 
 `decide_admission` combines the immutable plan ceiling with policy and current pressure evidence:
@@ -74,6 +78,8 @@ Zombie status is `recovery-required`. It does not infer that a process is alive 
 - active claims and concurrency capacity.
 
 The result is exactly `admit` or `defer`. Admission never changes an active claim and always emits `active_work_action: preserve` and `kill_requested: false`. Pressure evidence cannot expand a plan ceiling or grant authority.
+
+Admission binds the status start time to `plan.created_at` and requires the admission observation to be at least as recent as the status observation. A status older than the policy zombie interval is deferred with `status-stale`. An observation at or after the immutable wall-time deadline is deferred with `wall-time-budget`. A status that claims to remain nonterminal after its wall-time deadline is rejected as inconsistent.
 
 ## Safe projections
 

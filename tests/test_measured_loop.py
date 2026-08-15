@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import sys
 import unittest
@@ -32,10 +33,17 @@ from krcn_core.measured_loop import (  # noqa: E402
     resume_measured_loop,
     validate_iteration_chain,
 )
+from krcn_core.json_documents import canonical_json_bytes  # noqa: E402
 
 
 def digest(character: str) -> str:
     return character * 64
+
+
+def record_digest(payload: dict, digest_field: str) -> str:
+    return hashlib.sha256(
+        canonical_json_bytes({key: value for key, value in payload.items() if key != digest_field})
+    ).hexdigest()
 
 
 class MeasuredLoopTests(unittest.TestCase):
@@ -184,6 +192,91 @@ class MeasuredLoopTests(unittest.TestCase):
     def test_zombie_requires_recovery(self) -> None:
         status = build_measured_loop_status(self.policy, self.plan(), [], observed_at="2026-08-16T00:15:00Z")
         self.assertEqual(("recovery-required", "zombie"), (status.payload["state"], status.payload["stop_reason"]))
+
+    def test_iteration_timeline_is_bound_to_plan_and_wall_time(self) -> None:
+        plan = self.plan()
+        with self.assertRaisesRegex(MeasuredLoopError, "timeline"):
+            create_iteration_record(
+                plan, [], started_at="2026-08-15T23:59:58Z", ended_at="2026-08-15T23:59:59Z",
+                metric_values={"quality": 111}, usage={"input_tokens": 1, "output_tokens": 1,
+                    "cost_microunits": 1, "attempts": 1, "peak_concurrency": 1},
+                decision="continue", verification_passed=True, evidence_digest=digest("3"),
+                checkpoint_digest=digest("4"), verifier_evidence_digest=digest("5"),
+            )
+        first = self.iteration(plan, [], 111, 1).as_dict()
+        imported_late = copy.deepcopy(first)
+        imported_late["started_at"] = "2026-08-18T00:00:01Z"
+        imported_late["ended_at"] = "2026-08-18T00:00:02Z"
+        imported_late["iteration_digest"] = record_digest(imported_late, "iteration_digest")
+        with self.assertRaisesRegex(MeasuredLoopError, "wall-time"):
+            validate_iteration_chain(plan, [imported_late])
+
+    def test_status_and_resume_timestamps_are_monotonic(self) -> None:
+        plan = self.plan()
+        first = self.iteration(plan, [], 111, 1)
+        with self.assertRaisesRegex(MeasuredLoopError, "latest verified iteration"):
+            build_measured_loop_status(
+                self.policy, plan, [first.as_dict()], observed_at="2026-08-16T00:00:01Z"
+            )
+        status = build_measured_loop_status(
+            self.policy, plan, [first.as_dict()], observed_at="2026-08-16T00:00:03Z"
+        )
+        with self.assertRaisesRegex(MeasuredLoopError, "predates persisted status"):
+            resume_measured_loop(
+                self.policy, plan, [first.as_dict()], status.as_dict(),
+                observed_at="2026-08-16T00:00:02Z",
+            )
+
+    def test_wall_time_status_is_terminal_budget(self) -> None:
+        status = build_measured_loop_status(
+            self.policy, self.plan(), [], observed_at="2026-08-18T00:00:00Z"
+        )
+        self.assertTrue(status.payload["terminal"])
+        self.assertEqual(("stopped", "budget"), (status.payload["state"], status.payload["stop_reason"]))
+
+    def test_admission_rejects_future_status_and_defers_stale_or_expired_status(self) -> None:
+        plan = self.plan()
+        status = build_measured_loop_status(
+            self.policy, plan, [], observed_at="2026-08-16T00:00:01Z"
+        )
+        with self.assertRaisesRegex(MeasuredLoopError, "predates status"):
+            decide_admission(
+                self.policy, plan, status.as_dict(), observed_at="2026-08-16T00:00:00Z",
+                requested_claims=1, active_claims=0, cpu_pressure_basis_points=0,
+                ram_pressure_basis_points=0, provider_required=False,
+                provider_quota_remaining_basis_points=None, cost_headroom_microunits=5000,
+                failure_pressure_basis_points=0,
+            )
+        stale = decide_admission(
+            self.policy, plan, status.as_dict(), observed_at="2026-08-16T00:15:01Z",
+            requested_claims=1, active_claims=0, cpu_pressure_basis_points=0,
+            ram_pressure_basis_points=0, provider_required=False,
+            provider_quota_remaining_basis_points=None, cost_headroom_microunits=5000,
+            failure_pressure_basis_points=0,
+        )
+        self.assertEqual(("defer", 0), (stale.payload["decision"], stale.payload["admitted_claims"]))
+        self.assertIn("status-stale", stale.payload["reason_codes"])
+        expired = decide_admission(
+            self.policy, plan, status.as_dict(), observed_at="2026-08-18T00:00:00Z",
+            requested_claims=1, active_claims=0, cpu_pressure_basis_points=0,
+            ram_pressure_basis_points=0, provider_required=False,
+            provider_quota_remaining_basis_points=None, cost_headroom_microunits=5000,
+            failure_pressure_basis_points=0,
+        )
+        self.assertEqual("defer", expired.payload["decision"])
+        self.assertIn("wall-time-budget", expired.payload["reason_codes"])
+
+        invalid_status = copy.deepcopy(status.as_dict())
+        invalid_status["observed_at"] = "2026-08-16T02:00:00Z"
+        invalid_status["status_digest"] = record_digest(invalid_status, "status_digest")
+        with self.assertRaisesRegex(MeasuredLoopError, "wall-time budget"):
+            decide_admission(
+                self.policy, plan, invalid_status, observed_at="2026-08-16T02:00:01Z",
+                requested_claims=1, active_claims=0, cpu_pressure_basis_points=0,
+                ram_pressure_basis_points=0, provider_required=False,
+                provider_quota_remaining_basis_points=None, cost_headroom_microunits=5000,
+                failure_pressure_basis_points=0,
+            )
 
     def test_admission_only_admits_or_defers_and_preserves_active_work(self) -> None:
         plan = self.plan()
