@@ -166,6 +166,10 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 - `PHASE-21-APPLICATION-CLI-IC-BOLUNME.md`
 - `PHASE-21-COMPLETION.md`
 
+## Faz 22 - Olcumlu otonomi ve ogrenme dongusu
+
+- `PHASE-22-KICKOFF.md`
+
 ## Faz dışı operasyon ve düzeltme kayıtları
 
 - `JSON-BELGE-BICIMI.md`
