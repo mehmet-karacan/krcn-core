@@ -952,6 +952,29 @@ def _aggregate_usage(iterations: Sequence[MeasuredLoopRecord]) -> dict[str, int]
     return totals
 
 
+def _budget_stop_codes(
+    usage: Mapping[str, object],
+    budget: Mapping[str, object],
+    *,
+    elapsed_seconds: int,
+) -> tuple[str, ...]:
+    counters = (
+        ("rounds", "max_rounds", "round-budget"),
+        ("input_tokens", "max_input_tokens", "input-token-budget"),
+        ("output_tokens", "max_output_tokens", "output-token-budget"),
+        ("cost_microunits", "max_cost_microunits", "cost-budget"),
+        ("attempts", "max_attempts", "attempt-budget"),
+    )
+    reasons = [
+        reason
+        for usage_key, budget_key, reason in counters
+        if int(usage[usage_key]) >= int(budget[budget_key])
+    ]
+    if elapsed_seconds >= int(budget["max_wall_time_seconds"]):
+        reasons.append("wall-time-budget")
+    return tuple(sorted(reasons))
+
+
 def build_measured_loop_status(
     policy: MeasuredLoopPolicy,
     plan: Mapping[str, object] | MeasuredLoopRecord,
@@ -987,13 +1010,8 @@ def build_measured_loop_status(
     budget = plan_record["budget"]
     latest = chain[-1].payload if chain else None
     elapsed = int((observed_time - created_time).total_seconds())
-    budget_reached = (
-        totals["rounds"] >= int(budget["max_rounds"])
-        or elapsed >= int(budget["max_wall_time_seconds"])
-        or totals["input_tokens"] >= int(budget["max_input_tokens"])
-        or totals["output_tokens"] >= int(budget["max_output_tokens"])
-        or totals["cost_microunits"] >= int(budget["max_cost_microunits"])
-        or totals["attempts"] >= int(budget["max_attempts"])
+    budget_reached = bool(
+        _budget_stop_codes(totals, budget, elapsed_seconds=elapsed)
     )
     plateau_rounds = int(policy.payload["plateau_rounds"])
     plateau = len(chain) >= plateau_rounds and not any(
@@ -1137,7 +1155,7 @@ def parse_measured_loop_status(payload: object) -> MeasuredLoopRecord:
     _exact(usage, {"rounds", "input_tokens", "output_tokens", "cost_microunits", "attempts", "peak_concurrency"}, "status usage")
     for key, value in usage.items():
         _integer(value, f"status {key}")
-    _bounded_budget(payload.get("budget"))
+    budget = _bounded_budget(payload.get("budget"))
     metrics = payload.get("metrics")
     if isinstance(metrics, (str, bytes)) or not isinstance(metrics, Sequence) or not metrics:
         raise MeasuredLoopError("status metrics must be a non-empty list")
@@ -1160,6 +1178,23 @@ def parse_measured_loop_status(payload: object) -> MeasuredLoopRecord:
             raise MeasuredLoopError("status target flag must be boolean")
     if metric_ids != sorted(set(metric_ids)):
         raise MeasuredLoopError("status metrics must be unique and canonically ordered")
+    counter_limits = (
+        ("rounds", "max_rounds"),
+        ("input_tokens", "max_input_tokens"),
+        ("output_tokens", "max_output_tokens"),
+        ("cost_microunits", "max_cost_microunits"),
+        ("attempts", "max_attempts"),
+    )
+    if any(int(usage[key]) > int(budget[limit]) for key, limit in counter_limits):
+        raise MeasuredLoopError("status usage exceeds its immutable budget")
+    if int(usage["peak_concurrency"]) > int(budget["max_concurrency"]):
+        raise MeasuredLoopError("status peak concurrency exceeds its immutable budget")
+    elapsed = int((observed - started).total_seconds())
+    exhausted = _budget_stop_codes(usage, budget, elapsed_seconds=elapsed)
+    if exhausted and not terminal:
+        raise MeasuredLoopError("nonterminal status has an exhausted immutable budget")
+    if reason == "budget" and not exhausted:
+        raise MeasuredLoopError("budget status has no exhausted immutable budget")
     claimed = _digest_value(payload.get("status_digest"), "status digest")
     if claimed != _digest({key: value for key, value in payload.items() if key != "status_digest"}):
         raise MeasuredLoopError("measured loop status digest is invalid")
@@ -1264,6 +1299,13 @@ def decide_admission(
         observation_time - status_observed
     ).total_seconds() >= int(policy.payload["zombie_after_seconds"]):
         reasons.append("status-stale")
+    reasons.extend(
+        _budget_stop_codes(
+            status_record["usage"],
+            status_record["budget"],
+            elapsed_seconds=int((observation_time - plan_time).total_seconds()),
+        )
+    )
     if active >= ceiling:
         reasons.append("concurrency-ceiling")
     if cpu >= int(policy.payload["max_cpu_pressure_basis_points"]):
@@ -1292,7 +1334,7 @@ def decide_admission(
         "active_claims": active,
         "admitted_claims": admitted,
         "concurrency_ceiling": ceiling,
-        "reason_codes": sorted(reasons),
+        "reason_codes": sorted(set(reasons)),
         "pressure": {
             "cpu_basis_points": cpu,
             "ram_basis_points": ram,

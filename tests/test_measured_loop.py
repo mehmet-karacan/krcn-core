@@ -269,7 +269,7 @@ class MeasuredLoopTests(unittest.TestCase):
         invalid_status = copy.deepcopy(status.as_dict())
         invalid_status["observed_at"] = "2026-08-16T02:00:00Z"
         invalid_status["status_digest"] = record_digest(invalid_status, "status_digest")
-        with self.assertRaisesRegex(MeasuredLoopError, "wall-time budget"):
+        with self.assertRaisesRegex(MeasuredLoopError, "exhausted immutable budget"):
             decide_admission(
                 self.policy, plan, invalid_status, observed_at="2026-08-16T02:00:01Z",
                 requested_claims=1, active_claims=0, cpu_pressure_basis_points=0,
@@ -277,6 +277,56 @@ class MeasuredLoopTests(unittest.TestCase):
                 provider_quota_remaining_basis_points=None, cost_headroom_microunits=5000,
                 failure_pressure_basis_points=0,
             )
+
+    def test_admission_never_accepts_request_supplied_exhausted_budget_status(self) -> None:
+        plan = self.plan()
+        status = build_measured_loop_status(
+            self.policy, plan, [], observed_at="2026-08-16T00:00:01Z"
+        ).as_dict()
+        counters = (
+            ("rounds", "max_rounds", "round-budget"),
+            ("input_tokens", "max_input_tokens", "input-token-budget"),
+            ("output_tokens", "max_output_tokens", "output-token-budget"),
+            ("cost_microunits", "max_cost_microunits", "cost-budget"),
+            ("attempts", "max_attempts", "attempt-budget"),
+        )
+        for usage_key, budget_key, reason_code in counters:
+            with self.subTest(counter=usage_key):
+                nonterminal = copy.deepcopy(status)
+                nonterminal["usage"][usage_key] = nonterminal["budget"][budget_key]
+                nonterminal["status_digest"] = record_digest(nonterminal, "status_digest")
+                with self.assertRaisesRegex(MeasuredLoopError, "exhausted immutable budget"):
+                    decide_admission(
+                        self.policy, plan, nonterminal, observed_at="2026-08-16T00:00:02Z",
+                        requested_claims=1, active_claims=0, cpu_pressure_basis_points=0,
+                        ram_pressure_basis_points=0, provider_required=False,
+                        provider_quota_remaining_basis_points=None,
+                        cost_headroom_microunits=5000, failure_pressure_basis_points=0,
+                    )
+
+                terminal = copy.deepcopy(nonterminal)
+                terminal.update({
+                    "state": "stopped", "stop_reason": "budget", "terminal": True,
+                    "resume_allowed": False, "ended_at": terminal["observed_at"],
+                })
+                terminal["status_digest"] = record_digest(terminal, "status_digest")
+                decision = decide_admission(
+                    self.policy, plan, terminal, observed_at="2026-08-16T00:00:02Z",
+                    requested_claims=1, active_claims=0, cpu_pressure_basis_points=0,
+                    ram_pressure_basis_points=0, provider_required=False,
+                    provider_quota_remaining_basis_points=None,
+                    cost_headroom_microunits=5000, failure_pressure_basis_points=0,
+                )
+                self.assertEqual(("defer", 0), (
+                    decision.payload["decision"], decision.payload["admitted_claims"]
+                ))
+                self.assertIn(reason_code, decision.payload["reason_codes"])
+
+        invalid_peak = copy.deepcopy(status)
+        invalid_peak["usage"]["peak_concurrency"] = invalid_peak["budget"]["max_concurrency"] + 1
+        invalid_peak["status_digest"] = record_digest(invalid_peak, "status_digest")
+        with self.assertRaisesRegex(MeasuredLoopError, "peak concurrency"):
+            parse_measured_loop_status(invalid_peak)
 
     def test_admission_only_admits_or_defers_and_preserves_active_work(self) -> None:
         plan = self.plan()

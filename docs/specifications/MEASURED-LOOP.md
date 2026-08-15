@@ -81,6 +81,8 @@ The result is exactly `admit` or `defer`. Admission never changes an active clai
 
 Admission binds the status start time to `plan.created_at` and requires the admission observation to be at least as recent as the status observation. A status older than the policy zombie interval is deferred with `status-stale`. An observation at or after the immutable wall-time deadline is deferred with `wall-time-budget`. A status that claims to remain nonterminal after its wall-time deadline is rejected as inconsistent.
 
+Persisted usage is checked against its embedded immutable budget before admission. Equal round, input-token, output-token, cost, or attempt limits require a terminal status; values over a limit are invalid. Peak concurrency may equal but cannot exceed its ceiling. Admission exposes exhausted limits with the exact `round-budget`, `input-token-budget`, `output-token-budget`, `cost-budget`, `attempt-budget`, and `wall-time-budget` reason codes and admits zero claims.
+
 ## Safe projections
 
 Status and morning digest records are safe aggregate projections. They include identifiers, digests, state, stop reason, usage totals, metric values, and a safe next action. They omit prompts, generated output, physical paths, and secrets, with explicit false containment flags.

@@ -47,6 +47,9 @@ Testler su davranislari kapatir:
 - Plan oncesi, duvar saati sonrasi ve birbiriyle cakisan iterasyon zamanlarinin reddi
 - Durum ve devam zamanlarinin son dogrulanmis kayittan geriye gidememesi
 - Eski durumla yeni is kabulunun ertelenmesi ve duvar saati biten kosunun butce ile kapanmasi
+- Tur, token, maliyet ve deneme butcesi dolu durumu calisiyor gosteren kaydin reddi
+- Tukenmis her butce icin ayri admission neden kodu ve sifir yeni is kabulu
+- Tarihsel tepe eszamanliligin plan tavanini asamamasinin dogrulanmasi
 - Tum kamusal kayitlarin strict JSON Schema dogrulamasi
 - Sabah ozetinin hassas icerik tasimamasi
 
