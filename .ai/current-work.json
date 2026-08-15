@@ -3,7 +3,7 @@
   "schema_version": 1,
   "phase_id": "phase-22",
   "workstream_id": "olcumlu-otonomi-ve-ogrenme-dongusu",
-  "status": "active",
+  "status": "completed",
   "goal": "Mevcut güvenli mimariyi ölçümlü gece-sabah döngüsü, gerçek benchmark yürütmesi, kontrollü skill gelişimi ve hafıza hijyeni ile tamamlamak",
   "plan_ref": "docs/plans/PLAN-022-OLCUMLU-OTONOMI-VE-OGRENME-DONGUSU.md",
   "progress_refs": [
@@ -13,13 +13,13 @@
     "docs/progress/PHASE-22-MEASURED-LOOP.md",
     "docs/progress/PHASE-22-MODEL-BENCHMARK-RUNNER.md",
     "docs/progress/PHASE-22-LEARNING-GOVERNANCE.md",
-    "docs/progress/PHASE-22-EXECUTION-GOVERNANCE.md"
+    "docs/progress/PHASE-22-EXECUTION-GOVERNANCE.md",
+    "docs/progress/PHASE-22-CLOSURE.md"
   ],
   "next_actions": [
-    "bagimsiz Phase 22 verifier bulgularini kapat",
-    "tam regresyon ve CLI smoke testlerini tamamla",
-    "phase kapanis checkpointini pushla",
-    "dogrulanmis dev mimarisini krcn-core uretim klonuna esitle ve CLI kurulumunu yenile"
+    "yeni kullanici isteklerinde tamamlanmis Phase 22 sozlesmelerini kullan",
+    "typed provider authorization ve predecessor chain adapterini yalniz ayri reviewed plan ile degerlendir",
+    "yeni bir workstream baslatilirsa current-work kaydini yeni plan ve progress referanslariyla degistir"
   ],
   "baseline_commit": "293c13e",
   "approval_gates": {

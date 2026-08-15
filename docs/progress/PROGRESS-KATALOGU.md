@@ -174,6 +174,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 - `PHASE-22-MODEL-BENCHMARK-RUNNER.md`
 - `PHASE-22-LEARNING-GOVERNANCE.md`
 - `PHASE-22-EXECUTION-GOVERNANCE.md`
+- `PHASE-22-CLOSURE.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 
