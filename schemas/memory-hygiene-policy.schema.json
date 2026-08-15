@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:memory-hygiene-policy:1",
+  "title": "KRCN read-only memory hygiene policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "policy_revision",
+    "stale_after_days",
+    "unused_after_days",
+    "retention_review_after_days",
+    "context_thresholds",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/memory-hygiene-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "policy_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "stale_after_days": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "unused_after_days": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "retention_review_after_days": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "context_thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimum_required_evidence_recall_basis_points",
+        "minimum_context_use_basis_points",
+        "maximum_stale_rate_basis_points",
+        "maximum_duplicate_rate_basis_points",
+        "maximum_omitted_rate_basis_points",
+        "minimum_downstream_success_basis_points",
+        "require_compaction_rehydration"
+      ],
+      "properties": {
+        "minimum_required_evidence_recall_basis_points": {
+          "$ref": "#/$defs/basis"
+        },
+        "minimum_context_use_basis_points": {
+          "$ref": "#/$defs/basis"
+        },
+        "maximum_stale_rate_basis_points": {
+          "$ref": "#/$defs/basis"
+        },
+        "maximum_duplicate_rate_basis_points": {
+          "$ref": "#/$defs/basis"
+        },
+        "maximum_omitted_rate_basis_points": {
+          "$ref": "#/$defs/basis"
+        },
+        "minimum_downstream_success_basis_points": {
+          "$ref": "#/$defs/basis"
+        },
+        "require_compaction_rehydration": {
+          "type": "boolean"
+        }
+      }
+    },
+    "invariants": {
+      "$ref": "#/$defs/invariants"
+    }
+  },
+  "$defs": {
+    "basis": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "invariants": {
+      "const": {
+        "memory_content_included": false,
+        "source_content_included": false,
+        "physical_paths_included": false,
+        "secret_values_included": false,
+        "automatic_delete_performed": false,
+        "automatic_merge_performed": false,
+        "automatic_lifecycle_mutation_performed": false,
+        "memory_gate_required": true,
+        "grants_authority": false
+      }
+    }
+  }
+}

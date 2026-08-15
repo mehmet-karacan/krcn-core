@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:skill-lifecycle-record:1",
+  "title": "KRCN reviewed skill lifecycle record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "skill_id",
+    "candidate_id",
+    "candidate_digest",
+    "evaluation_digest",
+    "state",
+    "previous_state",
+    "registry_record_digest",
+    "registry_plan_id",
+    "changed_by_ref",
+    "rollback_target_ref",
+    "supersedes_ref",
+    "lifecycle_digest",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/skill-lifecycle-record.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "skill_id": {
+      "$ref": "#/$defs/id"
+    },
+    "candidate_id": {
+      "$ref": "#/$defs/id"
+    },
+    "candidate_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "evaluation_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "state": {
+      "enum": [
+        "active",
+        "deprecated",
+        "retired"
+      ]
+    },
+    "previous_state": {
+      "enum": [
+        "evaluated",
+        "active",
+        "deprecated"
+      ]
+    },
+    "registry_record_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "registry_plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "changed_by_ref": {
+      "$ref": "#/$defs/ref"
+    },
+    "rollback_target_ref": {
+      "$ref": "#/$defs/ref"
+    },
+    "supersedes_ref": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/ref"
+        }
+      ]
+    },
+    "lifecycle_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "invariants": {
+      "$ref": "#/$defs/invariants"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/@-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "invariants": {
+      "const": {
+        "skill_code_included": false,
+        "skill_content_included": false,
+        "physical_paths_included": false,
+        "secret_values_included": false,
+        "grants_authority": false
+      }
+    }
+  }
+}

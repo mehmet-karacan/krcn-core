@@ -1,0 +1,28 @@
+{
+  "schema_ref": "schemas/memory-hygiene-policy.schema.json",
+  "schema_version": 1,
+  "policy_revision": 1,
+  "stale_after_days": 90,
+  "unused_after_days": 60,
+  "retention_review_after_days": 365,
+  "context_thresholds": {
+    "minimum_required_evidence_recall_basis_points": 9500,
+    "minimum_context_use_basis_points": 1000,
+    "maximum_stale_rate_basis_points": 500,
+    "maximum_duplicate_rate_basis_points": 500,
+    "maximum_omitted_rate_basis_points": 500,
+    "minimum_downstream_success_basis_points": 9000,
+    "require_compaction_rehydration": true
+  },
+  "invariants": {
+    "memory_content_included": false,
+    "source_content_included": false,
+    "physical_paths_included": false,
+    "secret_values_included": false,
+    "automatic_delete_performed": false,
+    "automatic_merge_performed": false,
+    "automatic_lifecycle_mutation_performed": false,
+    "memory_gate_required": true,
+    "grants_authority": false
+  }
+}

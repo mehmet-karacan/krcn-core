@@ -1,0 +1,18 @@
+{
+  "schema_ref": "schemas/skill-lifecycle-policy.schema.json",
+  "schema_version": 1,
+  "policy_revision": 1,
+  "minimum_trials": 3,
+  "minimum_passed_trials": 3,
+  "pass_threshold_basis_points": 9000,
+  "maximum_candidates": 10000,
+  "invariants": {
+    "candidate_self_promotion_allowed": false,
+    "registry_write_performed": false,
+    "skill_code_included": false,
+    "skill_content_included": false,
+    "physical_paths_included": false,
+    "secret_values_included": false,
+    "grants_authority": false
+  }
+}

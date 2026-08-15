@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:research-evidence-metadata:1",
+  "title": "KRCN content-free canonical research evidence metadata",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "evidence_id",
+    "canonical_source_ref",
+    "content_digest",
+    "observed_at",
+    "evidence_digest",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/research-evidence-metadata.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "evidence_id": {
+      "$ref": "#/$defs/id"
+    },
+    "canonical_source_ref": {
+      "$ref": "#/$defs/ref"
+    },
+    "content_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "evidence_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "invariants": {
+      "$ref": "#/$defs/invariants"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/@-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "invariants": {
+      "const": {
+        "memory_content_included": false,
+        "source_content_included": false,
+        "physical_paths_included": false,
+        "secret_values_included": false,
+        "automatic_delete_performed": false,
+        "automatic_merge_performed": false,
+        "automatic_lifecycle_mutation_performed": false,
+        "memory_gate_required": true,
+        "grants_authority": false
+      }
+    }
+  }
+}

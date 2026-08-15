@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:skill-evaluation:1",
+  "title": "KRCN independently verified skill evaluation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "evaluation_id",
+    "candidate_id",
+    "candidate_digest",
+    "state",
+    "project_fixture_digest",
+    "evaluation_run_digest",
+    "evaluator_ref",
+    "verifier_ref",
+    "tested_model_digest",
+    "verifier_model_digest",
+    "environment_digest",
+    "trial_count",
+    "passed_trials",
+    "score_basis_points",
+    "outcome",
+    "evaluated_at",
+    "evaluation_digest",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/skill-evaluation.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "evaluation_id": {
+      "$ref": "#/$defs/id"
+    },
+    "candidate_id": {
+      "$ref": "#/$defs/id"
+    },
+    "candidate_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "state": {
+      "const": "evaluated"
+    },
+    "project_fixture_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "evaluation_run_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "evaluator_ref": {
+      "$ref": "#/$defs/ref"
+    },
+    "verifier_ref": {
+      "$ref": "#/$defs/ref"
+    },
+    "tested_model_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "verifier_model_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "environment_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "trial_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+    },
+    "passed_trials": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "score_basis_points": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "outcome": {
+      "enum": [
+        "passed",
+        "failed"
+      ]
+    },
+    "evaluated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "evaluation_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "invariants": {
+      "$ref": "#/$defs/invariants"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/@-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "invariants": {
+      "const": {
+        "skill_code_included": false,
+        "skill_content_included": false,
+        "physical_paths_included": false,
+        "secret_values_included": false,
+        "grants_authority": false
+      }
+    }
+  }
+}

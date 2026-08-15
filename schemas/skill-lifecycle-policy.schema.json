@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:skill-lifecycle-policy:1",
+  "title": "KRCN controlled skill lifecycle policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "policy_revision",
+    "minimum_trials",
+    "minimum_passed_trials",
+    "pass_threshold_basis_points",
+    "maximum_candidates",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/skill-lifecycle-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "policy_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "minimum_trials": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+    },
+    "minimum_passed_trials": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+    },
+    "pass_threshold_basis_points": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000
+    },
+    "maximum_candidates": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+    },
+    "invariants": {
+      "$ref": "#/$defs/policyInvariants"
+    }
+  },
+  "$defs": {
+    "policyInvariants": {
+      "const": {
+        "candidate_self_promotion_allowed": false,
+        "registry_write_performed": false,
+        "skill_code_included": false,
+        "skill_content_included": false,
+        "physical_paths_included": false,
+        "secret_values_included": false,
+        "grants_authority": false
+      }
+    }
+  }
+}

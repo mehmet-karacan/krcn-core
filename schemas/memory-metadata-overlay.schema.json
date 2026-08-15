@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:memory-metadata-overlay:1",
+  "title": "KRCN optional temporal and usage memory metadata overlay",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "memory_id",
+    "revision",
+    "content_digest",
+    "semantic_digest",
+    "created_at",
+    "valid_from",
+    "valid_until",
+    "last_used_at",
+    "usage_count",
+    "retention_review_at",
+    "conflict_refs",
+    "lifecycle",
+    "reviewed_by_ref",
+    "review_digest",
+    "metadata_digest",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/memory-metadata-overlay.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "memory_id": {
+      "$ref": "#/$defs/id"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "content_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "semantic_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "created_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "valid_from": {
+      "$ref": "#/$defs/nullableTimestamp"
+    },
+    "valid_until": {
+      "$ref": "#/$defs/nullableTimestamp"
+    },
+    "last_used_at": {
+      "$ref": "#/$defs/nullableTimestamp"
+    },
+    "usage_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "retention_review_at": {
+      "$ref": "#/$defs/nullableTimestamp"
+    },
+    "conflict_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "lifecycle": {
+      "enum": [
+        "current",
+        "superseded",
+        "archived"
+      ]
+    },
+    "reviewed_by_ref": {
+      "$ref": "#/$defs/ref"
+    },
+    "review_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "metadata_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "invariants": {
+      "$ref": "#/$defs/invariants"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/@-]*$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "nullableTimestamp": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/timestamp"
+        }
+      ]
+    },
+    "invariants": {
+      "const": {
+        "memory_content_included": false,
+        "source_content_included": false,
+        "physical_paths_included": false,
+        "secret_values_included": false,
+        "automatic_delete_performed": false,
+        "automatic_merge_performed": false,
+        "automatic_lifecycle_mutation_performed": false,
+        "memory_gate_required": true,
+        "grants_authority": false
+      }
+    }
+  }
+}

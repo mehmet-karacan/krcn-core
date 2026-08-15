@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:memory-hygiene-report:1",
+  "title": "KRCN read-only memory hygiene report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "report_id",
+    "as_of",
+    "policy_digest",
+    "reviewed_memory_digests",
+    "reviewed_evidence_digests",
+    "context_evaluation_digests",
+    "stale_memory_ids",
+    "conflict_memory_ids",
+    "duplicate_groups",
+    "unused_memory_ids",
+    "retention_candidate_ids",
+    "not_yet_valid_memory_ids",
+    "research_duplicate_groups",
+    "context_effectiveness",
+    "action_suggestions",
+    "invariants",
+    "report_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/memory-hygiene-report.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "report_id": {
+      "$ref": "#/$defs/id"
+    },
+    "as_of": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "reviewed_memory_digests": {
+      "$ref": "#/$defs/digests"
+    },
+    "reviewed_evidence_digests": {
+      "$ref": "#/$defs/digests"
+    },
+    "context_evaluation_digests": {
+      "$ref": "#/$defs/digests"
+    },
+    "stale_memory_ids": {
+      "$ref": "#/$defs/ids"
+    },
+    "conflict_memory_ids": {
+      "$ref": "#/$defs/ids"
+    },
+    "unused_memory_ids": {
+      "$ref": "#/$defs/ids"
+    },
+    "retention_candidate_ids": {
+      "$ref": "#/$defs/ids"
+    },
+    "not_yet_valid_memory_ids": {
+      "$ref": "#/$defs/ids"
+    },
+    "duplicate_groups": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/memoryDuplicateGroup"
+      }
+    },
+    "research_duplicate_groups": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/researchDuplicateGroup"
+      }
+    },
+    "context_effectiveness": {
+      "type": "array",
+      "items": {
+        "$ref": "context-effectiveness.schema.json"
+      }
+    },
+    "action_suggestions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/suggestion"
+      }
+    },
+    "invariants": {
+      "$ref": "#/$defs/invariants"
+    },
+    "report_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/@-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "digests": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/digest"
+      }
+    },
+    "suggestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "suggestion_id",
+        "action",
+        "memory_id",
+        "expected_revision",
+        "expected_content_digest",
+        "replacement_ref",
+        "reason_codes",
+        "requires_memory_gate",
+        "grants_authority"
+      ],
+      "properties": {
+        "suggestion_id": {
+          "$ref": "#/$defs/id"
+        },
+        "action": {
+          "enum": [
+            "supersede",
+            "revoke"
+          ]
+        },
+        "memory_id": {
+          "$ref": "#/$defs/id"
+        },
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "expected_content_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "replacement_ref": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/ref"
+            }
+          ]
+        },
+        "reason_codes": {
+          "$ref": "#/$defs/ids"
+        },
+        "requires_memory_gate": {
+          "const": true
+        },
+        "grants_authority": {
+          "const": false
+        }
+      }
+    },
+    "memoryDuplicateGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_memory_id",
+        "duplicate_memory_ids",
+        "semantic_digest"
+      ],
+      "properties": {
+        "canonical_memory_id": {
+          "$ref": "#/$defs/id"
+        },
+        "duplicate_memory_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "semantic_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "researchDuplicateGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_evidence_id",
+        "duplicate_of_suggestions",
+        "canonical_evidence_weight"
+      ],
+      "properties": {
+        "canonical_evidence_id": {
+          "$ref": "#/$defs/id"
+        },
+        "duplicate_of_suggestions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/researchDuplicateSuggestion"
+          }
+        },
+        "canonical_evidence_weight": {
+          "const": 1
+        }
+      }
+    },
+    "researchDuplicateSuggestion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "duplicate_of",
+        "evidence_weight"
+      ],
+      "properties": {
+        "evidence_id": {
+          "$ref": "#/$defs/id"
+        },
+        "duplicate_of": {
+          "$ref": "#/$defs/id"
+        },
+        "evidence_weight": {
+          "const": 0
+        }
+      }
+    },
+    "invariants": {
+      "const": {
+        "memory_content_included": false,
+        "source_content_included": false,
+        "physical_paths_included": false,
+        "secret_values_included": false,
+        "automatic_delete_performed": false,
+        "automatic_merge_performed": false,
+        "automatic_lifecycle_mutation_performed": false,
+        "memory_gate_required": true,
+        "grants_authority": false
+      }
+    }
+  }
+}

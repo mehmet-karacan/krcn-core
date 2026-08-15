@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:skill-candidate:1",
+  "title": "KRCN content-free skill candidate metadata",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "candidate_id",
+    "skill_id",
+    "state",
+    "proposed_by_ref",
+    "source_refs",
+    "source_digest",
+    "repetition_digests",
+    "proposer_model_digest",
+    "candidate_digest",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/skill-candidate.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "candidate_id": {
+      "$ref": "#/$defs/id"
+    },
+    "skill_id": {
+      "$ref": "#/$defs/id"
+    },
+    "state": {
+      "const": "candidate"
+    },
+    "proposed_by_ref": {
+      "$ref": "#/$defs/ref"
+    },
+    "source_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/ref"
+      }
+    },
+    "source_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "repetition_digests": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/digest"
+      }
+    },
+    "proposer_model_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "candidate_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "invariants": {
+      "$ref": "#/$defs/invariants"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/@-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "invariants": {
+      "const": {
+        "skill_code_included": false,
+        "skill_content_included": false,
+        "physical_paths_included": false,
+        "secret_values_included": false,
+        "grants_authority": false
+      }
+    }
+  }
+}

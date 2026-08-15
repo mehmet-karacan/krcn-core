@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:context-effectiveness:1",
+  "title": "KRCN measured context effectiveness result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "evaluation_id",
+    "policy_digest",
+    "required_evidence_refs",
+    "recalled_evidence_refs",
+    "selected_bytes",
+    "used_bytes",
+    "selected_tokens",
+    "used_tokens",
+    "selected_count",
+    "stale_selected_count",
+    "duplicate_selected_count",
+    "omitted_required_count",
+    "downstream_success_basis_points",
+    "compaction_rehydration_passed",
+    "metrics",
+    "passed",
+    "evaluation_digest",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/context-effectiveness.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "evaluation_id": {
+      "$ref": "#/$defs/id"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "required_evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/ref"
+      }
+    },
+    "recalled_evidence_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/ref"
+      }
+    },
+    "selected_bytes": {
+      "$ref": "#/$defs/count"
+    },
+    "used_bytes": {
+      "$ref": "#/$defs/count"
+    },
+    "selected_tokens": {
+      "$ref": "#/$defs/count"
+    },
+    "used_tokens": {
+      "$ref": "#/$defs/count"
+    },
+    "selected_count": {
+      "$ref": "#/$defs/count"
+    },
+    "stale_selected_count": {
+      "$ref": "#/$defs/count"
+    },
+    "duplicate_selected_count": {
+      "$ref": "#/$defs/count"
+    },
+    "omitted_required_count": {
+      "$ref": "#/$defs/count"
+    },
+    "downstream_success_basis_points": {
+      "$ref": "#/$defs/basis"
+    },
+    "compaction_rehydration_passed": {
+      "type": "boolean"
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_evidence_recall_basis_points",
+        "used_bytes_basis_points",
+        "used_tokens_basis_points",
+        "stale_rate_basis_points",
+        "duplicate_rate_basis_points",
+        "omitted_rate_basis_points",
+        "downstream_success_basis_points"
+      ],
+      "properties": {
+        "required_evidence_recall_basis_points": {
+          "$ref": "#/$defs/basis"
+        },
+        "used_bytes_basis_points": {
+          "$ref": "#/$defs/basis"
+        },
+        "used_tokens_basis_points": {
+          "$ref": "#/$defs/basis"
+        },
+        "stale_rate_basis_points": {
+          "$ref": "#/$defs/basis"
+        },
+        "duplicate_rate_basis_points": {
+          "$ref": "#/$defs/basis"
+        },
+        "omitted_rate_basis_points": {
+          "$ref": "#/$defs/basis"
+        },
+        "downstream_success_basis_points": {
+          "$ref": "#/$defs/basis"
+        }
+      }
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "evaluation_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "invariants": {
+      "$ref": "#/$defs/invariants"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "ref": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/@-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "basis": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "invariants": {
+      "const": {
+        "memory_content_included": false,
+        "source_content_included": false,
+        "physical_paths_included": false,
+        "secret_values_included": false,
+        "automatic_delete_performed": false,
+        "automatic_merge_performed": false,
+        "automatic_lifecycle_mutation_performed": false,
+        "memory_gate_required": true,
+        "grants_authority": false
+      }
+    }
+  }
+}
