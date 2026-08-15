@@ -305,6 +305,23 @@ class MeasuredLoopTests(unittest.TestCase):
             self.plan(run_id="run-two", created_at="2026-08-16T00:04:00Z", previous_status=terminal.as_dict())
         self.assertEqual("run-two", self.plan(run_id="run-two", created_at="2026-08-16T00:05:02Z", previous_status=terminal.as_dict()).payload["run_id"])
 
+    def test_objective_rejects_portable_and_platform_absolute_paths(self) -> None:
+        for unsafe in (
+            "Inspect /etc/passwd safely.",
+            "Inspect /opt/project/config.json safely.",
+            "Inspect D:/private/config.json safely.",
+            r"Inspect \\server\share\config.json safely.",
+        ):
+            with self.subTest(unsafe=unsafe):
+                with self.assertRaisesRegex(MeasuredLoopError, "unsafe content"):
+                    self.plan(objective_statement=unsafe)
+
+        statement = "Compare research and planning evidence within fixed constraints."
+        self.assertEqual(
+            statement,
+            self.plan(objective_statement=statement).payload["objective"]["statement"],
+        )
+
     def test_all_public_records_are_strict_schema_valid_and_safe(self) -> None:
         plan = self.plan()
         iteration = self.iteration(plan, [], 111, 1)

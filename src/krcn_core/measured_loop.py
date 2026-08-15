@@ -29,7 +29,8 @@ DIGEST = re.compile(r"^[a-f0-9]{64}$")
 LOGICAL_REF = re.compile(r"^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$")
 SAFE_TEXT = re.compile(r"^[^\x00-\x08\x0b\x0c\x0e-\x1f]{1,512}$")
 ABSOLUTE_PATH = re.compile(
-    r"(^|[^A-Za-z0-9])([A-Za-z]:[\\/]|\\\\[^\\]|/(?:home|Users|root|mnt|var)/)"
+    r"(^|[^A-Za-z0-9._~-])(?:[A-Za-z]:[\\/]|\\\\[^\\]|"
+    r"/(?!/)[A-Za-z0-9._~-]+(?:/[A-Za-z0-9._~-]+)*)"
 )
 SECRET_MARKER = re.compile(
     r"(?i)\b(password|passwd|secret|api[_-]?key|access[_-]?token|private[_-]?key|"
