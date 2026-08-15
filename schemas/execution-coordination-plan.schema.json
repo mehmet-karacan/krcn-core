@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:execution-coordination-plan:1",
+  "title": "KRCN Core immutable root execution coordination plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "correlation_id",
+    "request_id",
+    "client_id",
+    "request_digest",
+    "work_class",
+    "project_id",
+    "work_item_id",
+    "work_item_revision",
+    "work_item_digest",
+    "intent_digest",
+    "context_digest",
+    "delegation_decision_digest",
+    "delegation_mode",
+    "task_plan_id",
+    "task_authorization_id",
+    "model_assignment_ids",
+    "dag_execution_plan_id",
+    "step_bindings",
+    "approval_triggers",
+    "route",
+    "status",
+    "agent_calls_planned",
+    "provider_calls_implicit",
+    "coordinator_performs_project_work",
+    "grants_authority",
+    "plan_id"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/execution-coordination-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "correlation_id": {
+      "$ref": "#/$defs/id"
+    },
+    "request_id": {
+      "$ref": "#/$defs/id"
+    },
+    "client_id": {
+      "$ref": "#/$defs/id"
+    },
+    "request_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "work_class": {
+      "$ref": "#/$defs/id"
+    },
+    "project_id": {
+      "$ref": "#/$defs/nullableId"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/nullableId"
+    },
+    "work_item_revision": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "work_item_digest": {
+      "$ref": "#/$defs/nullableDigest"
+    },
+    "intent_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "context_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "delegation_decision_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "delegation_mode": {
+      "enum": [
+        "native-parallel",
+        "native-sequential",
+        "isolated-role-fallback",
+        "delegation-unavailable"
+      ]
+    },
+    "task_plan_id": {
+      "$ref": "#/$defs/nullableDigest"
+    },
+    "task_authorization_id": {
+      "$ref": "#/$defs/nullableDigest"
+    },
+    "model_assignment_ids": {
+      "$ref": "#/$defs/ids"
+    },
+    "dag_execution_plan_id": {
+      "$ref": "#/$defs/nullableDigest"
+    },
+    "step_bindings": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "step_id",
+          "role"
+        ],
+        "properties": {
+          "step_id": {
+            "$ref": "#/$defs/id"
+          },
+          "role": {
+            "enum": [
+              "worker",
+              "verifier"
+            ]
+          }
+        }
+      }
+    },
+    "approval_triggers": {
+      "$ref": "#/$defs/ids"
+    },
+    "route": {
+      "enum": [
+        "coordinator-response",
+        "delegated-dag",
+        "blocked"
+      ]
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "awaiting-approval",
+        "blocked"
+      ]
+    },
+    "agent_calls_planned": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "provider_calls_implicit": {
+      "const": false
+    },
+    "coordinator_performs_project_work": {
+      "const": false
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "nullableId": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "nullableDigest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    }
+  }
+}

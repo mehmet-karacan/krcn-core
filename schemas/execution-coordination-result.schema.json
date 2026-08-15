@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:execution-coordination-result:1",
+  "title": "KRCN Core composed execution coordination result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "correlation_id",
+    "plan_id",
+    "route",
+    "status",
+    "evidence_digest",
+    "verification_id",
+    "continuity_snapshot_id",
+    "handoff_id",
+    "trace",
+    "status_projection",
+    "grants_authority",
+    "result_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/execution-coordination-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "correlation_id": {
+      "$ref": "#/$defs/id"
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "route": {
+      "enum": [
+        "coordinator-response",
+        "delegated-dag"
+      ]
+    },
+    "status": {
+      "const": "completed"
+    },
+    "evidence_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "verification_id": {
+      "$ref": "#/$defs/nullableId"
+    },
+    "continuity_snapshot_id": {
+      "$ref": "#/$defs/nullableId"
+    },
+    "handoff_id": {
+      "$ref": "#/$defs/nullableId"
+    },
+    "trace": {
+      "$ref": "urn:krcn:schemas:execution-trace:1"
+    },
+    "status_projection": {
+      "$ref": "urn:krcn:schemas:status-projection:1"
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "result_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "nullableId": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

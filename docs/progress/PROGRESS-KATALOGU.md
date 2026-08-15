@@ -160,6 +160,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 - `PHASE-21-GENERIC-DAG-EXECUTOR.md`
 - `PHASE-21-OKUNUR-IS-INDEKSI.md`
 - `PHASE-21-KUYRUK-ALTYAPISI-UYGUNLUK-OLCUMU.md`
+- `PHASE-21-EXECUTION-COORDINATOR.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 

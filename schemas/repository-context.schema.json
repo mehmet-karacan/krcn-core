@@ -112,6 +112,9 @@
         "execution_observability_boundary",
         "execution_trace_schema",
         "status_projection_schema",
+        "execution_coordinator_boundary",
+        "execution_coordination_plan_schema",
+        "execution_coordination_result_schema",
         "source_relocation_boundary",
         "source_relocation_assessment_schema",
         "model_capability_boundary",
@@ -363,6 +366,15 @@
           "$ref": "#/$defs/repoPath"
         },
         "status_projection_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "execution_coordinator_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "execution_coordination_plan_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "execution_coordination_result_schema": {
           "$ref": "#/$defs/repoPath"
         },
         "source_relocation_boundary": {

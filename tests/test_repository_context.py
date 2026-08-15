@@ -154,6 +154,18 @@ class RepositoryContextTests(unittest.TestCase):
                     resolve_repo_reference(REPO_ROOT, canonical[key]).is_file()
                 )
 
+    def test_execution_coordinator_contract_is_canonical(self) -> None:
+        canonical = resolve_repository_context(REPO_ROOT).manifest["canonical"]
+        for key in (
+            "execution_coordinator_boundary",
+            "execution_coordination_plan_schema",
+            "execution_coordination_result_schema",
+        ):
+            with self.subTest(key=key):
+                self.assertTrue(
+                    resolve_repo_reference(REPO_ROOT, canonical[key]).is_file()
+                )
+
     def test_current_work_references_exist(self) -> None:
         resolved = resolve_repository_context(REPO_ROOT)
         current = resolved.current_work

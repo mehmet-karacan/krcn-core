@@ -26,6 +26,7 @@ Aşağıdaki sözleşmeler V1 boyunca değişmezdir. Bileşim, sadeleştirme vey
 10. Model, agent veya delegation kararı yetki kaynağı değildir.
 11. Authoritative kullanıcı kaydı JSON'dur; SQLite projection ve vektör indeksleri yeniden üretilebilir.
 12. Onaylanmış kullanıcı politikaları kullanıcıya aittir; core güncellemesi şemasını taşıyabilir, anlamını zayıflatamaz.
+13. Bir kullanıcı isteğinin gözden geçirilmiş yürütme aşamaları tek immutable root plan altında bağlanır; coordinator policy yetkisini kendi üzerine alamaz.
 
 ## Zorlama
 

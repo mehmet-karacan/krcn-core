@@ -33,6 +33,7 @@
         "client.bootstrap",
         "client.capabilities",
         "client.delegation",
+        "execution.coordinate",
         "model.resolve",
         "project.learn",
         "project.integrate",

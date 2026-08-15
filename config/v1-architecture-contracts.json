@@ -280,6 +280,26 @@
       ]
     },
     {
+      "id": "single-root-execution",
+      "statement": "One user request binds reviewed execution stages under one immutable root plan without moving policy authority into the coordinator.",
+      "evidence": [
+        {
+          "kind": "module-symbol",
+          "module": "krcn_core.execution_coordinator",
+          "symbols": [
+            "prepare_execution_coordination",
+            "execute_execution_coordination",
+            "finalize_execution_coordination"
+          ]
+        },
+        {
+          "kind": "document-phrase",
+          "document": "docs/specifications/EXECUTION-COORDINATOR.md",
+          "phrase": "It does not parse domain policy"
+        }
+      ]
+    },
+    {
       "id": "json-authoritative-projection-rebuildable",
       "statement": "Authoritative user records are JSON; SQLite projections and vector indexes are rebuildable derived data.",
       "evidence": [

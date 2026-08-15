@@ -18,12 +18,13 @@
     "docs/progress/PHASE-21-BAGIMSIZ-VERIFIER-KIMLIGI.md",
     "docs/progress/PHASE-21-GENERIC-DAG-EXECUTOR.md",
     "docs/progress/PHASE-21-OKUNUR-IS-INDEKSI.md",
-    "docs/progress/PHASE-21-KUYRUK-ALTYAPISI-UYGUNLUK-OLCUMU.md"
+    "docs/progress/PHASE-21-KUYRUK-ALTYAPISI-UYGUNLUK-OLCUMU.md",
+    "docs/progress/PHASE-21-EXECUTION-COORDINATOR.md"
   ],
   "next_actions": [
-    "Execution Coordinator ile servisleri tek akis altinda compose et",
     "model karar servisini kapali dongu hale getir",
-    "retrieval golden set ve olcek fixturelarini tamamla"
+    "retrieval golden set ve olcek fixturelarini tamamla",
+    "application ve CLI ic bolunmesini tamamla"
   ],
   "baseline_commit": "2e4d23a",
   "approval_gates": {

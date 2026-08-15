@@ -35,6 +35,7 @@ FROZEN_CONTRACT_IDS = {
     "independent-verifier",
     "records-grant-no-authority",
     "model-decision-grants-no-authority",
+    "single-root-execution",
     "json-authoritative-projection-rebuildable",
     "user-policies-preserved",
 }
@@ -85,7 +86,7 @@ class ArchitectureContractRecordTests(unittest.TestCase):
         payload = json.loads(json.dumps(self.payload))
         payload["contracts"].append(payload["contracts"][0])
         self.assertIn(
-            "contracts[12] id is duplicated: ownership-classes",
+            f"contracts[{len(FROZEN_CONTRACT_IDS)}] id is duplicated: ownership-classes",
             validate_architecture_contracts(payload),
         )
 

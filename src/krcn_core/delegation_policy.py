@@ -228,3 +228,104 @@ def decide_delegation(
         policy.policy_digest,
         _digest(digest_payload),
     )
+
+
+def parse_delegation_decision(payload: object) -> DelegationDecision:
+    """Parse one persisted decision without treating it as authority."""
+
+    expected = {
+        "schema_ref",
+        "schema_version",
+        "session_id",
+        "client_id",
+        "work_class",
+        "project_matched",
+        "delegation_required",
+        "selected_mode",
+        "execution_allowed",
+        "parallel_preferred",
+        "coordinator_only",
+        "decision_basis",
+        "profile_digest",
+        "policy_digest",
+        "decision_digest",
+        "client_declaration_grants_authority",
+    }
+    if not isinstance(payload, Mapping) or set(payload) != expected:
+        raise DelegationPolicyError("delegation decision fields are invalid")
+    if (
+        payload.get("schema_ref") != "schemas/delegation-decision.schema.json"
+        or payload.get("schema_version") != 1
+        or payload.get("client_declaration_grants_authority") is not False
+    ):
+        raise DelegationPolicyError("delegation decision schema is invalid")
+    session_id = payload.get("session_id")
+    client_id = payload.get("client_id")
+    work_class = payload.get("work_class")
+    if (
+        not isinstance(session_id, str)
+        or not session_id
+        or len(session_id) > 128
+        or not isinstance(client_id, str)
+        or not IDENTIFIER.fullmatch(client_id)
+        or not isinstance(work_class, str)
+        or not IDENTIFIER.fullmatch(work_class)
+    ):
+        raise DelegationPolicyError("delegation decision identity is invalid")
+    selected_mode = payload.get("selected_mode")
+    if selected_mode not in EXECUTION_MODES:
+        raise DelegationPolicyError("delegation decision mode is invalid")
+    boolean_fields = (
+        "project_matched",
+        "delegation_required",
+        "execution_allowed",
+        "parallel_preferred",
+        "coordinator_only",
+    )
+    if any(not isinstance(payload.get(field), bool) for field in boolean_fields):
+        raise DelegationPolicyError("delegation decision flags are invalid")
+    for field in ("profile_digest", "policy_digest", "decision_digest"):
+        value = payload.get(field)
+        if (
+            not isinstance(value, str)
+            or len(value) != 64
+            or any(character not in "0123456789abcdef" for character in value)
+        ):
+            raise DelegationPolicyError("delegation decision digest is invalid")
+    digest_payload = {
+        "schema_version": 1,
+        **{
+            field: payload[field]
+            for field in (
+                "session_id",
+                "client_id",
+                "work_class",
+                "project_matched",
+                "delegation_required",
+                "selected_mode",
+                "execution_allowed",
+                "parallel_preferred",
+                "coordinator_only",
+                "decision_basis",
+                "profile_digest",
+                "policy_digest",
+            )
+        },
+    }
+    if payload.get("decision_digest") != _digest(digest_payload):
+        raise DelegationPolicyError("delegation decision digest does not match")
+    return DelegationDecision(
+        str(session_id),
+        str(client_id),
+        str(work_class),
+        bool(payload["project_matched"]),
+        bool(payload["delegation_required"]),
+        str(selected_mode),
+        bool(payload["execution_allowed"]),
+        bool(payload["parallel_preferred"]),
+        bool(payload["coordinator_only"]),
+        str(payload["decision_basis"]),
+        str(payload["profile_digest"]),
+        str(payload["policy_digest"]),
+        str(payload["decision_digest"]),
+    )

@@ -73,7 +73,12 @@ from .client_capabilities import (
     create_client_capability_profile,
     load_client_capability_policy,
 )
-from .delegation_policy import decide_delegation, load_delegation_policy
+from .delegation_policy import (
+    decide_delegation,
+    load_delegation_policy,
+    parse_delegation_decision,
+)
+from .execution_coordinator import prepare_execution_coordination
 from .memory_gate import (
     apply_memory_lifecycle,
     apply_memory_persistence,
@@ -122,6 +127,8 @@ from .orchestration_service import (
     ORCHESTRATION_OPERATIONS,
     OrchestrationApplicationService,
 )
+from .orchestration_intent import parse_task_intent
+from .orchestration_plan import parse_task_plan
 from .orchestration_verifier import VerifierHandlerRegistry
 from .orchestration_worker import WorkerHandlerRegistry
 from .oracle_metadata import (
@@ -301,6 +308,7 @@ OPERATIONS = {
     "client.bootstrap",
     "client.capabilities",
     "client.delegation",
+    "execution.coordinate",
     "model.resolve",
     "model.inventory",
     "model.list",
@@ -677,6 +685,7 @@ class KrcnApplicationService:
             "client.bootstrap": self._bootstrap_clients,
             "client.capabilities": self._client_capabilities,
             "client.delegation": self._client_delegation,
+            "execution.coordinate": self._coordinate_execution,
             "model.resolve": self._resolve_model,
             "model.inventory": self._model_inventory,
             "model.list": self._list_models,
@@ -757,6 +766,87 @@ class KrcnApplicationService:
             operation=request.operation,
             status=status,
             data=data,
+        )
+
+    def _coordinate_execution(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        if request.apply:
+            raise ApplicationServiceError(
+                "execution coordination preparation is read-only"
+            )
+        required = {
+            "request_id",
+            "client_id",
+            "request_text",
+            "work_class",
+            "intent",
+            "context_digest",
+            "delegation",
+        }
+        optional = {
+            "project_id",
+            "work_item_id",
+            "work_item_revision",
+            "work_item_digest",
+            "task_plan",
+            "task_authorization_id",
+            "model_assignment_ids",
+            "dag_execution_plan_id",
+        }
+        if set(request.arguments) - required - optional or not required.issubset(
+            request.arguments
+        ):
+            raise ApplicationServiceError(
+                "execution coordination arguments are invalid"
+            )
+        try:
+            intent = parse_task_intent(request.arguments["intent"])
+            delegation = parse_delegation_decision(
+                request.arguments["delegation"]
+            )
+            task_plan_payload = request.arguments.get("task_plan")
+            task_plan = (
+                parse_task_plan(task_plan_payload)
+                if task_plan_payload is not None
+                else None
+            )
+            model_assignments = request.arguments.get(
+                "model_assignment_ids",
+                [],
+            )
+            if not isinstance(model_assignments, list):
+                raise ValueError("model assignment ids must be a list")
+            plan = prepare_execution_coordination(
+                request_id=request.arguments["request_id"],
+                client_id=request.arguments["client_id"],
+                request_text=request.arguments["request_text"],
+                work_class=request.arguments["work_class"],
+                intent=intent,
+                context_digest=request.arguments["context_digest"],
+                delegation=delegation,
+                project_id=request.arguments.get("project_id"),
+                work_item_id=request.arguments.get("work_item_id"),
+                work_item_revision=request.arguments.get("work_item_revision"),
+                work_item_digest=request.arguments.get("work_item_digest"),
+                task_plan=task_plan,
+                task_authorization_id=request.arguments.get(
+                    "task_authorization_id"
+                ),
+                model_assignment_ids=model_assignments,
+                dag_execution_plan_id=request.arguments.get(
+                    "dag_execution_plan_id"
+                ),
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(
+                "execution coordination request is invalid"
+            ) from exc
+        data = {"coordination_plan": plan.as_dict()}
+        return (
+            "blocked" if plan.as_dict()["status"] == "blocked" else "planned",
+            data,
         )
 
     def _put_work_item(
