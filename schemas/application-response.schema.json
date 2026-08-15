@@ -61,6 +61,7 @@
         "work.documents.copy-initial",
         "work.documents.migrate-layout",
         "work.documents.process",
+        "work.index-readable",
         "work.index-semantic",
         "work.search",
         "work.query",

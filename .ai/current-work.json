@@ -16,12 +16,13 @@
     "docs/progress/PHASE-21-TASINABILIR-PROJE-KIMLIGI.md",
     "docs/progress/PHASE-21-MODEL-YETENEK-KORUMA.md",
     "docs/progress/PHASE-21-BAGIMSIZ-VERIFIER-KIMLIGI.md",
-    "docs/progress/PHASE-21-GENERIC-DAG-EXECUTOR.md"
+    "docs/progress/PHASE-21-GENERIC-DAG-EXECUTOR.md",
+    "docs/progress/PHASE-21-OKUNUR-IS-INDEKSI.md"
   ],
   "next_actions": [
-    "Work Graph kaynakli okunur WORK-INDEX projection uret",
     "kuyruk altyapisi uygunluk olcumunu tamamla",
-    "Execution Coordinator ile servisleri tek akis altinda compose et"
+    "Execution Coordinator ile servisleri tek akis altinda compose et",
+    "model karar servisini kapali dongu hale getir"
   ],
   "baseline_commit": "2e4d23a",
   "approval_gates": {

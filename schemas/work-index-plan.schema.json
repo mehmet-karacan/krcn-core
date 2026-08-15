@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-index-plan:1",
+  "title": "KRCN Core readable work index exact plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "project_id",
+    "graph_digest",
+    "policy_digest",
+    "document_digest",
+    "active_item_count",
+    "historical_item_count",
+    "listed_item_count",
+    "omitted_item_count",
+    "no_op",
+    "mutation",
+    "authoritative_source",
+    "source_content_included",
+    "evidence_references_included",
+    "absolute_paths_included",
+    "grants_authority"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-index-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "graph_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "document_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "active_item_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "historical_item_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "listed_item_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "omitted_item_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "no_op": {
+      "type": "boolean"
+    },
+    "mutation": {
+      "oneOf": [
+        {
+          "$ref": "mutation-plan.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "authoritative_source": {
+      "const": "work-item-v1"
+    },
+    "source_content_included": {
+      "const": false
+    },
+    "evidence_references_included": {
+      "const": false
+    },
+    "absolute_paths_included": {
+      "const": false
+    },
+    "grants_authority": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

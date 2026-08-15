@@ -948,6 +948,7 @@ def prepare_work_document_processing(
     project_id: str,
     requested_external_id: str | None = None,
     requested_work_type: str | None = None,
+    repo_root: Path | None = None,
 ) -> tuple[WorkImportPlan | None, Mapping[str, object]]:
     if requested_work_type not in {None, "request", "defect", "task"}:
         raise WorkDocumentError("requested work document type is invalid")
@@ -1180,4 +1181,9 @@ def prepare_work_document_processing(
         "source_inventory": inventory,
         "candidates": candidates,
     }
-    return prepare_work_import(store, ownership, request), summary
+    return prepare_work_import(
+        store,
+        ownership,
+        request,
+        repo_root=repo_root,
+    ), summary

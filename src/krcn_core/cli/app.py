@@ -452,6 +452,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Plan or build the local project work semantic index",
     )
     _add_phase_four_options(work_index_semantic, mutation=True)
+    work_index_readable = work_commands.add_parser(
+        "index-readable",
+        help="Plan or build the readable project WORK-INDEX projection",
+    )
+    work_index_readable.add_argument("project_id")
+    _add_service_options(work_index_readable, mutation=True)
+    work_index_readable.set_defaults(format="text")
     work_search = work_commands.add_parser(
         "search",
         help="Run exact, lexical, graph, and semantic work retrieval",
@@ -1290,6 +1297,32 @@ def _work_document_processing_text(
     return "\n".join(lines)
 
 
+def _work_index_text(
+    status: str,
+    data: Mapping[str, object],
+) -> str:
+    plan = data.get("plan")
+    if not isinstance(plan, Mapping):
+        return "Okunur iş indeksi özeti kullanılamıyor."
+    lines = [
+        f"Proje: {plan.get('project_id', '-')}",
+        f"Durum: {_display_status(status)}",
+        (
+            f"Aktif: {plan.get('active_item_count', 0)} | "
+            f"Geçmiş: {plan.get('historical_item_count', 0)} | "
+            f"Listelenen: {plan.get('listed_item_count', 0)}"
+        ),
+        f"Atlanan geçmiş kayıt: {plan.get('omitted_item_count', 0)}",
+        "Konum: proje KRCN home içindeki derived/work/WORK-INDEX.md",
+    ]
+    if status == "planned":
+        lines.extend((
+            f"Exact plan: {plan.get('plan_id', '-')}",
+            "Uygulama türetilmiş görünümü yeniler; Work Graph JSON kayıtları otoriter kalır.",
+        ))
+    return "\n".join(lines)
+
+
 def _research_action_text(
     status: str,
     data: Mapping[str, object],
@@ -1376,6 +1409,8 @@ def _print_service_response(
         print(_work_document_migration_text(response.status, response.data))
     elif response.operation == "work.documents.process":
         print(_work_document_processing_text(response.status, response.data))
+    elif response.operation == "work.index-readable":
+        print(_work_index_text(response.status, response.data))
     elif response.operation == "research.action":
         print(_research_action_text(response.status, response.data))
     else:
@@ -1774,6 +1809,7 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
         "copy-documents-initial",
         "migrate-document-layout",
         "process-documents",
+        "index-readable",
         "index-semantic",
         "search",
         "query",
@@ -1815,6 +1851,9 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
             }
         elif args.work_command == "process-documents":
             operation = "work.documents.process"
+            arguments = {"project_id": args.project_id}
+        elif args.work_command == "index-readable":
+            operation = "work.index-readable"
             arguments = {"project_id": args.project_id}
         else:
             operation = f"work.{args.work_command}"
@@ -1873,6 +1912,8 @@ def _run_phase_four_service_command(args: argparse.Namespace) -> int:
         print(json.dumps(payload, ensure_ascii=False, indent=2))
     elif response.operation == "work.list":
         print(_work_list_text(response.data))
+    elif response.operation == "work.index-readable":
+        print(_work_index_text(response.status, response.data))
     else:
         print(f"{response.status}\t{response.operation}")
         print(json.dumps(response.data, ensure_ascii=False, indent=2))

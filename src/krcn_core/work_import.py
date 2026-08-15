@@ -33,6 +33,13 @@ from .work_graph import (
     work_graph_digest,
     work_graph_index_path,
 )
+from .work_index import (
+    WorkIndexPlan,
+    apply_work_index,
+    assert_work_index_preflight,
+    prepare_work_index_from_items,
+    work_index_path,
+)
 
 
 SHA256 = re.compile(r"^[a-f0-9]{64}$")
@@ -460,12 +467,14 @@ class WorkImportPlan:
     projection_mutation: MutationPlan | None
     projection_existed: bool
     projection_before_digest: str | None
+    readable_index_plan: WorkIndexPlan | None
     manifest_payload: Mapping[str, object]
     manifest_mutation: MutationPlan | None
     graph_digest_before: str
     graph_digest_after: str
     no_op: bool
     plan_id: str
+    repo_root: Path
 
     @property
     def effect_plans(self) -> tuple[MutationPlan, ...]:
@@ -473,10 +482,13 @@ class WorkImportPlan:
             return ()
         assert self.projection_mutation is not None
         assert self.manifest_mutation is not None
+        assert self.readable_index_plan is not None
         return tuple(
             [plan.mutation for plan in self.item_plans]
             + [plan.mutation for plan in self.event_plans]
-            + [self.projection_mutation, self.manifest_mutation]
+            + [self.projection_mutation]
+            + list(self.readable_index_plan.effect_plans)
+            + [self.manifest_mutation]
         )
 
     def public_summary(self) -> dict[str, object]:
@@ -490,6 +502,11 @@ class WorkImportPlan:
             "source_inventory": self.source_inventory.public_summary(),
             "graph_digest_before": self.graph_digest_before,
             "graph_digest_after": self.graph_digest_after,
+            "readable_index": (
+                None
+                if self.readable_index_plan is None
+                else self.readable_index_plan.public_summary()
+            ),
             "no_op": self.no_op,
             "item_count": len(self.manifest_payload["items"]),
             "work_item_ids": [item["work_item_id"] for item in self.manifest_payload["items"]],
@@ -502,7 +519,14 @@ def prepare_work_import(
     store: LocalWorkspaceStore,
     ownership: OwnershipResolver,
     request: Mapping[str, object],
+    *,
+    repo_root: Path | None = None,
 ) -> WorkImportPlan:
+    resolved_repo_root = (
+        Path(__file__).resolve().parents[2]
+        if repo_root is None
+        else repo_root.resolve()
+    )
     project_id, inventory, candidates = parse_work_import_request(dict(request))
     if store.read("projects", project_id) is None:
         raise WorkImportError("work import project is not registered")
@@ -530,8 +554,8 @@ def prepare_work_import(
         })
         return WorkImportPlan(
             project_id, import_id, import_digest, inventory, (), (), (), None,
-            False, None, existing_manifest, None, current_graph_digest,
-            current_graph_digest, True, plan_id,
+            False, None, None, existing_manifest, None, current_graph_digest,
+            current_graph_digest, True, plan_id, resolved_repo_root,
         )
 
     existing_items = {item.work_item_id: item for item in _project_items(store, project_id)}
@@ -595,6 +619,14 @@ def prepare_work_import(
         change_digest=graph_after,
         reversible=True,
     )
+    readable_index = prepare_work_index_from_items(
+        resolved_repo_root,
+        store,
+        ownership,
+        project_id,
+        tuple(merged.values()),
+        graph_after,
+    )
     manifest_payload: dict[str, object] = {
         "schema_ref": "schemas/work-import-manifest.schema.json",
         "schema_version": 1,
@@ -630,7 +662,9 @@ def prepare_work_import(
     effects = (
         [plan.mutation.as_dict() for plan in item_plans]
         + [plan.mutation.as_dict() for plan in event_plans]
-        + [projection_mutation.as_dict(), manifest_mutation.as_dict()]
+        + [projection_mutation.as_dict()]
+        + [effect.as_dict() for effect in readable_index.effect_plans]
+        + [manifest_mutation.as_dict()]
     )
     plan_id = _digest({
         "import_digest": import_digest,
@@ -641,8 +675,9 @@ def prepare_work_import(
     return WorkImportPlan(
         project_id, import_id, import_digest, inventory, tuple(planned_items),
         tuple(item_plans), tuple(event_plans), projection_mutation,
-        projection_existed, projection_before_digest, manifest_payload,
-        manifest_mutation, current_graph_digest, graph_after, False, plan_id,
+        projection_existed, projection_before_digest, readable_index,
+        manifest_payload, manifest_mutation, current_graph_digest, graph_after,
+        False, plan_id, resolved_repo_root,
     )
 
 
@@ -716,6 +751,7 @@ class WorkImportResult:
     work_item_ids: tuple[str, ...]
     graph_digest: str
     projection_updated: bool
+    readable_index_updated: bool
     manifest_recorded: bool
 
     def as_dict(self) -> dict[str, object]:
@@ -730,6 +766,7 @@ class WorkImportResult:
             "work_item_ids": list(self.work_item_ids),
             "graph_digest": self.graph_digest,
             "projection_updated": self.projection_updated,
+            "readable_index_updated": self.readable_index_updated,
             "manifest_recorded": self.manifest_recorded,
             "paths_disclosed": False,
         }
@@ -755,7 +792,7 @@ def apply_work_import(
             plan.project_id, plan.import_id, plan.import_digest, "already-applied",
             len(plan.manifest_payload["items"]),
             tuple(item["work_item_id"] for item in plan.manifest_payload["items"]),
-            plan.graph_digest_after, False, True,
+            plan.graph_digest_after, False, False, True,
         )
     if work_graph_digest(store, plan.project_id) != plan.graph_digest_before:
         raise WorkImportError("work graph changed after import planning")
@@ -771,11 +808,18 @@ def apply_work_import(
     manifest_path = _manifest_path(store.data_root, plan.project_id, plan.import_id)
     if manifest_path.exists():
         raise WorkImportError("work import manifest appeared after planning")
+    assert plan.readable_index_plan is not None
+    assert_work_index_preflight(
+        plan.repo_root,
+        store,
+        plan.readable_index_plan,
+    )
     _validate_authorizations(plan, authorizations)
     targets = [
         *(record_plan.target for record_plan in plan.item_plans),
         *(record_plan.target for record_plan in plan.event_plans),
         projection_path,
+        work_index_path(store.data_root, plan.project_id),
         manifest_path,
     ]
     snapshots = _snapshot_targets(targets)
@@ -791,6 +835,20 @@ def apply_work_import(
         if actual_graph_digest != plan.graph_digest_after:
             raise WorkImportError("work graph changed during batch apply")
         _write_projection(projection_path, items, actual_graph_digest)
+        assert plan.readable_index_plan is not None
+        index_authorization = (
+            None
+            if plan.readable_index_plan.mutation is None
+            else authorizations[plan.readable_index_plan.mutation.plan_id]
+        )
+        index_result = apply_work_index(
+            plan.repo_root,
+            store,
+            OwnershipResolver.from_repository(plan.repo_root),
+            plan.readable_index_plan,
+            index_authorization,
+            expected_plan_id=plan.readable_index_plan.plan_id,
+        )
         _atomic_write(manifest_path, pretty_json_bytes(plan.manifest_payload))
         stored_manifest = _read_manifest(manifest_path)
         if stored_manifest is None or stored_manifest.get("import_digest") != plan.import_digest:
@@ -806,5 +864,5 @@ def apply_work_import(
     return WorkImportResult(
         plan.project_id, plan.import_id, plan.import_digest, "applied",
         len(plan.items), tuple(item.work_item_id for item in plan.items),
-        plan.graph_digest_after, True, True,
+        plan.graph_digest_after, True, index_result["status"] == "applied", True,
     )

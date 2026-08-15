@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-index-result:1",
+  "title": "KRCN Core readable work index apply result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "project_id",
+    "status",
+    "graph_digest",
+    "document_digest",
+    "active_item_count",
+    "historical_item_count",
+    "listed_item_count",
+    "omitted_item_count",
+    "authoritative_status",
+    "derived_projection",
+    "paths_disclosed",
+    "grants_authority"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-index-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "status": {
+      "enum": [
+        "applied",
+        "current"
+      ]
+    },
+    "graph_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "document_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "active_item_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "historical_item_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "listed_item_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "omitted_item_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "authoritative_status": {
+      "const": false
+    },
+    "derived_projection": {
+      "const": true
+    },
+    "paths_disclosed": {
+      "const": false
+    },
+    "grants_authority": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

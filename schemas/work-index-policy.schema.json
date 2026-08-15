@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-index-policy:1",
+  "title": "KRCN Core readable work index policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "renderer_revision",
+    "maximum_items",
+    "maximum_document_bytes",
+    "maximum_title_characters",
+    "active_statuses",
+    "status_order",
+    "work_type_order",
+    "source_content_included",
+    "evidence_references_included",
+    "absolute_paths_included",
+    "grants_authority"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-index-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "renderer_revision": {
+      "const": 1
+    },
+    "maximum_items": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+    },
+    "maximum_document_bytes": {
+      "type": "integer",
+      "minimum": 4096,
+      "maximum": 16777216
+    },
+    "maximum_title_characters": {
+      "type": "integer",
+      "minimum": 32,
+      "maximum": 500
+    },
+    "active_statuses": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "proposed",
+          "active",
+          "blocked"
+        ]
+      }
+    },
+    "status_order": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "proposed",
+          "active",
+          "blocked",
+          "completed",
+          "cancelled",
+          "archived"
+        ]
+      }
+    },
+    "work_type_order": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "request",
+          "defect",
+          "task",
+          "subtask",
+          "decision"
+        ]
+      }
+    },
+    "source_content_included": {
+      "const": false
+    },
+    "evidence_references_included": {
+      "const": false
+    },
+    "absolute_paths_included": {
+      "const": false
+    },
+    "grants_authority": {
+      "const": false
+    }
+  }
+}

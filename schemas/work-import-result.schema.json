@@ -15,6 +15,7 @@
     "work_item_ids",
     "graph_digest",
     "projection_updated",
+    "readable_index_updated",
     "manifest_recorded",
     "paths_disclosed"
   ],
@@ -56,6 +57,9 @@
       "$ref": "#/$defs/digest"
     },
     "projection_updated": {
+      "type": "boolean"
+    },
+    "readable_index_updated": {
       "type": "boolean"
     },
     "manifest_recorded": {

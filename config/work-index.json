@@ -1,0 +1,32 @@
+{
+  "schema_ref": "schemas/work-index-policy.schema.json",
+  "schema_version": 1,
+  "renderer_revision": 1,
+  "maximum_items": 5000,
+  "maximum_document_bytes": 2097152,
+  "maximum_title_characters": 160,
+  "active_statuses": [
+    "proposed",
+    "active",
+    "blocked"
+  ],
+  "status_order": [
+    "blocked",
+    "active",
+    "proposed",
+    "completed",
+    "cancelled",
+    "archived"
+  ],
+  "work_type_order": [
+    "defect",
+    "request",
+    "task",
+    "subtask",
+    "decision"
+  ],
+  "source_content_included": false,
+  "evidence_references_included": false,
+  "absolute_paths_included": false,
+  "grants_authority": false
+}

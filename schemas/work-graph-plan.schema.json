@@ -14,6 +14,7 @@
     "next_revision",
     "graph_digest",
     "authoritative_status",
+    "readable_index",
     "effect_plans"
   ],
   "properties": {
@@ -44,6 +45,9 @@
     },
     "authoritative_status": {
       "const": true
+    },
+    "readable_index": {
+      "$ref": "work-index-plan.schema.json"
     },
     "effect_plans": {
       "type": "array",

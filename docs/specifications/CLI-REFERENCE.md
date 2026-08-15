@@ -224,9 +224,15 @@ krcn work put --request-file <work-item.json>
 krcn work put --request-file <work-item.json> --apply --expected-plan <plan-id> --approval-id <approval-id>
 krcn work query --request-file <work-query.json>
 krcn work history --request-file <work-history-query.json>
+krcn work index-readable <project-id>
+krcn work index-readable <project-id> --apply --expected-plan <plan-id>
 ```
 
 Work item JSON is authoritative. The local SQLite projection is rebuildable and is not used as the final source of lifecycle state.
+`work index-readable` checks or rebuilds the bounded
+`derived/work/WORK-INDEX.md` projection. Its default CLI output is a readable
+summary; automation may request `--format json`. The Markdown file contains no
+descriptions, evidence references, source content, physical paths, or authority.
 
 ## Work Documents
 

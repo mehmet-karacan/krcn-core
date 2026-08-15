@@ -14,11 +14,21 @@ from typing import Mapping, Sequence, TYPE_CHECKING
 
 from .home_layout import project_derived_path
 from .json_documents import canonical_json_bytes
-from .mutation_gate import MutationAuthorization, MutationPlan, plan_mutation
+from .mutation_gate import (
+    MutationAuthorization,
+    MutationPlan,
+    OwnershipResolver,
+    plan_mutation,
+)
+from .work_index import (
+    WorkIndexPlan,
+    apply_work_index,
+    assert_work_index_preflight,
+    prepare_work_index_from_items,
+)
 
 if TYPE_CHECKING:
     from .local_store import LocalWorkspaceStore, RecordWritePlan
-    from .mutation_gate import OwnershipResolver
 
 
 IDENTIFIER = re.compile(r"^[a-z][a-z0-9-]*$")
@@ -378,16 +388,19 @@ class WorkGraphWritePlan:
     record_plan: "RecordWritePlan"
     event_plan: "RecordWritePlan"
     projection_mutation: MutationPlan
+    readable_index_plan: WorkIndexPlan
     graph_digest: str
     plan_id: str
+    repo_root: Path
 
     @property
     def effect_plans(self) -> tuple[MutationPlan, ...]:
-        return (
+        effects = (
             self.record_plan.mutation,
             self.event_plan.mutation,
             self.projection_mutation,
         )
+        return effects + self.readable_index_plan.effect_plans
 
     def public_summary(self) -> dict[str, object]:
         return {
@@ -400,6 +413,7 @@ class WorkGraphWritePlan:
             "next_revision": self.item.revision,
             "graph_digest": self.graph_digest,
             "authoritative_status": True,
+            "readable_index": self.readable_index_plan.public_summary(),
             "effect_plans": [item.as_dict() for item in self.effect_plans],
         }
 
@@ -408,7 +422,14 @@ def prepare_work_item(
     store: "LocalWorkspaceStore",
     ownership: "OwnershipResolver",
     arguments: Mapping[str, object],
+    *,
+    repo_root: Path | None = None,
 ) -> WorkGraphWritePlan:
+    resolved_repo_root = (
+        Path(__file__).resolve().parents[2]
+        if repo_root is None
+        else repo_root.resolve()
+    )
     project_id = str(arguments.get("project_id", ""))
     if store.read("projects", project_id) is None:
         raise WorkGraphError("work item project is not registered")
@@ -451,16 +472,37 @@ def prepare_work_item(
         target_ref=target_ref, expected_ownership="derived",
         change_digest=graph_digest, reversible=True,
     )
+    readable_index = prepare_work_index_from_items(
+        resolved_repo_root,
+        store,
+        ownership,
+        project_id,
+        tuple(items),
+        graph_digest,
+    )
     plan_id = _digest({
         "project_id": project_id, "work_item": item.as_dict(),
         "graph_digest": graph_digest,
         "effects": [
             record_plan.mutation.as_dict(), event_plan.mutation.as_dict(),
             projection.as_dict(),
+            *[
+                effect.as_dict()
+                for effect in readable_index.effect_plans
+            ],
         ],
+        "readable_index_plan_id": readable_index.plan_id,
     })
     return WorkGraphWritePlan(
-        project_id, item, record_plan, event_plan, projection, graph_digest, plan_id
+        project_id,
+        item,
+        record_plan,
+        event_plan,
+        projection,
+        readable_index,
+        graph_digest,
+        plan_id,
+        resolved_repo_root,
     )
 
 
@@ -516,6 +558,7 @@ def apply_work_item(
 ) -> dict[str, object]:
     store.assert_plan_current(plan.record_plan)
     store.assert_plan_current(plan.event_plan)
+    assert_work_index_preflight(plan.repo_root, store, plan.readable_index_plan)
     for effect in plan.effect_plans:
         authorization = authorizations.get(effect.plan_id)
         if authorization is None or authorization.plan.plan_id != effect.plan_id:
@@ -527,6 +570,19 @@ def apply_work_item(
     if graph_digest != plan.graph_digest:
         raise WorkGraphError("work graph changed before projection")
     _write_projection(work_graph_index_path(store.data_root, plan.project_id), items, graph_digest)
+    index_authorization = (
+        None
+        if plan.readable_index_plan.mutation is None
+        else authorizations.get(plan.readable_index_plan.mutation.plan_id)
+    )
+    readable_index_result = apply_work_index(
+        plan.repo_root,
+        store,
+        OwnershipResolver.from_repository(plan.repo_root),
+        plan.readable_index_plan,
+        index_authorization,
+        expected_plan_id=plan.readable_index_plan.plan_id,
+    )
     return {
         "project_id": plan.project_id,
         "work_item_id": plan.item.work_item_id,
@@ -534,6 +590,7 @@ def apply_work_item(
         "status": plan.item.status,
         "graph_digest": graph_digest,
         "projection_updated": True,
+        "readable_index": readable_index_result,
     }
 
 

@@ -25,9 +25,12 @@ from krcn_core.mutation_gate import (  # noqa: E402
 )
 from krcn_core.work_graph import (  # noqa: E402
     WorkGraphError,
+    apply_work_item,
     prepare_work_item,
     work_graph_index_path,
 )
+from krcn_core.work_index import work_index_path  # noqa: E402
+from krcn_core.work_index import WorkIndexError  # noqa: E402
 
 
 def authorize(plan):
@@ -130,6 +133,11 @@ class WorkGraphTests(unittest.TestCase):
             self.assertEqual("ok", connection.execute("PRAGMA integrity_check").fetchone()[0])
         finally:
             connection.close()
+        readable = work_index_path(self.home, "sample")
+        self.assertTrue(readable.is_file())
+        readable_text = readable.read_text(encoding="utf-8")
+        self.assertIn("task-one", readable_text)
+        self.assertIn("## Active work", readable_text)
 
     def test_completed_item_requires_evidence_and_history_is_append_only(self) -> None:
         self.apply_item(self.item("task-one"))
@@ -184,6 +192,25 @@ class WorkGraphTests(unittest.TestCase):
                 apply=True,
                 plan_id=str(planned.data["plan"]["plan_id"]),
             )
+
+    def test_readable_index_target_drift_fails_before_authoritative_write(self) -> None:
+        plan = prepare_work_item(
+            self.store,
+            self.ownership,
+            self.item("task-index-drift"),
+            repo_root=REPO_ROOT,
+        )
+        target = work_index_path(self.home, "sample")
+        target.parent.mkdir(parents=True)
+        target.write_text("unexpected", encoding="utf-8")
+        with self.assertRaises(WorkIndexError):
+            apply_work_item(
+                self.store,
+                plan,
+                {effect.plan_id: authorize(effect) for effect in plan.effect_plans},
+            )
+        self.assertIsNone(self.store.read("work-items", "task-index-drift"))
+        self.assertIsNone(self.store.read("work-events", "task-index-drift-r1"))
 
     def test_query_returns_exact_active_and_historical_counts(self) -> None:
         self.apply_item(self.item("task-active"))

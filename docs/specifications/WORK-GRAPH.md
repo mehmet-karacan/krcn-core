@@ -12,9 +12,13 @@ Layout v2 stores project records under:
 projects/<project-id>/work/items/
 projects/<project-id>/work/events/
 projects/<project-id>/derived/retrieval/work-graph-v1.sqlite
+projects/<project-id>/derived/work/WORK-INDEX.md
 ```
 
-Work item and event JSON documents are user data. The SQLite database is a rebuildable projection. Status and history must remain available when the projection is absent.
+Work item and event JSON documents are user data. The SQLite database and
+`WORK-INDEX.md` are rebuildable projections. Status and history must remain
+available when either projection is absent. The readable projection contract is
+defined by `docs/specifications/WORK-INDEX.md`.
 
 ## Identity and lifecycle
 
@@ -36,6 +40,7 @@ Evidence may reference commits, branches, relative source files, tests, releases
 - `work.query` reads current authoritative status.
 - `work.history` reads append-only lifecycle evidence.
 - Derived projection failure cannot make SQLite authoritative.
+- Readable projection failure cannot make Markdown authoritative.
 - All clients use the shared application service.
 
 ## Resume behavior

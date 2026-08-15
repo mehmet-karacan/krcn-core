@@ -267,6 +267,7 @@ from .work_import import (
     parse_work_import_request,
     prepare_work_import,
 )
+from .work_index import apply_work_index, prepare_work_index
 from .work_documents import (
     WorkDocumentError,
     apply_work_document_manifest_update,
@@ -343,6 +344,7 @@ OPERATIONS = {
     "work.documents.copy-initial",
     "work.documents.migrate-layout",
     "work.documents.process",
+    "work.index-readable",
     "work.index-semantic",
     "work.search",
     "work.query",
@@ -718,6 +720,7 @@ class KrcnApplicationService:
             "work.documents.copy-initial": self._copy_initial_work_documents,
             "work.documents.migrate-layout": self._migrate_work_document_layout,
             "work.documents.process": self._process_work_documents,
+            "work.index-readable": self._index_work_readable,
             "work.index-semantic": self._index_work_semantic,
             "work.search": self._search_work,
             "work.query": self._query_work,
@@ -760,7 +763,12 @@ class KrcnApplicationService:
         self,
         request: ServiceRequest,
     ) -> tuple[str, Mapping[str, object]]:
-        plan = prepare_work_item(self._store, self._ownership, request.arguments)
+        plan = prepare_work_item(
+            self._store,
+            self._ownership,
+            request.arguments,
+            repo_root=self._repo_root,
+        )
         if not request.apply:
             return "planned", {"plan": plan.public_summary(), "applied": False}
         authorizations = self._authorize_effect_plans(
@@ -798,6 +806,7 @@ class KrcnApplicationService:
             self._store,
             self._ownership,
             import_request,
+            repo_root=self._repo_root,
         )
         if not request.apply:
             return "planned", {"plan": plan.public_summary(), "applied": False}
@@ -859,6 +868,51 @@ class KrcnApplicationService:
             self._store,
             plan,
             authorization,
+        )
+        return "applied", {
+            "plan": plan.public_summary(),
+            "result": result,
+            "applied": True,
+        }
+
+    def _index_work_readable(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"project_id"})
+        project_id = _identifier_argument(request.arguments, "project_id")
+        if self._store.read("projects", project_id) is None:
+            raise ApplicationServiceError("readable work index project is not registered")
+        plan = prepare_work_index(
+            self._repo_root,
+            self._store,
+            self._ownership,
+            project_id,
+        )
+        if not request.apply:
+            return (
+                "ok" if plan.no_op else "planned",
+                {"plan": plan.public_summary(), "applied": False},
+            )
+        if request.expected_plan_id != plan.plan_id:
+            raise ApplicationServiceError(
+                "apply requires the exact readable work index plan id"
+            )
+        authorization = (
+            None
+            if plan.mutation is None
+            else authorize_mutation(
+                plan.mutation,
+                dry_run=DryRunEvidence(plan.mutation.plan_id, verified=True),
+            )
+        )
+        result = apply_work_index(
+            self._repo_root,
+            self._store,
+            self._ownership,
+            plan,
+            authorization,
+            expected_plan_id=plan.plan_id,
         )
         return "applied", {
             "plan": plan.public_summary(),
@@ -1097,6 +1151,7 @@ class KrcnApplicationService:
             project_id,
             requested_external_id=requested_external_id,
             requested_work_type=requested_work_type,
+            repo_root=self._repo_root,
         )
         if import_plan is None:
             semantic_plan = prepare_work_semantic_index(

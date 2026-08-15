@@ -298,6 +298,20 @@
           "symbols": [
             "work_graph_index_path"
           ]
+        },
+        {
+          "kind": "module-symbol",
+          "module": "krcn_core.work_index",
+          "symbols": [
+            "prepare_work_index",
+            "render_work_index",
+            "work_index_path"
+          ]
+        },
+        {
+          "kind": "document-phrase",
+          "document": "docs/specifications/WORK-INDEX.md",
+          "phrase": "It is derived"
         }
       ]
     },

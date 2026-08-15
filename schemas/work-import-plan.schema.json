@@ -14,6 +14,7 @@
     "source_inventory",
     "graph_digest_before",
     "graph_digest_after",
+    "readable_index",
     "no_op",
     "item_count",
     "work_item_ids",
@@ -74,6 +75,16 @@
     },
     "graph_digest_after": {
       "$ref": "#/$defs/digest"
+    },
+    "readable_index": {
+      "oneOf": [
+        {
+          "$ref": "work-index-plan.schema.json"
+        },
+        {
+          "type": "null"
+        }
+      ]
     },
     "no_op": {
       "type": "boolean"

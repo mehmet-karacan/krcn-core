@@ -25,6 +25,7 @@ from krcn_core.work_graph import (  # noqa: E402
     prepare_work_item,
     work_graph_index_path,
 )
+from krcn_core.work_index import work_index_path  # noqa: E402
 from krcn_core.work_import import (  # noqa: E402
     WorkImportError,
     apply_work_import,
@@ -174,6 +175,10 @@ class WorkImportTests(unittest.TestCase):
             self.assertEqual("ok", connection.execute("PRAGMA integrity_check").fetchone()[0])
         finally:
             connection.close()
+        readable = work_index_path(self.home, "gpu-fusion")
+        self.assertTrue(readable.is_file())
+        self.assertIn("gpu-fusion-request-893614", readable.read_text(encoding="utf-8"))
+        self.assertTrue(result.readable_index_updated)
 
         repeated = prepare_work_import(self.store, self.ownership, request)
         self.assertTrue(repeated.no_op)
@@ -242,6 +247,7 @@ class WorkImportTests(unittest.TestCase):
             self.assertIsNone(self.store.read("work-items", work_item_id))
             self.assertIsNone(self.store.read("work-events", f"{work_item_id}-r1"))
         self.assertFalse(work_graph_index_path(self.home, "gpu-fusion").exists())
+        self.assertFalse(work_index_path(self.home, "gpu-fusion").exists())
         imports = self.home / "projects" / "gpu-fusion" / "work" / "imports"
         self.assertFalse(imports.exists() and any(imports.iterdir()))
 
