@@ -25,6 +25,11 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
 - Faz 14 tamamlandı. Satır verisi toplamayan Oracle metadata RAG hazır.
 - Faz 15 tamamlandı. Kanıt öncelikli birleşik RAG ve proje kapsamlı retrieval hazır.
 - Faz 16 bekliyor. Gerçek projeler ve görev mirası entegre edilecek.
+- Faz 17 - 22 tamamlandı. Model sağlığı, gerçek proje ve araştırma akışları,
+  kalıcı görev ilerlemesi, iş belgesi yerleşimi, mimari devamlılık ve ölçümlü
+  öğrenme yönetişimi hazır.
+- Faz 23 aktif. Adaptive Routing mevcut yürütmeyi değiştirmeden shadow mode
+  karar ve karşılaştırma kanıtı üretecek.
 
 ## Temel kullanım modeli
 

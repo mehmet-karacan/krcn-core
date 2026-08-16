@@ -176,6 +176,10 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 - `PHASE-22-EXECUTION-GOVERNANCE.md`
 - `PHASE-22-CLOSURE.md`
 
+## Faz 23 - Adaptive Routing shadow mode
+
+- `PHASE-23-KICKOFF.md`
+
 ## Faz dışı operasyon ve düzeltme kayıtları
 
 - `JSON-BELGE-BICIMI.md`
