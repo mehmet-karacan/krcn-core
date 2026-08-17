@@ -12,8 +12,8 @@
 ## Senkronizasyon sınırı
 
 `krcn-core-dev` main, bu handoff commit'iyle mimari kaynak olacaktır. Bir sonraki
-iş yalnız ayrı bir exact eşitleme planıdır: production
-`C:/Users/mkaracan/krcn-core` mevcut dirty durum, commit kimliği, release diff,
+iş yalnız ayrı bir exact eşitleme planıdır: `production-krcn-core` kaynağının
+mevcut dirty durumu, commit kimliği, release diff,
 backup, merge/migration, CLI update ve proje metadata refresh salt okunur
 incelenmeli; kullanıcı onayı olmadan eşitleme uygulanmamalıdır.
 
