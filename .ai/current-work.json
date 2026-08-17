@@ -3,7 +3,7 @@
   "schema_version": 1,
   "phase_id": "phase-23",
   "workstream_id": "adaptive-routing-shadow-mode",
-  "status": "active",
+  "status": "completed",
   "goal": "Mevcut yürütme davranışını değiştirmeden her anlamlı istek için açıklanabilir, strict ve digest bağlı RouteDecision üretmek",
   "plan_ref": "docs/plans/PLAN-023-ADAPTIVE-ROUTING-SHADOW-MODE.md",
   "progress_refs": [
@@ -11,12 +11,13 @@
     "docs/progress/PHASE-23-KICKOFF.md",
     "docs/progress/PHASE-23-ADAPTIVE-ROUTING-DOMAIN.md",
     "docs/progress/PHASE-23-APPLICATION-CLI.md",
-    "docs/progress/PHASE-23-COORDINATOR-SHADOW.md"
+    "docs/progress/PHASE-23-COORDINATOR-SHADOW.md",
+    "docs/progress/PHASE-23-CLOSURE.md"
   ],
   "next_actions": [
-    "golden routing ve coordinator shadow entegrasyonunu tam regression ile dogrula",
-    "Faz 23 kapanis ve bagimsiz kabul kanitlarini kaydet",
-    "dev main checkpointini pushla ve uretim klonu ile CLI esitlemesini planla"
+    "Faz 24 Agent Result Envelope v2 ve Workflow Step Receipt icin ayri exact plan hazirla",
+    "Faz 24 onayi olmadan mevcut v1 result veya DAG davranisini degistirme",
+    "tum Faz 24 checkpointlerini once krcn-core-dev main dalinda dogrula"
   ],
   "baseline_commit": "c111a9a",
   "approval_gates": {

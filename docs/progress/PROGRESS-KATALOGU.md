@@ -182,6 +182,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 - `PHASE-23-ADAPTIVE-ROUTING-DOMAIN.md`
 - `PHASE-23-APPLICATION-CLI.md`
 - `PHASE-23-COORDINATOR-SHADOW.md`
+- `PHASE-23-CLOSURE.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 

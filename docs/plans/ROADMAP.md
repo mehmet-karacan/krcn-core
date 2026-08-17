@@ -28,8 +28,10 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
 - Faz 17 - 22 tamamlandı. Model sağlığı, gerçek proje ve araştırma akışları,
   kalıcı görev ilerlemesi, iş belgesi yerleşimi, mimari devamlılık ve ölçümlü
   öğrenme yönetişimi hazır.
-- Faz 23 aktif. Adaptive Routing mevcut yürütmeyi değiştirmeden shadow mode
-  karar ve karşılaştırma kanıtı üretecek.
+- Faz 23 tamamlandı. Adaptive Routing mevcut yürütmeyi değiştirmeden shadow
+  karar, karşılaştırma, trace ve append-only runtime kanıtı üretiyor.
+- Faz 24 plan bekliyor. Agent Result Envelope v2 ve Workflow Step Receipt ayrı
+  compatibility ve approval sınırında ele alınacak.
 
 ## Temel kullanım modeli
 
