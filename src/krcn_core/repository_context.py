@@ -56,6 +56,8 @@ REQUIRED_CANONICAL_KEYS = {
     "finalized_handoff_schema",
     "execution_observability_boundary",
     "execution_trace_schema",
+    "validation_gate_boundary",
+    "validation_gate_schema",
     "agent_result_envelope_boundary",
     "agent_result_envelope_schema",
     "native_agent_result_schema",

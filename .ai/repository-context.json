@@ -78,6 +78,8 @@
     "finalized_handoff_schema": "schemas/finalized-handoff.schema.json",
     "execution_observability_boundary": "docs/specifications/EXECUTION-OBSERVABILITY.md",
     "execution_trace_schema": "schemas/execution-trace.schema.json",
+    "validation_gate_boundary": "docs/specifications/VALIDATION-GATE.md",
+    "validation_gate_schema": "schemas/validation-gate.schema.json",
     "agent_result_envelope_boundary": "docs/specifications/AGENT-RESULT-ENVELOPE.md",
     "agent_result_envelope_schema": "schemas/agent-result-envelope.schema.json",
     "native_agent_result_schema": "schemas/native-agent-result.schema.json",

@@ -196,6 +196,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 ## Faz 25 - Validation Gate ve Generalized Effect Ledger
 
 - `PHASE-25-KICKOFF.md`
+- `PHASE-25-VALIDATION-GATE.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 

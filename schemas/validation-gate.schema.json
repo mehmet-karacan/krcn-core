@@ -1,0 +1,261 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:validation-gate:1",
+  "title": "KRCN Core immutable pre-execution validation gate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "validation_gate_id",
+    "bindings",
+    "authorization_bindings",
+    "subjects",
+    "checks",
+    "policy",
+    "safety",
+    "gate_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/validation-gate.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "validation_gate_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_id",
+        "work_item_id",
+        "task_id",
+        "task_plan_id",
+        "worker_step_id",
+        "effect_id",
+        "effect_type",
+        "effect_digest",
+        "effect_authorization_id",
+        "worker_execution_identity_id",
+        "worker_actor_digest",
+        "verifier_execution_identity"
+      ],
+      "properties": {
+        "project_id": {
+          "$ref": "#/$defs/id"
+        },
+        "work_item_id": {
+          "$ref": "#/$defs/id"
+        },
+        "task_id": {
+          "$ref": "#/$defs/id"
+        },
+        "task_plan_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "worker_step_id": {
+          "$ref": "#/$defs/id"
+        },
+        "effect_id": {
+          "$ref": "#/$defs/id"
+        },
+        "effect_type": {
+          "enum": [
+            "write",
+            "execute",
+            "network"
+          ]
+        },
+        "effect_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "effect_authorization_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "worker_execution_identity_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "worker_actor_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "verifier_execution_identity": {
+          "$ref": "urn:krcn:schemas:agent-execution-identity:1"
+        }
+      }
+    },
+    "authorization_bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mutation_plan_id",
+        "provider_request_id"
+      ],
+      "properties": {
+        "mutation_plan_id": {
+          "$ref": "#/$defs/nullableDigest"
+        },
+        "provider_request_id": {
+          "$ref": "#/$defs/nullableDigest"
+        }
+      }
+    },
+    "subjects": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subject_kind",
+          "subject_digest"
+        ],
+        "properties": {
+          "subject_kind": {
+            "enum": [
+              "acceptance-criterion",
+              "constraint",
+              "verification-requirement"
+            ]
+          },
+          "subject_digest": {
+            "$ref": "#/$defs/digest"
+          }
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "check_id",
+          "actor_kind",
+          "method",
+          "expected_result",
+          "evidence_required",
+          "subject_digests"
+        ],
+        "properties": {
+          "check_id": {
+            "$ref": "#/$defs/id"
+          },
+          "actor_kind": {
+            "enum": [
+              "code",
+              "verifier"
+            ]
+          },
+          "method": {
+            "enum": [
+              "command",
+              "evidence-review",
+              "artifact-review",
+              "state-check"
+            ]
+          },
+          "expected_result": {
+            "$ref": "#/$defs/id"
+          },
+          "evidence_required": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "artifact-digest",
+                "policy-decision",
+                "preservation-check",
+                "state-observation",
+                "test-result"
+              ]
+            }
+          },
+          "subject_digests": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/$defs/digest"
+            }
+          }
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_revision",
+        "source_revision_digest",
+        "created_at"
+      ],
+      "properties": {
+        "policy_revision": {
+          "$ref": "#/$defs/digest"
+        },
+        "source_revision_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grants_authority",
+        "derived_after_execution",
+        "contains_raw_payload",
+        "contains_physical_paths",
+        "contains_credentials"
+      ],
+      "properties": {
+        "grants_authority": {
+          "const": false
+        },
+        "derived_after_execution": {
+          "const": false
+        },
+        "contains_raw_payload": {
+          "const": false
+        },
+        "contains_physical_paths": {
+          "const": false
+        },
+        "contains_credentials": {
+          "const": false
+        }
+      }
+    },
+    "gate_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,127}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "nullableDigest": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
