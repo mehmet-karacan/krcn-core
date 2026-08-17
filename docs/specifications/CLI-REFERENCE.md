@@ -388,8 +388,11 @@ Each mutation first produces an exact runtime plan. Apply the same request with 
 
 ```text
 krcn runtime enqueue --request-file <enqueue.json>
+krcn runtime migrate-v2 --request-file <project.json>
 krcn runtime claim --request-file <claim.json>
 krcn runtime heartbeat --request-file <heartbeat.json>
+krcn runtime bind-effect-claim --request-file <effect-claim.json>
+krcn runtime bind-effect-receipt --request-file <effect-receipt.json>
 krcn runtime complete --request-file <completion.json>
 krcn runtime fail --request-file <failure.json>
 krcn runtime recover --request-file <project.json>
@@ -398,6 +401,11 @@ krcn runtime status --request-file <project.json>
 ```
 
 Mutation commands use `--apply --expected-plan <plan-id>`. Runtime state is not user data, so it does not consume a user-data approval. Work Graph changes and provider use keep their separate approval gates.
+
+Effect bind requests contain the complete content-free Effect Claim or Effect
+Receipt envelope. KRCN verifies the corresponding durable ledger record and
+current lease/fence before preparing the queue mutation. A digest string by
+itself is not accepted as evidence.
 
 ## Knowledge, context, and memory
 

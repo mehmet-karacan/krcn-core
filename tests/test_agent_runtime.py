@@ -14,6 +14,10 @@ from krcn_core.agent_runtime import (  # noqa: E402
     apply_runtime_queue_action,
     prepare_runtime_queue_action,
 )
+from krcn_core.agent_execution_identity import create_agent_execution_identity  # noqa: E402
+from krcn_core.effect_ledger import build_effect_claim, build_effect_receipt  # noqa: E402
+from krcn_core.effect_ledger_store import EffectLedgerStore, effect_ledger_path  # noqa: E402
+from krcn_core.validation_gate import build_validation_gate  # noqa: E402
 from krcn_core.application import ServiceRequest, create_application_service  # noqa: E402
 from krcn_core.doctor import run_doctor  # noqa: E402
 from krcn_core.home_layout import user_home_layout_bytes  # noqa: E402
@@ -261,6 +265,92 @@ class AgentRuntimeTests(unittest.TestCase):
             self.enqueue_args("task-two", effects=["execute"], role="verifier"),
         )
         self.assertEqual("enqueue", execute_plan.action)
+
+    def test_v2_effect_binding_is_additive_and_blocks_early_completion(self) -> None:
+        verifier = create_agent_execution_identity(
+            task_id="run-task-one", plan_id="a" * 64, step_id="verify-effect",
+            role="verifier", actor_digest="8" * 64, session_digest="9" * 64,
+            assignment_digest="7" * 64, runtime_kind="isolated-role",
+        )
+        validation_gate = build_validation_gate(
+            project_id="sample", work_item_id="task-one", task_id="run-task-one",
+            task_plan_id="a" * 64, worker_step_id="implement", effect_id="write-change",
+            effect_type="write", effect_digest="b" * 64, effect_authorization_id="c" * 64,
+            worker_execution_identity_id="d" * 64, worker_actor_digest="e" * 64,
+            verifier_execution_identity=verifier,
+            subjects=[{"subject_kind": "acceptance-criterion", "subject_digest": "1" * 64}],
+            checks=[{"check_id": "state-check", "actor_kind": "verifier", "method": "state-check",
+                     "expected_result": "passed", "evidence_required": ["state-observation"],
+                     "subject_digests": ["1" * 64]}],
+            policy_revision="f" * 64, source_revision_digest="0" * 64,
+            created_at="2026-08-17T15:00:00.000Z", mutation_plan_id="3" * 64,
+        )
+        arguments = self.enqueue_args("task-one", effects=["write"])
+        arguments["validation_gate_id"] = validation_gate.validation_gate_id
+        self.apply("enqueue", arguments)
+        queue, _, claim = self.apply("claim", self.claim_args())
+        self.assertTrue(claim["ledger_required"])
+        self.assertEqual(validation_gate.validation_gate_id, claim["validation_gate_id"])
+        lease = {
+            "project_id": "sample", "queue_id": claim["queue_id"],
+            "lease_id": claim["lease_id"], "owner_token": "owner-token-0000001",
+            "fencing_token": claim["fencing_token"],
+        }
+        with self.assertRaisesRegex(AgentRuntimeError, "receipt is required"):
+            self.apply("complete", {**lease, "evidence_digest": "2" * 64})
+        effect_claim = build_effect_claim(
+            project_id="sample", work_item_id="task-one", task_id="run-task-one",
+            task_plan_id="a" * 64, step_id="implement", queue_id=claim["queue_id"],
+            attempt_id=claim["attempt_id"], attempt_number=1,
+            execution_identity_id="d" * 64, lease_id=claim["lease_id"],
+            fencing_token=claim["fencing_token"], effect_id="write-change",
+            effect_type="write", effect_digest="b" * 64, idempotency_key="5" * 64,
+            effect_authorization_id="c" * 64, validation_gate=validation_gate,
+            host_digest="6" * 64, claimed_at="2026-08-17T15:01:00.000Z",
+            mutation_plan_id="3" * 64,
+        )
+        ledger = EffectLedgerStore(effect_ledger_path(self.store.data_root, "sample"))
+        ledger.record_claim(effect_claim, validation_gate=validation_gate)
+        self.apply("bind_effect_claim", {**lease, "effect_claim": effect_claim.as_dict()})
+        effect_receipt = build_effect_receipt(
+            claim=effect_claim, outcome="completed", retry_safety="non-replayable",
+            result_digest="4" * 64, finished_at="2026-08-17T15:02:00.000Z",
+            observed_fencing_token=claim["fencing_token"],
+        )
+        ledger.record_receipt(effect_receipt)
+        self.apply("bind_effect_receipt", {**lease, "effect_receipt": effect_receipt.as_dict()})
+        queue, _, completed = self.apply(
+            "complete", {**lease, "evidence_digest": "5" * 64}
+        )
+        self.assertEqual("completed", completed["status"])
+        item = queue.status()["items"][0]
+        self.assertEqual(effect_claim.claim_id, item["effect_claim_id"])
+        self.assertEqual(effect_receipt.receipt_id, item["effect_receipt_id"])
+
+    def test_v1_queue_metadata_is_migrated_additively(self) -> None:
+        queue, _, _ = self.apply("enqueue", self.enqueue_args("task-one"))
+        import sqlite3
+
+        connection = sqlite3.connect(queue.path)
+        try:
+            connection.execute("UPDATE metadata SET value='1' WHERE key='schema_version'")
+            connection.commit()
+        finally:
+            connection.close()
+        with self.assertRaisesRegex(AgentRuntimeError, "explicit additive migration"):
+            self.apply("claim", self.claim_args())
+        reopened, _, migrated = self.apply("migrate_v2", {"project_id": "sample"})
+        self.assertTrue(migrated["migrated"])
+        connection = reopened._connect(create=False)
+        self.assertIsNotNone(connection)
+        try:
+            self.assertEqual("2", connection.execute(
+                "SELECT value FROM metadata WHERE key='schema_version'"
+            ).fetchone()[0])
+            columns = {row[1] for row in connection.execute("PRAGMA table_info(queue_items)")}
+            self.assertTrue({"validation_gate_id", "effect_claim_id", "effect_receipt_id"}.issubset(columns))
+        finally:
+            connection.close()
 
     def test_nonportable_resource_refs_and_owner_tokens_are_rejected(self) -> None:
         with self.assertRaises(AgentRuntimeError):

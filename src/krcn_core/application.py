@@ -2186,7 +2186,7 @@ class KrcnApplicationService:
         self,
         request: ServiceRequest,
     ) -> tuple[str, Mapping[str, object]]:
-        action = request.operation.rsplit(".", 1)[1]
+        action = request.operation.rsplit(".", 1)[1].replace("-", "_")
         queue, plan = prepare_runtime_queue_action(
             self._repo_root,
             self._store,

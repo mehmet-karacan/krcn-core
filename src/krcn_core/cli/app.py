@@ -597,8 +597,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     runtime_commands = runtime.add_subparsers(dest="runtime_command")
     for operation in (
-        "enqueue", "claim", "heartbeat", "complete", "fail", "recover",
-        "reconcile",
+        "enqueue", "migrate-v2", "claim", "heartbeat", "bind-effect-claim",
+        "bind-effect-receipt", "complete", "fail", "recover", "reconcile",
     ):
         command = runtime_commands.add_parser(
             operation,
@@ -2056,8 +2056,9 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
         operation = f"research.{args.research_command}"
         arguments = _load_phase_four_arguments(args.request_file)
     elif args.command == "runtime" and args.runtime_command in {
-        "enqueue", "claim", "heartbeat", "complete", "fail", "recover",
-        "reconcile", "status",
+        "enqueue", "migrate-v2", "claim", "heartbeat", "bind-effect-claim",
+        "bind-effect-receipt", "complete", "fail", "recover", "reconcile",
+        "status",
     }:
         operation = f"runtime.queue.{args.runtime_command}"
         arguments = _load_phase_four_arguments(args.request_file)

@@ -198,11 +198,21 @@ def _runtime_home(data_root: Path) -> list[str]:
                     "PRAGMA table_info(leases)"
                 ).fetchall()
             }
+            queue_columns = {
+                row[1]
+                for row in connection.execute(
+                    "PRAGMA table_info(queue_items)"
+                ).fetchall()
+            }
             if (
                 integrity != "ok"
-                or metadata.get("schema_version") != "1"
+                or metadata.get("schema_version") != "2"
                 or "owner_digest" not in lease_columns
                 or "owner_token" in lease_columns
+                or not {
+                    "ledger_required", "validation_gate_id",
+                    "effect_claim_id", "effect_receipt_id",
+                }.issubset(queue_columns)
             ):
                 errors.append("runtime queue integrity or secret boundary")
         except sqlite3.Error:

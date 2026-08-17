@@ -14,13 +14,22 @@ projects/<project-id>/runtime/queue/scheduler-v1.sqlite
 
 Queue items, attempts, leases, resource locks, scheduler events, and projection jobs change inside `BEGIN IMMEDIATE` transactions. Independent JSON files are not used to coordinate competing workers.
 
+The stable filename remains `scheduler-v1.sqlite` for portable location
+compatibility. Its current internal database schema is version 2. Existing
+schema version 1 databases are changed only through the explicit additive
+`runtime.queue.migrate-v2` exact plan; status and planning do not silently
+migrate a database.
+
 ## Exact plan
 
 Every mutating runtime action has a state digest and exact plan:
 
 - `runtime.queue.enqueue`
+- `runtime.queue.migrate-v2`
 - `runtime.queue.claim`
 - `runtime.queue.heartbeat`
+- `runtime.queue.bind-effect-claim`
+- `runtime.queue.bind-effect-receipt`
 - `runtime.queue.complete`
 - `runtime.queue.fail`
 - `runtime.queue.recover`
@@ -33,6 +42,18 @@ Runtime actions do not mutate user data and do not require user-data approval. T
 The worker supplies an opaque owner token. Only its SHA-256 digest is stored. Every successful claim increments the queue item's fencing token. Heartbeat, completion, failure, lock release, and recovery evidence must match the current lease, owner digest, and fencing token.
 
 An expired or superseded worker cannot publish a result. A new lease always has a higher fencing token.
+
+## Effect ledger binding
+
+A non-read queue item may opt into the version 2 ledger boundary by carrying a
+pre-execution Validation Gate ID. Such an item cannot complete until a durable
+Effect Claim and a completed terminal Effect Receipt are bound to its current
+queue, attempt, lease, and fencing token. The bind actions re-read the
+project-scoped durable Effect Ledger; caller-supplied IDs alone are not proof.
+
+Version 1 rows migrate with `ledger_required=0`. This preserves old queue
+history without retroactively inventing a gate or receipt. New governed
+workers use the version 2 binding explicitly.
 
 ## Retry and recovery
 

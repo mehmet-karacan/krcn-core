@@ -12,6 +12,8 @@ from pathlib import Path, PurePosixPath
 from typing import Callable, Mapping, TYPE_CHECKING
 
 from .foundation import load_json
+from .effect_ledger import parse_effect_claim, parse_effect_receipt
+from .effect_ledger_store import EffectLedgerStore, effect_ledger_path
 from .home_layout import project_capsule_root
 from .json_documents import canonical_json_bytes
 from .mutation_gate import MutationAuthorization, MutationPlan, plan_mutation
@@ -135,7 +137,7 @@ def load_scheduler_policy(repo_root: Path) -> SchedulerPolicy:
     if (
         payload.get("schema_ref") != "schemas/runtime-scheduler-policy.schema.json"
         or payload.get("schema_version") != 1
-        or payload.get("database_schema_version") != 1
+        or payload.get("database_schema_version") != 2
         or payload.get("automatic_replay_side_effects") != ["read"]
     ):
         raise AgentRuntimeError("runtime scheduler policy is invalid")
@@ -176,7 +178,11 @@ CREATE TABLE IF NOT EXISTS queue_items(
   attempts INTEGER NOT NULL,
   max_attempts INTEGER NOT NULL,
   current_fence INTEGER NOT NULL,
-  result_digest TEXT
+  result_digest TEXT,
+  ledger_required INTEGER NOT NULL DEFAULT 0,
+  validation_gate_id TEXT,
+  effect_claim_id TEXT,
+  effect_receipt_id TEXT
 );
 CREATE TABLE IF NOT EXISTS leases(
   lease_id TEXT PRIMARY KEY,
@@ -254,12 +260,12 @@ class AgentRuntimeQueue:
         connection.execute(f"PRAGMA busy_timeout={self.policy.claim_busy_timeout_ms}")
         if create:
             connection.executescript(SCHEMA)
-            connection.execute("INSERT OR IGNORE INTO metadata VALUES('schema_version','1')")
+            connection.execute("INSERT OR IGNORE INTO metadata VALUES('schema_version','2')")
             connection.commit()
         version = connection.execute(
             "SELECT value FROM metadata WHERE key='schema_version'"
         ).fetchone()
-        if version is None or version[0] != "1":
+        if version is None or version[0] not in {"1", "2"}:
             connection.close()
             raise AgentRuntimeError("runtime queue schema version is invalid")
         return connection
@@ -288,10 +294,15 @@ class AgentRuntimeQueue:
         finally:
             connection.close()
 
-    def _begin(self, expected_state_digest: str) -> sqlite3.Connection:
+    def _begin(self, expected_state_digest: str, *, allow_legacy: bool = False) -> sqlite3.Connection:
         connection = self._connect(create=True)
         assert connection is not None
         connection.execute("BEGIN IMMEDIATE")
+        version = connection.execute("SELECT value FROM metadata WHERE key='schema_version'").fetchone()
+        if version is None or (version[0] == "1" and not allow_legacy):
+            connection.rollback()
+            connection.close()
+            raise AgentRuntimeError("runtime queue v1 requires explicit additive migration")
         current = _digest(self._state_payload(connection))
         expected = (
             _digest(self._state_payload(connection))
@@ -318,7 +329,7 @@ class AgentRuntimeQueue:
         method = getattr(self, f"_apply_{action}", None)
         if method is None:
             raise AgentRuntimeError("runtime queue action is invalid")
-        connection = self._begin(expected_state_digest)
+        connection = self._begin(expected_state_digest, allow_legacy=action == "migrate_v2")
         try:
             result = method(connection, arguments)
             connection.commit()
@@ -337,7 +348,7 @@ class AgentRuntimeQueue:
         if existing:
             return {"queue_id": existing["queue_id"], "status": existing["status"], "idempotent_reuse": True}
         connection.execute(
-            "INSERT INTO queue_items VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            "INSERT INTO queue_items(queue_id,project_id,work_item_id,work_item_revision,work_item_digest,task_id,parent_task_id,plan_id,step_id,required_role,capabilities_json,side_effects_json,resources_json,idempotency_key,status,attempts,max_attempts,current_fence,result_digest,ledger_required,validation_gate_id,effect_claim_id,effect_receipt_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (
                 arguments["queue_id"], self.project_id, arguments["work_item_id"],
                 arguments["work_item_revision"], arguments["work_item_digest"],
@@ -347,11 +358,35 @@ class AgentRuntimeQueue:
                 json.dumps(arguments["side_effects"], separators=(",", ":")),
                 json.dumps(arguments["resource_refs"], separators=(",", ":")),
                 arguments["idempotency_key"], "queued", 0, arguments["max_attempts"], 0, None,
+                1 if arguments.get("validation_gate_id") is not None else 0,
+                arguments.get("validation_gate_id"), None, None,
             ),
         )
         now = self.clock()
         self._event(connection, str(arguments["queue_id"]), "enqueued", None, now, str(arguments["idempotency_key"]))
         return {"queue_id": arguments["queue_id"], "status": "queued", "idempotent_reuse": False}
+
+    def _apply_migrate_v2(self, connection: sqlite3.Connection, arguments: Mapping[str, object]) -> dict[str, object]:
+        version = connection.execute("SELECT value FROM metadata WHERE key='schema_version'").fetchone()
+        if version is None:
+            raise AgentRuntimeError("runtime queue schema metadata is missing")
+        if version[0] == "2":
+            return {"status": "current", "from_version": 2, "to_version": 2, "migrated": False}
+        if version[0] != "1":
+            raise AgentRuntimeError("runtime queue schema version is invalid")
+        columns = {row[1] for row in connection.execute("PRAGMA table_info(queue_items)")}
+        additions = (
+            ("ledger_required", "INTEGER NOT NULL DEFAULT 0"),
+            ("validation_gate_id", "TEXT"),
+            ("effect_claim_id", "TEXT"),
+            ("effect_receipt_id", "TEXT"),
+        )
+        for name, declaration in additions:
+            if name not in columns:
+                connection.execute(f"ALTER TABLE queue_items ADD COLUMN {name} {declaration}")
+        connection.execute("UPDATE metadata SET value='2' WHERE key='schema_version'")
+        self._event(connection, "queue-migration", "schema-migrated", None, self.clock(), _digest({"from": 1, "to": 2}))
+        return {"status": "migrated", "from_version": 1, "to_version": 2, "migrated": True}
 
     def _apply_claim(self, connection: sqlite3.Connection, arguments: Mapping[str, object]) -> dict[str, object]:
         now = self.clock()
@@ -406,6 +441,8 @@ class AgentRuntimeQueue:
             "fencing_token": fence,
             "attempt_id": attempt_id,
             "expires_at": expires,
+            "ledger_required": bool(selected["ledger_required"]),
+            "validation_gate_id": selected["validation_gate_id"],
         }
 
     @staticmethod
@@ -434,6 +471,38 @@ class AgentRuntimeQueue:
         self._event(connection, lease["queue_id"], "heartbeat", lease["fencing_token"], now, _digest({"expires": expires}))
         return {"queue_id": lease["queue_id"], "lease_id": lease["lease_id"], "fencing_token": lease["fencing_token"], "expires_at": expires}
 
+    def _apply_bind_effect_claim(self, connection: sqlite3.Connection, arguments: Mapping[str, object]) -> dict[str, object]:
+        lease = self._lease(connection, arguments, self.clock())
+        queue = connection.execute("SELECT * FROM queue_items WHERE queue_id=?", (lease["queue_id"],)).fetchone()
+        if queue is None or queue["status"] != "leased" or not queue["ledger_required"]:
+            raise AgentRuntimeError("runtime queue item does not require an effect ledger")
+        if queue["validation_gate_id"] != arguments["validation_gate_id"]:
+            raise AgentRuntimeError("runtime validation gate binding changed")
+        current = queue["effect_claim_id"]
+        if current is not None and current != arguments["effect_claim_id"]:
+            raise AgentRuntimeError("runtime queue item already has a conflicting effect claim")
+        connection.execute(
+            "UPDATE queue_items SET effect_claim_id=? WHERE queue_id=?",
+            (arguments["effect_claim_id"], lease["queue_id"]),
+        )
+        self._event(connection, lease["queue_id"], "effect-claimed", lease["fencing_token"], self.clock(), arguments["effect_claim_id"])
+        return {"queue_id": lease["queue_id"], "effect_claim_id": arguments["effect_claim_id"], "idempotent_reuse": current is not None}
+
+    def _apply_bind_effect_receipt(self, connection: sqlite3.Connection, arguments: Mapping[str, object]) -> dict[str, object]:
+        lease = self._lease(connection, arguments, self.clock())
+        queue = connection.execute("SELECT * FROM queue_items WHERE queue_id=?", (lease["queue_id"],)).fetchone()
+        if queue is None or queue["status"] != "leased" or queue["effect_claim_id"] != arguments["effect_claim_id"]:
+            raise AgentRuntimeError("runtime effect receipt has no matching claim")
+        current = queue["effect_receipt_id"]
+        if current is not None and current != arguments["effect_receipt_id"]:
+            raise AgentRuntimeError("runtime queue item already has a conflicting effect receipt")
+        connection.execute(
+            "UPDATE queue_items SET effect_receipt_id=? WHERE queue_id=?",
+            (arguments["effect_receipt_id"], lease["queue_id"]),
+        )
+        self._event(connection, lease["queue_id"], "effect-receipted", lease["fencing_token"], self.clock(), arguments["effect_receipt_id"])
+        return {"queue_id": lease["queue_id"], "effect_receipt_id": arguments["effect_receipt_id"], "idempotent_reuse": current is not None}
+
     def _finish(self, connection: sqlite3.Connection, arguments: Mapping[str, object], status: str) -> dict[str, object]:
         now = self.clock()
         lease = self._lease(connection, arguments, now)
@@ -441,6 +510,10 @@ class AgentRuntimeQueue:
         queue = connection.execute("SELECT * FROM queue_items WHERE queue_id=?", (lease["queue_id"],)).fetchone()
         if queue is None or queue["status"] != "leased":
             raise AgentRuntimeError("runtime queue item is not leased")
+        if status == "completed" and queue["ledger_required"] and (
+            queue["effect_claim_id"] is None or queue["effect_receipt_id"] is None
+        ):
+            raise AgentRuntimeError("runtime effect ledger receipt is required before completion")
         next_status = status
         if status == "failed":
             effects = set(json.loads(queue["side_effects_json"]))
@@ -545,8 +618,10 @@ class AgentRuntimeQueue:
         try:
             if connection.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
                 raise AgentRuntimeError("runtime queue integrity check failed")
+            queue_columns = {row[1] for row in connection.execute("PRAGMA table_info(queue_items)")}
+            effect_columns = "ledger_required,validation_gate_id,effect_claim_id,effect_receipt_id" if "ledger_required" in queue_columns else "0 AS ledger_required,NULL AS validation_gate_id,NULL AS effect_claim_id,NULL AS effect_receipt_id"
             items = [dict(row) for row in connection.execute(
-                "SELECT queue_id,work_item_id,work_item_revision,work_item_digest,task_id,plan_id,step_id,required_role,status,attempts,max_attempts,current_fence,result_digest FROM queue_items ORDER BY queue_id"
+                f"SELECT queue_id,work_item_id,work_item_revision,work_item_digest,task_id,plan_id,step_id,required_role,status,attempts,max_attempts,current_fence,result_digest,{effect_columns} FROM queue_items ORDER BY queue_id"
             )]
             counts = {row["status"]: row["count"] for row in connection.execute("SELECT status,COUNT(*) AS count FROM queue_items GROUP BY status")}
             active = connection.execute("SELECT COUNT(*) FROM leases").fetchone()[0]
@@ -597,7 +672,7 @@ def prepare_runtime_queue_action(
     *,
     clock: Callable[[], float] = time.time,
 ) -> tuple[AgentRuntimeQueue, RuntimeQueuePlan]:
-    allowed_actions = {"enqueue", "claim", "heartbeat", "complete", "fail", "recover", "reconcile"}
+    allowed_actions = {"migrate_v2", "enqueue", "claim", "heartbeat", "bind_effect_claim", "bind_effect_receipt", "complete", "fail", "recover", "reconcile"}
     if action not in allowed_actions:
         raise AgentRuntimeError("runtime queue action is invalid")
     project_id = arguments.get("project_id")
@@ -606,9 +681,12 @@ def prepare_runtime_queue_action(
     policy = load_scheduler_policy(repo_root)
     queue = AgentRuntimeQueue(store.data_root, project_id, policy, clock=clock)
     sanitized: dict[str, object] = {"project_id": project_id}
-    if action == "enqueue":
+    if action == "migrate_v2":
+        if set(arguments) != {"project_id"}:
+            raise AgentRuntimeError("runtime queue migration fields are invalid")
+    elif action == "enqueue":
         required = {"project_id", "work_item_id", "task_id", "plan_id", "step_id", "required_role", "required_capabilities", "side_effects", "resource_refs"}
-        optional = {"parent_task_id", "max_attempts"}
+        optional = {"parent_task_id", "max_attempts", "validation_gate_id"}
         if set(arguments) - required - optional or not required.issubset(arguments):
             raise AgentRuntimeError("runtime enqueue fields are invalid")
         work_id = arguments.get("work_item_id")
@@ -643,6 +721,11 @@ def prepare_runtime_queue_action(
             raise AgentRuntimeError("runtime side effects are invalid")
         if role == "verifier" and not set(effects).issubset({"read", "execute"}):
             raise AgentRuntimeError("verifier queue item may only read or execute")
+        validation_gate_id = arguments.get("validation_gate_id")
+        if validation_gate_id is not None and (not isinstance(validation_gate_id, str) or not SHA256.fullmatch(validation_gate_id)):
+            raise AgentRuntimeError("runtime validation gate id is invalid")
+        if validation_gate_id is not None and set(effects).issubset({"read"}):
+            raise AgentRuntimeError("read-only runtime step may not require an effect ledger")
         resources_value = arguments.get("resource_refs")
         if not isinstance(resources_value, list) or len(set(resources_value)) != len(resources_value):
             raise AgentRuntimeError("runtime resources are invalid")
@@ -658,6 +741,8 @@ def prepare_runtime_queue_action(
             "required_role": role, "required_capabilities": capabilities,
             "side_effects": sorted(effects), "resource_refs": resources,
         }
+        if validation_gate_id is not None:
+            identity["validation_gate_id"] = validation_gate_id
         idempotency = _digest(identity)
         sanitized.update(identity)
         sanitized.update({"idempotency_key": idempotency, "queue_id": "queue-" + idempotency[:24], "max_attempts": max_attempts})
@@ -672,9 +757,16 @@ def prepare_runtime_queue_action(
         if not isinstance(lease_seconds, int) or isinstance(lease_seconds, bool) or not policy.minimum_lease_seconds <= lease_seconds <= policy.maximum_lease_seconds:
             raise AgentRuntimeError("runtime lease duration is invalid")
         sanitized.update({"owner_digest": _owner_digest(arguments.get("owner_token")), "worker_role": role, "capability_refs": _identifiers(arguments.get("capability_refs"), "runtime claim capabilities"), "lease_seconds": lease_seconds})
-    elif action in {"heartbeat", "complete", "fail"}:
+    elif action in {"heartbeat", "bind_effect_claim", "bind_effect_receipt", "complete", "fail"}:
         required = {"project_id", "queue_id", "lease_id", "owner_token", "fencing_token"}
-        optional = {"lease_seconds"} if action == "heartbeat" else ({"evidence_digest", "replay_safe"} if action == "fail" else {"evidence_digest"})
+        if action == "heartbeat":
+            optional = {"lease_seconds"}
+        elif action == "bind_effect_claim":
+            optional = {"effect_claim"}
+        elif action == "bind_effect_receipt":
+            optional = {"effect_receipt"}
+        else:
+            optional = {"evidence_digest", "replay_safe"} if action == "fail" else {"evidence_digest"}
         if set(arguments) - required - optional or not required.issubset(arguments):
             raise AgentRuntimeError("runtime lease action fields are invalid")
         for field in ("queue_id", "lease_id"):
@@ -689,6 +781,46 @@ def prepare_runtime_queue_action(
             if not isinstance(lease_seconds, int) or isinstance(lease_seconds, bool) or not policy.minimum_lease_seconds <= lease_seconds <= policy.maximum_lease_seconds:
                 raise AgentRuntimeError("runtime heartbeat duration is invalid")
             sanitized["lease_seconds"] = lease_seconds
+        elif action in {"bind_effect_claim", "bind_effect_receipt"}:
+            ledger_path = effect_ledger_path(store.data_root, project_id)
+            if not ledger_path.is_file():
+                raise AgentRuntimeError("runtime durable effect ledger is unavailable")
+            ledger = EffectLedgerStore(ledger_path)
+            if action == "bind_effect_claim":
+                try:
+                    effect_claim = parse_effect_claim(arguments.get("effect_claim"))
+                except ValueError as exc:
+                    raise AgentRuntimeError("runtime effect claim is invalid") from exc
+                status = ledger.claim_status(effect_claim.claim_id)
+                binding = effect_claim.payload["bindings"]
+                if (
+                    not status.get("found")
+                    or status.get("project_id") != project_id
+                    or status.get("queue_id") != arguments["queue_id"]
+                    or status.get("lease_id") != arguments["lease_id"]
+                    or status.get("fencing_token") != fence
+                    or binding["attempt_id"] != status.get("attempt_id")
+                ):
+                    raise AgentRuntimeError("runtime effect claim is not durable or does not match lease")
+                sanitized["validation_gate_id"] = effect_claim.payload["validation_gate_id"]
+                sanitized["effect_claim_id"] = effect_claim.claim_id
+            else:
+                try:
+                    effect_receipt = parse_effect_receipt(arguments.get("effect_receipt"))
+                except ValueError as exc:
+                    raise AgentRuntimeError("runtime effect receipt is invalid") from exc
+                status = ledger.claim_status(str(effect_receipt.payload["claim_id"]))
+                if (
+                    status.get("receipt_id") != effect_receipt.receipt_id
+                    or status.get("receipt_status") != "completed"
+                    or status.get("project_id") != project_id
+                    or status.get("queue_id") != arguments["queue_id"]
+                    or status.get("lease_id") != arguments["lease_id"]
+                    or status.get("fencing_token") != fence
+                ):
+                    raise AgentRuntimeError("runtime completed effect receipt is not durable or does not match lease")
+                sanitized["effect_claim_id"] = effect_receipt.payload["claim_id"]
+                sanitized["effect_receipt_id"] = effect_receipt.receipt_id
         else:
             evidence = arguments.get("evidence_digest")
             if not isinstance(evidence, str) or not SHA256.fullmatch(evidence):

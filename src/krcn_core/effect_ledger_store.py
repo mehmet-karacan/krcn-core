@@ -17,6 +17,7 @@ from .effect_ledger import (
     parse_effect_reconciliation,
 )
 from .validation_gate import ValidationGate
+from .home_layout import project_capsule_root
 
 
 class EffectLedgerStoreError(ValueError):
@@ -55,6 +56,10 @@ CREATE TABLE IF NOT EXISTS effect_reconciliations (
 CREATE INDEX IF NOT EXISTS idx_effect_claim_scope
   ON effect_claims(project_id, task_id, step_id);
 """
+
+
+def effect_ledger_path(data_root: Path, project_id: str) -> Path:
+    return project_capsule_root(data_root, project_id) / "runtime" / "effects" / "effect-ledger.sqlite"
 
 
 def _json(payload: Mapping[str, object]) -> str:
@@ -225,6 +230,14 @@ class EffectLedgerStore:
             return {
                 "found": True, "claim_id": claim_id,
                 "idempotency_key": claim.payload["effect"]["idempotency_key"],
+                "project_id": claim.payload["bindings"]["project_id"],
+                "task_id": claim.payload["bindings"]["task_id"],
+                "step_id": claim.payload["bindings"]["step_id"],
+                "queue_id": claim.payload["bindings"]["queue_id"],
+                "attempt_id": claim.payload["bindings"]["attempt_id"],
+                "lease_id": claim.payload["bindings"]["lease_id"],
+                "fencing_token": claim.payload["bindings"]["fencing_token"],
+                "validation_gate_id": claim.payload["validation_gate_id"],
                 "receipt_id": None if receipt is None else receipt.receipt_id,
                 "receipt_status": None if receipt is None else receipt.payload["outcome"]["status"],
                 "reconciliation_id": None if reconciliation is None else reconciliation.payload["reconciliation_id"],
