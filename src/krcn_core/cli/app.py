@@ -429,6 +429,28 @@ def build_parser() -> argparse.ArgumentParser:
         command = routing_commands.add_parser(operation, help=help_text)
         _add_phase_four_options(command, mutation=operation == "record")
         command.set_defaults(format="text")
+    outbound = subparsers.add_parser(
+        "outbound",
+        help="Assess one exact provider payload disclosure without sending data",
+    )
+    outbound_commands = outbound.add_subparsers(dest="outbound_command")
+    outbound_assess = outbound_commands.add_parser(
+        "assess",
+        help="Evaluate an outbound ProviderRequest and assurance profile",
+    )
+    _add_phase_four_options(outbound_assess)
+    outbound_assess.set_defaults(format="text")
+    sandbox = subparsers.add_parser(
+        "sandbox",
+        help="Plan an exact detached worktree sandbox without creating it",
+    )
+    sandbox_commands = sandbox.add_subparsers(dest="sandbox_command")
+    sandbox_plan = sandbox_commands.add_parser(
+        "plan",
+        help="Build an authority-free worktree sandbox plan",
+    )
+    _add_phase_four_options(sandbox_plan)
+    sandbox_plan.set_defaults(format="text")
     result = subparsers.add_parser(
         "result",
         help="Normalize and aggregate authority-free agent results",
@@ -1969,6 +1991,12 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
     }:
         operation = f"routing.{args.routing_command}"
         arguments = _load_phase_four_arguments(args.request_file)
+    elif args.command == "outbound" and args.outbound_command == "assess":
+        operation = "outbound.assess"
+        arguments = _load_phase_four_arguments(args.request_file)
+    elif args.command == "sandbox" and args.sandbox_command == "plan":
+        operation = "sandbox.plan"
+        arguments = _load_phase_four_arguments(args.request_file)
     elif args.command == "result" and args.result_command in {
         "normalize-native", "fan-in", "trace",
     }:
@@ -2115,6 +2143,24 @@ def _run_phase_four_service_command(args: argparse.Namespace) -> int:
         "memory.context-effectiveness",
     }:
         print(_phase22_text(response))
+    elif response.operation == "outbound.assess":
+        decision = response.data.get("decision", {})
+        print(_text_table(
+            ["Karar", "Provider", "Kategoriler", "Nedenler", "Payload"],
+            [[decision.get("verdict", "-"), decision.get("provider_id", "-"),
+              ", ".join(decision.get("data_categories", [])),
+              ", ".join(decision.get("reason_codes", [])), "saklanmadi"]],
+        ))
+    elif response.operation == "sandbox.plan":
+        plan = response.data.get("plan", {})
+        print(_text_table(
+            ["Plan", "HEAD", "Path", "Network", "Calistirma"],
+            [[_shorten(plan.get("sandbox_plan_id", "-"), 20),
+              _shorten(plan.get("source_head", "-"), 16),
+              len(plan.get("allowed_paths", [])),
+              "kapali" if plan.get("network_default_deny") else "yetkili",
+              "hazir" if plan.get("execution_allowed") else "engelli"]],
+        ))
     else:
         print(f"{response.status}\t{response.operation}")
         print(json.dumps(response.data, ensure_ascii=False, indent=2))
@@ -2432,6 +2478,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         "models",
         "routing",
         "result",
+        "outbound",
+        "sandbox",
     }:
         return _run_phase_four_service_command(args)
 

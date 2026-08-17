@@ -209,6 +209,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 - `PHASE-26-KICKOFF.md`
 - `PHASE-26-OUTBOUND-ASSURANCE.md`
 - `PHASE-26-WORKTREE-SANDBOX.md`
+- `PHASE-26-APPLICATION-CLI.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 

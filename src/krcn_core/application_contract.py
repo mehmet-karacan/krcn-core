@@ -30,6 +30,8 @@ APPLICATION_OPERATIONS = frozenset(
         "routing.decide",
         "routing.explain",
         "routing.record",
+        "outbound.assess",
+        "sandbox.plan",
         "result.normalize-native",
         "result.fan-in",
         "result.trace",

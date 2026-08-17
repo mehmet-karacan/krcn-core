@@ -15,6 +15,7 @@ from .home_layout import home_layout_version
 from .hybrid_retrieval import hybrid_index_path
 from .effect_ledger_store import EffectLedgerStore, EffectLedgerStoreError
 from .provider_gate import load_provider_gate_policy, select_default_provider
+from .outbound_assurance import load_outbound_assurance_policy
 from .repository_context import validate_repository_context
 from .release_quality import validate_release_quality_repository
 
@@ -300,6 +301,18 @@ def run_doctor(
             "offline-provider",
             provider_errors,
             "offline deterministic provider is the default",
+        )
+    )
+    try:
+        load_outbound_assurance_policy(repo_root)
+        outbound_errors: list[str] = []
+    except ValueError as exc:
+        outbound_errors = [str(exc)]
+    checks.append(
+        _check(
+            "outbound-assurance",
+            outbound_errors,
+            "outbound data defaults deny and secret remote use is prohibited",
         )
     )
     checks.append(

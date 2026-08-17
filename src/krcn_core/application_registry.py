@@ -26,6 +26,8 @@ HANDLER_METHODS: Mapping[str, str] = MappingProxyType(
         "routing.decide": "_routing_decide",
         "routing.explain": "_routing_explain",
         "routing.record": "_routing_record",
+        "outbound.assess": "_outbound_assess",
+        "sandbox.plan": "_sandbox_plan",
         "result.normalize-native": "_normalize_native_result",
         "result.fan-in": "_fan_in_agent_results",
         "result.trace": "_trace_agent_results",

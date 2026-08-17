@@ -29,10 +29,11 @@
     "docs/progress/PHASE-25-CLOSURE.md",
     "docs/progress/PHASE-26-KICKOFF.md",
     "docs/progress/PHASE-26-OUTBOUND-ASSURANCE.md",
-    "docs/progress/PHASE-26-WORKTREE-SANDBOX.md"
+    "docs/progress/PHASE-26-WORKTREE-SANDBOX.md",
+    "docs/progress/PHASE-26-APPLICATION-CLI.md"
   ],
   "next_actions": [
-    "outbound ve sandbox kararlarini application CLI runtime effect ve doctor yuzeylerine bagla"
+    "Faz 26 security matrisi tam regression ve kapanis kaydini tamamla"
   ],
   "baseline_commit": "fb6d8c6",
   "approval_gates": {

@@ -232,6 +232,15 @@ from .provider_gate import (
     create_provider_request,
     load_provider_gate_policy,
 )
+from .outbound_assurance import (
+    decide_outbound_data,
+    load_outbound_assurance_policy,
+    parse_provider_assurance_profile,
+)
+from .worktree_sandbox import (
+    parse_sandbox_host_profile,
+    prepare_worktree_sandbox,
+)
 from .rescan import apply_rescan, prepare_rescan
 from .research_orchestration import (
     apply_research_result_import,
@@ -617,6 +626,116 @@ class KrcnApplicationService:
             "behavior_changed": False,
             "persisted": False,
             "grants_authority": False,
+        }
+
+    def _outbound_assess(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"provider_request", "payload_digest", "data_categories", "evaluated_at"},
+            optional={"provider_approval", "assurance_profile"},
+        )
+        if request.apply:
+            raise ApplicationServiceError("outbound assessment is read-only")
+        try:
+            raw = _object_argument(request.arguments, "provider_request")
+            expected = {
+                "schema_version", "request_id", "provider", "endpoint",
+                "data_categories", "operation_scope", "retention_assumptions",
+                "session_id", "remote",
+            }
+            if set(raw) != expected or raw["schema_version"] != 1:
+                raise ValueError("provider request fields are invalid")
+            categories = raw["data_categories"]
+            if not isinstance(categories, list):
+                raise ValueError("provider request categories are invalid")
+            provider_request = create_provider_request(
+                provider=str(raw["provider"]), endpoint=str(raw["endpoint"]),
+                data_categories=tuple(str(item) for item in categories),
+                operation_scope=str(raw["operation_scope"]),
+                retention_assumptions=str(raw["retention_assumptions"]),
+                session_id=str(raw["session_id"]), remote=raw["remote"],
+            )
+            if raw["request_id"] != provider_request.request_id:
+                raise ValueError("provider request digest is invalid")
+            approval_payload = request.arguments.get("provider_approval")
+            approval = None
+            if approval_payload is not None:
+                if not isinstance(approval_payload, Mapping) or set(approval_payload) != {"request_id", "session_id", "approval_id", "approved"}:
+                    raise ValueError("provider approval fields are invalid")
+                approval = ProviderApproval(
+                    str(approval_payload["request_id"]), str(approval_payload["session_id"]),
+                    str(approval_payload["approval_id"]), approval_payload["approved"],
+                )
+            authorization = authorize_provider_request(
+                load_provider_gate_policy(self._repo_root), provider_request, approval=approval
+            )
+            profile_payload = request.arguments.get("assurance_profile")
+            profile = parse_provider_assurance_profile(profile_payload) if profile_payload is not None else None
+            decision = decide_outbound_data(
+                load_outbound_assurance_policy(self._repo_root), authorization,
+                payload_digest=_string_argument(request.arguments, "payload_digest"),
+                data_categories=_string_tuple_argument(request.arguments, "data_categories"),
+                evaluated_at=_string_argument(request.arguments, "evaluated_at"),
+                assurance=profile,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return ("ok" if decision.verdict != "blocked" else "blocked"), {
+            "decision": decision.as_dict(),
+            "provider_authorization_verified": authorization.approval_verified,
+            "payload_disclosed": False,
+            "authority_granted": False,
+        }
+
+    def _sandbox_plan(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={
+                "source_root", "project_id", "task_plan_id", "worker_step_id",
+                "validation_gate_id", "effect_claim_id", "allowed_paths",
+                "allowed_executables", "allowed_env_keys", "host_profile",
+            },
+            optional={"network_authorization_digest", "maximum_patch_bytes"},
+        )
+        if request.apply:
+            raise ApplicationServiceError("sandbox planning is read-only")
+        source_root = Path(_string_argument(request.arguments, "source_root"))
+        if not source_root.is_absolute():
+            raise ApplicationServiceError("sandbox source root must be absolute")
+        maximum = request.arguments.get("maximum_patch_bytes", 8388608)
+        if isinstance(maximum, bool) or not isinstance(maximum, int):
+            raise ApplicationServiceError("maximum_patch_bytes must be an integer")
+        try:
+            host = parse_sandbox_host_profile(_object_argument(request.arguments, "host_profile"))
+            plan = prepare_worktree_sandbox(
+                source_root.resolve(), self._ownership,
+                project_id=_identifier_argument(request.arguments, "project_id"),
+                task_plan_id=_string_argument(request.arguments, "task_plan_id"),
+                worker_step_id=_identifier_argument(request.arguments, "worker_step_id"),
+                validation_gate_id=_string_argument(request.arguments, "validation_gate_id"),
+                effect_claim_id=_string_argument(request.arguments, "effect_claim_id"),
+                allowed_paths=_string_tuple_argument(request.arguments, "allowed_paths"),
+                allowed_executables=_string_tuple_argument(request.arguments, "allowed_executables"),
+                allowed_env_keys=_string_tuple_argument(request.arguments, "allowed_env_keys"),
+                host_profile=host,
+                network_authorization_digest=request.arguments.get("network_authorization_digest"),
+                maximum_patch_bytes=maximum,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return ("planned" if plan.payload["execution_allowed"] else "blocked"), {
+            "plan": plan.as_dict(),
+            "mutation_plan": plan.mutation_plan.as_dict(),
+            "expected_plan_id": plan.plan_id,
+            "source_path_disclosed": False,
+            "apply_supported": False,
+            "authority_granted": False,
         }
 
     def _routing_explain(

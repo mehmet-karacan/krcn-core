@@ -61,6 +61,15 @@
         "user_policy_schema",
         "mutation_plan_schema",
         "provider_request_schema",
+        "outbound_assurance_boundary",
+        "outbound_assurance_policy",
+        "provider_assurance_profile_schema",
+        "outbound_data_decision_schema",
+        "secret_broker_ref_schema",
+        "worktree_sandbox_boundary",
+        "sandbox_host_profile_schema",
+        "worktree_sandbox_plan_schema",
+        "sandbox_patch_artifact_schema",
         "local_record_schema",
         "onboarding_plan_schema",
         "discovery_result_schema",
@@ -255,6 +264,33 @@
           "$ref": "#/$defs/repoPath"
         },
         "provider_request_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "outbound_assurance_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "outbound_assurance_policy": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "provider_assurance_profile_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "outbound_data_decision_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "secret_broker_ref_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "worktree_sandbox_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "sandbox_host_profile_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "worktree_sandbox_plan_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "sandbox_patch_artifact_schema": {
           "$ref": "#/$defs/repoPath"
         },
         "local_record_schema": {

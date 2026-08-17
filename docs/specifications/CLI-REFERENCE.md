@@ -514,3 +514,22 @@ Bu uc operasyon read-only'dir. Native sonuc serbest metin degil strict
 structured payload olmalidir. Fan-in yalniz coordinator execution identity ile
 ozet uretir; completion authority vermez. Trace degerleri Workflow Step Receipt
 kayitlarindan yeniden uretilir.
+
+## Outbound assurance ve worktree sandbox
+
+```powershell
+krcn outbound assess --request-file outbound-request.json
+krcn sandbox plan --request-file sandbox-request.json
+```
+
+`outbound assess` ProviderRequest, exact provider approval, payload digest,
+data classification ve opsiyonel Provider Assurance Profile'i degerlendirir.
+Komut payload'i gondermez veya saklamaz. Secret remote karar her zaman blocked
+olur.
+
+`sandbox plan` exact Git HEAD/tree, Validation Gate, Effect Claim,
+changed-path/executable/environment allowlist ve host enforcement profile'ina
+bagli detached worktree planini gosterir. Bu komut fiziksel worktree olusturmaz
+ve apply kabul etmez. Worktree creation yalniz ayri exact runtime
+MutationAuthorization ile ayni process icindeki reviewed delivery adapter'inda
+yapilabilir.

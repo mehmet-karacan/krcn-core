@@ -25,6 +25,7 @@ class DoctorTests(unittest.TestCase):
                 "repository-content",
                 "cli-catalog",
                 "offline-provider",
+                "outbound-assurance",
                 "tracked-local-data",
                 "release-quality",
                 "sqlite-runtime",
