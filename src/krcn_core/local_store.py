@@ -126,6 +126,11 @@ COLLECTIONS = {
         "runtime/routing-decisions",
         "runtime",
     ),
+    "workflow-step-receipts": (
+        "workflow_step_receipt_record_id",
+        "runtime/workflow-step-receipts",
+        "runtime",
+    ),
     "model-inventory": ("model_ref", "models", "user-data"),
     "model-health": ("model_ref", "derived/model-health", "derived"),
     "model-benchmark-suites": (
@@ -249,6 +254,14 @@ def _validate_record_identity(
         parse_source_state(payload)
     if record_type == "project-integrations":
         parse_project_integration_state(payload)
+        return None
+    if record_type == "workflow-step-receipts":
+        from .workflow_step_receipt_store import parse_workflow_step_receipt_record
+
+        try:
+            parse_workflow_step_receipt_record(payload)
+        except ValueError as exc:
+            raise LocalStoreError(str(exc)) from exc
         return None
     if record_type == "model-inventory":
         from .model_inventory import parse_model_inventory_record
@@ -808,8 +821,8 @@ class LocalWorkspaceStore:
         current_revision = current.revision if current else 0
         if expected_revision != current_revision:
             raise RevisionConflictError("record revision changed before planning")
-        if record_type == "route-decisions" and current is not None:
-            raise LocalStoreError("route decision records are append-only")
+        if record_type in {"route-decisions", "workflow-step-receipts"} and current is not None:
+            raise LocalStoreError(f"{record_type} records are append-only")
         next_revision = current_revision + 1
         if information_revision is not None and information_revision != next_revision:
             raise LocalStoreError(

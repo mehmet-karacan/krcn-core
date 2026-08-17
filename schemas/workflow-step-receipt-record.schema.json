@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:workflow-step-receipt-record:1",
+  "title": "KRCN Core append-only workflow step receipt record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "workflow_step_receipt_record_id",
+    "project_id",
+    "work_item_id",
+    "step_id",
+    "attempt_id",
+    "receipt",
+    "append_only",
+    "grants_authority",
+    "record_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/workflow-step-receipt-record.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "workflow_step_receipt_record_id": {
+      "$ref": "#/$defs/id"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/id"
+    },
+    "step_id": {
+      "$ref": "#/$defs/id"
+    },
+    "attempt_id": {
+      "$ref": "#/$defs/id"
+    },
+    "receipt": {
+      "$ref": "urn:krcn:schemas:workflow-step-receipt:1"
+    },
+    "append_only": {
+      "const": true
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "record_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,127}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

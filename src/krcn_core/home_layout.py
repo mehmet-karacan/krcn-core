@@ -42,6 +42,7 @@ PROJECT_COLLECTION_PATHS = {
     "orchestration-checkpoints": "runtime/checkpoints/orchestration",
     "orchestration-handoffs": "runtime/orchestration-handoffs",
     "route-decisions": "runtime/routing-decisions",
+    "workflow-step-receipts": "runtime/workflow-step-receipts",
     "model-inventory": "models",
     "model-health": "derived/model-health",
     "model-benchmark-suites": "derived/model-benchmark-suites",

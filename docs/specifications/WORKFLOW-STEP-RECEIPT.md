@@ -28,6 +28,18 @@ durumlar structured failure ister. Boolean degerler integer gibi kabul edilmez.
 Ayni `(step_id, attempt)` icin birden fazla receipt veya celisen digest
 fail-closed reddedilir. Aggregation yalniz ayni correlation kimligi ve uyumlu
 currency icindeki receipt'leri toplar. Toplamlar public receipt alanlarindan
-deterministik hesaplanir. Bir sonraki checkpoint append-only store, durable
-replay ve conflict kontrollerini bu sozlesmeye baglayacaktir.
+deterministik hesaplanir.
 
+`src/krcn_core/workflow_step_receipt_store.py` receipt'i proje runtime
+alaninda append-only bir record olarak saklar. Record kimligi receipt sonucundan
+degil correlation, task plan, step ve attempt slotundan turetilir. Bu nedenle:
+
+- ayni slot ve ayni receipt gercek no-op olur;
+- ayni slotta farkli receipt conflict olarak reddedilir;
+- iki paralel plan ayni record lock ve optimistic revision sinirini paylasir;
+- exact plan, verified dry-run ve runtime ownership olmadan yazim yapilmaz;
+- receipt record'u approval, execution veya mutation yetkisi vermez.
+
+Record ve exact plan public payloadlari sirasiyla
+`schemas/workflow-step-receipt-record.schema.json` ve
+`schemas/workflow-step-receipt-record-plan.schema.json` ile dogrulanir.

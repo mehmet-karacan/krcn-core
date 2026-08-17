@@ -188,6 +188,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 
 - `PHASE-24-KICKOFF.md`
 - `PHASE-24-DOMAIN-CONTRACTS.md`
+- `PHASE-24-RECEIPT-STORE.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 

@@ -60,6 +60,8 @@ REQUIRED_CANONICAL_KEYS = {
     "agent_result_envelope_schema",
     "workflow_step_receipt_boundary",
     "workflow_step_receipt_schema",
+    "workflow_step_receipt_record_schema",
+    "workflow_step_receipt_record_plan_schema",
     "status_projection_schema",
     "execution_coordinator_boundary",
     "execution_coordination_plan_schema",

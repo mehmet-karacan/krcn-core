@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:workflow-step-receipt-record-plan:1",
+  "title": "KRCN Core workflow step receipt exact record plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "workflow_step_receipt_record_id",
+    "receipt_digest",
+    "project_id",
+    "work_item_id",
+    "step_id",
+    "attempt_id",
+    "record_digest",
+    "no_op",
+    "append_only",
+    "grants_authority",
+    "effects"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/workflow-step-receipt-record-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "workflow_step_receipt_record_id": {
+      "$ref": "#/$defs/id"
+    },
+    "receipt_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/id"
+    },
+    "step_id": {
+      "$ref": "#/$defs/id"
+    },
+    "attempt_id": {
+      "$ref": "#/$defs/id"
+    },
+    "record_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "no_op": {
+      "type": "boolean"
+    },
+    "append_only": {
+      "const": true
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "effects": {
+      "type": "array",
+      "maxItems": 1,
+      "items": {
+        "$ref": "urn:krcn:schemas:mutation-plan:1"
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,127}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

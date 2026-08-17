@@ -14,10 +14,10 @@
     "docs/progress/PHASE-23-COORDINATOR-SHADOW.md",
     "docs/progress/PHASE-23-CLOSURE.md",
     "docs/progress/PHASE-24-KICKOFF.md",
-    "docs/progress/PHASE-24-DOMAIN-CONTRACTS.md"
+    "docs/progress/PHASE-24-DOMAIN-CONTRACTS.md",
+    "docs/progress/PHASE-24-RECEIPT-STORE.md"
   ],
   "next_actions": [
-    "append-only receipt deposu ve replay conflict kontrollerini ekle",
     "worker, DAG ve native client adapterlarini compatibility penceresiyle bagla",
     "coordinator fan-in ve Execution Trace aggregation kabulunu tamamla"
   ],
