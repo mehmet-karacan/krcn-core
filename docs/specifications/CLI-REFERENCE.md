@@ -238,6 +238,26 @@ returns recovery-required and is never retried silently. Results
 contain measurements and provenance only; prompts, responses, credentials,
 endpoints, physical paths, and source content are not returned or persisted.
 
+## Adaptive Routing shadow mode
+
+Phase 23 exposes the authority-free router through the same application
+service used by every client:
+
+```bash
+krcn routing decide --request-file <route-request.json>
+krcn routing explain --request-file <route-comparison.json>
+```
+
+The request file for `decide` contains a canonical `route_request` object.
+The request file for `explain` also contains `observed_route`, such as the
+existing coordinator route `delegated-dag`. The readable output shows the
+shadow route, concurrency, reason codes, comparison status, and that no
+authority was granted.
+
+Both operations are read-only. They do not enqueue work, select a model,
+invoke a provider, alter delegation or admission, persist user data, or apply
+the shadow route. An `apply` request is rejected.
+
 ## Measured autonomy, skill lifecycle, and memory hygiene
 
 The bounded loop can be inspected from reviewed JSON records without granting

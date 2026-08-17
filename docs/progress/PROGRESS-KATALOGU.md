@@ -180,6 +180,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 
 - `PHASE-23-KICKOFF.md`
 - `PHASE-23-ADAPTIVE-ROUTING-DOMAIN.md`
+- `PHASE-23-APPLICATION-CLI.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 

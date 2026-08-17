@@ -9,7 +9,8 @@
   "progress_refs": [
     "docs/progress/PROGRESS-KATALOGU.md",
     "docs/progress/PHASE-23-KICKOFF.md",
-    "docs/progress/PHASE-23-ADAPTIVE-ROUTING-DOMAIN.md"
+    "docs/progress/PHASE-23-ADAPTIVE-ROUTING-DOMAIN.md",
+    "docs/progress/PHASE-23-APPLICATION-CLI.md"
   ],
   "next_actions": [
     "adaptive routing domain, policy ve strict schema sozlesmelerini uygula",

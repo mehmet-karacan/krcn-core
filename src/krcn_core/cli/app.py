@@ -416,6 +416,18 @@ def build_parser() -> argparse.ArgumentParser:
         command = autonomy_commands.add_parser(operation, help=help_text)
         _add_phase_four_options(command)
         command.set_defaults(format="text")
+    routing = subparsers.add_parser(
+        "routing",
+        help="Inspect authority-free adaptive routing shadow decisions",
+    )
+    routing_commands = routing.add_subparsers(dest="routing_command")
+    for operation, help_text in (
+        ("decide", "Calculate a deterministic shadow route decision"),
+        ("explain", "Compare a shadow decision with the observed coordinator route"),
+    ):
+        command = routing_commands.add_parser(operation, help=help_text)
+        _add_phase_four_options(command)
+        command.set_defaults(format="text")
     skills = subparsers.add_parser(
         "skills",
         help="Evaluate skill candidates and prepare reviewed registry changes",
@@ -1398,6 +1410,26 @@ def _research_action_text(
 def _phase22_text(response: ServiceResponse) -> str:
     data = response.data
     operation = response.operation
+    if operation in {"routing.decide", "routing.explain"}:
+        decision = data.get("decision", {})
+        selected = decision.get("selected", {}) if isinstance(decision, Mapping) else {}
+        reasons = decision.get("reason_codes", []) if isinstance(decision, Mapping) else []
+        comparison = data.get("comparison", {})
+        comparison_status = (
+            comparison.get("comparison_status", "-")
+            if isinstance(comparison, Mapping)
+            else "-"
+        )
+        return _text_table(
+            ["Gölge rota", "Eşzamanlılık", "Nedenler", "Karşılaştırma", "Yetki"],
+            [[
+                selected.get("route_mode", "-"),
+                selected.get("maximum_concurrency", 1),
+                ", ".join(reasons) if isinstance(reasons, list) else "-",
+                comparison_status,
+                "verilmedi",
+            ]],
+        )
     if operation == "autonomy.status":
         status = data.get("status", {})
         usage = status.get("usage", {}) if isinstance(status, Mapping) else {}
@@ -1910,6 +1942,12 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
     }:
         operation = f"autonomy.{args.autonomy_command}"
         arguments = _load_phase_four_arguments(args.request_file)
+    elif args.command == "routing" and args.routing_command in {
+        "decide",
+        "explain",
+    }:
+        operation = f"routing.{args.routing_command}"
+        arguments = _load_phase_four_arguments(args.request_file)
     elif args.command == "skills" and args.skills_command in {
         "evaluate",
         "plan-change",
@@ -2039,6 +2077,8 @@ def _run_phase_four_service_command(args: argparse.Namespace) -> int:
         "autonomy.status",
         "autonomy.morning",
         "autonomy.admission",
+        "routing.decide",
+        "routing.explain",
         "model.benchmark-prepare",
         "model.benchmark-execute",
         "skill.evaluate",
@@ -2362,6 +2402,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "autonomy",
         "skills",
         "models",
+        "routing",
     }:
         return _run_phase_four_service_command(args)
 

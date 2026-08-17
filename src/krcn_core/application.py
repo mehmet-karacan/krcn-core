@@ -77,6 +77,12 @@ from .delegation_policy import (
     load_delegation_policy,
     parse_delegation_decision,
 )
+from .adaptive_routing import (
+    compare_shadow_route,
+    decide_route,
+    load_adaptive_routing_policy,
+    parse_route_request,
+)
 from .execution_coordinator import prepare_execution_coordination
 from .memory_gate import (
     apply_memory_lifecycle,
@@ -570,6 +576,63 @@ class KrcnApplicationService:
             "blocked" if plan.as_dict()["status"] == "blocked" else "planned",
             data,
         )
+
+    def _routing_decide(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"route_request"})
+        if request.apply:
+            raise ApplicationServiceError("adaptive routing decision is read-only")
+        try:
+            policy = load_adaptive_routing_policy(self._repo_root)
+            route_request = parse_route_request(
+                _object_argument(request.arguments, "route_request"), policy
+            )
+            decision = decide_route(policy, route_request)
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {
+            "decision": decision.as_dict(),
+            "shadow_only": True,
+            "behavior_changed": False,
+            "persisted": False,
+            "grants_authority": False,
+        }
+
+    def _routing_explain(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"route_request", "observed_route"},
+        )
+        if request.apply:
+            raise ApplicationServiceError("adaptive routing explanation is read-only")
+        try:
+            policy = load_adaptive_routing_policy(self._repo_root)
+            route_request = parse_route_request(
+                _object_argument(request.arguments, "route_request"), policy
+            )
+            decision = decide_route(policy, route_request)
+            comparison = compare_shadow_route(
+                policy,
+                decision,
+                observed_route=_string_argument(
+                    request.arguments, "observed_route"
+                ),
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {
+            "decision": decision.as_dict(),
+            "comparison": comparison.as_dict(),
+            "shadow_only": True,
+            "behavior_changed": False,
+            "persisted": False,
+            "grants_authority": False,
+        }
 
     def _put_work_item(
         self,

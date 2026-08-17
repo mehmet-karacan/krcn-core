@@ -115,6 +115,14 @@
         "execution_coordinator_boundary",
         "execution_coordination_plan_schema",
         "execution_coordination_result_schema",
+        "adaptive_routing_boundary",
+        "adaptive_routing_policy",
+        "adaptive_routing_policy_schema",
+        "adaptive_routing_golden_set",
+        "adaptive_routing_golden_set_schema",
+        "route_request_schema",
+        "route_decision_schema",
+        "route_shadow_comparison_schema",
         "application_modularity_boundary",
         "source_relocation_boundary",
         "source_relocation_assessment_schema",
@@ -391,6 +399,30 @@
           "$ref": "#/$defs/repoPath"
         },
         "execution_coordination_result_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "adaptive_routing_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "adaptive_routing_policy": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "adaptive_routing_policy_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "adaptive_routing_golden_set": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "adaptive_routing_golden_set_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "route_request_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "route_decision_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "route_shadow_comparison_schema": {
           "$ref": "#/$defs/repoPath"
         },
         "application_modularity_boundary": {

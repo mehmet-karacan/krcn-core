@@ -27,6 +27,8 @@ APPLICATION_OPERATIONS = frozenset(
         "client.capabilities",
         "client.delegation",
         "execution.coordinate",
+        "routing.decide",
+        "routing.explain",
         "model.resolve",
         "model.inventory",
         "model.list",
