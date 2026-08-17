@@ -3,7 +3,7 @@
   "schema_version": 1,
   "phase_id": "phase-24",
   "workstream_id": "agent-result-envelope-and-step-receipt",
-  "status": "active",
+  "status": "complete",
   "goal": "Direct worker, Generic DAG ve native client sonuçlarını tek güvenli envelope sözleşmesinde normalize etmek ve step bazlı append-only telemetry üretmek",
   "plan_ref": "docs/plans/PLAN-024-AGENT-RESULT-ENVELOPE-STEP-RECEIPT.md",
   "progress_refs": [
@@ -17,10 +17,11 @@
     "docs/progress/PHASE-24-DOMAIN-CONTRACTS.md",
     "docs/progress/PHASE-24-RECEIPT-STORE.md",
     "docs/progress/PHASE-24-RESULT-ADAPTERS.md",
-    "docs/progress/PHASE-24-FAN-IN-TRACE.md"
+    "docs/progress/PHASE-24-FAN-IN-TRACE.md",
+    "docs/progress/PHASE-24-CLOSURE.md"
   ],
   "next_actions": [
-    "Faz 24 full regression ve bagimsiz kabul kontrolunu tamamla"
+    "Faz 25 icin yeni plan ve kullanici onayi bekle"
   ],
   "baseline_commit": "1ff472c",
   "approval_gates": {

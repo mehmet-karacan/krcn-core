@@ -191,6 +191,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 - `PHASE-24-RECEIPT-STORE.md`
 - `PHASE-24-RESULT-ADAPTERS.md`
 - `PHASE-24-FAN-IN-TRACE.md`
+- `PHASE-24-CLOSURE.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 
