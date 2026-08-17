@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:sandbox-patch-artifact:1",
+  "title": "KRCN Core sandbox patch artifact",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "artifact_id",
+    "sandbox_plan_id",
+    "source_head",
+    "source_tree_digest",
+    "effect_claim_id",
+    "effect_receipt_id",
+    "validation_gate_id",
+    "verifier_evidence_digest",
+    "changed_files",
+    "patch_digest",
+    "contains_patch_bytes",
+    "commit_created",
+    "push_performed",
+    "grants_authority",
+    "artifact_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/sandbox-patch-artifact.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "artifact_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "sandbox_plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "source_head": {
+      "$ref": "#/$defs/gitOid"
+    },
+    "source_tree_digest": {
+      "$ref": "#/$defs/gitOid"
+    },
+    "effect_claim_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "effect_receipt_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "validation_gate_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "verifier_evidence_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "changed_files": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path_ref",
+          "content_digest",
+          "deleted"
+        ],
+        "properties": {
+          "path_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "content_digest": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/$defs/digest"
+              }
+            ]
+          },
+          "deleted": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "patch_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "contains_patch_bytes": {
+      "const": false
+    },
+    "commit_created": {
+      "const": false
+    },
+    "push_performed": {
+      "const": false
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "artifact_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "gitOid": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}([a-f0-9]{24})?$"
+    }
+  }
+}

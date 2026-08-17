@@ -28,10 +28,11 @@
     "docs/progress/PHASE-25-RECOVERY-DOCTOR.md",
     "docs/progress/PHASE-25-CLOSURE.md",
     "docs/progress/PHASE-26-KICKOFF.md",
-    "docs/progress/PHASE-26-OUTBOUND-ASSURANCE.md"
+    "docs/progress/PHASE-26-OUTBOUND-ASSURANCE.md",
+    "docs/progress/PHASE-26-WORKTREE-SANDBOX.md"
   ],
   "next_actions": [
-    "detached worktree sandbox ve patch artifact sozlesmelerini uygula"
+    "outbound ve sandbox kararlarini application CLI runtime effect ve doctor yuzeylerine bagla"
   ],
   "baseline_commit": "fb6d8c6",
   "approval_gates": {

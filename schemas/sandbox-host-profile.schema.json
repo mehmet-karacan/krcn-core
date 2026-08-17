@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:sandbox-host-profile:1",
+  "title": "KRCN Core sandbox host profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "host_id",
+    "os_family",
+    "detached_worktree",
+    "path_isolation",
+    "environment_allowlist",
+    "network_default_deny",
+    "commit_push_blocked",
+    "junction_guard",
+    "execution_allowed",
+    "authority_granted",
+    "profile_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/sandbox-host-profile.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "host_id": {
+      "$ref": "#/$defs/id"
+    },
+    "os_family": {
+      "enum": [
+        "windows",
+        "linux",
+        "macos"
+      ]
+    },
+    "detached_worktree": {
+      "type": "boolean"
+    },
+    "path_isolation": {
+      "type": "boolean"
+    },
+    "environment_allowlist": {
+      "type": "boolean"
+    },
+    "network_default_deny": {
+      "type": "boolean"
+    },
+    "commit_push_blocked": {
+      "type": "boolean"
+    },
+    "junction_guard": {
+      "type": "boolean"
+    },
+    "execution_allowed": {
+      "type": "boolean"
+    },
+    "authority_granted": {
+      "const": false
+    },
+    "profile_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,127}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

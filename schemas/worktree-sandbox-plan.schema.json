@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:worktree-sandbox-plan:1",
+  "title": "KRCN Core worktree sandbox plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "sandbox_plan_id",
+    "project_id",
+    "task_plan_id",
+    "worker_step_id",
+    "validation_gate_id",
+    "effect_claim_id",
+    "source_head",
+    "source_tree_digest",
+    "allowed_paths",
+    "allowed_executables",
+    "allowed_env_keys",
+    "network_authorization_digest",
+    "network_default_deny",
+    "commit_push_allowed",
+    "maximum_patch_bytes",
+    "host_profile_digest",
+    "execution_allowed",
+    "contains_physical_paths",
+    "grants_authority",
+    "mutation_plan_id",
+    "plan_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/worktree-sandbox-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "sandbox_plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "worker_step_id": {
+      "$ref": "#/$defs/id"
+    },
+    "validation_gate_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "effect_claim_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "source_head": {
+      "$ref": "#/$defs/gitOid"
+    },
+    "source_tree_digest": {
+      "$ref": "#/$defs/gitOid"
+    },
+    "allowed_paths": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/path"
+      }
+    },
+    "allowed_executables": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "allowed_env_keys": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z][A-Z0-9_]*$"
+      }
+    },
+    "network_authorization_digest": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/digest"
+        }
+      ]
+    },
+    "network_default_deny": {
+      "type": "boolean"
+    },
+    "commit_push_allowed": {
+      "const": false
+    },
+    "maximum_patch_bytes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 16777216
+    },
+    "host_profile_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "execution_allowed": {
+      "type": "boolean"
+    },
+    "contains_physical_paths": {
+      "const": false
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "mutation_plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "plan_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,127}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "gitOid": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}([a-f0-9]{24})?$"
+    },
+    "path": {
+      "type": "string",
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+    }
+  }
+}
