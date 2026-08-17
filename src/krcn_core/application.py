@@ -241,6 +241,14 @@ from .worktree_sandbox import (
     parse_sandbox_host_profile,
     prepare_worktree_sandbox,
 )
+from .implementation_delivery import (
+    ImplementationDeliveryHost,
+    apply_implementation_plan,
+    parse_implementation_result,
+    prepare_implementation_plan,
+    verify_implementation_result,
+)
+from .route_enforcement import decide_route_enforcement, load_route_enforcement_policy
 from .rescan import apply_rescan, prepare_rescan
 from .research_orchestration import (
     apply_research_result_import,
@@ -392,6 +400,7 @@ class KrcnApplicationService:
         model_health_probes: Mapping[str, ModelHealthProbe] | None = None,
         model_benchmark_hosts: Mapping[str, BenchmarkExecutionHost] | None = None,
         model_benchmark_adapters: Mapping[str, Callable[..., object]] | None = None,
+        implementation_delivery_hosts: Mapping[str, ImplementationDeliveryHost] | None = None,
         research_execution_adapters: Mapping[
             str, Callable[[ResearchWorkUnit], Mapping[str, object]]
         ] | None = None,
@@ -461,6 +470,14 @@ class KrcnApplicationService:
         except ValueError as exc:
             raise ApplicationServiceError(str(exc)) from exc
         self._model_benchmark_hosts = benchmark_hosts
+        delivery_hosts = dict(implementation_delivery_hosts or {})
+        if any(
+            not isinstance(project_id, str) or not IDENTIFIER.fullmatch(project_id)
+            or any(not callable(getattr(host, method, None)) for method in ("report_bytes", "patch_artifact", "test_runner"))
+            for project_id, host in delivery_hosts.items()
+        ):
+            raise ApplicationServiceError("implementation delivery hosts are invalid")
+        self._implementation_delivery_hosts = delivery_hosts
         research_adapters = dict(research_execution_adapters or {})
         if research_adapters and (
             set(research_adapters) != set(RESEARCH_DAG)
@@ -737,6 +754,75 @@ class KrcnApplicationService:
             "apply_supported": False,
             "authority_granted": False,
         }
+
+    def _implementation_plan_from_request(self, request: ServiceRequest):
+        required = {"project_id", "work_item_id", "task_plan_id", "report_ref", "artifact_id", "test_specs", "execution_trace_ref"}
+        _check_arguments(request.arguments, required=required, optional={"result", "verifier_identity_digest", "verifier_evidence_digest"})
+        project_id = _identifier_argument(request.arguments, "project_id")
+        host = self._implementation_delivery_hosts.get(project_id)
+        if host is None:
+            raise ApplicationServiceError("implementation delivery host is unavailable")
+        report_ref = _string_argument(request.arguments, "report_ref")
+        artifact_id = _string_argument(request.arguments, "artifact_id")
+        specs = request.arguments["test_specs"]
+        if not isinstance(specs, list):
+            raise ApplicationServiceError("test_specs must be a list")
+        try:
+            artifact = host.patch_artifact(artifact_id)
+            report = host.report_bytes(report_ref)
+            plan = prepare_implementation_plan(
+                self._repo_root, self._ownership, project_id=project_id,
+                work_item_id=_identifier_argument(request.arguments, "work_item_id"),
+                task_plan_id=_string_argument(request.arguments, "task_plan_id"), report_ref=report_ref,
+                report_bytes=report, artifact=artifact, test_specs=specs,
+                execution_trace_ref=_string_argument(request.arguments, "execution_trace_ref"),
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return host, report, artifact, plan
+
+    def _implementation_action(self, request: ServiceRequest) -> tuple[str, Mapping[str, object]]:
+        host, report, artifact, plan = self._implementation_plan_from_request(request)
+        if request.operation in {"implementation.plan", "implementation.show", "implementation.status"}:
+            if request.apply:
+                raise ApplicationServiceError("implementation inspection is read-only")
+            return "planned", {"plan": plan.as_dict(), "mutation_plans": [item.as_dict() for item in plan.mutation_plans], "apply_supported": True, "authority_granted": False}
+        if request.operation == "implementation.verify":
+            if request.apply:
+                raise ApplicationServiceError("implementation verification records evidence but grants no mutation authority")
+            try:
+                result = parse_implementation_result(_object_argument(request.arguments, "result"))
+                verification = verify_implementation_result(
+                    plan, result,
+                    verifier_identity_digest=_string_argument(request.arguments, "verifier_identity_digest"),
+                    verifier_evidence_digest=_string_argument(request.arguments, "verifier_evidence_digest"),
+                )
+            except ValueError as exc:
+                raise ApplicationServiceError(str(exc)) from exc
+            return "ok", {"verification": verification.as_dict(), "authority_granted": False}
+        if not request.apply:
+            return "planned", {"plan": plan.as_dict(), "mutation_plans": [item.as_dict() for item in plan.mutation_plans], "applied": False, "authority_granted": False}
+        authorizations = self._authorize_effect_plans(request, plan.plan_id, plan.mutation_plans, "implementation delivery")
+        try:
+            result = apply_implementation_plan(plan, artifact, authorizations, expected_plan_id=request.expected_plan_id or "", current_report_bytes=report, test_runner=host.test_runner())
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "applied", {"plan": plan.as_dict(), "result": result.as_dict(), "applied": True, "authority_granted": False}
+
+    def _route_enforcement(self, request: ServiceRequest) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"current_stage", "requested_stage", "observation_count", "mismatch_count", "project_opt_in"})
+        if request.apply:
+            raise ApplicationServiceError("route enforcement decision is read-only")
+        try:
+            decision = decide_route_enforcement(
+                load_route_enforcement_policy(self._repo_root),
+                current_stage=_string_argument(request.arguments, "current_stage"), requested_stage=_string_argument(request.arguments, "requested_stage"),
+                observation_count=_nonnegative_integer_argument(request.arguments, "observation_count"), mismatch_count=_nonnegative_integer_argument(request.arguments, "mismatch_count"),
+                project_opt_in=request.arguments["project_opt_in"],
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return ("ok" if decision.payload["allowed"] else "blocked"), {"decision": decision.as_dict(), "authority_granted": False}
 
     def _routing_explain(
         self,

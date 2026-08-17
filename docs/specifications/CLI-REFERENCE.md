@@ -533,3 +533,9 @@ bagli detached worktree planini gosterir. Bu komut fiziksel worktree olusturmaz
 ve apply kabul etmez. Worktree creation yalniz ayri exact runtime
 MutationAuthorization ile ayni process icindeki reviewed delivery adapter'inda
 yapilabilir.
+# Faz 27 implementation delivery
+
+`krcn implementation plan|show|apply|status|verify --request-file <json>`
+rapor veya patch içeriğini CLI request'ine koymadan host-bound exact teslim
+akışını açar. Default host yoksa apply fail-closed olur. `krcn routing
+enforcement --request-file <json>` ölçümlü rollout kararını salt okunur gösterir.

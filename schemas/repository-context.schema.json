@@ -70,6 +70,13 @@
         "sandbox_host_profile_schema",
         "worktree_sandbox_plan_schema",
         "sandbox_patch_artifact_schema",
+        "implementation_delivery_boundary",
+        "implementation_plan_schema",
+        "implementation_result_schema",
+        "implementation_verification_schema",
+        "route_enforcement_policy",
+        "route_enforcement_policy_schema",
+        "route_enforcement_decision_schema",
         "local_record_schema",
         "onboarding_plan_schema",
         "discovery_result_schema",
@@ -291,6 +298,27 @@
           "$ref": "#/$defs/repoPath"
         },
         "sandbox_patch_artifact_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "implementation_delivery_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "implementation_plan_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "implementation_result_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "implementation_verification_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "route_enforcement_policy": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "route_enforcement_policy_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "route_enforcement_decision_schema": {
           "$ref": "#/$defs/repoPath"
         },
         "local_record_schema": {

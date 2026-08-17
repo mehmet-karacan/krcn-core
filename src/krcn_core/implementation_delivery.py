@@ -28,6 +28,12 @@ class ImplementationTestRunner(Protocol):
     def run(self, repo_root: Path, test_id: str, command_digest: str) -> Mapping[str, object]: ...
 
 
+class ImplementationDeliveryHost(Protocol):
+    def report_bytes(self, report_ref: str) -> bytes: ...
+    def patch_artifact(self, artifact_id: str) -> SandboxPatchArtifact: ...
+    def test_runner(self) -> ImplementationTestRunner: ...
+
+
 def _digest(value: Mapping[str, object]) -> str:
     return hashlib.sha256(canonical_json_bytes(value)).hexdigest()
 
@@ -102,6 +108,19 @@ class ImplementationVerification:
 
     def as_dict(self) -> dict[str, object]:
         return json.loads(json.dumps(self.payload))
+
+
+def parse_implementation_result(value: object) -> ImplementationResult:
+    required = {"schema_ref", "schema_version", "result_id", "plan_id", "project_id", "work_item_id", "task_plan_id", "patch_digest", "changed_paths", "test_results", "status", "rollback_available", "commit_created", "push_performed", "completion_allowed", "authority_granted", "result_digest"}
+    if not isinstance(value, Mapping) or set(value) != required or value["schema_ref"] != "schemas/implementation-result.schema.json" or value["schema_version"] != 1:
+        raise ImplementationDeliveryError("implementation result fields are invalid")
+    for name in ("result_id", "plan_id", "task_plan_id", "patch_digest", "result_digest"):
+        _sha(value[name], name)
+    identity = {key: value[key] for key in required - {"schema_ref", "schema_version", "result_id", "result_digest"}}
+    digest = _digest(identity)
+    if value["result_id"] != digest or value["result_digest"] != digest or value["status"] != "pending-verification" or value["completion_allowed"] is not False or value["authority_granted"] is not False:
+        raise ImplementationDeliveryError("implementation result digest or safety state is invalid")
+    return ImplementationResult(dict(value))
 
 
 def prepare_implementation_plan(

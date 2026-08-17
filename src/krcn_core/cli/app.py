@@ -425,6 +425,7 @@ def build_parser() -> argparse.ArgumentParser:
         ("decide", "Calculate a deterministic shadow route decision"),
         ("explain", "Compare a shadow decision with the observed coordinator route"),
         ("record", "Persist one append-only shadow route decision"),
+        ("enforcement", "Evaluate one measured adjacent enforcement transition"),
     ):
         command = routing_commands.add_parser(operation, help=help_text)
         _add_phase_four_options(command, mutation=operation == "record")
@@ -451,6 +452,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     _add_phase_four_options(sandbox_plan)
     sandbox_plan.set_defaults(format="text")
+    implementation = subparsers.add_parser(
+        "implementation",
+        help="Plan, apply, inspect, and independently verify sandbox implementation delivery",
+    )
+    implementation_commands = implementation.add_subparsers(dest="implementation_command")
+    for operation, help_text in (
+        ("plan", "Build an exact implementation plan"),
+        ("show", "Show the current exact implementation plan"),
+        ("apply", "Apply through an injected delivery host and exact approval"),
+        ("status", "Inspect implementation delivery status"),
+        ("verify", "Bind independent verifier evidence"),
+    ):
+        command = implementation_commands.add_parser(operation, help=help_text)
+        _add_phase_four_options(command, mutation=operation == "apply")
+        command.set_defaults(format="text")
     result = subparsers.add_parser(
         "result",
         help="Normalize and aggregate authority-free agent results",
@@ -1988,6 +2004,7 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
         "decide",
         "explain",
         "record",
+        "enforcement",
     }:
         operation = f"routing.{args.routing_command}"
         arguments = _load_phase_four_arguments(args.request_file)
@@ -1996,6 +2013,9 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
         arguments = _load_phase_four_arguments(args.request_file)
     elif args.command == "sandbox" and args.sandbox_command == "plan":
         operation = "sandbox.plan"
+        arguments = _load_phase_four_arguments(args.request_file)
+    elif args.command == "implementation" and args.implementation_command in {"plan", "show", "apply", "status", "verify"}:
+        operation = f"implementation.{args.implementation_command}"
         arguments = _load_phase_four_arguments(args.request_file)
     elif args.command == "result" and args.result_command in {
         "normalize-native", "fan-in", "trace",
@@ -2160,6 +2180,17 @@ def _run_phase_four_service_command(args: argparse.Namespace) -> int:
               len(plan.get("allowed_paths", [])),
               "kapali" if plan.get("network_default_deny") else "yetkili",
               "hazir" if plan.get("execution_allowed") else "engelli"]],
+        ))
+    elif response.operation.startswith("implementation."):
+        plan = response.data.get("plan", {})
+        result = response.data.get("result", {})
+        verification = response.data.get("verification", {})
+        print(_text_table(
+            ["Durum", "Plan", "Dosya", "Test", "Dogrulama", "Commit/Push"],
+            [[response.status, _shorten(plan.get("plan_id", result.get("plan_id", "-")), 20),
+              len(plan.get("changed_paths", result.get("changed_paths", []))),
+              len(plan.get("test_specs", result.get("test_results", []))),
+              verification.get("status", result.get("status", "bekliyor")), "yok"]],
         ))
     else:
         print(f"{response.status}\t{response.operation}")
@@ -2480,6 +2511,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "result",
         "outbound",
         "sandbox",
+        "implementation",
     }:
         return _run_phase_four_service_command(args)
 

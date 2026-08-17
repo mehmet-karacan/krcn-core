@@ -215,6 +215,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 ## Faz 27 - Markdown Implementation Delivery ve Enforcement
 
 - `PHASE-27-KICKOFF.md`
+- `PHASE-27-DOMAIN-AND-CLIENTS.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 

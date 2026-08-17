@@ -2,12 +2,102 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:krcn:schemas:route-enforcement-decision:1",
   "title": "KRCN route enforcement transition decision",
-  "type": "object", "additionalProperties": false,
-  "required": ["schema_ref", "schema_version", "decision_id", "current_stage", "requested_stage", "direction", "observation_count", "mismatch_count", "mismatch_rate_ppm", "project_opt_in", "allowed", "reason_codes", "rollback_available", "mutation_allowed", "authority_granted", "decision_digest"],
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "decision_id",
+    "current_stage",
+    "requested_stage",
+    "direction",
+    "observation_count",
+    "mismatch_count",
+    "mismatch_rate_ppm",
+    "project_opt_in",
+    "allowed",
+    "reason_codes",
+    "rollback_available",
+    "mutation_allowed",
+    "authority_granted",
+    "decision_digest"
+  ],
   "properties": {
-    "schema_ref": {"const": "schemas/route-enforcement-decision.schema.json"}, "schema_version": {"const": 1},
-    "decision_id": {"$ref": "#/$defs/digest"}, "current_stage": {"$ref": "#/$defs/stage"}, "requested_stage": {"$ref": "#/$defs/stage"}, "direction": {"enum": ["hold", "promote", "rollback"]},
-    "observation_count": {"type": "integer", "minimum": 0}, "mismatch_count": {"type": "integer", "minimum": 0}, "mismatch_rate_ppm": {"type": "integer", "minimum": 0, "maximum": 1000000}, "project_opt_in": {"type": "boolean"}, "allowed": {"type": "boolean"},
-    "reason_codes": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}, "rollback_available": {"const": true}, "mutation_allowed": {"type": "boolean"}, "authority_granted": {"const": false}, "decision_digest": {"$ref": "#/$defs/digest"}
-  }, "$defs": {"digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "stage": {"enum": ["shadow", "advisory", "project-opt-in", "read-only", "mutating", "default"]}}
+    "schema_ref": {
+      "const": "schemas/route-enforcement-decision.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "decision_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "current_stage": {
+      "$ref": "#/$defs/stage"
+    },
+    "requested_stage": {
+      "$ref": "#/$defs/stage"
+    },
+    "direction": {
+      "enum": [
+        "hold",
+        "promote",
+        "rollback"
+      ]
+    },
+    "observation_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "mismatch_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "mismatch_rate_ppm": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "project_opt_in": {
+      "type": "boolean"
+    },
+    "allowed": {
+      "type": "boolean"
+    },
+    "reason_codes": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "rollback_available": {
+      "const": true
+    },
+    "mutation_allowed": {
+      "type": "boolean"
+    },
+    "authority_granted": {
+      "const": false
+    },
+    "decision_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "stage": {
+      "enum": [
+        "shadow",
+        "advisory",
+        "project-opt-in",
+        "read-only",
+        "mutating",
+        "default"
+      ]
+    }
+  }
 }
