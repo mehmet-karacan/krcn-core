@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:route-decision:1",
+  "title": "KRCN Core authority-free adaptive route decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "route_decision_id",
+    "policy_revision",
+    "policy_digest",
+    "mode",
+    "request_digest",
+    "bindings",
+    "selected",
+    "reason_codes",
+    "exclusions",
+    "estimated",
+    "resource_conflict_observed",
+    "delegation_decision_id",
+    "model_assignment_ids",
+    "admission_decision_id",
+    "enforcement_applied",
+    "grants_authority",
+    "decision_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/route-decision.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "route_decision_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "policy_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "mode": {
+      "const": "shadow"
+    },
+    "request_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "bindings": {
+      "$ref": "#/$defs/bindings"
+    },
+    "selected": {
+      "$ref": "#/$defs/selected"
+    },
+    "reason_codes": {
+      "$ref": "#/$defs/reasons"
+    },
+    "exclusions": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "items": {
+        "$ref": "#/$defs/exclusion"
+      }
+    },
+    "estimated": {
+      "$ref": "#/$defs/estimated"
+    },
+    "resource_conflict_observed": {
+      "type": "boolean"
+    },
+    "delegation_decision_id": {
+      "type": "null"
+    },
+    "model_assignment_ids": {
+      "const": []
+    },
+    "admission_decision_id": {
+      "type": "null"
+    },
+    "enforcement_applied": {
+      "const": false
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "decision_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,127}$"
+    },
+    "nullableId": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "route": {
+      "enum": [
+        "blocked",
+        "coordinator-response",
+        "direct-read",
+        "parallel-dag",
+        "recovery-required",
+        "review-only",
+        "sequential-dag",
+        "single-worker"
+      ]
+    },
+    "bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "correlation_id",
+        "project_id",
+        "work_item_id",
+        "intent_digest",
+        "context_digest"
+      ],
+      "properties": {
+        "request_id": {
+          "$ref": "#/$defs/id"
+        },
+        "correlation_id": {
+          "$ref": "#/$defs/id"
+        },
+        "project_id": {
+          "$ref": "#/$defs/nullableId"
+        },
+        "work_item_id": {
+          "$ref": "#/$defs/nullableId"
+        },
+        "intent_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "context_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "selected": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "route_mode",
+        "role_sequence",
+        "maximum_concurrency"
+      ],
+      "properties": {
+        "route_mode": {
+          "$ref": "#/$defs/route"
+        },
+        "role_sequence": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "maximum_concurrency": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "reasons": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "exclusion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "reason_codes"
+      ],
+      "properties": {
+        "mode": {
+          "$ref": "#/$defs/route"
+        },
+        "reason_codes": {
+          "$ref": "#/$defs/reasons"
+        }
+      }
+    },
+    "estimated": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_tokens",
+        "output_tokens",
+        "cost_microunits",
+        "latency_seconds"
+      ],
+      "properties": {
+        "input_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cost_microunits": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "latency_seconds": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

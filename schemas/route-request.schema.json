@@ -1,0 +1,338 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:route-request:1",
+  "title": "KRCN Core content-free adaptive route request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "policy_digest",
+    "request_id",
+    "correlation_id",
+    "client_id",
+    "project_id",
+    "work_item_id",
+    "source_revision_digest",
+    "intent_digest",
+    "context_digest",
+    "task_type",
+    "risk_level",
+    "mutation_level",
+    "data_classification",
+    "complexity",
+    "capabilities",
+    "resources",
+    "authority",
+    "budgets",
+    "provider",
+    "source_revision_current",
+    "authoritative_context_required",
+    "contains_raw_content",
+    "contains_physical_paths",
+    "contains_credentials",
+    "grants_authority",
+    "request_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/route-request.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "request_id": {
+      "$ref": "#/$defs/id"
+    },
+    "correlation_id": {
+      "$ref": "#/$defs/id"
+    },
+    "client_id": {
+      "$ref": "#/$defs/id"
+    },
+    "project_id": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "work_item_id": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "source_revision_digest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "intent_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "context_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "task_type": {
+      "enum": [
+        "analysis",
+        "exact-lookup",
+        "governance",
+        "implementation",
+        "recovery",
+        "research",
+        "status",
+        "verification"
+      ]
+    },
+    "risk_level": {
+      "enum": [
+        "critical",
+        "high",
+        "low",
+        "medium"
+      ]
+    },
+    "mutation_level": {
+      "enum": [
+        "core",
+        "external",
+        "none",
+        "runtime",
+        "user-data"
+      ]
+    },
+    "data_classification": {
+      "enum": [
+        "confidential-ip",
+        "internal",
+        "public",
+        "secret"
+      ]
+    },
+    "complexity": {
+      "$ref": "#/$defs/complexity"
+    },
+    "capabilities": {
+      "$ref": "#/$defs/capabilities"
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/resource"
+      }
+    },
+    "authority": {
+      "$ref": "#/$defs/authority"
+    },
+    "budgets": {
+      "$ref": "#/$defs/budgets"
+    },
+    "provider": {
+      "$ref": "#/$defs/provider"
+    },
+    "source_revision_current": {
+      "type": "boolean"
+    },
+    "authoritative_context_required": {
+      "type": "boolean"
+    },
+    "contains_raw_content": {
+      "const": false
+    },
+    "contains_physical_paths": {
+      "const": false
+    },
+    "contains_credentials": {
+      "const": false
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "request_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,127}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "nonnegative": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "complexity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "estimated_work_units",
+        "context_size_tokens",
+        "context_pressure_millis",
+        "independent_subproblem_count",
+        "dependency_depth"
+      ],
+      "properties": {
+        "estimated_work_units": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "context_size_tokens": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "context_pressure_millis": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "independent_subproblem_count": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "dependency_depth": {
+          "$ref": "#/$defs/nonnegative"
+        }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "available",
+        "deterministic_validator_available",
+        "verifier_available",
+        "sandbox_available"
+      ],
+      "properties": {
+        "required": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "available": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "deterministic_validator_available": {
+          "type": "boolean"
+        },
+        "verifier_available": {
+          "type": "boolean"
+        },
+        "sandbox_available": {
+          "type": "boolean"
+        }
+      }
+    },
+    "resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "node_id",
+        "resource_ref",
+        "access"
+      ],
+      "properties": {
+        "node_id": {
+          "$ref": "#/$defs/id"
+        },
+        "resource_ref": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*:[A-Za-z0-9][A-Za-z0-9._/-]*$"
+        },
+        "access": {
+          "enum": [
+            "read",
+            "write"
+          ]
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approval_required",
+        "approval_verified",
+        "pending_claim_without_receipt"
+      ],
+      "properties": {
+        "approval_required": {
+          "type": "boolean"
+        },
+        "approval_verified": {
+          "type": "boolean"
+        },
+        "pending_claim_without_receipt": {
+          "type": "boolean"
+        }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_tokens",
+        "output_tokens",
+        "cost_microunits",
+        "latency_seconds",
+        "maximum_concurrency"
+      ],
+      "properties": {
+        "input_tokens": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "output_tokens": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "cost_microunits": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "latency_seconds": {
+          "$ref": "#/$defs/nonnegative"
+        },
+        "maximum_concurrency": {
+          "$ref": "#/$defs/nonnegative"
+        }
+      }
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "remote_required",
+        "assurance_available"
+      ],
+      "properties": {
+        "remote_required": {
+          "type": "boolean"
+        },
+        "assurance_available": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

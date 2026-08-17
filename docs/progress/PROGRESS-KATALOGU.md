@@ -179,6 +179,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 ## Faz 23 - Adaptive Routing shadow mode
 
 - `PHASE-23-KICKOFF.md`
+- `PHASE-23-ADAPTIVE-ROUTING-DOMAIN.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 

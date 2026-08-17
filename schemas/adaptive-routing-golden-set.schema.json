@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:adaptive-routing-golden-set:1",
+  "title": "KRCN Core adaptive routing golden fixture set",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "policy_revision",
+    "cases",
+    "grants_authority"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/adaptive-routing-golden-set.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "policy_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/case"
+      }
+    },
+    "grants_authority": {
+      "const": false
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,127}$"
+    },
+    "route": {
+      "enum": [
+        "blocked",
+        "coordinator-response",
+        "direct-read",
+        "parallel-dag",
+        "recovery-required",
+        "review-only",
+        "sequential-dag",
+        "single-worker"
+      ]
+    },
+    "scalar": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "overrides",
+        "expected_route",
+        "expected_reason"
+      ],
+      "properties": {
+        "case_id": {
+          "$ref": "#/$defs/id"
+        },
+        "overrides": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/scalar"
+          }
+        },
+        "expected_route": {
+          "$ref": "#/$defs/route"
+        },
+        "expected_reason": {
+          "$ref": "#/$defs/id"
+        }
+      }
+    }
+  }
+}

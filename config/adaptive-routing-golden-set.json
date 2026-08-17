@@ -1,0 +1,150 @@
+{
+  "schema_ref": "schemas/adaptive-routing-golden-set.schema.json",
+  "schema_version": 1,
+  "policy_revision": 1,
+  "cases": [
+    {
+      "case_id": "status-query",
+      "overrides": {
+        "task_type": "status",
+        "estimated_work_units": 0,
+        "context_size_tokens": 0
+      },
+      "expected_route": "coordinator-response",
+      "expected_reason": "coordinator-exception"
+    },
+    {
+      "case_id": "exact-symbol-lookup",
+      "overrides": {
+        "task_type": "exact-lookup",
+        "estimated_work_units": 1
+      },
+      "expected_route": "coordinator-response",
+      "expected_reason": "coordinator-exception"
+    },
+    {
+      "case_id": "small-read",
+      "overrides": {
+        "estimated_work_units": 1,
+        "context_size_tokens": 3000
+      },
+      "expected_route": "direct-read",
+      "expected_reason": "bounded-read-only-work"
+    },
+    {
+      "case_id": "long-single-problem",
+      "overrides": {},
+      "expected_route": "single-worker",
+      "expected_reason": "single-bounded-problem"
+    },
+    {
+      "case_id": "independent-documents",
+      "overrides": {
+        "independent_subproblem_count": 2,
+        "maximum_concurrency": 2
+      },
+      "expected_route": "parallel-dag",
+      "expected_reason": "independent-subproblems"
+    },
+    {
+      "case_id": "dependency-chain",
+      "overrides": {
+        "independent_subproblem_count": 2,
+        "dependency_depth": 2
+      },
+      "expected_route": "sequential-dag",
+      "expected_reason": "dependency-order-required"
+    },
+    {
+      "case_id": "approval-missing",
+      "overrides": {
+        "mutation_level": "core",
+        "approval_required": true,
+        "approval_verified": false
+      },
+      "expected_route": "review-only",
+      "expected_reason": "approval-required"
+    },
+    {
+      "case_id": "sandbox-missing",
+      "overrides": {
+        "mutation_level": "core",
+        "approval_required": true,
+        "approval_verified": true,
+        "sandbox_available": false
+      },
+      "expected_route": "blocked",
+      "expected_reason": "sandbox-required"
+    },
+    {
+      "case_id": "verifier-missing",
+      "overrides": {
+        "risk_level": "high",
+        "verifier_available": false
+      },
+      "expected_route": "blocked",
+      "expected_reason": "independent-verifier-required"
+    },
+    {
+      "case_id": "secret-remote",
+      "overrides": {
+        "data_classification": "secret",
+        "remote_required": true,
+        "provider_assurance_available": true
+      },
+      "expected_route": "blocked",
+      "expected_reason": "secret-remote-denied"
+    },
+    {
+      "case_id": "provider-assurance-missing",
+      "overrides": {
+        "remote_required": true,
+        "provider_assurance_available": false
+      },
+      "expected_route": "blocked",
+      "expected_reason": "provider-assurance-required"
+    },
+    {
+      "case_id": "pending-effect",
+      "overrides": {
+        "pending_claim_without_receipt": true
+      },
+      "expected_route": "recovery-required",
+      "expected_reason": "effect-reconciliation-required"
+    },
+    {
+      "case_id": "budget-exhausted",
+      "overrides": {
+        "cost_microunits": 0
+      },
+      "expected_route": "blocked",
+      "expected_reason": "budget-exhausted"
+    },
+    {
+      "case_id": "capability-missing",
+      "overrides": {
+        "available_capabilities": []
+      },
+      "expected_route": "blocked",
+      "expected_reason": "capability-missing"
+    },
+    {
+      "case_id": "work-context-missing",
+      "overrides": {
+        "project_id": null,
+        "work_item_id": null
+      },
+      "expected_route": "blocked",
+      "expected_reason": "work-context-required"
+    },
+    {
+      "case_id": "source-stale",
+      "overrides": {
+        "source_revision_current": false
+      },
+      "expected_route": "blocked",
+      "expected_reason": "source-revision-stale"
+    }
+  ],
+  "grants_authority": false
+}

@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:adaptive-routing-policy:1",
+  "title": "KRCN Core adaptive routing shadow policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "revision",
+    "mode",
+    "route_modes",
+    "task_types",
+    "risk_levels",
+    "mutation_levels",
+    "data_classifications",
+    "thresholds",
+    "invariants"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/adaptive-routing-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "mode": {
+      "const": "shadow"
+    },
+    "route_modes": {
+      "const": [
+        "blocked",
+        "coordinator-response",
+        "direct-read",
+        "parallel-dag",
+        "recovery-required",
+        "review-only",
+        "sequential-dag",
+        "single-worker"
+      ]
+    },
+    "task_types": {
+      "const": [
+        "analysis",
+        "exact-lookup",
+        "governance",
+        "implementation",
+        "recovery",
+        "research",
+        "status",
+        "verification"
+      ]
+    },
+    "risk_levels": {
+      "const": [
+        "critical",
+        "high",
+        "low",
+        "medium"
+      ]
+    },
+    "mutation_levels": {
+      "const": [
+        "core",
+        "external",
+        "none",
+        "runtime",
+        "user-data"
+      ]
+    },
+    "data_classifications": {
+      "const": [
+        "confidential-ip",
+        "internal",
+        "public",
+        "secret"
+      ]
+    },
+    "thresholds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "direct_read_max_work_units",
+        "direct_read_max_context_tokens",
+        "parallel_min_subproblems",
+        "parallel_min_concurrency"
+      ],
+      "properties": {
+        "direct_read_max_work_units": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "direct_read_max_context_tokens": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "parallel_min_subproblems": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "parallel_min_concurrency": {
+          "type": "integer",
+          "minimum": 2
+        }
+      }
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_grants_authority",
+        "enforcement_enabled",
+        "hard_gates_override_soft_routes",
+        "decision_axes_separate",
+        "unknown_fields_allowed",
+        "raw_content_allowed"
+      ],
+      "properties": {
+        "decision_grants_authority": {
+          "const": false
+        },
+        "enforcement_enabled": {
+          "const": false
+        },
+        "hard_gates_override_soft_routes": {
+          "const": true
+        },
+        "decision_axes_separate": {
+          "const": true
+        },
+        "unknown_fields_allowed": {
+          "const": false
+        },
+        "raw_content_allowed": {
+          "const": false
+        }
+      }
+    }
+  }
+}

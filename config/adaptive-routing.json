@@ -1,0 +1,59 @@
+{
+  "schema_ref": "schemas/adaptive-routing-policy.schema.json",
+  "schema_version": 1,
+  "revision": 1,
+  "mode": "shadow",
+  "route_modes": [
+    "blocked",
+    "coordinator-response",
+    "direct-read",
+    "parallel-dag",
+    "recovery-required",
+    "review-only",
+    "sequential-dag",
+    "single-worker"
+  ],
+  "task_types": [
+    "analysis",
+    "exact-lookup",
+    "governance",
+    "implementation",
+    "recovery",
+    "research",
+    "status",
+    "verification"
+  ],
+  "risk_levels": [
+    "critical",
+    "high",
+    "low",
+    "medium"
+  ],
+  "mutation_levels": [
+    "core",
+    "external",
+    "none",
+    "runtime",
+    "user-data"
+  ],
+  "data_classifications": [
+    "confidential-ip",
+    "internal",
+    "public",
+    "secret"
+  ],
+  "thresholds": {
+    "direct_read_max_work_units": 1,
+    "direct_read_max_context_tokens": 6000,
+    "parallel_min_subproblems": 2,
+    "parallel_min_concurrency": 2
+  },
+  "invariants": {
+    "decision_grants_authority": false,
+    "enforcement_enabled": false,
+    "hard_gates_override_soft_routes": true,
+    "decision_axes_separate": true,
+    "unknown_fields_allowed": false,
+    "raw_content_allowed": false
+  }
+}
