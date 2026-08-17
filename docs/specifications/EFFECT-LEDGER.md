@@ -43,3 +43,16 @@ reconcile edilmez.
 Claim, receipt ve reconciliation kayitlari ham prompt/output, source content,
 secret, credential veya fiziksel path icermez. Bilinmeyen alanlar ve digest
 tamper fail-closed reddedilir.
+
+## Durable exactly-once store
+
+`src/krcn_core/effect_ledger_store.py`, claim kimligi ve idempotency key icin
+veritabani uniqueness uygular. Ayni payload replay'i yeni execution hakki
+vermez; farkli payload conflict olur. Claim basina yalniz bir terminal receipt
+ve bir reconciliation tutulur. Receipt ve reconciliation bulunmayan claim
+`recovery-required` olarak raporlanir.
+
+Store `BEGIN IMMEDIATE`, foreign key, full synchronous commit ve explicit
+connection close kullanir. Symlink veya junction ancestor altinda veritabani
+acmaz. Reconciliation sonrasi gec receipt kabul edilmez; recovery karari
+sessiz retry yerine yeni kontrollu bir akisa birakilir.
