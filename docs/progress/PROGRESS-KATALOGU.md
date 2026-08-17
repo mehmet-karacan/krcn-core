@@ -216,6 +216,11 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 
 - `PHASE-27-KICKOFF.md`
 - `PHASE-27-DOMAIN-AND-CLIENTS.md`
+- `PHASE-27-CLOSURE.md`
+
+## Faz 28 - Opsiyonel Team Runtime ihtiyaç kapısı
+
+- `PHASE-28-KICKOFF.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 
