@@ -202,6 +202,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 - `PHASE-25-QUEUE-V2.md`
 - `PHASE-25-RESULT-BINDING.md`
 - `PHASE-25-RECOVERY-DOCTOR.md`
+- `PHASE-25-CLOSURE.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 

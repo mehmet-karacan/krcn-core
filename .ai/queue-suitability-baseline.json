@@ -3,8 +3,8 @@
   "schema_version": 1,
   "benchmark_id": "runtime-queue-sqlite-v1",
   "policy_id": "queue-suitability-v1",
-  "runtime_source_digest": "bc0a83fe973f3199b84ff19a08a6f75220823af69310f5bca30c9c9ac25a3f45",
-  "scheduler_policy_digest": "1f93492fd9b46e0c57781ea9053e07cd546389fe679b4b38cb4c156a731aabef",
+  "runtime_source_digest": "0818ce867ce4cad45e1e5a8478192f4511a8bebe5add4b097cda61dbbd8fb4ee",
+  "scheduler_policy_digest": "fb59bc58ec01a208a965b58eebfc54da6289d23a807fab62d0b0b9d97d16da58",
   "measurement_scope": "local synthetic reference workload",
   "execution_mode": "processes",
   "observed": [

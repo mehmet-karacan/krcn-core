@@ -3,7 +3,7 @@
   "schema_version": 1,
   "phase_id": "phase-25",
   "workstream_id": "validation-gate-and-effect-ledger",
-  "status": "active",
+  "status": "completed",
   "goal": "Mutation ve dış etki adımlarını pre-bound Validation Gate ve exactly-once Effect Claim/Receipt zinciriyle güvenli hale getirmek",
   "plan_ref": "docs/plans/PLAN-025-VALIDATION-GATE-EFFECT-LEDGER.md",
   "progress_refs": [
@@ -25,10 +25,11 @@
     "docs/progress/PHASE-25-DURABLE-LEDGER.md",
     "docs/progress/PHASE-25-QUEUE-V2.md",
     "docs/progress/PHASE-25-RESULT-BINDING.md",
-    "docs/progress/PHASE-25-RECOVERY-DOCTOR.md"
+    "docs/progress/PHASE-25-RECOVERY-DOCTOR.md",
+    "docs/progress/PHASE-25-CLOSURE.md"
   ],
   "next_actions": [
-    "worker verifier recovery ve doctor entegrasyonunu tamamla"
+    "Faz 26 icin ayri kickoff planini hazirla ve kullanici onayi bekle"
   ],
   "baseline_commit": "e05733f",
   "approval_gates": {
