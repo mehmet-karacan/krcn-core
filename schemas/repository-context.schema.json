@@ -113,6 +113,10 @@
         "execution_trace_schema",
         "validation_gate_boundary",
         "validation_gate_schema",
+        "effect_ledger_boundary",
+        "effect_claim_schema",
+        "effect_receipt_schema",
+        "effect_reconciliation_schema",
         "agent_result_envelope_boundary",
         "agent_result_envelope_schema",
         "native_agent_result_schema",
@@ -407,6 +411,18 @@
           "$ref": "#/$defs/repoPath"
         },
         "validation_gate_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "effect_ledger_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "effect_claim_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "effect_receipt_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "effect_reconciliation_schema": {
           "$ref": "#/$defs/repoPath"
         },
         "agent_result_envelope_boundary": {

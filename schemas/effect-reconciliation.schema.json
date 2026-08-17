@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:effect-reconciliation:1",
+  "title": "KRCN effect reconciliation record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "reconciliation_id",
+    "claim_id",
+    "receipt_id",
+    "outcome",
+    "evidence",
+    "reconciler_execution_identity_id",
+    "observed_at",
+    "safety",
+    "reconciliation_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/effect-reconciliation.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "reconciliation_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "claim_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "receipt_id": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "outcome": {
+      "enum": [
+        "effect-confirmed",
+        "effect-not-applied",
+        "effect-state-unknown"
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence_type",
+          "evidence_digest"
+        ],
+        "properties": {
+          "evidence_type": {
+            "enum": [
+              "artifact-digest",
+              "policy-decision",
+              "provider-receipt",
+              "state-observation",
+              "test-result"
+            ]
+          },
+          "evidence_digest": {
+            "$ref": "#/$defs/digest"
+          }
+        }
+      }
+    },
+    "reconciler_execution_identity_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "observed_at": {
+      "$ref": "#/$defs/time"
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grants_authority",
+        "permits_implicit_replay",
+        "contains_raw_payload",
+        "contains_physical_paths",
+        "contains_credentials"
+      ],
+      "properties": {
+        "grants_authority": {
+          "const": false
+        },
+        "permits_implicit_replay": {
+          "const": false
+        },
+        "contains_raw_payload": {
+          "const": false
+        },
+        "contains_physical_paths": {
+          "const": false
+        },
+        "contains_credentials": {
+          "const": false
+        }
+      }
+    },
+    "reconciliation_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "time": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$"
+    }
+  }
+}

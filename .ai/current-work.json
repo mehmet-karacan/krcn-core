@@ -20,10 +20,10 @@
     "docs/progress/PHASE-24-FAN-IN-TRACE.md",
     "docs/progress/PHASE-24-CLOSURE.md",
     "docs/progress/PHASE-25-KICKOFF.md",
-    "docs/progress/PHASE-25-VALIDATION-GATE.md"
+    "docs/progress/PHASE-25-VALIDATION-GATE.md",
+    "docs/progress/PHASE-25-EFFECT-CONTRACTS.md"
   ],
   "next_actions": [
-    "Effect Claim Receipt ve reconciliation domain sozlesmelerini ekle",
     "durable ledger ve queue v2 migrationini uygula",
     "worker verifier recovery ve doctor entegrasyonunu tamamla"
   ],
