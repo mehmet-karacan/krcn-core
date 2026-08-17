@@ -193,6 +193,10 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 - `PHASE-24-FAN-IN-TRACE.md`
 - `PHASE-24-CLOSURE.md`
 
+## Faz 25 - Validation Gate ve Generalized Effect Ledger
+
+- `PHASE-25-KICKOFF.md`
+
 ## Faz dışı operasyon ve düzeltme kayıtları
 
 - `JSON-BELGE-BICIMI.md`

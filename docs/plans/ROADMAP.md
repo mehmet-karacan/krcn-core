@@ -34,6 +34,9 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
   Receipt, worker/DAG/native compatibility, coordinator fan-in ve receipt
   tabanli Execution Trace aggregation mevcut authority sinirlarini koruyarak
   eklendi.
+- Faz 25 aktif. Pre-execution Validation Gate ile write/execute/network
+  effect'leri exactly-once Claim/Receipt, lease/fence ve recovery-required
+  sinirina baglaniyor.
 
 ## Temel kullanım modeli
 
