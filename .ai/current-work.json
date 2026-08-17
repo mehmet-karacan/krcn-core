@@ -3,7 +3,7 @@
   "schema_version": 1,
   "phase_id": "phase-26",
   "workstream_id": "outbound-assurance-and-worktree-sandbox",
-  "status": "active",
+  "status": "completed",
   "goal": "Remote veri paylasimini guncel assurance karariyla ve mutating agent calismasini exact detached worktree sandboxiyla fail-closed hale getirmek",
   "plan_ref": "docs/plans/PLAN-026-OUTBOUND-ASSURANCE-WORKTREE-SANDBOX.md",
   "progress_refs": [
@@ -30,10 +30,11 @@
     "docs/progress/PHASE-26-KICKOFF.md",
     "docs/progress/PHASE-26-OUTBOUND-ASSURANCE.md",
     "docs/progress/PHASE-26-WORKTREE-SANDBOX.md",
-    "docs/progress/PHASE-26-APPLICATION-CLI.md"
+    "docs/progress/PHASE-26-APPLICATION-CLI.md",
+    "docs/progress/PHASE-26-CLOSURE.md"
   ],
   "next_actions": [
-    "Faz 26 security matrisi tam regression ve kapanis kaydini tamamla"
+    "Faz 27 Markdown Implementation Delivery ve Enforcement kickoff planini baslat"
   ],
   "baseline_commit": "fb6d8c6",
   "approval_gates": {
