@@ -212,6 +212,10 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 - `PHASE-26-APPLICATION-CLI.md`
 - `PHASE-26-CLOSURE.md`
 
+## Faz 27 - Markdown Implementation Delivery ve Enforcement
+
+- `PHASE-27-KICKOFF.md`
+
 ## Faz dışı operasyon ve düzeltme kayıtları
 
 - `JSON-BELGE-BICIMI.md`

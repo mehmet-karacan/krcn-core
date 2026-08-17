@@ -1,11 +1,11 @@
 {
   "schema_ref": "schemas/current-work.schema.json",
   "schema_version": 1,
-  "phase_id": "phase-26",
-  "workstream_id": "outbound-assurance-and-worktree-sandbox",
-  "status": "completed",
-  "goal": "Remote veri paylasimini guncel assurance karariyla ve mutating agent calismasini exact detached worktree sandboxiyla fail-closed hale getirmek",
-  "plan_ref": "docs/plans/PLAN-026-OUTBOUND-ASSURANCE-WORKTREE-SANDBOX.md",
+  "phase_id": "phase-27",
+  "workstream_id": "markdown-implementation-delivery-and-enforcement",
+  "status": "active",
+  "goal": "Markdown arastirma raporunu exact sandbox patch test ve independent verifier bagli uygulama teslimine donusturmek",
+  "plan_ref": "docs/plans/PLAN-027-MARKDOWN-IMPLEMENTATION-DELIVERY.md",
   "progress_refs": [
     "docs/progress/PROGRESS-KATALOGU.md",
     "docs/progress/PHASE-23-KICKOFF.md",
@@ -31,12 +31,13 @@
     "docs/progress/PHASE-26-OUTBOUND-ASSURANCE.md",
     "docs/progress/PHASE-26-WORKTREE-SANDBOX.md",
     "docs/progress/PHASE-26-APPLICATION-CLI.md",
-    "docs/progress/PHASE-26-CLOSURE.md"
+    "docs/progress/PHASE-26-CLOSURE.md",
+    "docs/progress/PHASE-27-KICKOFF.md"
   ],
   "next_actions": [
-    "Faz 27 Markdown Implementation Delivery ve Enforcement kickoff planini baslat"
+    "implementation delivery domain sozlesmelerini uygula"
   ],
-  "baseline_commit": "fb6d8c6",
+  "baseline_commit": "2257b23",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,
