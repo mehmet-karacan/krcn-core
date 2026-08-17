@@ -13,10 +13,10 @@
     "docs/progress/PHASE-23-APPLICATION-CLI.md",
     "docs/progress/PHASE-23-COORDINATOR-SHADOW.md",
     "docs/progress/PHASE-23-CLOSURE.md",
-    "docs/progress/PHASE-24-KICKOFF.md"
+    "docs/progress/PHASE-24-KICKOFF.md",
+    "docs/progress/PHASE-24-DOMAIN-CONTRACTS.md"
   ],
   "next_actions": [
-    "Agent Result Envelope v2 ve Workflow Step Receipt strict domain sozlesmelerini uygula",
     "append-only receipt deposu ve replay conflict kontrollerini ekle",
     "worker, DAG ve native client adapterlarini compatibility penceresiyle bagla",
     "coordinator fan-in ve Execution Trace aggregation kabulunu tamamla"

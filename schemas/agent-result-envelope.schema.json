@@ -1,0 +1,480 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:agent-result-envelope:2",
+  "title": "KRCN Core bounded agent result envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "identity",
+    "decision_bindings",
+    "result",
+    "safety",
+    "envelope_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/agent-result-envelope.schema.json"
+    },
+    "schema_version": {
+      "const": 2
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "envelope_id",
+        "correlation_id",
+        "project_id",
+        "work_item_id",
+        "task_id",
+        "task_plan_id",
+        "step_id",
+        "queue_id",
+        "execution_identity_id",
+        "role"
+      ],
+      "properties": {
+        "envelope_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "correlation_id": {
+          "$ref": "#/$defs/id"
+        },
+        "project_id": {
+          "$ref": "#/$defs/id"
+        },
+        "work_item_id": {
+          "$ref": "#/$defs/id"
+        },
+        "task_id": {
+          "$ref": "#/$defs/id"
+        },
+        "task_plan_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "step_id": {
+          "$ref": "#/$defs/id"
+        },
+        "queue_id": {
+          "$ref": "#/$defs/nullableId"
+        },
+        "execution_identity_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "role": {
+          "enum": [
+            "worker",
+            "verifier",
+            "explorer"
+          ]
+        }
+      }
+    },
+    "decision_bindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "route_decision_id",
+        "delegation_decision_id",
+        "model_assignment_id",
+        "admission_decision_id"
+      ],
+      "properties": {
+        "route_decision_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "delegation_decision_id": {
+          "$ref": "#/$defs/nullableDigest"
+        },
+        "model_assignment_id": {
+          "$ref": "#/$defs/nullableId"
+        },
+        "admission_decision_id": {
+          "$ref": "#/$defs/nullableDigest"
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "summary",
+        "artifacts",
+        "evidence",
+        "effects",
+        "risks",
+        "failure",
+        "missing_step_ids",
+        "recommended_next_action",
+        "verification"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "completed",
+            "partial",
+            "failed",
+            "blocked",
+            "recovery-required",
+            "abstained"
+          ]
+        },
+        "summary": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "headline",
+            "findings"
+          ],
+          "properties": {
+            "headline": {
+              "$ref": "#/$defs/headline"
+            },
+            "findings": {
+              "type": "array",
+              "maxItems": 20,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "code",
+                  "statement"
+                ],
+                "properties": {
+                  "code": {
+                    "$ref": "#/$defs/code"
+                  },
+                  "statement": {
+                    "$ref": "#/$defs/statement"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "artifacts": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "artifact_id",
+              "artifact_type",
+              "artifact_digest"
+            ],
+            "properties": {
+              "artifact_id": {
+                "$ref": "#/$defs/id"
+              },
+              "artifact_type": {
+                "enum": [
+                  "patch",
+                  "report",
+                  "source",
+                  "test-result",
+                  "migration",
+                  "evidence"
+                ]
+              },
+              "artifact_digest": {
+                "$ref": "#/$defs/digest"
+              }
+            }
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "evidence_id",
+              "evidence_type",
+              "evidence_digest"
+            ],
+            "properties": {
+              "evidence_id": {
+                "$ref": "#/$defs/id"
+              },
+              "evidence_type": {
+                "enum": [
+                  "artifact-digest",
+                  "test-result",
+                  "state-observation",
+                  "policy-decision"
+                ]
+              },
+              "evidence_digest": {
+                "$ref": "#/$defs/digest"
+              }
+            }
+          }
+        },
+        "effects": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "effect_id",
+              "effect_type",
+              "claim_id",
+              "receipt_id",
+              "result_digest"
+            ],
+            "properties": {
+              "effect_id": {
+                "$ref": "#/$defs/id"
+              },
+              "effect_type": {
+                "enum": [
+                  "read",
+                  "write",
+                  "execute",
+                  "network"
+                ]
+              },
+              "claim_id": {
+                "$ref": "#/$defs/nullableDigest"
+              },
+              "receipt_id": {
+                "$ref": "#/$defs/nullableDigest"
+              },
+              "result_digest": {
+                "$ref": "#/$defs/nullableDigest"
+              }
+            }
+          }
+        },
+        "risks": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "risk_code",
+              "severity",
+              "statement",
+              "disposition"
+            ],
+            "properties": {
+              "risk_code": {
+                "$ref": "#/$defs/code"
+              },
+              "severity": {
+                "enum": [
+                  "low",
+                  "medium",
+                  "high",
+                  "critical"
+                ]
+              },
+              "statement": {
+                "$ref": "#/$defs/statement"
+              },
+              "disposition": {
+                "enum": [
+                  "open",
+                  "mitigated",
+                  "accepted",
+                  "blocked"
+                ]
+              }
+            }
+          }
+        },
+        "failure": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "category",
+                "retry_safety",
+                "failure_digest",
+                "last_verified_checkpoint_id"
+              ],
+              "properties": {
+                "category": {
+                  "$ref": "#/$defs/code"
+                },
+                "retry_safety": {
+                  "enum": [
+                    "replay-safe",
+                    "reconciliation-required",
+                    "non-replayable"
+                  ]
+                },
+                "failure_digest": {
+                  "$ref": "#/$defs/digest"
+                },
+                "last_verified_checkpoint_id": {
+                  "$ref": "#/$defs/nullableDigest"
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "missing_step_ids": {
+          "$ref": "#/$defs/ids"
+        },
+        "recommended_next_action": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "action_code",
+            "statement",
+            "required_role"
+          ],
+          "properties": {
+            "action_code": {
+              "$ref": "#/$defs/code"
+            },
+            "statement": {
+              "$ref": "#/$defs/statement"
+            },
+            "required_role": {
+              "enum": [
+                "coordinator",
+                "worker",
+                "verifier",
+                "human"
+              ]
+            }
+          }
+        },
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "required",
+            "validation_gate_id",
+            "verification_id",
+            "covered_worker_step_ids",
+            "verdict"
+          ],
+          "properties": {
+            "required": {
+              "type": "boolean"
+            },
+            "validation_gate_id": {
+              "$ref": "#/$defs/nullableDigest"
+            },
+            "verification_id": {
+              "$ref": "#/$defs/nullableDigest"
+            },
+            "covered_worker_step_ids": {
+              "$ref": "#/$defs/ids"
+            },
+            "verdict": {
+              "oneOf": [
+                {
+                  "enum": [
+                    "passed",
+                    "failed",
+                    "abstained"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grants_authority",
+        "contains_raw_prompt",
+        "contains_raw_model_output",
+        "contains_physical_paths",
+        "contains_credentials"
+      ],
+      "properties": {
+        "grants_authority": {
+          "const": false
+        },
+        "contains_raw_prompt": {
+          "const": false
+        },
+        "contains_raw_model_output": {
+          "const": false
+        },
+        "contains_physical_paths": {
+          "const": false
+        },
+        "contains_credentials": {
+          "const": false
+        }
+      }
+    },
+    "envelope_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,127}$"
+    },
+    "nullableId": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "nullableDigest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "code": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{0,63}$"
+    },
+    "headline": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    }
+  }
+}

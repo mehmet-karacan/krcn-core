@@ -111,6 +111,10 @@
         "finalized_handoff_schema",
         "execution_observability_boundary",
         "execution_trace_schema",
+        "agent_result_envelope_boundary",
+        "agent_result_envelope_schema",
+        "workflow_step_receipt_boundary",
+        "workflow_step_receipt_schema",
         "status_projection_schema",
         "execution_coordinator_boundary",
         "execution_coordination_plan_schema",
@@ -389,6 +393,18 @@
           "$ref": "#/$defs/repoPath"
         },
         "execution_trace_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "agent_result_envelope_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "agent_result_envelope_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "workflow_step_receipt_boundary": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "workflow_step_receipt_schema": {
           "$ref": "#/$defs/repoPath"
         },
         "status_projection_schema": {

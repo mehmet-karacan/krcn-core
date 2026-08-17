@@ -1,0 +1,328 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:workflow-step-receipt:1",
+  "title": "KRCN Core append-only workflow step receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "identity",
+    "actor",
+    "outcome",
+    "usage",
+    "provenance",
+    "time",
+    "safety",
+    "receipt_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/workflow-step-receipt.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "correlation_id",
+        "project_id",
+        "work_item_id",
+        "task_id",
+        "task_plan_id",
+        "step_id",
+        "queue_id",
+        "attempt_id",
+        "sequence",
+        "attempt_number"
+      ],
+      "properties": {
+        "receipt_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "correlation_id": {
+          "$ref": "#/$defs/id"
+        },
+        "project_id": {
+          "$ref": "#/$defs/id"
+        },
+        "work_item_id": {
+          "$ref": "#/$defs/id"
+        },
+        "task_id": {
+          "$ref": "#/$defs/id"
+        },
+        "task_plan_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "step_id": {
+          "$ref": "#/$defs/id"
+        },
+        "queue_id": {
+          "$ref": "#/$defs/nullableId"
+        },
+        "attempt_id": {
+          "$ref": "#/$defs/id"
+        },
+        "sequence": {
+          "$ref": "#/$defs/positiveInteger"
+        },
+        "attempt_number": {
+          "$ref": "#/$defs/positiveInteger"
+        }
+      }
+    },
+    "actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actor_kind",
+        "role",
+        "execution_identity_id",
+        "model_assignment_id",
+        "client_id"
+      ],
+      "properties": {
+        "actor_kind": {
+          "enum": [
+            "agent",
+            "code",
+            "human"
+          ]
+        },
+        "role": {
+          "enum": [
+            "worker",
+            "verifier",
+            "coordinator",
+            "test"
+          ]
+        },
+        "execution_identity_id": {
+          "$ref": "#/$defs/nullableDigest"
+        },
+        "model_assignment_id": {
+          "$ref": "#/$defs/nullableId"
+        },
+        "client_id": {
+          "$ref": "#/$defs/nullableId"
+        }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "input_digest",
+        "output_digest",
+        "failure_category",
+        "failure_digest"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "completed",
+            "failed",
+            "denied",
+            "timed-out",
+            "cancelled",
+            "recovery-required"
+          ]
+        },
+        "input_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "output_digest": {
+          "$ref": "#/$defs/nullableDigest"
+        },
+        "failure_category": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/code"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "failure_digest": {
+          "$ref": "#/$defs/nullableDigest"
+        }
+      }
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "duration_ms",
+        "input_tokens",
+        "output_tokens",
+        "cache_read_tokens",
+        "cache_write_tokens",
+        "cost_microunits",
+        "currency"
+      ],
+      "properties": {
+        "duration_ms": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "input_tokens": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "output_tokens": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "cache_read_tokens": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "cache_write_tokens": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "cost_microunits": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "currency": {
+          "oneOf": [
+            {
+              "enum": [
+                "TRY",
+                "USD",
+                "EUR"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "harness_revision",
+        "policy_revision",
+        "source_revision_digest",
+        "context_snapshot_digest",
+        "route_decision_id",
+        "validation_gate_id"
+      ],
+      "properties": {
+        "harness_revision": {
+          "$ref": "#/$defs/portableRef"
+        },
+        "policy_revision": {
+          "$ref": "#/$defs/portableRef"
+        },
+        "source_revision_digest": {
+          "$ref": "#/$defs/nullableDigest"
+        },
+        "context_snapshot_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "route_decision_id": {
+          "$ref": "#/$defs/digest"
+        },
+        "validation_gate_id": {
+          "$ref": "#/$defs/nullableDigest"
+        }
+      }
+    },
+    "time": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "started_at",
+        "finished_at"
+      ],
+      "properties": {
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grants_authority",
+        "contains_raw_payload",
+        "contains_physical_paths",
+        "contains_credentials"
+      ],
+      "properties": {
+        "grants_authority": {
+          "const": false
+        },
+        "contains_raw_payload": {
+          "const": false
+        },
+        "contains_physical_paths": {
+          "const": false
+        },
+        "contains_credentials": {
+          "const": false
+        }
+      }
+    },
+    "receipt_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,127}$"
+    },
+    "nullableId": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "nullableDigest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "code": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_]{0,63}$"
+    },
+    "portableRef": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "positiveInteger": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "nonNegativeInteger": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

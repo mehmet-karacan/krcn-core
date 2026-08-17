@@ -187,6 +187,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 ## Faz 24 - Agent Result Envelope ve Workflow Step Receipt
 
 - `PHASE-24-KICKOFF.md`
+- `PHASE-24-DOMAIN-CONTRACTS.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 
