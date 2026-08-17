@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:team-runtime-assessment:1",
+  "title": "KRCN optional team runtime assessment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "assessment_id",
+    "machine_count",
+    "concurrent_worker_count",
+    "cross_machine_claim_required",
+    "enterprise_needs",
+    "migration_owner_assigned",
+    "rollback_owner_assigned",
+    "operating_budget_approved",
+    "decision",
+    "reason_codes",
+    "postgresql_required",
+    "migration_allowed",
+    "provider_calls",
+    "authority_granted",
+    "assessment_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/team-runtime-assessment.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "assessment_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "machine_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "concurrent_worker_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "cross_machine_claim_required": {
+      "type": "boolean"
+    },
+    "enterprise_needs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "migration_owner_assigned": {
+      "type": "boolean"
+    },
+    "rollback_owner_assigned": {
+      "type": "boolean"
+    },
+    "operating_budget_approved": {
+      "type": "boolean"
+    },
+    "decision": {
+      "enum": [
+        "deferred",
+        "eligible-for-separate-plan"
+      ]
+    },
+    "reason_codes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string"
+      }
+    },
+    "postgresql_required": {
+      "type": "boolean"
+    },
+    "migration_allowed": {
+      "const": false
+    },
+    "provider_calls": {
+      "const": 0
+    },
+    "authority_granted": {
+      "const": false
+    },
+    "assessment_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

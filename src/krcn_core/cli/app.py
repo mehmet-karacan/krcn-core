@@ -648,6 +648,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Read runtime queue status from a JSON request",
     )
     _add_phase_four_options(runtime_status)
+    runtime_team_assess = runtime_commands.add_parser(
+        "team-assess",
+        help="Assess whether a separate multi-machine team runtime is justified",
+    )
+    _add_phase_four_options(runtime_team_assess)
     orchestrator = subparsers.add_parser(
         "orchestrator",
         help="Use the shared client-neutral orchestration service",
@@ -2107,8 +2112,9 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
         "enqueue", "migrate-v2", "claim", "heartbeat", "bind-effect-claim",
         "bind-effect-receipt", "complete", "fail", "recover", "reconcile",
         "status",
+        "team-assess",
     }:
-        operation = f"runtime.queue.{args.runtime_command}"
+        operation = "team-runtime.assess" if args.runtime_command == "team-assess" else f"runtime.queue.{args.runtime_command}"
         arguments = _load_phase_four_arguments(args.request_file)
     elif args.command == "oracle" and args.oracle_command in {
         "inspect", "collect", "refresh", "status", "index", "search",
@@ -2191,6 +2197,12 @@ def _run_phase_four_service_command(args: argparse.Namespace) -> int:
               len(plan.get("changed_paths", result.get("changed_paths", []))),
               len(plan.get("test_specs", result.get("test_results", []))),
               verification.get("status", result.get("status", "bekliyor")), "yok"]],
+        ))
+    elif response.operation == "team-runtime.assess":
+        assessment = response.data.get("assessment", {})
+        print(_text_table(
+            ["Karar", "Makine", "Worker", "Nedenler", "PostgreSQL", "Yetki"],
+            [[assessment.get("decision", "-"), assessment.get("machine_count", 0), assessment.get("concurrent_worker_count", 0), ", ".join(assessment.get("reason_codes", [])), "gerekli" if assessment.get("postgresql_required") else "hayir", "verilmedi"]],
         ))
     else:
         print(f"{response.status}\t{response.operation}")

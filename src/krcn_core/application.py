@@ -249,6 +249,7 @@ from .implementation_delivery import (
     verify_implementation_result,
 )
 from .route_enforcement import decide_route_enforcement, load_route_enforcement_policy
+from .team_runtime_need import assess_team_runtime_need, load_team_runtime_need_policy
 from .rescan import apply_rescan, prepare_rescan
 from .research_orchestration import (
     apply_research_result_import,
@@ -823,6 +824,24 @@ class KrcnApplicationService:
         except ValueError as exc:
             raise ApplicationServiceError(str(exc)) from exc
         return ("ok" if decision.payload["allowed"] else "blocked"), {"decision": decision.as_dict(), "authority_granted": False}
+
+    def _team_runtime_assess(self, request: ServiceRequest) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"machine_count", "concurrent_worker_count", "cross_machine_claim_required", "enterprise_needs", "migration_owner_assigned", "rollback_owner_assigned", "operating_budget_approved"})
+        if request.apply:
+            raise ApplicationServiceError("team runtime need assessment is read-only")
+        needs = request.arguments["enterprise_needs"]
+        if not isinstance(needs, list):
+            raise ApplicationServiceError("enterprise_needs must be a list")
+        try:
+            assessment = assess_team_runtime_need(
+                load_team_runtime_need_policy(self._repo_root),
+                machine_count=_nonnegative_integer_argument(request.arguments, "machine_count"), concurrent_worker_count=_nonnegative_integer_argument(request.arguments, "concurrent_worker_count"),
+                cross_machine_claim_required=request.arguments["cross_machine_claim_required"], enterprise_needs=tuple(needs),
+                migration_owner_assigned=request.arguments["migration_owner_assigned"], rollback_owner_assigned=request.arguments["rollback_owner_assigned"], operating_budget_approved=request.arguments["operating_budget_approved"],
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {"assessment": assessment.as_dict(), "next_stage": "separate-team-runtime-plan" if assessment.payload["decision"] == "eligible-for-separate-plan" else "keep-local-first", "authority_granted": False}
 
     def _routing_explain(
         self,

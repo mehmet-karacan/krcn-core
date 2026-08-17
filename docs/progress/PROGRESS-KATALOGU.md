@@ -221,6 +221,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 ## Faz 28 - Opsiyonel Team Runtime ihtiyaç kapısı
 
 - `PHASE-28-KICKOFF.md`
+- `PHASE-28-NEED-GATE.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 

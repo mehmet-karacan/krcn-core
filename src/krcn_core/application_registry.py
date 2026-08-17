@@ -118,6 +118,7 @@ HANDLER_METHODS: Mapping[str, str] = MappingProxyType(
         "runtime.queue.recover": "_runtime_queue_action",
         "runtime.queue.reconcile": "_runtime_queue_action",
         "runtime.queue.status": "_runtime_queue_status",
+        "team-runtime.assess": "_team_runtime_assess",
         "database.oracle.inspect": "_oracle_inspect",
         "database.oracle.collect": "_oracle_collect",
         "database.oracle.refresh": "_oracle_collect",

@@ -122,6 +122,7 @@ APPLICATION_OPERATIONS = frozenset(
         "runtime.queue.recover",
         "runtime.queue.reconcile",
         "runtime.queue.status",
+        "team-runtime.assess",
         "database.oracle.inspect",
         "database.oracle.collect",
         "database.oracle.refresh",

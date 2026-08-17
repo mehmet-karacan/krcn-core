@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:team-runtime-need-policy:1",
+  "title": "KRCN optional team runtime need policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "minimum_machine_count",
+    "require_cross_machine_claim",
+    "qualifying_enterprise_needs",
+    "migration_owner_required",
+    "rollback_owner_required",
+    "operating_budget_required",
+    "default_decision",
+    "authority_granted"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/team-runtime-need-policy.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "minimum_machine_count": {
+      "type": "integer",
+      "minimum": 2
+    },
+    "require_cross_machine_claim": {
+      "const": true
+    },
+    "qualifying_enterprise_needs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "central-artifact-store",
+          "high-availability",
+          "tenant-isolation",
+          "row-level-security"
+        ]
+      }
+    },
+    "migration_owner_required": {
+      "const": true
+    },
+    "rollback_owner_required": {
+      "const": true
+    },
+    "operating_budget_required": {
+      "const": true
+    },
+    "default_decision": {
+      "const": "deferred"
+    },
+    "authority_granted": {
+      "const": false
+    }
+  }
+}

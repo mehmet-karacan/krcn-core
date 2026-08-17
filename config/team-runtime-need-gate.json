@@ -1,0 +1,17 @@
+{
+  "schema_ref": "schemas/team-runtime-need-policy.schema.json",
+  "schema_version": 1,
+  "minimum_machine_count": 2,
+  "require_cross_machine_claim": true,
+  "qualifying_enterprise_needs": [
+    "central-artifact-store",
+    "high-availability",
+    "tenant-isolation",
+    "row-level-security"
+  ],
+  "migration_owner_required": true,
+  "rollback_owner_required": true,
+  "operating_budget_required": true,
+  "default_decision": "deferred",
+  "authority_granted": false
+}

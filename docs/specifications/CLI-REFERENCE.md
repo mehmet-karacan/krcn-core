@@ -539,3 +539,6 @@ yapilabilir.
 rapor veya patch içeriğini CLI request'ine koymadan host-bound exact teslim
 akışını açar. Default host yoksa apply fail-closed olur. `krcn routing
 enforcement --request-file <json>` ölçümlü rollout kararını salt okunur gösterir.
+
+`krcn runtime team-assess --request-file <json>` opsiyonel çok-makine runtime
+ihtiyacını salt okunur değerlendirir; PostgreSQL veya migration çalıştırmaz.
