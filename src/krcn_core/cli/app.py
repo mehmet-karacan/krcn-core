@@ -424,9 +424,10 @@ def build_parser() -> argparse.ArgumentParser:
     for operation, help_text in (
         ("decide", "Calculate a deterministic shadow route decision"),
         ("explain", "Compare a shadow decision with the observed coordinator route"),
+        ("record", "Persist one append-only shadow route decision"),
     ):
         command = routing_commands.add_parser(operation, help=help_text)
-        _add_phase_four_options(command)
+        _add_phase_four_options(command, mutation=operation == "record")
         command.set_defaults(format="text")
     skills = subparsers.add_parser(
         "skills",
@@ -1410,7 +1411,7 @@ def _research_action_text(
 def _phase22_text(response: ServiceResponse) -> str:
     data = response.data
     operation = response.operation
-    if operation in {"routing.decide", "routing.explain"}:
+    if operation in {"routing.decide", "routing.explain", "routing.record"}:
         decision = data.get("decision", {})
         selected = decision.get("selected", {}) if isinstance(decision, Mapping) else {}
         reasons = decision.get("reason_codes", []) if isinstance(decision, Mapping) else []
@@ -1420,13 +1421,19 @@ def _phase22_text(response: ServiceResponse) -> str:
             if isinstance(comparison, Mapping)
             else "-"
         )
+        persistence = (
+            "kaydedildi" if data.get("persisted") else
+            "exact plan gerekli" if operation == "routing.record" else
+            "salt okunur"
+        )
         return _text_table(
-            ["Gölge rota", "Eşzamanlılık", "Nedenler", "Karşılaştırma", "Yetki"],
+            ["Gölge rota", "Eşzamanlılık", "Nedenler", "Karşılaştırma", "Kayıt", "Yetki"],
             [[
                 selected.get("route_mode", "-"),
                 selected.get("maximum_concurrency", 1),
                 ", ".join(reasons) if isinstance(reasons, list) else "-",
                 comparison_status,
+                persistence,
                 "verilmedi",
             ]],
         )
@@ -1945,6 +1952,7 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
     elif args.command == "routing" and args.routing_command in {
         "decide",
         "explain",
+        "record",
     }:
         operation = f"routing.{args.routing_command}"
         arguments = _load_phase_four_arguments(args.request_file)
@@ -2079,6 +2087,7 @@ def _run_phase_four_service_command(args: argparse.Namespace) -> int:
         "autonomy.admission",
         "routing.decide",
         "routing.explain",
+        "routing.record",
         "model.benchmark-prepare",
         "model.benchmark-execute",
         "skill.evaluate",

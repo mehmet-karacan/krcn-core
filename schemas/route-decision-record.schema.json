@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:route-decision-record:1",
+  "title": "KRCN Core append-only adaptive route decision record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "route_decision_record_id",
+    "project_id",
+    "work_item_id",
+    "recorded_at",
+    "decision",
+    "append_only",
+    "grants_authority",
+    "record_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/route-decision-record.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "route_decision_record_id": {
+      "type": "string",
+      "pattern": "^route-[a-f0-9]{64}$"
+    },
+    "project_id": {
+      "$ref": "#/$defs/nullableId"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/nullableId"
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decision": {
+      "$ref": "urn:krcn:schemas:route-decision:1"
+    },
+    "append_only": {
+      "const": true
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "record_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "nullableId": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

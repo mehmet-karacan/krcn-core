@@ -4,6 +4,8 @@
 
 - `routing.decide` ve `routing.explain` transport-neutral application
   operasyonlari eklendi.
+- `routing.record` append-only runtime kaydi icin exact-plan ve idempotent apply
+  siniri ekledi.
 - CLI `krcn routing decide|explain --request-file ...` komutlari eklendi.
 - Text cikti JSON yerine okunur tabloyla golge rota, eszamanlilik, reason code,
   comparison ve authority sonucunu gosteriyor.
@@ -13,7 +15,6 @@
 
 ## Kalici sinir
 
-Bu yuzey route karari veya comparison kaydini user-data alanina yazmiyor.
-Mevcut execution davranisini degistirmiyor ve yeni authority uretmiyor.
-Coordinator shadow entegrasyonu ayri checkpointte bu karari mevcut trace ile
-baglayacak.
+`decide` ve `explain` salt okunurdur. `record` yalniz exact plan ve verified
+runtime mutation authorization ile append-only kanit yazar. Hicbiri mevcut
+execution davranisini degistirmez veya yeni authority uretmez.

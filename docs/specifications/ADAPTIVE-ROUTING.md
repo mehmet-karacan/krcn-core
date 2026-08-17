@@ -85,6 +85,20 @@ Shadow comparison maps detailed worker routes to the existing
 Every comparison declares `behavior_changed: false`. A mismatch is evidence
 for policy evaluation, not permission to enforce the new route.
 
+## Append-only decision record
+
+`routing.record` prepares an exact runtime-owned write for one deterministic
+route decision. The record key is derived from the decision digest, so the same
+decision is idempotent and a conflicting replacement is rejected. Planning is
+read-only. Apply requires the exact plan ID and a verified mutation
+authorization, but runtime ownership never turns the record into user,
+provider, model, queue, or execution authority.
+
+Records live under the project or global runtime routing collection. They keep
+the strict decision, portable scope identities, canonical observation time,
+and a record digest. They never contain raw prompts, model output, source
+content, secrets, or physical paths.
+
 ## Determinism and compatibility
 
 The policy, request, decision, and comparison records use strict field sets,

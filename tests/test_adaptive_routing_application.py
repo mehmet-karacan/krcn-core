@@ -8,6 +8,9 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
+from jsonschema import Draft202012Validator
+from referencing import Registry, Resource
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "src"))
@@ -138,6 +141,112 @@ class AdaptiveRoutingApplicationTests(unittest.TestCase):
                     apply=True,
                 )
             )
+
+    def test_append_only_route_record_requires_exact_plan_and_is_idempotent(self) -> None:
+        arguments = {
+            "route_request": self.route_request,
+            "recorded_at": "2026-08-17T12:00:00Z",
+        }
+        planned = self.service.execute(
+            ServiceRequest("cli", "routing.record", arguments)
+        )
+        self.assertEqual("planned", planned.status)
+        self.assertFalse(planned.data["persisted"])
+        plan = planned.data["plan"]
+        self.assertTrue(plan["append_only"])
+        self.assertFalse(plan["grants_authority"])
+        self.assertEqual(1, len(plan["effects"]))
+
+        with self.assertRaisesRegex(ApplicationServiceError, "exact plan"):
+            self.service.execute(
+                ServiceRequest(
+                    "cli",
+                    "routing.record",
+                    arguments,
+                    apply=True,
+                    expected_plan_id="f" * 64,
+                )
+            )
+        applied = self.service.execute(
+            ServiceRequest(
+                "cli",
+                "routing.record",
+                arguments,
+                apply=True,
+                expected_plan_id=plan["plan_id"],
+            )
+        )
+        self.assertEqual("applied", applied.status)
+        self.assertTrue(applied.data["persisted"])
+        record = applied.data["result"]["record"]
+        self.assertTrue(record["append_only"])
+        self.assertFalse(record["grants_authority"])
+        stored = self.store.list_records("route-decisions")
+        self.assertEqual(1, len(stored))
+
+        current = self.service.execute(
+            ServiceRequest("sdk", "routing.record", arguments)
+        )
+        self.assertEqual("current", current.status)
+        self.assertTrue(current.data["persisted"])
+        self.assertTrue(current.data["plan"]["no_op"])
+
+        route_schema = json.loads(
+            (REPO_ROOT / "schemas/route-decision.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        mutation_schema = json.loads(
+            (REPO_ROOT / "schemas/mutation-plan.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        registry = Registry().with_resources(
+            [
+                (
+                    "urn:krcn:schemas:route-decision:1",
+                    Resource.from_contents(route_schema),
+                ),
+                (
+                    "urn:krcn:schemas:mutation-plan:1",
+                    Resource.from_contents(mutation_schema),
+                ),
+            ]
+        )
+        record_schema = json.loads(
+            (REPO_ROOT / "schemas/route-decision-record.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(
+            [],
+            list(
+                Draft202012Validator(
+                    record_schema, registry=registry
+                ).iter_errors(record)
+            ),
+        )
+        plan_schema = json.loads(
+            (REPO_ROOT / "schemas/route-decision-record-plan.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(
+            [],
+            list(
+                Draft202012Validator(
+                    plan_schema, registry=registry
+                ).iter_errors(plan)
+            ),
+        )
+        with self.assertRaisesRegex(ValueError, "append-only"):
+            self.store.prepare_put(
+                "route-decisions",
+                record["route_decision_record_id"],
+                record,
+                expected_revision=1,
+                project_id="project-one",
+            )
         with self.assertRaisesRegex(ApplicationServiceError, "arguments"):
             self.service.execute(
                 ServiceRequest(
@@ -154,6 +263,19 @@ class AdaptiveRoutingApplicationTests(unittest.TestCase):
         )
         self.assertEqual("routing", parsed.command)
         self.assertEqual("decide", parsed.routing_command)
+        recorded = parser.parse_args(
+            [
+                "routing",
+                "record",
+                "--request-file",
+                "route.json",
+                "--apply",
+                "--expected-plan",
+                "a" * 64,
+            ]
+        )
+        self.assertEqual("record", recorded.routing_command)
+        self.assertTrue(recorded.apply)
 
         request_file = self.root / "route.json"
         request_file.write_text(

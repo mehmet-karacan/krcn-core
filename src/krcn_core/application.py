@@ -83,6 +83,10 @@ from .adaptive_routing import (
     load_adaptive_routing_policy,
     parse_route_request,
 )
+from .adaptive_routing_store import (
+    apply_route_decision_record,
+    prepare_route_decision_record,
+)
 from .execution_coordinator import prepare_execution_coordination
 from .memory_gate import (
     apply_memory_lifecycle,
@@ -644,6 +648,56 @@ class KrcnApplicationService:
             "shadow_only": True,
             "behavior_changed": False,
             "persisted": False,
+            "grants_authority": False,
+        }
+
+    def _routing_record(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"route_request", "recorded_at"},
+        )
+        try:
+            policy = load_adaptive_routing_policy(self._repo_root)
+            route_request = parse_route_request(
+                _object_argument(request.arguments, "route_request"), policy
+            )
+            decision = decide_route(policy, route_request)
+            plan = prepare_route_decision_record(
+                self._store,
+                policy,
+                decision,
+                recorded_at=_string_argument(request.arguments, "recorded_at"),
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        if not request.apply:
+            return "current" if plan.no_op else "planned", {
+                "decision": decision.as_dict(),
+                "plan": plan.public_summary(),
+                "persisted": plan.no_op,
+                "grants_authority": False,
+            }
+        record_plans = () if plan.write_plan is None else (plan.write_plan,)
+        authorizations = self._authorize_record_plans(
+            request,
+            plan.plan_id,
+            record_plans,
+        )
+        result = apply_route_decision_record(
+            self._store,
+            policy,
+            plan,
+            authorizations,
+            expected_plan_id=request.expected_plan_id or "",
+        )
+        return "current" if result["no_op"] else "applied", {
+            "decision": decision.as_dict(),
+            "plan": plan.public_summary(),
+            "result": result,
+            "persisted": True,
             "grants_authority": False,
         }
 

@@ -25,6 +25,7 @@ HANDLER_METHODS: Mapping[str, str] = MappingProxyType(
         "execution.coordinate": "_coordinate_execution",
         "routing.decide": "_routing_decide",
         "routing.explain": "_routing_explain",
+        "routing.record": "_routing_record",
         "model.resolve": "_resolve_model",
         "model.inventory": "_model_inventory",
         "model.list": "_list_models",

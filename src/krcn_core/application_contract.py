@@ -29,6 +29,7 @@ APPLICATION_OPERATIONS = frozenset(
         "execution.coordinate",
         "routing.decide",
         "routing.explain",
+        "routing.record",
         "model.resolve",
         "model.inventory",
         "model.list",

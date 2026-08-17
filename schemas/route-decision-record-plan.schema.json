@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:route-decision-record-plan:1",
+  "title": "KRCN Core adaptive route decision record exact plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "route_decision_record_id",
+    "route_decision_id",
+    "project_id",
+    "work_item_id",
+    "record_digest",
+    "no_op",
+    "append_only",
+    "grants_authority",
+    "effects"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/route-decision-record-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "route_decision_record_id": {
+      "type": "string",
+      "pattern": "^route-[a-f0-9]{64}$"
+    },
+    "route_decision_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "project_id": {
+      "$ref": "#/$defs/nullableId"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/nullableId"
+    },
+    "record_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "no_op": {
+      "type": "boolean"
+    },
+    "append_only": {
+      "const": true
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "effects": {
+      "type": "array",
+      "maxItems": 1,
+      "items": {
+        "$ref": "urn:krcn:schemas:mutation-plan:1"
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "nullableId": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

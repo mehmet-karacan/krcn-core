@@ -67,6 +67,8 @@ REQUIRED_CANONICAL_KEYS = {
     "adaptive_routing_golden_set_schema",
     "route_request_schema",
     "route_decision_schema",
+    "route_decision_record_schema",
+    "route_decision_record_plan_schema",
     "route_shadow_comparison_schema",
     "application_modularity_boundary",
     "source_relocation_boundary",

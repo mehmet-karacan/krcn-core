@@ -246,6 +246,8 @@ service used by every client:
 ```bash
 krcn routing decide --request-file <route-request.json>
 krcn routing explain --request-file <route-comparison.json>
+krcn routing record --request-file <route-record.json>
+krcn routing record --request-file <route-record.json> --apply --expected-plan <plan-id>
 ```
 
 The request file for `decide` contains a canonical `route_request` object.
@@ -254,9 +256,14 @@ existing coordinator route `delegated-dag`. The readable output shows the
 shadow route, concurrency, reason codes, comparison status, and that no
 authority was granted.
 
-Both operations are read-only. They do not enqueue work, select a model,
+`decide` and `explain` are read-only. They do not enqueue work, select a model,
 invoke a provider, alter delegation or admission, persist user data, or apply
-the shadow route. An `apply` request is rejected.
+the shadow route. An `apply` request is rejected for those operations.
+
+`record` is a separate exact-plan operation. Its request contains
+`route_request` and canonical UTC `recorded_at`. Apply writes one idempotent,
+append-only runtime record without changing execution behavior or granting
+authority.
 
 ## Measured autonomy, skill lifecycle, and memory hygiene
 
