@@ -522,6 +522,7 @@ class KrcnApplicationService:
             "task_authorization_id",
             "model_assignment_ids",
             "dag_execution_plan_id",
+            "route_request",
         }
         if set(request.arguments) - required - optional or not required.issubset(
             request.arguments
@@ -546,6 +547,16 @@ class KrcnApplicationService:
             )
             if not isinstance(model_assignments, list):
                 raise ValueError("model assignment ids must be a list")
+            route_request_payload = request.arguments.get("route_request")
+            adaptive_routing_policy = None
+            route_request = None
+            if route_request_payload is not None:
+                adaptive_routing_policy = load_adaptive_routing_policy(
+                    self._repo_root
+                )
+                route_request = parse_route_request(
+                    route_request_payload, adaptive_routing_policy
+                )
             plan = prepare_execution_coordination(
                 request_id=request.arguments["request_id"],
                 client_id=request.arguments["client_id"],
@@ -566,6 +577,8 @@ class KrcnApplicationService:
                 dag_execution_plan_id=request.arguments.get(
                     "dag_execution_plan_id"
                 ),
+                route_request=route_request,
+                adaptive_routing_policy=adaptive_routing_policy,
             )
         except ValueError as exc:
             raise ApplicationServiceError(

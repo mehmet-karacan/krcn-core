@@ -39,6 +39,12 @@
         "delegated-dag"
       ]
     },
+    "route_decision_id": {
+      "$ref": "#/$defs/nullableDigest"
+    },
+    "route_shadow_comparison_digest": {
+      "$ref": "#/$defs/nullableDigest"
+    },
     "status": {
       "const": "completed"
     },
@@ -76,6 +82,16 @@
       "oneOf": [
         {
           "$ref": "#/$defs/id"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nullableDigest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
         },
         {
           "type": "null"

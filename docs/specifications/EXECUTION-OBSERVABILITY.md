@@ -17,6 +17,7 @@ metadata produced across the execution lifecycle:
 
 - correlation, request, client, project, and Work Item identities;
 - intent, context, plan, evidence, and trace digests;
+- an optional adaptive route decision ID used only for shadow correlation;
 - delegation mode, model assignment IDs, queue IDs, and agent execution IDs;
 - verification identity and canonical status;
 - start, end, and derived duration;
@@ -32,6 +33,10 @@ invented.
 The trace digest covers every public field except itself. A trace with unknown
 fields, invalid aggregate totals, reversed timestamps, or modified evidence is
 rejected.
+
+Phase 23 traces may include `route_decision_id`. Older version 1 traces that do
+not contain this field remain readable and are normalized to a null route
+binding. A route decision never changes execution and never supplies authority.
 
 ## StatusProjection
 

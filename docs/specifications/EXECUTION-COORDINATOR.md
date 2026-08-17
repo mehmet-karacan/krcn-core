@@ -16,6 +16,13 @@ The transport-neutral `execution.coordinate` application operation exposes
 the same immutable preparation contract. It is read-only and does not dispatch
 the plan by itself.
 
+Phase 23 optionally binds a canonical adaptive route request to the root plan.
+The resulting route decision ID, shadow comparison digest, and comparison
+status are evidence only. The existing coordinator route remains authoritative
+and `route_shadow_behavior_changed` is always false. A route request whose
+request, client, project, Work Item, intent, or context identity differs from
+the root coordination request is rejected.
+
 ## Routes
 
 Exact lookup, status, and general conversation use `coordinator-response`.
@@ -46,3 +53,7 @@ The root plan, result, trace, status, snapshot, and handoff all grant no
 authority. A root plan with approval triggers remains `awaiting-approval` until
 the underlying exact plan receives its own valid approval envelope. The
 coordinator never turns composition into implicit mutation or provider access.
+
+Legacy root plans and results without Phase 23 route evidence remain readable.
+New plans always expose either complete shadow evidence or the explicit
+`not-observed` state with null route digests.

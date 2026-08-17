@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import sys
 import unittest
 from pathlib import Path
@@ -62,6 +63,28 @@ def _trace(**overrides: object):
 
 
 class ExecutionTraceTests(unittest.TestCase):
+    def test_trace_binds_optional_route_decision_and_reads_legacy_shape(self) -> None:
+        routed = _trace(route_decision_id="e" * 64)
+        self.assertEqual("e" * 64, routed.as_dict()["route_decision_id"])
+        self.assertEqual(routed, parse_execution_trace(routed.as_dict()))
+
+        legacy = _trace().as_dict()
+        legacy.pop("route_decision_id")
+        identity = {
+            key: value for key, value in legacy.items() if key != "trace_digest"
+        }
+        legacy["trace_digest"] = hashlib.sha256(
+            json.dumps(
+                identity,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+        parsed_legacy = parse_execution_trace(legacy).as_dict()
+        self.assertIsNone(parsed_legacy["route_decision_id"])
+        self.assertNotEqual(legacy["trace_digest"], parsed_legacy["trace_digest"])
+
     def test_trace_round_trip_matches_schema_and_carries_bounded_metrics(self) -> None:
         trace = _trace()
         payload = trace.as_dict()

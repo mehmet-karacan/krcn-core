@@ -19,6 +19,10 @@ from krcn_core.agent_execution_identity import (  # noqa: E402
     create_agent_execution_identity,
 )
 from krcn_core.agent_runtime import AgentRuntimeQueue, load_scheduler_policy  # noqa: E402
+from krcn_core.adaptive_routing import (  # noqa: E402
+    create_route_request,
+    load_adaptive_routing_policy,
+)
 from krcn_core.application import ServiceRequest, create_application_service  # noqa: E402
 from krcn_core.capability_registry import (  # noqa: E402
     load_capability_registry,
@@ -223,6 +227,59 @@ class ExecutionCoordinatorTests(unittest.TestCase):
             project_matched=True,
         )
 
+    def route_request(self, **overrides):
+        policy = load_adaptive_routing_policy(REPO_ROOT)
+        values = {
+            "request_id": "request-one",
+            "correlation_id": "routing-shadow-one",
+            "client_id": "codex",
+            "project_id": "sample",
+            "work_item_id": "task-one",
+            "source_revision_digest": "a" * 64,
+            "intent_digest": self.intent.intent_digest,
+            "context_digest": "b" * 64,
+            "task_type": "analysis",
+            "risk_level": "medium",
+            "mutation_level": "user-data",
+            "data_classification": "internal",
+            "estimated_work_units": 4,
+            "context_size_tokens": 8000,
+            "context_pressure_millis": 20,
+            "independent_subproblem_count": 2,
+            "dependency_depth": 1,
+            "required_capabilities": ["source-read"],
+            "available_capabilities": ["source-read"],
+            "deterministic_validator_available": True,
+            "verifier_available": True,
+            "sandbox_available": True,
+            "resources": [
+                {
+                    "node_id": "inspect-source",
+                    "resource_ref": "path:sample/src",
+                    "access": "read",
+                },
+                {
+                    "node_id": "inspect-tests",
+                    "resource_ref": "path:sample/tests",
+                    "access": "read",
+                },
+            ],
+            "approval_required": False,
+            "approval_verified": False,
+            "pending_claim_without_receipt": False,
+            "input_tokens": 12000,
+            "output_tokens": 4000,
+            "cost_microunits": 1000,
+            "latency_seconds": 120,
+            "maximum_concurrency": 2,
+            "remote_required": False,
+            "provider_assurance_available": False,
+            "source_revision_current": True,
+            "authoritative_context_required": True,
+        }
+        values.update(overrides)
+        return create_route_request(policy, **values), policy
+
     def root_plan(self):
         return prepare_execution_coordination(
             request_id="request-one",
@@ -316,6 +373,67 @@ class ExecutionCoordinatorTests(unittest.TestCase):
         self.assertEqual("completed", payload["status_projection"]["status"])
         self.assertEqual(4, len(payload["trace"]["agent_execution_ids"]))
         self.assertEqual({"completed": 4}, self.queue.status()["counts"])
+
+    def test_adaptive_route_is_shadow_evidence_and_never_changes_execution(self) -> None:
+        route_request, policy = self.route_request()
+        plan = prepare_execution_coordination(
+            request_id="request-one",
+            client_id="codex",
+            request_text=self.request_text,
+            work_class="project-analysis",
+            intent=self.intent,
+            context_digest="b" * 64,
+            delegation=self.delegation(),
+            project_id="sample",
+            work_item_id="task-one",
+            work_item_revision=1,
+            work_item_digest="a" * 64,
+            task_plan=self.task_plan,
+            task_authorization_id=self.task_authorization.authorization_id,
+            model_assignment_ids=["model-worker", "model-verifier"],
+            dag_execution_plan_id=self.dag_plan.plan_id,
+            route_request=route_request,
+            adaptive_routing_policy=policy,
+        )
+        payload = plan.as_dict()
+        self.assertEqual("delegated-dag", payload["route"])
+        self.assertFalse(payload["route_shadow_behavior_changed"])
+        self.assertIn(payload["route_shadow_status"], {"matched", "mismatch"})
+        self.assertEqual(64, len(payload["route_decision_id"]))
+
+        result = execute_execution_coordination(
+            plan,
+            ExecutionCoordinatorAdapters(self.dag_dispatch, self.continuity),
+            started_at="2026-08-15T18:00:00Z",
+            ended_at="2026-08-15T18:00:01Z",
+        ).as_dict()
+        self.assertEqual(payload["route_decision_id"], result["route_decision_id"])
+        self.assertEqual(
+            payload["route_decision_id"], result["trace"]["route_decision_id"]
+        )
+
+    def test_route_request_must_match_coordination_identity(self) -> None:
+        route_request, policy = self.route_request(context_digest="f" * 64)
+        with self.assertRaisesRegex(ExecutionCoordinatorError, "does not match"):
+            prepare_execution_coordination(
+                request_id="request-one",
+                client_id="codex",
+                request_text=self.request_text,
+                work_class="project-analysis",
+                intent=self.intent,
+                context_digest="b" * 64,
+                delegation=self.delegation(),
+                project_id="sample",
+                work_item_id="task-one",
+                work_item_revision=1,
+                work_item_digest="a" * 64,
+                task_plan=self.task_plan,
+                task_authorization_id=self.task_authorization.authorization_id,
+                model_assignment_ids=["model-worker", "model-verifier"],
+                dag_execution_plan_id=self.dag_plan.plan_id,
+                route_request=route_request,
+                adaptive_routing_policy=policy,
+            )
 
     def test_exact_lookup_schedules_zero_agents_and_uses_direct_trace(self) -> None:
         decision = self.delegation(work_class="exact-lookup")
@@ -535,6 +653,17 @@ class ExecutionCoordinatorTests(unittest.TestCase):
             expected.as_dict(),
             response.data["coordination_plan"],
         )
+
+        route_request, _ = self.route_request()
+        routed_arguments = dict(arguments)
+        routed_arguments["route_request"] = route_request.as_dict()
+        routed = service.execute(
+            ServiceRequest("sdk", "execution.coordinate", routed_arguments)
+        )
+        routed_plan = routed.data["coordination_plan"]
+        self.assertEqual("delegated-dag", routed_plan["route"])
+        self.assertIsNotNone(routed_plan["route_decision_id"])
+        self.assertFalse(routed_plan["route_shadow_behavior_changed"])
 
 
 if __name__ == "__main__":

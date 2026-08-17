@@ -105,6 +105,7 @@ TRACE_KEYS = {
     "intent_digest",
     "context_digest",
     "plan_id",
+    "route_decision_id",
     "approval_envelope_id",
     "delegation_mode",
     "model_assignment_ids",
@@ -295,6 +296,7 @@ def build_execution_trace(
     project_id: str | None = None,
     work_item_id: str | None = None,
     plan_id: str | None = None,
+    route_decision_id: str | None = None,
     approval_envelope_id: str | None = None,
     delegation_mode: str = "direct",
     model_assignment_ids: Sequence[str] = (),
@@ -344,6 +346,9 @@ def build_execution_trace(
         "intent_digest": _digest_value(intent_digest, "intent digest"),
         "context_digest": _digest_value(context_digest, "context digest"),
         "plan_id": _digest_value(plan_id, "plan id", nullable=True),
+        "route_decision_id": _digest_value(
+            route_decision_id, "route decision id", nullable=True
+        ),
         "approval_envelope_id": _identifier(
             approval_envelope_id, "approval envelope id", nullable=True
         ),
@@ -386,7 +391,9 @@ def parse_execution_trace(payload: object) -> ExecutionTrace:
 
     if not isinstance(payload, Mapping):
         raise ExecutionObservabilityError("execution trace must be an object")
-    _exact_keys(payload, TRACE_KEYS, "execution trace")
+    legacy_without_route = set(payload) == TRACE_KEYS - {"route_decision_id"}
+    if not legacy_without_route:
+        _exact_keys(payload, TRACE_KEYS, "execution trace")
     if payload.get("schema_ref") != "schemas/execution-trace.schema.json":
         raise ExecutionObservabilityError("execution trace schema reference is invalid")
     if payload.get("schema_version") != 1:
@@ -439,6 +446,7 @@ def parse_execution_trace(payload: object) -> ExecutionTrace:
         intent_digest=payload.get("intent_digest"),
         context_digest=payload.get("context_digest"),
         plan_id=payload.get("plan_id"),
+        route_decision_id=payload.get("route_decision_id"),
         approval_envelope_id=payload.get("approval_envelope_id"),
         delegation_mode=payload.get("delegation_mode"),
         model_assignment_ids=payload.get("model_assignment_ids"),
@@ -455,7 +463,13 @@ def parse_execution_trace(payload: object) -> ExecutionTrace:
         cache_hit=payload.get("cache_hit"),
         failure_code=payload.get("failure_code"),
     )
-    if rebuilt.as_dict() != dict(payload):
+    rebuilt_payload = rebuilt.as_dict()
+    if legacy_without_route:
+        rebuilt_payload.pop("route_decision_id")
+        rebuilt_payload["trace_digest"] = _digest(
+            rebuilt_payload, "trace_digest"
+        )
+    if rebuilt_payload != dict(payload):
         raise ExecutionObservabilityError("execution trace content or digest is invalid")
     return rebuilt
 

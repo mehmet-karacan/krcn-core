@@ -8,6 +8,13 @@ import unicodedata
 from dataclasses import dataclass
 from typing import Callable, Mapping, Sequence
 
+from .adaptive_routing import (
+    AdaptiveRoutingPolicy,
+    RouteRequest,
+    compare_shadow_route,
+    decide_route,
+    parse_route_request,
+)
 from .continuity import (
     ContinuitySnapshot,
     FinalizedHandoff,
@@ -170,6 +177,8 @@ def prepare_execution_coordination(
     task_authorization_id: str | None = None,
     model_assignment_ids: Sequence[str] = (),
     dag_execution_plan_id: str | None = None,
+    route_request: RouteRequest | None = None,
+    adaptive_routing_policy: AdaptiveRoutingPolicy | None = None,
 ) -> ExecutionCoordinationPlan:
     """Bind existing stage decisions without replacing their policy owners."""
 
@@ -301,6 +310,51 @@ def prepare_execution_coordination(
     approval_triggers = (
         list(checked_plan.approval_triggers) if checked_plan is not None else []
     )
+    route_decision_id: str | None = None
+    route_shadow_comparison_digest: str | None = None
+    route_shadow_status = "not-observed"
+    if route_request is not None or adaptive_routing_policy is not None:
+        if route_request is None or adaptive_routing_policy is None:
+            raise ExecutionCoordinatorError(
+                "adaptive routing shadow inputs are incomplete"
+            )
+        try:
+            checked_route_request = parse_route_request(
+                route_request.as_dict(), adaptive_routing_policy
+            )
+            route_request_payload = checked_route_request.as_dict()
+            if (
+                route_request_payload["request_id"] != request_id
+                or route_request_payload["client_id"] != client_id
+                or route_request_payload["project_id"] != project_id
+                or route_request_payload["work_item_id"] != work_item_id
+                or route_request_payload["intent_digest"]
+                != checked_intent.intent_digest
+                or route_request_payload["context_digest"] != context_digest
+            ):
+                raise ExecutionCoordinatorError(
+                    "adaptive route request does not match coordination"
+                )
+            shadow_decision = decide_route(
+                adaptive_routing_policy, checked_route_request
+            )
+            comparison = compare_shadow_route(
+                adaptive_routing_policy,
+                shadow_decision,
+                observed_route=route,
+            )
+        except ExecutionCoordinatorError:
+            raise
+        except ValueError as exc:
+            raise ExecutionCoordinatorError(
+                "adaptive routing shadow decision is invalid"
+            ) from exc
+        route_decision_id = shadow_decision.decision_digest
+        comparison_payload = comparison.as_dict()
+        route_shadow_comparison_digest = str(
+            comparison_payload["comparison_digest"]
+        )
+        route_shadow_status = str(comparison_payload["comparison_status"])
     identity = {
         "request_id": request_id,
         "client_id": client_id,
@@ -322,6 +376,10 @@ def prepare_execution_coordination(
         "approval_triggers": approval_triggers,
         "route": route,
         "status": status,
+        "route_decision_id": route_decision_id,
+        "route_shadow_comparison_digest": route_shadow_comparison_digest,
+        "route_shadow_status": route_shadow_status,
+        "route_shadow_behavior_changed": False,
     }
     correlation_id = "execution-" + _digest(identity)[:24]
     payload: dict[str, object] = {
@@ -370,10 +428,20 @@ def parse_execution_coordination_plan(payload: object) -> ExecutionCoordinationP
         "grants_authority",
         "plan_id",
     }
-    if not isinstance(payload, Mapping) or set(payload) != expected:
+    route_fields = {
+        "route_decision_id",
+        "route_shadow_comparison_digest",
+        "route_shadow_status",
+        "route_shadow_behavior_changed",
+    }
+    if not isinstance(payload, Mapping) or set(payload) not in {
+        frozenset(expected),
+        frozenset(expected | route_fields),
+    }:
         raise ExecutionCoordinatorError(
             "execution coordination plan fields are invalid"
         )
+    legacy_without_route = set(payload) == expected
     if (
         payload.get("schema_ref")
         != "schemas/execution-coordination-plan.schema.json"
@@ -405,6 +473,34 @@ def parse_execution_coordination_plan(payload: object) -> ExecutionCoordinationP
         "dag_execution_plan_id",
     ):
         _sha256(payload.get(field), field, nullable=True)
+    if not legacy_without_route:
+        route_decision_id = _sha256(
+            payload.get("route_decision_id"), "route decision id", nullable=True
+        )
+        comparison_digest = _sha256(
+            payload.get("route_shadow_comparison_digest"),
+            "route shadow comparison digest",
+            nullable=True,
+        )
+        shadow_status = payload.get("route_shadow_status")
+        if shadow_status not in {
+            "matched",
+            "mismatch",
+            "not-comparable",
+            "not-observed",
+        } or payload.get("route_shadow_behavior_changed") is not False:
+            raise ExecutionCoordinatorError(
+                "execution coordination route shadow fields are invalid"
+            )
+        if shadow_status == "not-observed":
+            if route_decision_id is not None or comparison_digest is not None:
+                raise ExecutionCoordinatorError(
+                    "unobserved route shadow cannot carry evidence"
+                )
+        elif route_decision_id is None or comparison_digest is None:
+            raise ExecutionCoordinatorError(
+                "observed route shadow evidence is incomplete"
+            )
     _identifiers(payload.get("model_assignment_ids"), "model assignment ids")
     _identifiers(payload.get("approval_triggers"), "approval triggers")
     steps = payload.get("step_bindings")
@@ -648,6 +744,7 @@ def finalize_execution_coordination(
         intent_digest=str(payload["intent_digest"]),
         context_digest=str(payload["context_digest"]),
         plan_id=checked_plan.plan_id,
+        route_decision_id=payload.get("route_decision_id"),
         approval_envelope_id=approval_envelope_id,
         delegation_mode=delegation_mode,
         model_assignment_ids=payload["model_assignment_ids"],
@@ -682,6 +779,10 @@ def finalize_execution_coordination(
         "correlation_id": payload["correlation_id"],
         "plan_id": checked_plan.plan_id,
         "route": checked_plan.route,
+        "route_decision_id": payload.get("route_decision_id"),
+        "route_shadow_comparison_digest": payload.get(
+            "route_shadow_comparison_digest"
+        ),
         "status": "completed",
         "evidence_digest": evidence_digest,
         "verification_id": verification_id,
@@ -717,10 +818,18 @@ def parse_execution_coordination_result(
         "grants_authority",
         "result_digest",
     }
-    if not isinstance(payload, Mapping) or set(payload) != expected:
+    route_fields = {
+        "route_decision_id",
+        "route_shadow_comparison_digest",
+    }
+    if not isinstance(payload, Mapping) or set(payload) not in {
+        frozenset(expected),
+        frozenset(expected | route_fields),
+    }:
         raise ExecutionCoordinatorError(
             "execution coordination result fields are invalid"
         )
+    legacy_without_route = set(payload) == expected
     if (
         payload.get("schema_ref")
         != "schemas/execution-coordination-result.schema.json"
@@ -740,6 +849,23 @@ def parse_execution_coordination_result(
     evidence_digest = str(
         _sha256(payload.get("evidence_digest"), "evidence digest")
     )
+    route_decision_id = None
+    route_shadow_comparison_digest = None
+    if not legacy_without_route:
+        route_decision_id = _sha256(
+            payload.get("route_decision_id"), "route decision id", nullable=True
+        )
+        route_shadow_comparison_digest = _sha256(
+            payload.get("route_shadow_comparison_digest"),
+            "route shadow comparison digest",
+            nullable=True,
+        )
+        if (route_decision_id is None) != (
+            route_shadow_comparison_digest is None
+        ):
+            raise ExecutionCoordinatorError(
+                "execution coordination route evidence is incomplete"
+            )
     for field in (
         "verification_id",
         "continuity_snapshot_id",
@@ -758,6 +884,7 @@ def parse_execution_coordination_result(
     if (
         trace_payload["correlation_id"] != correlation_id
         or trace_payload["plan_id"] != plan_id
+        or trace_payload.get("route_decision_id") != route_decision_id
         or trace_payload["evidence_digest"] != evidence_digest
         or trace_payload["status"] != "completed"
         or status_payload["correlation_id"] != correlation_id

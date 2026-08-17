@@ -67,6 +67,16 @@
     "plan_id": {
       "$ref": "#/$defs/nullableDigest"
     },
+    "route_decision_id": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "approval_envelope_id": {
       "$ref": "#/$defs/nullableIdentifier"
     },

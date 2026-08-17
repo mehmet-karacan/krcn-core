@@ -145,6 +145,23 @@
         "blocked"
       ]
     },
+    "route_decision_id": {
+      "$ref": "#/$defs/nullableDigest"
+    },
+    "route_shadow_comparison_digest": {
+      "$ref": "#/$defs/nullableDigest"
+    },
+    "route_shadow_status": {
+      "enum": [
+        "matched",
+        "mismatch",
+        "not-comparable",
+        "not-observed"
+      ]
+    },
+    "route_shadow_behavior_changed": {
+      "const": false
+    },
     "agent_calls_planned": {
       "type": "integer",
       "minimum": 0

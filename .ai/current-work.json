@@ -10,13 +10,13 @@
     "docs/progress/PROGRESS-KATALOGU.md",
     "docs/progress/PHASE-23-KICKOFF.md",
     "docs/progress/PHASE-23-ADAPTIVE-ROUTING-DOMAIN.md",
-    "docs/progress/PHASE-23-APPLICATION-CLI.md"
+    "docs/progress/PHASE-23-APPLICATION-CLI.md",
+    "docs/progress/PHASE-23-COORDINATOR-SHADOW.md"
   ],
   "next_actions": [
-    "adaptive routing domain, policy ve strict schema sozlesmelerini uygula",
-    "routing application ve CLI yuzeylerini shadow-only olarak bagla",
-    "Execution Coordinator ve Execution Trace entegrasyonunu davranis degistirmeden tamamla",
-    "golden routing, tam regression ve bagimsiz kabul kanitlarini kaydet"
+    "golden routing ve coordinator shadow entegrasyonunu tam regression ile dogrula",
+    "Faz 23 kapanis ve bagimsiz kabul kanitlarini kaydet",
+    "dev main checkpointini pushla ve uretim klonu ile CLI esitlemesini planla"
   ],
   "baseline_commit": "c111a9a",
   "approval_gates": {
