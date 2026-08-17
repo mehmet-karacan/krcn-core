@@ -27,10 +27,11 @@
     "docs/progress/PHASE-25-RESULT-BINDING.md",
     "docs/progress/PHASE-25-RECOVERY-DOCTOR.md",
     "docs/progress/PHASE-25-CLOSURE.md",
-    "docs/progress/PHASE-26-KICKOFF.md"
+    "docs/progress/PHASE-26-KICKOFF.md",
+    "docs/progress/PHASE-26-OUTBOUND-ASSURANCE.md"
   ],
   "next_actions": [
-    "provider assurance ve outbound decision domain sozlesmelerini uygula"
+    "detached worktree sandbox ve patch artifact sozlesmelerini uygula"
   ],
   "baseline_commit": "fb6d8c6",
   "approval_gates": {

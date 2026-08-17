@@ -207,6 +207,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 ## Faz 26 - Outbound Assurance ve Worktree Sandbox
 
 - `PHASE-26-KICKOFF.md`
+- `PHASE-26-OUTBOUND-ASSURANCE.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 

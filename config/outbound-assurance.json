@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "default_action": "deny",
+  "classifications": [
+    "public",
+    "internal",
+    "confidential-ip",
+    "secret"
+  ],
+  "assurance_required_for": [
+    "internal",
+    "confidential-ip"
+  ],
+  "maximum_assurance_age_seconds": 86400,
+  "secret_remote_action": "deny",
+  "canary_required": true
+}

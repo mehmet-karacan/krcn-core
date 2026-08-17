@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:outbound-data-decision:1",
+  "title": "KRCN Core outbound data decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "decision_id",
+    "provider_request_id",
+    "provider_id",
+    "payload_digest",
+    "data_categories",
+    "assurance_profile_id",
+    "assurance_profile_digest",
+    "evaluated_at",
+    "verdict",
+    "reason_codes",
+    "contains_payload",
+    "grants_authority",
+    "decision_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/outbound-data-decision.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "decision_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "provider_request_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "provider_id": {
+      "$ref": "#/$defs/id"
+    },
+    "payload_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "data_categories": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "public",
+          "internal",
+          "confidential-ip",
+          "secret"
+        ]
+      }
+    },
+    "assurance_profile_id": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/id"
+        }
+      ]
+    },
+    "assurance_profile_digest": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/digest"
+        }
+      ]
+    },
+    "evaluated_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "verdict": {
+      "enum": [
+        "allowed-local",
+        "allowed-remote",
+        "blocked"
+      ]
+    },
+    "reason_codes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "contains_payload": {
+      "const": false
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "decision_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}
