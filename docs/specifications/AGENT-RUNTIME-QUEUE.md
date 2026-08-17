@@ -55,6 +55,15 @@ Version 1 rows migrate with `ledger_required=0`. This preserves old queue
 history without retroactively inventing a gate or receipt. New governed
 workers use the version 2 binding explicitly.
 
+New non-read enqueue requests carry the complete Validation Gate payload, not
+only its digest. A governed claim returns `handler_execution_allowed=false`.
+Only after the matching durable claim is bound under the current lease/fence
+does the queue return `handler_execution_allowed=true`.
+
+The v1-to-v2 migration records a forward-only journal row with the pre-state
+digest in the same SQLite transaction as the additive columns and metadata
+revision. No destructive downgrade is attempted.
+
 ## Retry and recovery
 
 - A read-only attempt can be replayed after expiry when retry capacity remains.

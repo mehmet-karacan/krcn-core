@@ -72,6 +72,9 @@ class EffectLedgerStoreTests(unittest.TestCase):
         reopened = EffectLedgerStore(self.path)
         self.assertTrue(reopened.claim_status(claim.claim_id)["recovery_required"])
         self.assertEqual((claim.claim_id,), reopened.recovery_required_claims())
+        report = reopened.doctor_report()
+        self.assertTrue(report["integrity_verified"])
+        self.assertEqual(1, report["recovery_required_count"])
 
     def test_same_idempotency_key_conflicting_claim_is_rejected(self) -> None:
         gate, claim = make_claim()
@@ -104,6 +107,7 @@ class EffectLedgerStoreTests(unittest.TestCase):
         status = self.store.claim_status(claim.claim_id)
         self.assertFalse(status["recovery_required"])
         self.assertEqual("completed", status["receipt_status"])
+        self.assertEqual(0, self.store.doctor_report()["recovery_required_count"])
         conflict = build_effect_receipt(
             claim=claim, outcome="failed", retry_safety="replay-safe", failure_category="adapter-failure",
             failure_digest=sha("8"), finished_at="2026-08-17T15:02:01.000Z", observed_fencing_token=2,

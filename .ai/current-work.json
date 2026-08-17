@@ -24,7 +24,8 @@
     "docs/progress/PHASE-25-EFFECT-CONTRACTS.md",
     "docs/progress/PHASE-25-DURABLE-LEDGER.md",
     "docs/progress/PHASE-25-QUEUE-V2.md",
-    "docs/progress/PHASE-25-RESULT-BINDING.md"
+    "docs/progress/PHASE-25-RESULT-BINDING.md",
+    "docs/progress/PHASE-25-RECOVERY-DOCTOR.md"
   ],
   "next_actions": [
     "worker verifier recovery ve doctor entegrasyonunu tamamla"

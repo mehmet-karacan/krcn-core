@@ -259,3 +259,59 @@ class EffectLedgerStore:
             row = connection.execute("PRAGMA integrity_check").fetchone()
             foreign = connection.execute("PRAGMA foreign_key_check").fetchall()
             return bool(row and row[0] == "ok" and not foreign)
+
+    def doctor_report(self) -> dict[str, object]:
+        issues: list[dict[str, object]] = []
+        counts = {"claims": 0, "receipts": 0, "reconciliations": 0}
+        recovery: list[str] = []
+        with self._connection() as connection:
+            integrity = connection.execute("PRAGMA integrity_check").fetchone()
+            foreign = connection.execute("PRAGMA foreign_key_check").fetchall()
+            if not integrity or integrity[0] != "ok" or foreign:
+                issues.append({"issue_code": "sqlite-integrity", "claim_id": None})
+            claims = {}
+            for row in connection.execute("SELECT claim_id,payload_json FROM effect_claims ORDER BY claim_id"):
+                counts["claims"] += 1
+                try:
+                    claim = parse_effect_claim(json.loads(row["payload_json"]))
+                    if claim.claim_id != row["claim_id"]:
+                        raise ValueError("claim identity mismatch")
+                    claims[claim.claim_id] = claim
+                except (ValueError, json.JSONDecodeError):
+                    issues.append({"issue_code": "invalid-claim", "claim_id": str(row["claim_id"])})
+            receipt_claims = set()
+            for row in connection.execute("SELECT claim_id,payload_json FROM effect_receipts ORDER BY claim_id"):
+                counts["receipts"] += 1
+                try:
+                    claim = claims.get(str(row["claim_id"]))
+                    parse_effect_receipt(json.loads(row["payload_json"]), claim=claim)
+                    if claim is None:
+                        raise ValueError("receipt claim unavailable")
+                    receipt_claims.add(str(row["claim_id"]))
+                except (ValueError, json.JSONDecodeError):
+                    issues.append({"issue_code": "invalid-receipt", "claim_id": str(row["claim_id"])})
+            reconciled_claims = set()
+            for row in connection.execute("SELECT claim_id,payload_json FROM effect_reconciliations ORDER BY claim_id"):
+                counts["reconciliations"] += 1
+                try:
+                    claim = claims.get(str(row["claim_id"]))
+                    receipt_row = connection.execute(
+                        "SELECT payload_json FROM effect_receipts WHERE claim_id=?", (row["claim_id"],)
+                    ).fetchone()
+                    receipt = None if receipt_row is None or claim is None else parse_effect_receipt(json.loads(receipt_row["payload_json"]), claim=claim)
+                    parse_effect_reconciliation(json.loads(row["payload_json"]), claim=claim, receipt=receipt)
+                    if claim is None:
+                        raise ValueError("reconciliation claim unavailable")
+                    reconciled_claims.add(str(row["claim_id"]))
+                except (ValueError, json.JSONDecodeError):
+                    issues.append({"issue_code": "invalid-reconciliation", "claim_id": str(row["claim_id"])})
+            recovery = sorted(set(claims) - receipt_claims - reconciled_claims)
+        return {
+            "integrity_verified": not issues,
+            "counts": counts,
+            "recovery_required_claim_ids": recovery,
+            "recovery_required_count": len(recovery),
+            "issues": issues,
+            "paths_disclosed": False,
+            "grants_authority": False,
+        }

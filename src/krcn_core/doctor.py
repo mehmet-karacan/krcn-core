@@ -13,6 +13,7 @@ from .cli.registry import compatibility_registry
 from .foundation import load_json, validate_foundation, verify_repository
 from .home_layout import home_layout_version
 from .hybrid_retrieval import hybrid_index_path
+from .effect_ledger_store import EffectLedgerStore, EffectLedgerStoreError
 from .provider_gate import load_provider_gate_policy, select_default_provider
 from .repository_context import validate_repository_context
 from .release_quality import validate_release_quality_repository
@@ -204,6 +205,9 @@ def _runtime_home(data_root: Path) -> list[str]:
                     "PRAGMA table_info(queue_items)"
                 ).fetchall()
             }
+            migration_table = connection.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='queue_schema_migrations'"
+            ).fetchone()
             if (
                 integrity != "ok"
                 or metadata.get("schema_version") != "2"
@@ -213,12 +217,43 @@ def _runtime_home(data_root: Path) -> list[str]:
                     "ledger_required", "validation_gate_id",
                     "effect_claim_id", "effect_receipt_id",
                 }.issubset(queue_columns)
+                or migration_table is None
             ):
                 errors.append("runtime queue integrity or secret boundary")
         except sqlite3.Error:
             errors.append("runtime queue cannot be inspected")
         finally:
             connection.close()
+    for ledger_index in root.glob("projects/*/runtime/effects/effect-ledger.sqlite"):
+        if ledger_index.is_symlink() or not ledger_index.is_file():
+            errors.append("effect ledger path is unsafe")
+            continue
+        try:
+            report = EffectLedgerStore(ledger_index).doctor_report()
+            if not report["integrity_verified"]:
+                errors.append("effect ledger contract or integrity")
+                continue
+            recovery = set(report["recovery_required_claim_ids"])
+            if not recovery:
+                continue
+            queue_index = ledger_index.parent.parent / "queue" / "scheduler-v1.sqlite"
+            active = set()
+            if queue_index.is_file() and not queue_index.is_symlink():
+                connection = sqlite3.connect(queue_index)
+                try:
+                    columns = {row[1] for row in connection.execute("PRAGMA table_info(queue_items)")}
+                    if "effect_claim_id" in columns:
+                        active = {
+                            row[0] for row in connection.execute(
+                                "SELECT q.effect_claim_id FROM queue_items q JOIN leases l ON l.queue_id=q.queue_id WHERE q.effect_claim_id IS NOT NULL AND q.status='leased'"
+                            )
+                        }
+                finally:
+                    connection.close()
+            if recovery - active:
+                errors.append("effect ledger has unattended recovery-required claims")
+        except (EffectLedgerStoreError, sqlite3.Error, ValueError):
+            errors.append("effect ledger cannot be inspected")
     return errors
 
 

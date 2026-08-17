@@ -14,6 +14,7 @@ from typing import Callable, Mapping, TYPE_CHECKING
 from .foundation import load_json
 from .effect_ledger import parse_effect_claim, parse_effect_receipt
 from .effect_ledger_store import EffectLedgerStore, effect_ledger_path
+from .validation_gate import parse_validation_gate
 from .home_layout import project_capsule_root
 from .json_documents import canonical_json_bytes
 from .mutation_gate import MutationAuthorization, MutationPlan, plan_mutation
@@ -227,6 +228,14 @@ CREATE TABLE IF NOT EXISTS projection_jobs(
   work_item_digest TEXT NOT NULL,
   status TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS queue_schema_migrations(
+  migration_id TEXT PRIMARY KEY,
+  from_version INTEGER NOT NULL,
+  to_version INTEGER NOT NULL,
+  pre_state_digest TEXT NOT NULL,
+  applied_at REAL NOT NULL,
+  status TEXT NOT NULL
+);
 """
 
 
@@ -248,7 +257,8 @@ class AgentRuntimeQueue:
         self.clock = clock
 
     def _connect(self, create: bool) -> sqlite3.Connection | None:
-        if not self.path.exists() and not create:
+        new_database = not self.path.exists()
+        if new_database and not create:
             return None
         if create:
             self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -258,7 +268,7 @@ class AgentRuntimeQueue:
         )
         connection.row_factory = sqlite3.Row
         connection.execute(f"PRAGMA busy_timeout={self.policy.claim_busy_timeout_ms}")
-        if create:
+        if create and new_database:
             connection.executescript(SCHEMA)
             connection.execute("INSERT OR IGNORE INTO metadata VALUES('schema_version','2')")
             connection.commit()
@@ -374,6 +384,7 @@ class AgentRuntimeQueue:
             return {"status": "current", "from_version": 2, "to_version": 2, "migrated": False}
         if version[0] != "1":
             raise AgentRuntimeError("runtime queue schema version is invalid")
+        pre_state_digest = _digest(self._state_payload(connection))
         columns = {row[1] for row in connection.execute("PRAGMA table_info(queue_items)")}
         additions = (
             ("ledger_required", "INTEGER NOT NULL DEFAULT 0"),
@@ -384,9 +395,17 @@ class AgentRuntimeQueue:
         for name, declaration in additions:
             if name not in columns:
                 connection.execute(f"ALTER TABLE queue_items ADD COLUMN {name} {declaration}")
+        connection.execute(
+            "CREATE TABLE IF NOT EXISTS queue_schema_migrations(migration_id TEXT PRIMARY KEY,from_version INTEGER NOT NULL,to_version INTEGER NOT NULL,pre_state_digest TEXT NOT NULL,applied_at REAL NOT NULL,status TEXT NOT NULL)"
+        )
+        migration_id = "queue-v1-to-v2-" + pre_state_digest[:24]
+        connection.execute(
+            "INSERT INTO queue_schema_migrations VALUES(?,?,?,?,?,?)",
+            (migration_id, 1, 2, pre_state_digest, self.clock(), "completed"),
+        )
         connection.execute("UPDATE metadata SET value='2' WHERE key='schema_version'")
         self._event(connection, "queue-migration", "schema-migrated", None, self.clock(), _digest({"from": 1, "to": 2}))
-        return {"status": "migrated", "from_version": 1, "to_version": 2, "migrated": True}
+        return {"status": "migrated", "from_version": 1, "to_version": 2, "migrated": True, "migration_id": migration_id, "pre_state_digest": pre_state_digest}
 
     def _apply_claim(self, connection: sqlite3.Connection, arguments: Mapping[str, object]) -> dict[str, object]:
         now = self.clock()
@@ -443,6 +462,7 @@ class AgentRuntimeQueue:
             "expires_at": expires,
             "ledger_required": bool(selected["ledger_required"]),
             "validation_gate_id": selected["validation_gate_id"],
+            "handler_execution_allowed": not bool(selected["ledger_required"]),
         }
 
     @staticmethod
@@ -486,7 +506,7 @@ class AgentRuntimeQueue:
             (arguments["effect_claim_id"], lease["queue_id"]),
         )
         self._event(connection, lease["queue_id"], "effect-claimed", lease["fencing_token"], self.clock(), arguments["effect_claim_id"])
-        return {"queue_id": lease["queue_id"], "effect_claim_id": arguments["effect_claim_id"], "idempotent_reuse": current is not None}
+        return {"queue_id": lease["queue_id"], "effect_claim_id": arguments["effect_claim_id"], "idempotent_reuse": current is not None, "handler_execution_allowed": True}
 
     def _apply_bind_effect_receipt(self, connection: sqlite3.Connection, arguments: Mapping[str, object]) -> dict[str, object]:
         lease = self._lease(connection, arguments, self.clock())
@@ -614,7 +634,20 @@ class AgentRuntimeQueue:
     def status(self) -> dict[str, object]:
         connection = self._connect(create=False)
         if connection is None:
-            return {"project_id": self.project_id, "items": [], "counts": {}, "active_lease_count": 0, "integrity_verified": True, "paths_disclosed": False}
+            return {
+                "project_id": self.project_id, "items": [], "counts": {},
+                "active_lease_count": 0, "pending_projection_count": 0,
+                "completed_projection_count": 0,
+                "effect_ledger": {
+                    "integrity_verified": True,
+                    "counts": {"claims": 0, "receipts": 0, "reconciliations": 0},
+                    "recovery_required_claim_ids": [], "recovery_required_count": 0,
+                    "active_claim_count": 0, "unattended_recovery_claim_ids": [],
+                    "unattended_recovery_count": 0, "issues": [],
+                    "paths_disclosed": False, "grants_authority": False,
+                },
+                "integrity_verified": True, "paths_disclosed": False,
+            }
         try:
             if connection.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
                 raise AgentRuntimeError("runtime queue integrity check failed")
@@ -627,7 +660,26 @@ class AgentRuntimeQueue:
             active = connection.execute("SELECT COUNT(*) FROM leases").fetchone()[0]
             pending = connection.execute("SELECT COUNT(*) FROM projection_jobs WHERE status IN ('pending','blocked-awaiting-work-graph-update')").fetchone()[0]
             completed_projections = connection.execute("SELECT COUNT(*) FROM projection_jobs WHERE status='completed'").fetchone()[0]
-            return {"project_id": self.project_id, "items": items, "counts": counts, "active_lease_count": active, "pending_projection_count": pending, "completed_projection_count": completed_projections, "integrity_verified": True, "paths_disclosed": False}
+            ledger_path = effect_ledger_path(self.data_root, self.project_id)
+            ledger = (
+                EffectLedgerStore(ledger_path).doctor_report()
+                if ledger_path.is_file()
+                else {
+                    "integrity_verified": True, "counts": {"claims": 0, "receipts": 0, "reconciliations": 0},
+                    "recovery_required_claim_ids": [], "recovery_required_count": 0,
+                    "issues": [], "paths_disclosed": False, "grants_authority": False,
+                }
+            )
+            active_claim_ids = {
+                row[0] for row in connection.execute(
+                    "SELECT q.effect_claim_id FROM queue_items q JOIN leases l ON l.queue_id=q.queue_id WHERE q.effect_claim_id IS NOT NULL AND q.status='leased'"
+                )
+            }
+            unattended = sorted(set(ledger["recovery_required_claim_ids"]) - active_claim_ids)
+            ledger["active_claim_count"] = len(set(ledger["recovery_required_claim_ids"]) & active_claim_ids)
+            ledger["unattended_recovery_claim_ids"] = unattended
+            ledger["unattended_recovery_count"] = len(unattended)
+            return {"project_id": self.project_id, "items": items, "counts": counts, "active_lease_count": active, "pending_projection_count": pending, "completed_projection_count": completed_projections, "effect_ledger": ledger, "integrity_verified": True, "paths_disclosed": False}
         finally:
             connection.close()
 
@@ -686,7 +738,7 @@ def prepare_runtime_queue_action(
             raise AgentRuntimeError("runtime queue migration fields are invalid")
     elif action == "enqueue":
         required = {"project_id", "work_item_id", "task_id", "plan_id", "step_id", "required_role", "required_capabilities", "side_effects", "resource_refs"}
-        optional = {"parent_task_id", "max_attempts", "validation_gate_id"}
+        optional = {"parent_task_id", "max_attempts", "validation_gate"}
         if set(arguments) - required - optional or not required.issubset(arguments):
             raise AgentRuntimeError("runtime enqueue fields are invalid")
         work_id = arguments.get("work_item_id")
@@ -721,11 +773,26 @@ def prepare_runtime_queue_action(
             raise AgentRuntimeError("runtime side effects are invalid")
         if role == "verifier" and not set(effects).issubset({"read", "execute"}):
             raise AgentRuntimeError("verifier queue item may only read or execute")
-        validation_gate_id = arguments.get("validation_gate_id")
-        if validation_gate_id is not None and (not isinstance(validation_gate_id, str) or not SHA256.fullmatch(validation_gate_id)):
-            raise AgentRuntimeError("runtime validation gate id is invalid")
+        validation_gate_value = arguments.get("validation_gate")
+        validation_gate_id = None
+        if validation_gate_value is not None:
+            try:
+                validation_gate = parse_validation_gate(validation_gate_value)
+            except ValueError as exc:
+                raise AgentRuntimeError("runtime validation gate is invalid") from exc
+            gate = validation_gate.payload["bindings"]
+            if (
+                gate["project_id"] != project_id or gate["work_item_id"] != work.work_item_id
+                or gate["task_id"] != arguments["task_id"] or gate["task_plan_id"] != plan_id
+                or gate["worker_step_id"] != arguments["step_id"]
+                or gate["effect_type"] not in set(effects) - {"read"}
+            ):
+                raise AgentRuntimeError("runtime validation gate does not match queue step")
+            validation_gate_id = validation_gate.validation_gate_id
         if validation_gate_id is not None and set(effects).issubset({"read"}):
             raise AgentRuntimeError("read-only runtime step may not require an effect ledger")
+        if not set(effects).issubset({"read"}) and validation_gate_id is None:
+            raise AgentRuntimeError("non-read runtime step requires a pre-execution validation gate")
         resources_value = arguments.get("resource_refs")
         if not isinstance(resources_value, list) or len(set(resources_value)) != len(resources_value):
             raise AgentRuntimeError("runtime resources are invalid")

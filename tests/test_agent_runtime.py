@@ -17,7 +17,7 @@ from krcn_core.agent_runtime import (  # noqa: E402
 from krcn_core.agent_execution_identity import create_agent_execution_identity  # noqa: E402
 from krcn_core.effect_ledger import build_effect_claim, build_effect_receipt  # noqa: E402
 from krcn_core.effect_ledger_store import EffectLedgerStore, effect_ledger_path  # noqa: E402
-from krcn_core.validation_gate import build_validation_gate  # noqa: E402
+from krcn_core.validation_gate import build_validation_gate, parse_validation_gate  # noqa: E402
 from krcn_core.application import ServiceRequest, create_application_service  # noqa: E402
 from krcn_core.doctor import run_doctor  # noqa: E402
 from krcn_core.home_layout import user_home_layout_bytes  # noqa: E402
@@ -51,6 +51,29 @@ def authorization(plan):
             if plan.approval_required
             else None
         ),
+    )
+
+
+def runtime_gate(work_id: str, effect_type: str):
+    verifier = create_agent_execution_identity(
+        task_id=f"run-{work_id}", plan_id="a" * 64, step_id="verify-effect",
+        role="verifier", actor_digest="8" * 64, session_digest="9" * 64,
+        assignment_digest="7" * 64, runtime_kind="isolated-role",
+    )
+    return build_validation_gate(
+        project_id="sample", work_item_id=work_id, task_id=f"run-{work_id}",
+        task_plan_id="a" * 64, worker_step_id="implement", effect_id=f"{effect_type}-change",
+        effect_type=effect_type, effect_digest="b" * 64, effect_authorization_id="c" * 64,
+        worker_execution_identity_id="d" * 64, worker_actor_digest="e" * 64,
+        verifier_execution_identity=verifier,
+        subjects=[{"subject_kind": "acceptance-criterion", "subject_digest": "1" * 64}],
+        checks=[{"check_id": "state-check", "actor_kind": "verifier", "method": "state-check",
+                 "expected_result": "passed", "evidence_required": ["state-observation"],
+                 "subject_digests": ["1" * 64]}],
+        policy_revision="f" * 64, source_revision_digest="0" * 64,
+        created_at="2026-08-17T15:00:00.000Z",
+        mutation_plan_id="3" * 64 if effect_type == "write" else None,
+        provider_request_id="4" * 64 if effect_type == "network" else None,
     )
 
 
@@ -147,7 +170,8 @@ class AgentRuntimeTests(unittest.TestCase):
 
     @staticmethod
     def enqueue_args(work_id: str, *, effects=None, resources=None, role="worker") -> dict[str, object]:
-        return {
+        selected_effects = effects or ["read"]
+        result = {
             "project_id": "sample",
             "work_item_id": work_id,
             "task_id": f"run-{work_id}",
@@ -155,9 +179,13 @@ class AgentRuntimeTests(unittest.TestCase):
             "step_id": "implement",
             "required_role": role,
             "required_capabilities": ["project-read"],
-            "side_effects": effects or ["read"],
+            "side_effects": selected_effects,
             "resource_refs": resources or [f"task:sample:{work_id}"],
         }
+        non_read = next((item for item in selected_effects if item != "read"), None)
+        if non_read is not None:
+            result["validation_gate"] = runtime_gate(work_id, non_read).as_dict()
+        return result
 
     @staticmethod
     def claim_args(owner: str = "owner-token-0000001") -> dict[str, object]:
@@ -267,29 +295,16 @@ class AgentRuntimeTests(unittest.TestCase):
         self.assertEqual("enqueue", execute_plan.action)
 
     def test_v2_effect_binding_is_additive_and_blocks_early_completion(self) -> None:
-        verifier = create_agent_execution_identity(
-            task_id="run-task-one", plan_id="a" * 64, step_id="verify-effect",
-            role="verifier", actor_digest="8" * 64, session_digest="9" * 64,
-            assignment_digest="7" * 64, runtime_kind="isolated-role",
-        )
-        validation_gate = build_validation_gate(
-            project_id="sample", work_item_id="task-one", task_id="run-task-one",
-            task_plan_id="a" * 64, worker_step_id="implement", effect_id="write-change",
-            effect_type="write", effect_digest="b" * 64, effect_authorization_id="c" * 64,
-            worker_execution_identity_id="d" * 64, worker_actor_digest="e" * 64,
-            verifier_execution_identity=verifier,
-            subjects=[{"subject_kind": "acceptance-criterion", "subject_digest": "1" * 64}],
-            checks=[{"check_id": "state-check", "actor_kind": "verifier", "method": "state-check",
-                     "expected_result": "passed", "evidence_required": ["state-observation"],
-                     "subject_digests": ["1" * 64]}],
-            policy_revision="f" * 64, source_revision_digest="0" * 64,
-            created_at="2026-08-17T15:00:00.000Z", mutation_plan_id="3" * 64,
-        )
+        missing_gate = self.enqueue_args("task-one", effects=["write"])
+        missing_gate.pop("validation_gate")
+        with self.assertRaisesRegex(AgentRuntimeError, "pre-execution validation gate"):
+            self.prepare("enqueue", missing_gate)
         arguments = self.enqueue_args("task-one", effects=["write"])
-        arguments["validation_gate_id"] = validation_gate.validation_gate_id
+        validation_gate = parse_validation_gate(arguments["validation_gate"])
         self.apply("enqueue", arguments)
         queue, _, claim = self.apply("claim", self.claim_args())
         self.assertTrue(claim["ledger_required"])
+        self.assertFalse(claim["handler_execution_allowed"])
         self.assertEqual(validation_gate.validation_gate_id, claim["validation_gate_id"])
         lease = {
             "project_id": "sample", "queue_id": claim["queue_id"],
@@ -311,7 +326,10 @@ class AgentRuntimeTests(unittest.TestCase):
         )
         ledger = EffectLedgerStore(effect_ledger_path(self.store.data_root, "sample"))
         ledger.record_claim(effect_claim, validation_gate=validation_gate)
-        self.apply("bind_effect_claim", {**lease, "effect_claim": effect_claim.as_dict()})
+        _, _, bound_claim = self.apply(
+            "bind_effect_claim", {**lease, "effect_claim": effect_claim.as_dict()}
+        )
+        self.assertTrue(bound_claim["handler_execution_allowed"])
         effect_receipt = build_effect_receipt(
             claim=effect_claim, outcome="completed", retry_safety="non-replayable",
             result_digest="4" * 64, finished_at="2026-08-17T15:02:00.000Z",
@@ -326,6 +344,7 @@ class AgentRuntimeTests(unittest.TestCase):
         item = queue.status()["items"][0]
         self.assertEqual(effect_claim.claim_id, item["effect_claim_id"])
         self.assertEqual(effect_receipt.receipt_id, item["effect_receipt_id"])
+        self.assertEqual(0, queue.status()["effect_ledger"]["unattended_recovery_count"])
 
     def test_v1_queue_metadata_is_migrated_additively(self) -> None:
         queue, _, _ = self.apply("enqueue", self.enqueue_args("task-one"))
@@ -341,6 +360,7 @@ class AgentRuntimeTests(unittest.TestCase):
             self.apply("claim", self.claim_args())
         reopened, _, migrated = self.apply("migrate_v2", {"project_id": "sample"})
         self.assertTrue(migrated["migrated"])
+        self.assertTrue(migrated["migration_id"].startswith("queue-v1-to-v2-"))
         connection = reopened._connect(create=False)
         self.assertIsNotNone(connection)
         try:
@@ -349,6 +369,10 @@ class AgentRuntimeTests(unittest.TestCase):
             ).fetchone()[0])
             columns = {row[1] for row in connection.execute("PRAGMA table_info(queue_items)")}
             self.assertTrue({"validation_gate_id", "effect_claim_id", "effect_receipt_id"}.issubset(columns))
+            journal = connection.execute(
+                "SELECT from_version,to_version,status FROM queue_schema_migrations"
+            ).fetchone()
+            self.assertEqual((1, 2, "completed"), tuple(journal))
         finally:
             connection.close()
 
