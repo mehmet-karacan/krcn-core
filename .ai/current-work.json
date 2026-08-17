@@ -15,10 +15,10 @@
     "docs/progress/PHASE-23-CLOSURE.md",
     "docs/progress/PHASE-24-KICKOFF.md",
     "docs/progress/PHASE-24-DOMAIN-CONTRACTS.md",
-    "docs/progress/PHASE-24-RECEIPT-STORE.md"
+    "docs/progress/PHASE-24-RECEIPT-STORE.md",
+    "docs/progress/PHASE-24-RESULT-ADAPTERS.md"
   ],
   "next_actions": [
-    "worker, DAG ve native client adapterlarini compatibility penceresiyle bagla",
     "coordinator fan-in ve Execution Trace aggregation kabulunu tamamla"
   ],
   "baseline_commit": "1ff472c",

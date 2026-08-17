@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:native-agent-result:1",
+  "title": "KRCN Core structured native client result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "result"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/native-agent-result.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "headline",
+        "findings",
+        "artifacts",
+        "evidence",
+        "effects",
+        "risks",
+        "failure",
+        "missing_step_ids",
+        "recommended_next_action",
+        "verification"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "urn:krcn:schemas:agent-result-envelope:2#/properties/result/properties/status"
+        },
+        "headline": {
+          "$ref": "urn:krcn:schemas:agent-result-envelope:2#/properties/result/properties/summary/properties/headline"
+        },
+        "findings": {
+          "$ref": "urn:krcn:schemas:agent-result-envelope:2#/properties/result/properties/summary/properties/findings"
+        },
+        "artifacts": {
+          "$ref": "urn:krcn:schemas:agent-result-envelope:2#/properties/result/properties/artifacts"
+        },
+        "evidence": {
+          "$ref": "urn:krcn:schemas:agent-result-envelope:2#/properties/result/properties/evidence"
+        },
+        "effects": {
+          "$ref": "urn:krcn:schemas:agent-result-envelope:2#/properties/result/properties/effects"
+        },
+        "risks": {
+          "$ref": "urn:krcn:schemas:agent-result-envelope:2#/properties/result/properties/risks"
+        },
+        "failure": {
+          "$ref": "urn:krcn:schemas:agent-result-envelope:2#/properties/result/properties/failure"
+        },
+        "missing_step_ids": {
+          "$ref": "urn:krcn:schemas:agent-result-envelope:2#/properties/result/properties/missing_step_ids"
+        },
+        "recommended_next_action": {
+          "$ref": "urn:krcn:schemas:agent-result-envelope:2#/properties/result/properties/recommended_next_action"
+        },
+        "verification": {
+          "$ref": "urn:krcn:schemas:agent-result-envelope:2#/properties/result/properties/verification"
+        }
+      }
+    }
+  }
+}

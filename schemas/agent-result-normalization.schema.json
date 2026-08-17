@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:agent-result-normalization:1",
+  "title": "KRCN Core normalized agent result pair",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "source_format",
+    "envelope",
+    "receipt",
+    "grants_authority",
+    "normalization_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/agent-result-normalization.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "source_format": {
+      "enum": [
+        "worker-execution-v1",
+        "worker-execution-v2",
+        "generic-dag-adapter-v1",
+        "native-client-v1"
+      ]
+    },
+    "envelope": {
+      "$ref": "urn:krcn:schemas:agent-result-envelope:2"
+    },
+    "receipt": {
+      "$ref": "urn:krcn:schemas:workflow-step-receipt:1"
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "normalization_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

@@ -36,3 +36,17 @@ execution adapterlari v2 envelope uretir; compatibility okuyuculari eski
 kayitlari normalize ederek v2 fan-in sinirina tasiyacaktir. Coordinator final
 ozeti yalniz dogrulanmis envelope ve receipt verilerinden uretilir.
 
+`src/krcn_core/agent_result_normalizer.py` bu compatibility sinirini uygular:
+
+- direct worker execution v1/v2 kayitlarini yeniden parse eder;
+- Generic DAG adapter result v1'i v2 envelope/receipt ciftine yukseltir;
+- native istemciden yalniz strict `schemas/native-agent-result.schema.json`
+  payloadini kabul eder; serbest metni authoritative sonuc saymaz;
+- client/model ozel alanlari core sonuc sozlesmesine sizdirmaz;
+- normalization ciftini `schemas/agent-result-normalization.schema.json` ile
+  digest-bound hale getirir.
+
+Mevcut worker v1/v2 journal kaydinda generalized effect claim/receipt alani
+yoktur. Bu nedenle read effect normalize edilebilir; completed write, execute
+ve network sonucu Faz 25 ledger baglari gelene kadar basarili envelope'a
+yukseltilemez. Bu bilincli fail-closed sinir sessiz yetki uretmez.

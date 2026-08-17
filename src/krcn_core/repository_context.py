@@ -58,6 +58,8 @@ REQUIRED_CANONICAL_KEYS = {
     "execution_trace_schema",
     "agent_result_envelope_boundary",
     "agent_result_envelope_schema",
+    "native_agent_result_schema",
+    "agent_result_normalization_schema",
     "workflow_step_receipt_boundary",
     "workflow_step_receipt_schema",
     "workflow_step_receipt_record_schema",
