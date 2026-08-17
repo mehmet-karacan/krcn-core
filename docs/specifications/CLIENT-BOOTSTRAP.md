@@ -36,6 +36,7 @@ result contract. Mode selection is client-neutral, and optional capabilities do
 not block a genuine native parallel channel.
 11. Keep client-generated operational artifacts out of `KRCN_CORE_HOME` and registered project sources. Supported project artifacts use `.krcn/projects/<project-id>/local-data/client-artifacts/`; `.krcn/global/local-data/client-artifacts/` is reserved for project-independent output. Without a reviewed write operation, the client returns the result and asks before creating a file.
 12. Treat versioned core writes as authorized only by an explicit KRCN Core product-development request. Integration, audit, retrieval, and ordinary project work are not core mutation authority.
+13. Use the same quiet execution contract in Codex, Claude Code, and OpenCode. Routine commands, native tool activity, raw JSON, stdout, and stderr are not repeated in the conversation. Clients surface only meaningful milestones, exact approval requests, actionable errors, and the final verified summary unless the user explicitly requests verbose or debug detail. Native UI tool cards are controlled by the client UI and must not be duplicated as assistant narration.
 
 Product rules remain in KRCN Core. Client files do not duplicate matching, policy, ownership, or orchestration logic.
 

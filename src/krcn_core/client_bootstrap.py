@@ -47,6 +47,7 @@ BOOTSTRAP_BODY = """<!-- KRCN-CORE:BEGIN -->
 - Treat natural requests such as `detaylı araştır`, `kök nedenini araştır`, `karşılaştır`, `araştır ve planla`, and their English equivalents as Research Actions. Route them through `research.action` or `krcn ask` while supplying the current project and conversational subject when available. The user does not need to know KRCN research commands or write a structured prompt.
 - If `bunu araştır` refers to an earlier message, carry that subject as bounded context. If the subject or project is genuinely unavailable, preserve the request and ask only for the missing choice. Never invent the topic. A generic `bunu yap` request is not automatically research.
 - After an approved Research Action preparation, continue through the reviewed research delegation and provider gates. `araştır ve uygula` requests still require verified research, a separate implementation plan, and the normal mutation approval; the phrase itself grants no authority.
+- Use quiet execution in every client. Do not narrate routine commands or repeat native tool activity, raw JSON, stdout, or stderr in the conversation. Show only meaningful milestones, exact approval requests, actionable errors, and the final verified summary. Reveal command-level detail only when the user explicitly asks for verbose or debug output. A client UI may still render its own native tool cards; do not duplicate them in assistant messages.
 <!-- KRCN-CORE:END -->"""
 
 

@@ -121,6 +121,11 @@ class ClientBootstrapTests(unittest.TestCase):
             "detaylı araştır",
             self.codex.read_text(encoding="utf-8"),
         )
+        for target in (self.codex, self.claude, self.opencode):
+            guidance = target.read_text(encoding="utf-8")
+            self.assertIn("Use quiet execution in every client", guidance)
+            self.assertIn("raw JSON, stdout, or stderr", guidance)
+            self.assertIn("verbose or debug output", guidance)
         for entry in plan.entries:
             if entry.existed:
                 assert entry.backup_path is not None
