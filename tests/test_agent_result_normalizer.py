@@ -34,6 +34,9 @@ from krcn_core.application import KrcnApplicationService  # noqa: E402
 from krcn_core.application_contract import ApplicationServiceError, ServiceRequest  # noqa: E402
 from krcn_core.cli.app import build_parser  # noqa: E402
 from krcn_core.home_layout import user_home_layout_bytes  # noqa: E402
+from krcn_core.effect_ledger import build_effect_claim, build_effect_receipt  # noqa: E402
+from krcn_core.agent_execution_identity import create_agent_execution_identity  # noqa: E402
+from krcn_core.validation_gate import build_validation_gate  # noqa: E402
 from krcn_core.local_store import LocalWorkspaceStore  # noqa: E402
 from krcn_core.mutation_gate import OwnershipResolver  # noqa: E402
 from krcn_core.orchestration_authorization import authorize_task_plan, create_operation_request  # noqa: E402
@@ -114,6 +117,56 @@ class AgentResultNormalizerTests(unittest.TestCase):
             self.assertEqual("completed", parsed.receipt.status)
             self.assertFalse(parsed.as_dict()["grants_authority"])
 
+    def test_generic_dag_non_read_effect_requires_exact_ledger_pair(self) -> None:
+        verifier = create_agent_execution_identity(
+            task_id="task-one", plan_id=sha("a"), step_id="verify-effect", role="verifier",
+            actor_digest=sha("8"), session_digest=sha("9"), assignment_digest=sha("7"),
+            runtime_kind="isolated-role",
+        )
+        gate = build_validation_gate(
+            project_id="project-one", work_item_id="work-one", task_id="task-one",
+            task_plan_id=sha("a"), worker_step_id="inspect-source", effect_id="execute-check",
+            effect_type="execute", effect_digest=sha("6"), effect_authorization_id=sha("5"),
+            worker_execution_identity_id=sha("b"), worker_actor_digest=sha("4"),
+            verifier_execution_identity=verifier,
+            subjects=[{"subject_kind": "acceptance-criterion", "subject_digest": sha("1")}],
+            checks=[{"check_id": "state-check", "actor_kind": "verifier", "method": "state-check",
+                     "expected_result": "passed", "evidence_required": ["state-observation"],
+                     "subject_digests": [sha("1")]}],
+            policy_revision=sha("2"), source_revision_digest=sha("f"),
+            created_at="2026-08-17T11:59:59.000Z",
+        )
+        claim = build_effect_claim(
+            project_id="project-one", work_item_id="work-one", task_id="task-one",
+            task_plan_id=sha("a"), step_id="inspect-source", queue_id="queue-one",
+            attempt_id="attempt-one", attempt_number=1, execution_identity_id=sha("b"),
+            lease_id="lease-one", fencing_token=1, effect_id="execute-check",
+            effect_type="execute", effect_digest=sha("6"), idempotency_key=sha("0"),
+            effect_authorization_id=sha("5"), validation_gate=gate,
+            host_digest=sha("4"), claimed_at="2026-08-17T12:00:00.000Z",
+        )
+        receipt = build_effect_receipt(
+            claim=claim, outcome="completed", retry_safety="non-replayable",
+            result_digest=sha("3"), finished_at="2026-08-17T12:00:00.004Z",
+            observed_fencing_token=1,
+        )
+        payload = {
+            "schema_ref": "schemas/generic-dag-execution-result.schema.json#/$defs/adapterResult",
+            "schema_version": 1, "status": "completed", "task_id": "task-one",
+            "plan_id": sha("a"), "step_id": "inspect-source", "execution_identity_id": sha("b"),
+            "evidence_digest": sha("3"), "grants_authority": False,
+        }
+        normalized = normalize_generic_dag_result(
+            payload, context(validation_gate_id=gate.validation_gate_id),
+            effect_claim=claim, effect_receipt=receipt,
+        )
+        effect = normalized.envelope.payload["result"]["effects"][0]
+        self.assertEqual((claim.claim_id, receipt.receipt_id), (effect["claim_id"], effect["receipt_id"]))
+        with self.assertRaisesRegex(AgentResultNormalizationError, "claim and receipt"):
+            normalize_generic_dag_result(
+                payload, context(validation_gate_id=gate.validation_gate_id), effect_claim=claim
+            )
+
     def test_native_free_text_unknown_fields_and_unsafe_content_fail_closed(self) -> None:
         with self.assertRaisesRegex(AgentResultNormalizationError, "fields"):
             normalize_native_client_result("completed", context())
@@ -127,6 +180,15 @@ class AgentResultNormalizerTests(unittest.TestCase):
             normalize_native_client_result(
                 {"schema_ref": "schemas/native-agent-result.schema.json", "schema_version": 1, "result": unsafe},
                 context(),
+            )
+        claimed = semantic(effects=[{
+            "effect_id": "write-change", "effect_type": "write",
+            "claim_id": sha("4"), "receipt_id": sha("5"), "result_digest": sha("3"),
+        }])
+        with self.assertRaisesRegex(AgentResultNormalizationError, "exact effect receipts"):
+            normalize_native_client_result(
+                {"schema_ref": "schemas/native-agent-result.schema.json", "schema_version": 1, "result": claimed},
+                context(validation_gate_id=sha("6")),
             )
 
     def test_partial_native_result_is_not_completed_semantically(self) -> None:
@@ -182,6 +244,59 @@ class AgentResultNormalizerTests(unittest.TestCase):
         self.assertEqual("worker-execution-v2", normalized.source_format)
         with self.assertRaisesRegex(AgentResultNormalizationError, "effect receipts"):
             normalize_worker_execution(run("execute"), worker_context, semantic())
+
+        governed_execution = run("execute")
+        verifier_identity = create_agent_execution_identity(
+            task_id=plan.task_id, plan_id=plan.plan_id, step_id="verify-effect",
+            role="verifier", actor_digest=sha("8"), session_digest=sha("9"),
+            assignment_digest=sha("7"), runtime_kind="isolated-role",
+        )
+        gate = build_validation_gate(
+            project_id="project-one", work_item_id="work-one", task_id=plan.task_id,
+            task_plan_id=plan.plan_id, worker_step_id=worker_step.step_id,
+            effect_id="source-read", effect_type="execute", effect_digest=sha("6"),
+            effect_authorization_id=sha("5"),
+            worker_execution_identity_id=identity.execution_identity_id,
+            worker_actor_digest=identity.actor_digest,
+            verifier_execution_identity=verifier_identity,
+            subjects=[{"subject_kind": "acceptance-criterion", "subject_digest": sha("4")}],
+            checks=[{"check_id": "result-check", "actor_kind": "verifier", "method": "state-check",
+                     "expected_result": "passed", "evidence_required": ["state-observation"],
+                     "subject_digests": [sha("4")]}],
+            policy_revision=sha("2"), source_revision_digest=sha("f"),
+            created_at="2026-08-17T11:59:59.000Z",
+        )
+        governed_context = context(
+            task_id=plan.task_id, task_plan_id=plan.plan_id, step_id=worker_step.step_id,
+            execution_identity_id=identity.execution_identity_id,
+            input_digest=governed_execution.journal.input_digest,
+            validation_gate_id=gate.validation_gate_id,
+        )
+        claim = build_effect_claim(
+            project_id="project-one", work_item_id="work-one", task_id=plan.task_id,
+            task_plan_id=plan.plan_id, step_id=worker_step.step_id, queue_id="queue-one",
+            attempt_id="attempt-one", attempt_number=1,
+            execution_identity_id=identity.execution_identity_id, lease_id="lease-one",
+            fencing_token=1, effect_id="source-read", effect_type="execute",
+            effect_digest=sha("6"), idempotency_key=sha("0"),
+            effect_authorization_id=sha("5"), validation_gate=gate,
+            host_digest=sha("1"), claimed_at="2026-08-17T12:00:00.000Z",
+        )
+        receipt = build_effect_receipt(
+            claim=claim, outcome="completed", retry_safety="non-replayable",
+            result_digest=sha("3"), finished_at="2026-08-17T12:00:00.004Z",
+            observed_fencing_token=1,
+        )
+        governed_semantic = semantic(effects=[{
+            "effect_id": "source-read", "effect_type": "execute",
+            "claim_id": claim.claim_id, "receipt_id": receipt.receipt_id,
+            "result_digest": sha("3"),
+        }])
+        normalized_governed = normalize_worker_execution(
+            governed_execution, governed_context, governed_semantic,
+            effect_claims=[claim], effect_receipts=[receipt],
+        )
+        self.assertEqual(claim.claim_id, normalized_governed.envelope.payload["result"]["effects"][0]["claim_id"])
 
     def test_normalized_payload_schemas_validate(self) -> None:
         normalized = normalize_native_client_result(

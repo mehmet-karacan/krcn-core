@@ -200,6 +200,7 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 - `PHASE-25-EFFECT-CONTRACTS.md`
 - `PHASE-25-DURABLE-LEDGER.md`
 - `PHASE-25-QUEUE-V2.md`
+- `PHASE-25-RESULT-BINDING.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 

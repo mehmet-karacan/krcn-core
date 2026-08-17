@@ -23,10 +23,10 @@
     "docs/progress/PHASE-25-VALIDATION-GATE.md",
     "docs/progress/PHASE-25-EFFECT-CONTRACTS.md",
     "docs/progress/PHASE-25-DURABLE-LEDGER.md",
-    "docs/progress/PHASE-25-QUEUE-V2.md"
+    "docs/progress/PHASE-25-QUEUE-V2.md",
+    "docs/progress/PHASE-25-RESULT-BINDING.md"
   ],
   "next_actions": [
-    "worker DAG ve receipt effect baglarini uygula",
     "worker verifier recovery ve doctor entegrasyonunu tamamla"
   ],
   "baseline_commit": "e05733f",

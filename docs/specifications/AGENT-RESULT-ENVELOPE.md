@@ -46,10 +46,16 @@ ozeti yalniz dogrulanmis envelope ve receipt verilerinden uretilir.
 - normalization ciftini `schemas/agent-result-normalization.schema.json` ile
   digest-bound hale getirir.
 
-Mevcut worker v1/v2 journal kaydinda generalized effect claim/receipt alani
-yoktur. Bu nedenle read effect normalize edilebilir; completed write, execute
-ve network sonucu Faz 25 ledger baglari gelene kadar basarili envelope'a
-yukseltilemez. Bu bilincli fail-closed sinir sessiz yetki uretmez.
+Mevcut worker v1/v2 journal kaydinin icine geriye donuk generalized effect
+alani eklenmez. Faz 25 normalizer'i non-read worker etkisini ayri durable Effect
+Claim/Receipt ciftleriyle baglar. Journal effect type ve authorizationlari;
+claim task, plan, step, queue, attempt, execution identity ve Validation Gate
+baglari; receipt terminal sonucu birebir eslesmeden envelope completed olamaz.
+
+Generic DAG ve native structured client adapterlari da ayni kurali uygular.
+Yalniz bir claim/receipt kimligi bildirmek yeterli degildir; tam content-free
+sozlesmeler parse edilir ve exact scope'a baglanir. Read-only legacy akisi
+claim olmadan uyumlu kalir.
 
 ## Coordinator fan-in
 

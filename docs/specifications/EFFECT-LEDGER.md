@@ -56,3 +56,11 @@ Store `BEGIN IMMEDIATE`, foreign key, full synchronous commit ve explicit
 connection close kullanir. Symlink veya junction ancestor altinda veritabani
 acmaz. Reconciliation sonrasi gec receipt kabul edilmez; recovery karari
 sessiz retry yerine yeni kontrollu bir akisa birakilir.
+
+## Result projection
+
+Worker execution, Generic DAG ve native structured client sonuclari non-read
+bir effect'i Agent Result Envelope'a yalniz durable claim ve completed receipt
+ciftiyle tasiyabilir. Normalizer effect, authorization, scope, attempt,
+execution identity, Validation Gate ve result digestlerini yeniden dogrular.
+Workflow Step Receipt ayni gate kimligini provenance icinde korur.
