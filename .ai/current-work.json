@@ -1,25 +1,27 @@
 {
   "schema_ref": "schemas/current-work.schema.json",
   "schema_version": 1,
-  "phase_id": "phase-23",
-  "workstream_id": "adaptive-routing-shadow-mode",
-  "status": "completed",
-  "goal": "Mevcut yürütme davranışını değiştirmeden her anlamlı istek için açıklanabilir, strict ve digest bağlı RouteDecision üretmek",
-  "plan_ref": "docs/plans/PLAN-023-ADAPTIVE-ROUTING-SHADOW-MODE.md",
+  "phase_id": "phase-24",
+  "workstream_id": "agent-result-envelope-and-step-receipt",
+  "status": "active",
+  "goal": "Direct worker, Generic DAG ve native client sonuçlarını tek güvenli envelope sözleşmesinde normalize etmek ve step bazlı append-only telemetry üretmek",
+  "plan_ref": "docs/plans/PLAN-024-AGENT-RESULT-ENVELOPE-STEP-RECEIPT.md",
   "progress_refs": [
     "docs/progress/PROGRESS-KATALOGU.md",
     "docs/progress/PHASE-23-KICKOFF.md",
     "docs/progress/PHASE-23-ADAPTIVE-ROUTING-DOMAIN.md",
     "docs/progress/PHASE-23-APPLICATION-CLI.md",
     "docs/progress/PHASE-23-COORDINATOR-SHADOW.md",
-    "docs/progress/PHASE-23-CLOSURE.md"
+    "docs/progress/PHASE-23-CLOSURE.md",
+    "docs/progress/PHASE-24-KICKOFF.md"
   ],
   "next_actions": [
-    "Faz 24 Agent Result Envelope v2 ve Workflow Step Receipt icin ayri exact plan hazirla",
-    "Faz 24 onayi olmadan mevcut v1 result veya DAG davranisini degistirme",
-    "tum Faz 24 checkpointlerini once krcn-core-dev main dalinda dogrula"
+    "Agent Result Envelope v2 ve Workflow Step Receipt strict domain sozlesmelerini uygula",
+    "append-only receipt deposu ve replay conflict kontrollerini ekle",
+    "worker, DAG ve native client adapterlarini compatibility penceresiyle bagla",
+    "coordinator fan-in ve Execution Trace aggregation kabulunu tamamla"
   ],
-  "baseline_commit": "c111a9a",
+  "baseline_commit": "1ff472c",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

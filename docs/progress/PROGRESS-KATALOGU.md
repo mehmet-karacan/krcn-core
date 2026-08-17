@@ -184,6 +184,10 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 - `PHASE-23-COORDINATOR-SHADOW.md`
 - `PHASE-23-CLOSURE.md`
 
+## Faz 24 - Agent Result Envelope ve Workflow Step Receipt
+
+- `PHASE-24-KICKOFF.md`
+
 ## Faz dışı operasyon ve düzeltme kayıtları
 
 - `JSON-BELGE-BICIMI.md`

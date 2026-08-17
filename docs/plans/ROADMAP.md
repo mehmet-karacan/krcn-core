@@ -30,8 +30,8 @@ Yerel dosyalar varsayılan olarak Git'e veya başka bir uzak servise gönderilme
   öğrenme yönetişimi hazır.
 - Faz 23 tamamlandı. Adaptive Routing mevcut yürütmeyi değiştirmeden shadow
   karar, karşılaştırma, trace ve append-only runtime kanıtı üretiyor.
-- Faz 24 plan bekliyor. Agent Result Envelope v2 ve Workflow Step Receipt ayrı
-  compatibility ve approval sınırında ele alınacak.
+- Faz 24 aktif. Agent Result Envelope v2 ve Workflow Step Receipt mevcut v1/v2
+  okuyucular korunarak compatibility ve append-only audit sinirinda ekleniyor.
 
 ## Temel kullanım modeli
 
