@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:implementation-verification:1",
+  "title": "KRCN independent implementation verification",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_ref", "schema_version", "verification_id", "plan_id", "result_id", "verifier_identity_digest", "verifier_evidence_digest", "status", "completion_allowed", "authority_granted", "verification_digest"],
+  "properties": {
+    "schema_ref": {"const": "schemas/implementation-verification.schema.json"}, "schema_version": {"const": 1},
+    "verification_id": {"$ref": "#/$defs/digest"}, "plan_id": {"$ref": "#/$defs/digest"}, "result_id": {"$ref": "#/$defs/digest"}, "verifier_identity_digest": {"$ref": "#/$defs/digest"}, "verifier_evidence_digest": {"$ref": "#/$defs/digest"},
+    "status": {"const": "verified"}, "completion_allowed": {"const": true}, "authority_granted": {"const": false}, "verification_digest": {"$ref": "#/$defs/digest"}
+  }, "$defs": {"digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}

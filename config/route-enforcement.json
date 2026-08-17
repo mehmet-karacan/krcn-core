@@ -1,0 +1,18 @@
+{
+  "schema_ref": "schemas/route-enforcement-policy.schema.json",
+  "schema_version": 1,
+  "stages": [
+    "shadow",
+    "advisory",
+    "project-opt-in",
+    "read-only",
+    "mutating",
+    "default"
+  ],
+  "maximum_mismatch_rate_ppm": 10000,
+  "minimum_observation_count": 100,
+  "project_opt_in_from_stage": "project-opt-in",
+  "mutation_from_stage": "mutating",
+  "rollback_required": true,
+  "authority_granted": false
+}

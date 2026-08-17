@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:route-enforcement-policy:1",
+  "title": "KRCN route enforcement rollout policy",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_ref", "schema_version", "stages", "maximum_mismatch_rate_ppm", "minimum_observation_count", "project_opt_in_from_stage", "mutation_from_stage", "rollback_required", "authority_granted"],
+  "properties": {
+    "schema_ref": {"const": "schemas/route-enforcement-policy.schema.json"}, "schema_version": {"const": 1},
+    "stages": {"const": ["shadow", "advisory", "project-opt-in", "read-only", "mutating", "default"]},
+    "maximum_mismatch_rate_ppm": {"type": "integer", "minimum": 0, "maximum": 1000000},
+    "minimum_observation_count": {"type": "integer", "minimum": 1},
+    "project_opt_in_from_stage": {"const": "project-opt-in"}, "mutation_from_stage": {"const": "mutating"},
+    "rollback_required": {"const": true}, "authority_granted": {"const": false}
+  }
+}

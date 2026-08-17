@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:implementation-plan:1",
+  "title": "KRCN exact implementation delivery plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_ref", "schema_version", "plan_id", "project_id", "work_item_id", "task_plan_id", "report_ref", "report_digest", "source_head", "source_tree_digest", "sandbox_artifact_id", "patch_digest", "changed_paths", "test_specs", "mutation_plan_ids", "execution_trace_ref", "plan_is_read_only", "commit_allowed", "push_allowed", "authority_granted", "plan_digest"],
+  "properties": {
+    "schema_ref": {"const": "schemas/implementation-plan.schema.json"},
+    "schema_version": {"const": 1},
+    "plan_id": {"$ref": "#/$defs/digest"},
+    "project_id": {"$ref": "#/$defs/id"},
+    "work_item_id": {"$ref": "#/$defs/id"},
+    "task_plan_id": {"$ref": "#/$defs/digest"},
+    "report_ref": {"type": "string", "minLength": 1},
+    "report_digest": {"$ref": "#/$defs/digest"},
+    "source_head": {"$ref": "#/$defs/oid"},
+    "source_tree_digest": {"$ref": "#/$defs/oid"},
+    "sandbox_artifact_id": {"$ref": "#/$defs/digest"},
+    "patch_digest": {"$ref": "#/$defs/digest"},
+    "changed_paths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "test_specs": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["test_id", "command_digest"], "properties": {"test_id": {"$ref": "#/$defs/id"}, "command_digest": {"$ref": "#/$defs/digest"}}}},
+    "mutation_plan_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/digest"}},
+    "execution_trace_ref": {"type": "string", "minLength": 1},
+    "plan_is_read_only": {"const": true},
+    "commit_allowed": {"const": false},
+    "push_allowed": {"const": false},
+    "authority_granted": {"const": false},
+    "plan_digest": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {"digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "oid": {"type": "string", "pattern": "^[a-f0-9]{40}([a-f0-9]{24})?$"}, "id": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,127}$"}}
+}
