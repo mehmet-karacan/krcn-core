@@ -3,7 +3,7 @@
   "schema_version": 1,
   "phase_id": "phase-28",
   "workstream_id": "optional-team-runtime-need-gate",
-  "status": "active",
+  "status": "completed",
   "goal": "Team Runtime ihtiyacini kanitla ve yalniz gercek ihtiyac varsa cok makineli altyapiyi ac",
   "plan_ref": "docs/plans/PLAN-028-OPTIONAL-TEAM-RUNTIME.md",
   "progress_refs": [
@@ -35,12 +35,15 @@
     "docs/progress/PHASE-27-KICKOFF.md",
     "docs/progress/PHASE-27-DOMAIN-AND-CLIENTS.md",
     "docs/progress/PHASE-27-CLOSURE.md",
-    "docs/progress/PHASE-28-KICKOFF.md"
+    "docs/progress/PHASE-28-KICKOFF.md",
+    "docs/progress/PHASE-28-NEED-GATE.md",
+    "docs/progress/PHASE-28-CLOSURE.md",
+    "docs/progress/PHASE-23-28-FINAL-HANDOFF.md"
   ],
   "next_actions": [
-    "team runtime need gate degerlendirmesini uygula"
+    "krcn-core-dev ile production krcn-core esitlemesi icin salt okunur exact plan hazirla ve kullanici onayi bekle"
   ],
-  "baseline_commit": "7028883",
+  "baseline_commit": "b4d6593",
   "approval_gates": {
     "tracked_source_import": true,
     "user_data_mutation": true,

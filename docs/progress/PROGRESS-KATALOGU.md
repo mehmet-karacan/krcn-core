@@ -222,6 +222,8 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 
 - `PHASE-28-KICKOFF.md`
 - `PHASE-28-NEED-GATE.md`
+- `PHASE-28-CLOSURE.md`
+- `PHASE-23-28-FINAL-HANDOFF.md`
 
 ## Faz dışı operasyon ve düzeltme kayıtları
 
