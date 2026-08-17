@@ -204,6 +204,10 @@ Bu katalog `docs/progress/` altındaki bütün ilerleme kayıtlarının canonica
 - `PHASE-25-RECOVERY-DOCTOR.md`
 - `PHASE-25-CLOSURE.md`
 
+## Faz 26 - Outbound Assurance ve Worktree Sandbox
+
+- `PHASE-26-KICKOFF.md`
+
 ## Faz dışı operasyon ve düzeltme kayıtları
 
 - `JSON-BELGE-BICIMI.md`
