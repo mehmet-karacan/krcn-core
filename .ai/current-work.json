@@ -16,10 +16,11 @@
     "docs/progress/PHASE-24-KICKOFF.md",
     "docs/progress/PHASE-24-DOMAIN-CONTRACTS.md",
     "docs/progress/PHASE-24-RECEIPT-STORE.md",
-    "docs/progress/PHASE-24-RESULT-ADAPTERS.md"
+    "docs/progress/PHASE-24-RESULT-ADAPTERS.md",
+    "docs/progress/PHASE-24-FAN-IN-TRACE.md"
   ],
   "next_actions": [
-    "coordinator fan-in ve Execution Trace aggregation kabulunu tamamla"
+    "Faz 24 full regression ve bagimsiz kabul kontrolunu tamamla"
   ],
   "baseline_commit": "1ff472c",
   "approval_gates": {

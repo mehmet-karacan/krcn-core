@@ -494,3 +494,15 @@ Bağlantı değeri komut satırına yazılmaz. Örneğin `secret://database/repo
 `krcn retrieval unified --request-file <json>` Work Graph, bilgi kataloğu, kaynak kod ve Oracle metadata kanıtlarını tek proje kapsamlı sonuçta birleştirir. JSON dosyasındaki `query`, `schemas/unified-retrieval-query.schema.json` sözleşmesine uyar.
 
 `auto` niyeti Türkçe ve İngilizce sorguyu deterministik olarak sınıflandırır. `Nerede kaldık?` gibi durum sorguları önce authoritative Work Graph kayıtlarını kullanır. Birden fazla proje ancak açık `multi-project` kapsamı ve proje listesiyle aranabilir. Eksik veya stale domain sonucu response içindeki `domain_status` ve `next_actions` alanlarında bildirilir.
+## Agent result normalization and fan-in
+
+```powershell
+krcn result normalize-native --request-file result-normalize.json
+krcn result fan-in --request-file result-fan-in.json
+krcn result trace --request-file result-trace.json
+```
+
+Bu uc operasyon read-only'dir. Native sonuc serbest metin degil strict
+structured payload olmalidir. Fan-in yalniz coordinator execution identity ile
+ozet uretir; completion authority vermez. Trace degerleri Workflow Step Receipt
+kayitlarindan yeniden uretilir.

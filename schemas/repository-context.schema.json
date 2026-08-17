@@ -115,8 +115,10 @@
         "agent_result_envelope_schema",
         "native_agent_result_schema",
         "agent_result_normalization_schema",
+        "agent_result_fan_in_schema",
         "workflow_step_receipt_boundary",
         "workflow_step_receipt_schema",
+        "workflow_step_receipt_aggregate_schema",
         "workflow_step_receipt_record_schema",
         "workflow_step_receipt_record_plan_schema",
         "status_projection_schema",
@@ -411,10 +413,16 @@
         "agent_result_normalization_schema": {
           "$ref": "#/$defs/repoPath"
         },
+        "agent_result_fan_in_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
         "workflow_step_receipt_boundary": {
           "$ref": "#/$defs/repoPath"
         },
         "workflow_step_receipt_schema": {
+          "$ref": "#/$defs/repoPath"
+        },
+        "workflow_step_receipt_aggregate_schema": {
           "$ref": "#/$defs/repoPath"
         },
         "workflow_step_receipt_record_schema": {

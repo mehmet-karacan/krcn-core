@@ -429,6 +429,19 @@ def build_parser() -> argparse.ArgumentParser:
         command = routing_commands.add_parser(operation, help=help_text)
         _add_phase_four_options(command, mutation=operation == "record")
         command.set_defaults(format="text")
+    result = subparsers.add_parser(
+        "result",
+        help="Normalize and aggregate authority-free agent results",
+    )
+    result_commands = result.add_subparsers(dest="result_command")
+    for operation, help_text in (
+        ("normalize-native", "Normalize one structured native client result"),
+        ("fan-in", "Build one coordinator-only bounded fan-in summary"),
+        ("trace", "Aggregate workflow receipts into an execution trace"),
+    ):
+        command = result_commands.add_parser(operation, help=help_text)
+        _add_phase_four_options(command)
+        command.set_defaults(format="text")
     skills = subparsers.add_parser(
         "skills",
         help="Evaluate skill candidates and prepare reviewed registry changes",
@@ -1956,6 +1969,11 @@ def _phase_four_service_request(args: argparse.Namespace) -> ServiceRequest:
     }:
         operation = f"routing.{args.routing_command}"
         arguments = _load_phase_four_arguments(args.request_file)
+    elif args.command == "result" and args.result_command in {
+        "normalize-native", "fan-in", "trace",
+    }:
+        operation = f"result.{args.result_command}"
+        arguments = _load_phase_four_arguments(args.request_file)
     elif args.command == "skills" and args.skills_command in {
         "evaluate",
         "plan-change",
@@ -2412,6 +2430,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "skills",
         "models",
         "routing",
+        "result",
     }:
         return _run_phase_four_service_command(args)
 

@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:agent-result-fan-in:1",
+  "title": "KRCN Core coordinator-only agent result fan-in",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "correlation_id",
+    "project_id",
+    "work_item_id",
+    "task_id",
+    "task_plan_id",
+    "coordinator_execution_identity_id",
+    "status",
+    "headline",
+    "expected_step_ids",
+    "completed_step_ids",
+    "missing_step_ids",
+    "failed_step_ids",
+    "envelope_ids",
+    "envelope_digests",
+    "receipt_digests",
+    "evidence_digest",
+    "receipt_aggregate",
+    "completion_authorized",
+    "grants_authority",
+    "fan_in_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/agent-result-fan-in.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "correlation_id": {
+      "$ref": "#/$defs/id"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "coordinator_execution_identity_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "status": {
+      "enum": [
+        "completed",
+        "partial",
+        "failed",
+        "blocked",
+        "recovery-required"
+      ]
+    },
+    "headline": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240
+    },
+    "expected_step_ids": {
+      "$ref": "#/$defs/ids"
+    },
+    "completed_step_ids": {
+      "$ref": "#/$defs/ids"
+    },
+    "missing_step_ids": {
+      "$ref": "#/$defs/ids"
+    },
+    "failed_step_ids": {
+      "$ref": "#/$defs/ids"
+    },
+    "envelope_ids": {
+      "$ref": "#/$defs/digests"
+    },
+    "envelope_digests": {
+      "$ref": "#/$defs/digests"
+    },
+    "receipt_digests": {
+      "$ref": "#/$defs/digests"
+    },
+    "evidence_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "receipt_aggregate": {
+      "$ref": "urn:krcn:schemas:workflow-step-receipt-aggregate:1"
+    },
+    "completion_authorized": {
+      "const": false
+    },
+    "grants_authority": {
+      "const": false
+    },
+    "fan_in_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{0,127}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "digests": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/digest"
+      }
+    }
+  }
+}

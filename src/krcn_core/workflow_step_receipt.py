@@ -317,4 +317,45 @@ def aggregate_step_receipts(receipts: list[WorkflowStepReceipt]) -> dict[str, ob
     payload["aggregation_digest"] = hashlib.sha256(
         canonical_json_bytes({key: value for key, value in payload.items() if key != "aggregation_digest"})
     ).hexdigest()
-    return payload
+    return parse_step_receipt_aggregate(payload)
+
+
+def parse_step_receipt_aggregate(payload: object) -> dict[str, object]:
+    data = _strict(
+        payload,
+        {"correlation_id", "receipt_ids", "receipt_count", "status_counts", "usage", "aggregation_digest", "grants_authority"},
+        "receipt aggregate",
+    )
+    _id(data.get("correlation_id"), "aggregate correlation id")
+    receipt_ids = data.get("receipt_ids")
+    if (
+        not isinstance(receipt_ids, list)
+        or not receipt_ids
+        or receipt_ids != sorted(receipt_ids)
+        or len(set(receipt_ids)) != len(receipt_ids)
+        or any(_sha(item, "aggregate receipt id") is None for item in receipt_ids)
+        or data.get("receipt_count") != len(receipt_ids)
+    ):
+        raise WorkflowStepReceiptError("receipt aggregate identities are invalid")
+    counts = data.get("status_counts")
+    if (
+        not isinstance(counts, Mapping)
+        or not counts
+        or any(key not in STATUSES or _positive(value, "aggregate status count") < 1 for key, value in counts.items())
+        or sum(int(value) for value in counts.values()) != len(receipt_ids)
+    ):
+        raise WorkflowStepReceiptError("receipt aggregate status counts are invalid")
+    usage = _strict(data.get("usage"), {"duration_ms", "input_tokens", "output_tokens", "cache_read_tokens", "cache_write_tokens", "cost_microunits", "currency"}, "receipt aggregate usage")
+    for field in ("duration_ms", "input_tokens", "output_tokens", "cache_read_tokens", "cache_write_tokens", "cost_microunits"):
+        _nonnegative(usage.get(field), "aggregate " + field.replace("_", " "))
+    currency = usage.get("currency")
+    if (usage["cost_microunits"] == 0 and currency is not None) or (usage["cost_microunits"] > 0 and currency not in CURRENCIES):
+        raise WorkflowStepReceiptError("receipt aggregate currency is invalid")
+    if data.get("grants_authority") is not False:
+        raise WorkflowStepReceiptError("receipt aggregate cannot grant authority")
+    expected = hashlib.sha256(
+        canonical_json_bytes({key: value for key, value in data.items() if key != "aggregation_digest"})
+    ).hexdigest()
+    if data.get("aggregation_digest") != expected:
+        raise WorkflowStepReceiptError("receipt aggregate digest is invalid")
+    return data

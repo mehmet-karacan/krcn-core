@@ -87,6 +87,8 @@ from .adaptive_routing_store import (
     apply_route_decision_record,
     prepare_route_decision_record,
 )
+from .agent_result_normalizer import normalize_native_client_result
+from .agent_result_fanin import build_agent_result_fan_in, build_execution_trace_from_results
 from .execution_coordinator import prepare_execution_coordination
 from .memory_gate import (
     apply_memory_lifecycle,
@@ -700,6 +702,74 @@ class KrcnApplicationService:
             "persisted": True,
             "grants_authority": False,
         }
+
+    def _normalize_native_result(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(request.arguments, required={"native_result", "context"})
+        if request.apply:
+            raise ApplicationServiceError("agent result normalization is read-only")
+        try:
+            normalized = normalize_native_client_result(
+                _object_argument(request.arguments, "native_result"),
+                _object_argument(request.arguments, "context"),
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {"normalized_result": normalized.as_dict(), "grants_authority": False}
+
+    def _fan_in_agent_results(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        _check_arguments(
+            request.arguments,
+            required={"normalized_results", "expected_step_ids", "coordinator_execution_identity_id", "caller_role"},
+        )
+        if request.apply:
+            raise ApplicationServiceError("agent result fan-in is read-only")
+        results = request.arguments.get("normalized_results")
+        if not isinstance(results, list):
+            raise ApplicationServiceError("normalized_results must be a list")
+        try:
+            fan_in = build_agent_result_fan_in(
+                results,
+                expected_step_ids=_string_tuple_argument(request.arguments, "expected_step_ids"),
+                coordinator_execution_identity_id=_string_argument(request.arguments, "coordinator_execution_identity_id"),
+                caller_role=_string_argument(request.arguments, "caller_role"),
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {"fan_in": fan_in.as_dict(), "grants_authority": False}
+
+    def _trace_agent_results(
+        self,
+        request: ServiceRequest,
+    ) -> tuple[str, Mapping[str, object]]:
+        required = {"normalized_results", "request_id", "client_id", "intent_digest", "context_digest", "delegation_mode"}
+        _check_arguments(request.arguments, required=required, optional={"approval_envelope_id"})
+        if request.apply:
+            raise ApplicationServiceError("agent result trace aggregation is read-only")
+        results = request.arguments.get("normalized_results")
+        if not isinstance(results, list):
+            raise ApplicationServiceError("normalized_results must be a list")
+        approval = request.arguments.get("approval_envelope_id")
+        if approval is not None and not isinstance(approval, str):
+            raise ApplicationServiceError("approval_envelope_id must be text or null")
+        try:
+            trace = build_execution_trace_from_results(
+                results,
+                request_id=_string_argument(request.arguments, "request_id"),
+                client_id=_string_argument(request.arguments, "client_id"),
+                intent_digest=_string_argument(request.arguments, "intent_digest"),
+                context_digest=_string_argument(request.arguments, "context_digest"),
+                delegation_mode=_string_argument(request.arguments, "delegation_mode"),
+                approval_envelope_id=approval,
+            )
+        except ValueError as exc:
+            raise ApplicationServiceError(str(exc)) from exc
+        return "ok", {"execution_trace": trace.as_dict(), "grants_authority": False}
 
     def _put_work_item(
         self,

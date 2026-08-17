@@ -38,6 +38,14 @@ Phase 23 traces may include `route_decision_id`. Older version 1 traces that do
 not contain this field remain readable and are normalized to a null route
 binding. A route decision never changes execution and never supplies authority.
 
+Phase 24 `build_execution_trace_from_results` projection'u token, cache, cost,
+retry, queue, model ve agent kimliklerini yalniz dogrulanmis Workflow Step
+Receipt kayitlarindan toplar. Trace wall-clock duration'i en erken step
+baslangici ile en gec step bitisi arasindan turetilir; paralel step
+duration'larini toplayip request latency diye sunmaz. Currency uyusmazligi
+fail-closed olur. Trace halen request seviyesinde, authority vermeyen bir
+projeksiyondur; receipt veya Work Graph yerine gecmez.
+
 ## StatusProjection
 
 `schemas/status-projection.schema.json` exposes one of the following canonical

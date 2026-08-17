@@ -50,3 +50,15 @@ Mevcut worker v1/v2 journal kaydinda generalized effect claim/receipt alani
 yoktur. Bu nedenle read effect normalize edilebilir; completed write, execute
 ve network sonucu Faz 25 ledger baglari gelene kadar basarili envelope'a
 yukseltilemez. Bu bilincli fail-closed sinir sessiz yetki uretmez.
+
+## Coordinator fan-in
+
+`src/krcn_core/agent_result_fanin.py` yalniz `caller_role=coordinator` ile
+bounded final ozet uretir. Child envelope ve receipt scope'lari birebir
+eslesir; duplicate step/attempt, farkli proje/task baglari ve tamper reddedilir.
+Eksik veya basarisiz bir step varsa fan-in completed olamaz. Recovery-required
+durumu partial sonuc uzerinde onceliklidir.
+
+Fan-in Work Graph completion'i gerceklestirmez ve `completion_authorized=false`
+tasir. Yalniz dogrulanmis child envelope/receipt kimliklerini, step
+projeksiyonunu ve deterministik receipt aggregate'ini sunar.
