@@ -32,6 +32,15 @@ from .orchestration_worker import (
 )
 from .policies import load_user_policies
 from .provider_gate import create_provider_request
+from .work_completion import (
+    WorkCompletionError,
+    apply_verified_work_completion,
+    build_work_completion_attestation,
+    persist_work_completion_attestation,
+    parse_work_completion_attestation,
+    prepare_verified_work_completion,
+    reconcile_applied_work_completion,
+)
 
 
 IDENTIFIER = re.compile(r"^[a-z][a-z0-9-]*$")
@@ -479,6 +488,62 @@ class OrchestrationApplicationService:
                     )
                 )
             resumed = self._states.resume(plan.task_id, plan, authorization)
+            if resumed.state.status == "completed":
+                if not isinstance(project_id, str) or not isinstance(work_item_id, str):
+                    raise OrchestrationServiceError(
+                        "completed orchestration has no Work Graph binding"
+                    )
+                stored_attestation = self._store.read(
+                    "work-completion-attestations",
+                    f"{plan.task_id}-work-completion",
+                )
+                stored_work = self._store.read("work-items", work_item_id)
+                if stored_attestation is None or stored_work is None:
+                    raise OrchestrationServiceError(
+                        "completed orchestration lacks completion attestation"
+                    )
+                try:
+                    attestation = parse_work_completion_attestation(
+                        stored_attestation.payload
+                    )
+                except ValueError as exc:
+                    raise OrchestrationServiceError(
+                        "stored completion attestation is invalid"
+                    ) from exc
+                if (
+                    attestation.project_id != project_id
+                    or attestation.work_item_id != work_item_id
+                    or attestation.task_plan_id != plan.plan_id
+                    or attestation.authorization_id != authorization.authorization_id
+                    or attestation.verification_id != resumed.state.verification_id
+                    or stored_work.payload.get("status") != "completed"
+                ):
+                    raise OrchestrationServiceError(
+                        "completed orchestration binding changed"
+                    )
+                if apply:
+                    self._require_apply_plan(apply, expected_plan_id, plan.plan_id)
+                return "ok", {
+                    "verification": {
+                        "verification_id": attestation.verification_id,
+                        "status": "verified",
+                        "completion_allowed": True,
+                        "persisted_attestation": True,
+                    },
+                    "state": resumed.state.as_dict(),
+                    "handoff": (
+                        resumed.handoff.as_dict() if resumed.handoff else None
+                    ),
+                    "work_completion": {
+                        "status": "completed",
+                        "completed": True,
+                        "work_item_id": work_item_id,
+                        "attestation_id": attestation.attestation_id,
+                        "second_approval_required": False,
+                        "reopen_supported": True,
+                    },
+                    "no_op": True,
+                }
             if resumed.state.status != "verifying":
                 raise OrchestrationServiceError("orchestration state is not ready for verification")
             verification = verify_task(
@@ -493,6 +558,90 @@ class OrchestrationApplicationService:
                 return "ok", {"verification": verification.as_dict()}
             self._require_apply_plan(apply, expected_plan_id, plan.plan_id)
             target_status = "completed" if verification.completion_allowed else "failed"
+            work_completion: dict[str, object] = {
+                "status": "not-requested",
+                "completed": False,
+                "second_approval_required": False,
+            }
+            if (
+                target_status == "completed"
+                and isinstance(project_id, str)
+                and isinstance(work_item_id, str)
+            ):
+                try:
+                    attestation_record = self._store.read(
+                        "work-completion-attestations",
+                        f"{plan.task_id}-work-completion",
+                    )
+                    if attestation_record is None:
+                        attestation = build_work_completion_attestation(
+                            self._store,
+                            project_id=project_id,
+                            work_item_id=work_item_id,
+                            plan=plan,
+                            verification=verification,
+                        )
+                        # Preparing before any write makes proof and concurrency
+                        # failures leave the orchestration in verifying state.
+                        completion_plan = prepare_verified_work_completion(
+                            self._repo_root,
+                            self._store,
+                            attestation,
+                        )
+                        persist_work_completion_attestation(self._store, attestation)
+                        completion_result = apply_verified_work_completion(
+                            self._store,
+                            self._ownership,
+                            completion_plan,
+                        )
+                    else:
+                        attestation = parse_work_completion_attestation(
+                            attestation_record.payload
+                        )
+                        if (
+                            attestation.project_id != project_id
+                            or attestation.work_item_id != work_item_id
+                            or attestation.task_id != plan.task_id
+                            or attestation.task_plan_id != plan.plan_id
+                            or attestation.authorization_id
+                            != authorization.authorization_id
+                            or attestation.verification_id
+                            != verification.verification_id
+                        ):
+                            raise WorkCompletionError(
+                                "stored completion attestation binding changed"
+                            )
+                        stored_target = self._store.read("work-items", work_item_id)
+                        if (
+                            stored_target is not None
+                            and stored_target.payload.get("status") == "completed"
+                        ):
+                            completion_result = reconcile_applied_work_completion(
+                                self._repo_root,
+                                self._store,
+                                self._ownership,
+                                attestation,
+                            )
+                        else:
+                            completion_plan = prepare_verified_work_completion(
+                                self._repo_root,
+                                self._store,
+                                attestation,
+                            )
+                            completion_result = apply_verified_work_completion(
+                                self._store,
+                                self._ownership,
+                                completion_plan,
+                            )
+                    work_completion = {
+                        "status": "completed",
+                        "completed": True,
+                        **completion_result,
+                    }
+                except WorkCompletionError as exc:
+                    raise OrchestrationServiceError(
+                        f"verified Work Graph completion failed: {exc}"
+                    ) from exc
             state = self._states.transition(
                 resumed.state,
                 plan,
@@ -514,5 +663,6 @@ class OrchestrationApplicationService:
                 "verification": verification.as_dict(),
                 "state": state.as_dict(),
                 "handoff": handoff.as_dict(),
+                "work_completion": work_completion,
             }
         raise OrchestrationServiceError("orchestration operation is invalid")

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-completion-plan:1",
+  "title": "KRCN verified Work Graph completion plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "plan_id",
+    "project_id",
+    "work_item_id",
+    "from_status",
+    "to_status",
+    "base_item_revision",
+    "base_item_digest",
+    "dependency_digest",
+    "attestation_id",
+    "reopen_supported",
+    "effect_plans"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-completion-plan.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/id"
+    },
+    "from_status": {
+      "const": "active"
+    },
+    "to_status": {
+      "const": "completed"
+    },
+    "base_item_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "base_item_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "dependency_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "attestation_id": {
+      "$ref": "#/$defs/id"
+    },
+    "reopen_supported": {
+      "const": true
+    },
+    "effect_plans": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "$ref": "mutation-plan.schema.json"
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

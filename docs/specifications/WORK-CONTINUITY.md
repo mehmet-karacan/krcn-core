@@ -46,6 +46,8 @@ The plan record binds one exact task plan to one project and one Work Graph item
 
 A new client must use the persisted progress instead of inferring completion from chat. It may continue an existing authorized execution only through the reviewed orchestration service. When a prior session authorization cannot be reused, the client prepares a fresh exact continuation plan for the remaining steps and keeps the prior checkpoints and handoff as history.
 
+When the reviewed orchestration reaches independently verified completion, the same client-neutral service may append the bound Work Graph completion attestation and close the active item without asking for the already granted authorization again. Repeating the exact verified finish is a no-op. Missing proof or a relevant target/dependency change fails closed; an unrelated Work Graph item does not invalidate the target-scoped closure.
+
 ## Portability
 
 Runtime continuity is local and ignored by Git. Thin capsule exports exclude runtime. Ready exports exclude active task runtime so leases or unfinished execution authority cannot move between machines. A paused or completed handoff may be carried only through the reviewed portability workflow. Derived indexes are not authoritative continuity records.

@@ -27,6 +27,7 @@ from .mutation_gate import (
     MutationPlan,
     OwnershipResolver,
     plan_mutation,
+    plan_verified_work_completion_mutation,
 )
 from .integrations import parse_integration_metadata
 from .information_records import (
@@ -119,6 +120,11 @@ COLLECTIONS = {
     "orchestration-handoffs": (
         "handoff_id",
         "runtime/orchestration-handoffs",
+        "runtime",
+    ),
+    "work-completion-attestations": (
+        "attestation_id",
+        "runtime/work-completion-attestations",
         "runtime",
     ),
     "route-decisions": (
@@ -328,6 +334,14 @@ def _validate_record_identity(
             return parse_work_event(payload).revision
         except ValueError as exc:
             raise LocalStoreError(str(exc)) from exc
+    if record_type == "work-completion-attestations":
+        from .work_completion import parse_work_completion_attestation
+
+        try:
+            parse_work_completion_attestation(payload)
+        except ValueError as exc:
+            raise LocalStoreError(str(exc)) from exc
+        return None
     if record_type.startswith("orchestration-"):
         from .orchestration_state import (
             parse_orchestration_checkpoint,
@@ -816,6 +830,7 @@ class LocalWorkspaceStore:
         expected_revision: int,
         project_id: str | None = None,
         approval_scope: str = "standard",
+        completion_attestation: object | None = None,
     ) -> RecordWritePlan:
         if not isinstance(payload, Mapping):
             raise LocalStoreError("record payload must be an object")
@@ -829,7 +844,11 @@ class LocalWorkspaceStore:
         current_revision = current.revision if current else 0
         if expected_revision != current_revision:
             raise RevisionConflictError("record revision changed before planning")
-        if record_type in {"route-decisions", "workflow-step-receipts"} and current is not None:
+        if record_type in {
+            "route-decisions",
+            "workflow-step-receipts",
+            "work-completion-attestations",
+        } and current is not None:
             raise LocalStoreError(f"{record_type} records are append-only")
         if (
             approval_scope == "local-observation-reconciliation"
@@ -838,6 +857,36 @@ class LocalWorkspaceStore:
             raise LocalStoreError(
                 "record collection is outside local observation reconciliation"
             )
+        if (
+            approval_scope == "verified-work-completion"
+            and record_type not in {"work-items", "work-events"}
+        ):
+            raise LocalStoreError(
+                "record collection is outside verified work completion"
+            )
+        attestation_digest = None
+        if approval_scope == "verified-work-completion":
+            from .work_completion import parse_work_completion_attestation
+
+            try:
+                attestation = parse_work_completion_attestation(
+                    completion_attestation
+                )
+            except ValueError as exc:
+                raise LocalStoreError(
+                    "verified work completion requires a valid attestation"
+                ) from exc
+            if (
+                project_id != attestation.project_id
+                or payload_copy.get("project_id") != attestation.project_id
+                or payload_copy.get("work_item_id") != attestation.work_item_id
+                or payload_copy.get("provenance", {}).get("source_ref")
+                != attestation.attestation_id
+            ):
+                raise LocalStoreError(
+                    "verified work completion record does not match attestation"
+                )
+            attestation_digest = attestation.attestation_digest
         next_revision = current_revision + 1
         if information_revision is not None and information_revision != next_revision:
             raise LocalStoreError(
@@ -858,15 +907,26 @@ class LocalWorkspaceStore:
             payload_copy,
             project_id,
         )
-        mutation = plan_mutation(
-            self._ownership,
-            operation="create" if current is None else "update",
-            target_ref=self._target_ref(target),
-            expected_ownership=COLLECTIONS[record_type][2],
-            change_digest=payload_sha256,
-            reversible=True,
-            approval_scope=approval_scope,
-        )
+        if approval_scope == "verified-work-completion":
+            mutation = plan_verified_work_completion_mutation(
+                self._ownership,
+                operation="create" if current is None else "update",
+                target_ref=self._target_ref(target),
+                expected_ownership=COLLECTIONS[record_type][2],
+                change_digest=payload_sha256,
+                reversible=True,
+                attestation_digest=str(attestation_digest),
+            )
+        else:
+            mutation = plan_mutation(
+                self._ownership,
+                operation="create" if current is None else "update",
+                target_ref=self._target_ref(target),
+                expected_ownership=COLLECTIONS[record_type][2],
+                change_digest=payload_sha256,
+                reversible=True,
+                approval_scope=approval_scope,
+            )
         return RecordWritePlan(
             record_type=record_type,
             record_id=record_id,

@@ -58,7 +58,8 @@
     "approval_scope": {
       "enum": [
         "standard",
-        "local-observation-reconciliation"
+        "local-observation-reconciliation",
+        "verified-work-completion"
       ]
     },
     "reversible": {

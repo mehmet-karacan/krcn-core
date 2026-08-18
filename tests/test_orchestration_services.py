@@ -319,7 +319,9 @@ class OrchestrationServiceTests(unittest.TestCase):
                 "title": "Scoped task",
                 "description": "Persist runtime inside the project capsule",
                 "status": "active",
-                "acceptance_criteria": ["State is project scoped"],
+                "acceptance_criteria": [
+                    item.value for item in self.intent.acceptance_criteria
+                ],
                 "relations": [],
                 "evidence": [],
                 "provenance": {"source_kind": "user", "source_ref": "test"},
@@ -402,6 +404,61 @@ class OrchestrationServiceTests(unittest.TestCase):
         self.assertEqual([], progress[0]["next_steps"])
         self.assertTrue(progress[0]["verification_required"])
         self.assertEqual("verify-task", progress[0]["next_action"])
+
+        verify_request = ServiceRequest(
+            "claude",
+            "orchestrator.verify",
+            {
+                **arguments,
+                "verifier_requests": [{
+                    "step_id": "verify-policy",
+                    "handler_id": "policy-verifier",
+                    "execution_identity": execution_identity(
+                        self.plan, "verify-policy", "verifier"
+                    ).as_dict(),
+                }],
+            },
+            apply=True,
+            expected_plan_id=self.plan.plan_id,
+        )
+        state_store = self.service._orchestration._states
+        original_transition = state_store.transition
+
+        def interrupt_terminal_transition(current, plan, **kwargs):
+            if kwargs.get("event_type") == "task-verified":
+                raise RuntimeError("injected terminal transition interruption")
+            return original_transition(current, plan, **kwargs)
+
+        state_store.transition = interrupt_terminal_transition
+        try:
+            with self.assertRaisesRegex(RuntimeError, "injected terminal"):
+                self.service.execute(verify_request)
+        finally:
+            state_store.transition = original_transition
+        interrupted_state = store.read("orchestration-states", self.plan.task_id)
+        self.assertEqual("verifying", interrupted_state.payload["status"])
+        self.assertEqual(
+            "completed", store.read("work-items", "task-scoped").payload["status"]
+        )
+
+        verified = self.service.execute(verify_request)
+        self.assertEqual("completed", verified.data["state"]["status"])
+        completion = verified.data["work_completion"]
+        self.assertTrue(completion["completed"])
+        self.assertFalse(completion["second_approval_required"])
+        completed_item = store.read("work-items", "task-scoped")
+        self.assertEqual("completed", completed_item.payload["status"])
+        self.assertEqual(2, completed_item.revision)
+        self.assertIsNotNone(store.read("work-events", "task-scoped-r2"))
+        attestation_id = f"{self.plan.task_id}-work-completion"
+        self.assertIsNotNone(
+            store.read("work-completion-attestations", attestation_id)
+        )
+        repeated = self.service.execute(verify_request)
+        self.assertEqual("ok", repeated.status)
+        self.assertTrue(repeated.data["no_op"])
+        self.assertTrue(repeated.data["work_completion"]["completed"])
+        self.assertEqual(2, store.read("work-items", "task-scoped").revision)
 
     def test_cli_uses_the_same_plan_service_contract(self) -> None:
         request_path = self.data_root / "orchestrator-plan.json"

@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:work-completion-attestation:1",
+  "title": "KRCN evidence-bound Work Graph completion attestation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "attestation_id",
+    "project_id",
+    "work_item_id",
+    "task_id",
+    "task_plan_id",
+    "authorization_id",
+    "verification_id",
+    "base_item_revision",
+    "base_item_digest",
+    "dependency_digest",
+    "relevant_work_item_ids",
+    "acceptance_subject_digests",
+    "checkpoint_ids",
+    "verifier_execution_identity_ids",
+    "verification_evidence_digests",
+    "status",
+    "completion_allowed",
+    "reversible",
+    "attestation_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/work-completion-attestation.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "attestation_id": {
+      "$ref": "#/$defs/id"
+    },
+    "project_id": {
+      "$ref": "#/$defs/id"
+    },
+    "work_item_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_id": {
+      "$ref": "#/$defs/id"
+    },
+    "task_plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "authorization_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "verification_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "base_item_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "base_item_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "dependency_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "relevant_work_item_ids": {
+      "$ref": "#/$defs/ids"
+    },
+    "acceptance_subject_digests": {
+      "$ref": "#/$defs/digests"
+    },
+    "checkpoint_ids": {
+      "$ref": "#/$defs/digests"
+    },
+    "verifier_execution_identity_ids": {
+      "$ref": "#/$defs/digests"
+    },
+    "verification_evidence_digests": {
+      "$ref": "#/$defs/digests"
+    },
+    "status": {
+      "const": "verified"
+    },
+    "completion_allowed": {
+      "const": true
+    },
+    "reversible": {
+      "const": true
+    },
+    "attestation_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/id"
+      }
+    },
+    "digests": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/digest"
+      }
+    }
+  }
+}

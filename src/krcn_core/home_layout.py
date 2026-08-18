@@ -41,6 +41,7 @@ PROJECT_COLLECTION_PATHS = {
     "orchestration-events": "runtime/events/orchestration",
     "orchestration-checkpoints": "runtime/checkpoints/orchestration",
     "orchestration-handoffs": "runtime/orchestration-handoffs",
+    "work-completion-attestations": "runtime/work-completion-attestations",
     "route-decisions": "runtime/routing-decisions",
     "workflow-step-receipts": "runtime/workflow-step-receipts",
     "model-inventory": "models",

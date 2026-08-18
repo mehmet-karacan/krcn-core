@@ -16,7 +16,11 @@ MutationOperation = Literal["create", "update", "delete", "move"]
 OwnershipClass = Literal[
     "core", "runtime", "user-data", "derived", "secrets", "unmanaged"
 ]
-ApprovalScope = Literal["standard", "local-observation-reconciliation"]
+ApprovalScope = Literal[
+    "standard",
+    "local-observation-reconciliation",
+    "verified-work-completion",
+]
 
 _LOCAL_RECONCILIATION_TARGETS = (
     re.compile(r"^\.krcn/projects/[a-z][a-z0-9-]*\.json$"),
@@ -28,6 +32,11 @@ _LOCAL_RECONCILIATION_TARGETS = (
     re.compile(r"^\.krcn/projects/[a-z][a-z0-9-]*/derived/source-states/[a-z][a-z0-9-]*\.json$"),
     re.compile(r"^\.krcn/projects/[a-z][a-z0-9-]*/knowledge/(?:authoritative-sources|records)/[a-z][a-z0-9-]*\.json$"),
     re.compile(r"^\.krcn/global/derived/source-states/[a-z][a-z0-9-]*\.json$"),
+)
+
+_VERIFIED_WORK_COMPLETION_TARGETS = (
+    re.compile(r"^\.krcn/work-(?:items|events)/[a-z][a-z0-9-]*\.json$"),
+    re.compile(r"^\.krcn/projects/[a-z][a-z0-9-]*/work/(?:items|events)/[a-z][a-z0-9-]*\.json$"),
 )
 
 
@@ -151,7 +160,10 @@ def plan_mutation(
 
     if operation not in {"create", "update", "delete", "move"}:
         raise MutationGateError("mutation operation is invalid")
-    if approval_scope not in {"standard", "local-observation-reconciliation"}:
+    if approval_scope not in {
+        "standard",
+        "local-observation-reconciliation",
+    }:
         raise MutationGateError("mutation approval scope is invalid")
     portable_ref = _portable_target_ref(target_ref)
     if not re.fullmatch(r"[a-f0-9]{64}", change_digest):
@@ -199,6 +211,63 @@ def plan_mutation(
         approval_required=approval_required,
         reversible=reversible,
         approval_scope=approval_scope,
+    )
+
+
+def plan_verified_work_completion_mutation(
+    resolver: OwnershipResolver,
+    *,
+    operation: MutationOperation,
+    target_ref: str,
+    expected_ownership: OwnershipClass,
+    change_digest: str,
+    reversible: bool,
+    attestation_digest: str,
+) -> MutationPlan:
+    """Plan only a proof-bound Work Graph completion record mutation."""
+
+    if operation not in {"create", "update"} or not reversible:
+        raise MutationGateError(
+            "verified work completion must be a reversible create or update"
+        )
+    portable_ref = _portable_target_ref(target_ref)
+    if (
+        expected_ownership != "user-data"
+        or resolver.resolve(portable_ref) != "user-data"
+        or not any(
+            pattern.fullmatch(portable_ref)
+            for pattern in _VERIFIED_WORK_COMPLETION_TARGETS
+        )
+    ):
+        raise MutationGateError(
+            "target is outside verified work completion records"
+        )
+    if not re.fullmatch(r"[a-f0-9]{64}", change_digest) or not re.fullmatch(
+        r"[a-f0-9]{64}", attestation_digest
+    ):
+        raise MutationGateError("verified work completion digest is invalid")
+    identity = {
+        "operation": operation,
+        "target_ref": portable_ref,
+        "ownership": "user-data",
+        "change_digest": change_digest,
+        "reversible": True,
+        "approval_scope": "verified-work-completion",
+        "attestation_digest": attestation_digest,
+    }
+    plan_id = hashlib.sha256(
+        json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    return MutationPlan(
+        plan_id,
+        operation,
+        portable_ref,
+        "user-data",
+        change_digest,
+        True,
+        False,
+        True,
+        "verified-work-completion",
     )
 
 
