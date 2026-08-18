@@ -38,6 +38,8 @@ not block a genuine native parallel channel.
 12. Treat versioned core writes as authorized only by an explicit KRCN Core product-development request. Integration, audit, retrieval, and ordinary project work are not core mutation authority.
 13. Use the same quiet execution contract in Codex, Claude Code, and OpenCode. Routine commands, native tool activity, raw JSON, stdout, and stderr are not repeated in the conversation. Clients surface only meaningful milestones, exact approval requests, actionable errors, and the final verified summary unless the user explicitly requests verbose or debug detail. Native UI tool cards are controlled by the client UI and must not be duplicated as assistant narration.
 14. Treat verified Work Graph completion identically in every client. A previously authorized orchestration with complete checkpoints and exact independent acceptance proof closes its one active item through the shared completion attestation path without a second prompt. Missing proof, manual/forced completion, bulk/cross-project effects, deletion, and new external authority retain their normal gate.
+15. Do not repeat approval inside one unchanged authorized scope. Runtime bookkeeping and rebuildable local projections do not need approval. A current explicit user request can authorize only a reviewed local mutation when a trusted host or human-owned interactive CLI boundary supplies expiring evidence; KRCN binds and consumes it against session, turn, request, operation, project, plan, target set, and effect digest. Agents cannot self-mint trusted-host evidence. Reviewed implementation delivery additionally binds the sandbox artifact, source revision, tests, allows no delete, and caps this reuse at 20 files. Exact replay returns the stored result; stale, swapped, expanded, unknown, destructive, bulk, cross-project, inferred source, provider, database, Git, deploy, secret, and cost effects fail closed or keep their dedicated gate.
+16. Codex, Claude Code, and OpenCode route an exact natural work-item creation request through `krcn ask "<current user text>" --apply` while preserving their real client/session identifiers. The shared parser plans and applies this small allowlisted mutation in one request. Rephrased, inferred, ambiguous, and unsupported mutations do not enter this path.
 
 Product rules remain in KRCN Core. Client files do not duplicate matching, policy, ownership, or orchestration logic.
 
@@ -49,7 +51,7 @@ If the global command later becomes unavailable, the managed guidance preserves 
 
 ## Exact plan and backup
 
-`client.bootstrap` is a shared application service operation. A dry-run plan binds each target's original and rendered SHA-256 identity. Apply requires that exact plan and explicit user approval.
+`client.bootstrap` is a shared application service operation. A dry-run plan binds each target's original and rendered SHA-256 identity. Apply requires that exact plan and either legacy explicit approval or a trusted, current, request-bound initiating authorization. The latter is consumed once and cannot authorize any other target or effect.
 
 Before an existing client file is changed, its original bytes are stored under the active KRCN home's ignored local-data backup area. A matching prior backup is reused. A conflicting backup identity stops the operation. Secret-like existing content stops planning so it is never copied into KRCN backup storage.
 

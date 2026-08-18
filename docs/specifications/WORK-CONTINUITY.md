@@ -48,6 +48,8 @@ A new client must use the persisted progress instead of inferring completion fro
 
 When the reviewed orchestration reaches independently verified completion, the same client-neutral service may append the bound Work Graph completion attestation and close the active item without asking for the already granted authorization again. Repeating the exact verified finish is a no-op. Missing proof or a relevant target/dependency change fails closed; an unrelated Work Graph item does not invalidate the target-scoped closure.
 
+The same no-repeat principle applies to routine local continuity bookkeeping: checkpoints, progress, handoffs, evidence, receipts, and rebuildable knowledge/index repair continue without a second prompt. Persistent local user mutations can reuse only a trusted current-turn authorization bound to the exact request and effects; the consumed receipt supports exact idempotent replay and rejects stale, transferred, or expanded scope.
+
 ## Portability
 
 Runtime continuity is local and ignored by Git. Thin capsule exports exclude runtime. Ready exports exclude active task runtime so leases or unfinished execution authority cannot move between machines. A paused or completed handoff may be carried only through the reviewed portability workflow. Derived indexes are not authoritative continuity records.

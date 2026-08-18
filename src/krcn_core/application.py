@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import sqlite3
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -232,6 +233,16 @@ from .provider_gate import (
     create_provider_request,
     load_provider_gate_policy,
 )
+from .request_authorization import (
+    RequestAuthorizationError,
+    RequestBoundAuthorization,
+    authorize_explicit_local_request,
+    build_consumed_receipt,
+    build_pending_receipt,
+    complete_pending_receipt,
+    parse_consumed_receipt,
+    parse_initiating_request_evidence,
+)
 from .outbound_assurance import (
     decide_outbound_data,
     load_outbound_assurance_policy,
@@ -407,6 +418,9 @@ class KrcnApplicationService:
         ] | None = None,
         research_process_runners: Mapping[str, ProcessRunner] | None = None,
         research_executable_resolver: ExecutableResolver | None = None,
+        trusted_request_evidence_provider: Callable[
+            [ServiceRequest], Mapping[str, object] | None
+        ] | None = None,
     ) -> None:
         self._repo_root = repo_root.resolve()
         self._store = store
@@ -497,8 +511,20 @@ class KrcnApplicationService:
             raise ApplicationServiceError("research executable resolver is invalid")
         self._research_process_runners = runners
         self._research_executable_resolver = research_executable_resolver
+        if trusted_request_evidence_provider is not None and not callable(
+            trusted_request_evidence_provider
+        ):
+            raise ApplicationServiceError(
+                "trusted request evidence provider must be callable"
+            )
+        self._trusted_request_evidence_provider = trusted_request_evidence_provider
         self._research_cancellations: dict[tuple[str, str], threading.Event] = {}
         self._research_cancellation_lock = threading.Lock()
+        self._request_authorization_lock = threading.Lock()
+        self._pending_request_authorizations: dict[
+            str, RequestBoundAuthorization
+        ] = {}
+        self._consumed_request_authorizations: dict[str, str] = {}
         self._orchestration = OrchestrationApplicationService(
             self._repo_root,
             self._store,
@@ -507,6 +533,9 @@ class KrcnApplicationService:
         )
 
     def execute(self, request: ServiceRequest) -> ServiceResponse:
+        persisted_replay = self._persisted_authorization_replay(request)
+        if persisted_replay is not None:
+            return persisted_replay
         if request.operation in ORCHESTRATION_OPERATIONS:
             status, data = self._orchestration.execute(
                 request.operation,
@@ -521,13 +550,300 @@ class KrcnApplicationService:
                 data=data,
             )
         handlers = bind_application_handlers(self)
-        status, data = handlers[request.operation](request)
-        return ServiceResponse(
+        try:
+            status, data = handlers[request.operation](request)
+        except Exception:
+            with self._request_authorization_lock:
+                self._pending_request_authorizations.pop(request.request_id, None)
+            raise
+        with self._request_authorization_lock:
+            authorization = self._pending_request_authorizations.pop(
+                request.request_id, None
+            )
+        response_data = dict(data)
+        if authorization is not None:
+            response_data["authorization_receipt"] = authorization.receipt()
+        response = ServiceResponse(
             request_id=request.request_id,
             operation=request.operation,
             status=status,
-            data=data,
+            data=response_data,
         )
+        if authorization is not None:
+            self._persist_authorization_receipt(
+                authorization,
+                response,
+            )
+            with self._request_authorization_lock:
+                self._consumed_request_authorizations[
+                    authorization.authorization_id
+                ] = request.request_id
+        return response
+
+    def _persisted_authorization_replay(
+        self,
+        request: ServiceRequest,
+    ) -> ServiceResponse | None:
+        evidence = self._trusted_initiating_request(request)
+        if evidence is None:
+            return None
+        if not evidence.is_current():
+            raise ApplicationServiceError(
+                "trusted initiating request is expired or not yet valid"
+            )
+        for record in self._store.list_records("request-authorization-receipts"):
+            try:
+                receipt = parse_consumed_receipt(record.payload)
+            except RequestAuthorizationError as exc:
+                raise ApplicationServiceError(str(exc)) from exc
+            if receipt["request_id"] != request.request_id:
+                continue
+            if (
+                receipt["intent_request_id"] != request.intent_request_id
+                or receipt["session_id"] != evidence.session_id
+                or receipt["user_turn_digest"] != evidence.user_turn_digest
+                or receipt["evidence_digest"] != evidence.evidence_digest
+                or receipt["issued_at"] != evidence.issued_at
+                or receipt["expires_at"] != evidence.expires_at
+                or receipt["operation"] != request.operation
+                or receipt["plan_id"] != request.expected_plan_id
+            ):
+                raise ApplicationServiceError(
+                    "consumed request authorization cannot be transferred"
+                )
+            if receipt["status"] == "pending":
+                observed = tuple(
+                    self._request_effect_observed(effect)
+                    for effect in receipt["effects"]
+                )
+                if observed and all(value is True for value in observed):
+                    reconciled = ServiceResponse(
+                        request_id=request.request_id,
+                        operation=request.operation,
+                        status="applied",
+                        data={
+                            "applied": True,
+                            "reconciled": True,
+                            "effects_reexecuted": False,
+                            "approval_required": False,
+                            "authorization_receipt": {
+                                "authorization_id": receipt["authorization_id"],
+                                "status": "consumed",
+                                "single_use": True,
+                                "scope_digest": receipt["scope_digest"],
+                                "effect_digest": receipt["effect_digest"],
+                            },
+                        },
+                    )
+                    completed_receipt = complete_pending_receipt(
+                        receipt, reconciled.as_dict()
+                    )
+                    self._update_pending_receipt(record, completed_receipt)
+                    return reconciled
+                if observed and all(value is False for value in observed):
+                    # The write-ahead claim exists but no effect started. The
+                    # unchanged exact request may execute once using that claim.
+                    return None
+                return ServiceResponse(
+                    request_id=request.request_id,
+                    operation=request.operation,
+                    status="recovery-required",
+                    data={
+                        "applied": False,
+                        "effects_reexecuted": False,
+                        "approval_required": False,
+                        "next_operation": "request.authorization.repair-local",
+                        "next_action": (
+                            "inspect the listed local effects, repair only the "
+                            "mismatched targets, then retry the same exact request"
+                        ),
+                        "reason": (
+                            "the exact authorization was claimed but its terminal "
+                            "result was not journaled; recover this receipt without "
+                            "granting new authority"
+                        ),
+                        "authorization_receipt": {
+                            "authorization_id": receipt["authorization_id"],
+                            "status": "pending",
+                            "single_use": True,
+                            "scope_digest": receipt["scope_digest"],
+                            "effect_digest": receipt["effect_digest"],
+                        },
+                    },
+                )
+            payload = receipt["response"]
+            if not isinstance(payload, Mapping):
+                raise ApplicationServiceError("authorization replay response is invalid")
+            try:
+                return ServiceResponse(
+                    request_id=str(payload["request_id"]),
+                    operation=str(payload["operation"]),
+                    status=str(payload["status"]),
+                    data=dict(payload["data"]),
+                )
+            except (KeyError, TypeError, ValueError) as exc:
+                raise ApplicationServiceError(
+                    "authorization replay response is invalid"
+                ) from exc
+        return None
+
+    def _request_effect_observed(self, value: object) -> bool | None:
+        if not isinstance(value, Mapping):
+            return None
+        target_ref = value.get("target_ref")
+        change_digest = value.get("change_digest")
+        if not isinstance(target_ref, str) or not isinstance(change_digest, str):
+            return None
+        if target_ref.startswith(".krcn/"):
+            target = self._store.data_root / target_ref.removeprefix(".krcn/")
+        elif target_ref.startswith("local-client-bootstrap/"):
+            return None
+        else:
+            target = self._repo_root / target_ref
+        if not target.is_file() or target.is_symlink():
+            return False
+        if target.suffix.casefold() == ".json":
+            try:
+                envelope = json.loads(target.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                return None
+            if isinstance(envelope, dict) and isinstance(
+                envelope.get("payload_sha256"), str
+            ):
+                return envelope["payload_sha256"] == change_digest
+        if target.suffix.casefold() == ".sqlite":
+            try:
+                connection = sqlite3.connect(f"file:{target.as_posix()}?mode=ro", uri=True)
+                try:
+                    metadata = dict(connection.execute("SELECT key,value FROM metadata"))
+                finally:
+                    connection.close()
+            except sqlite3.Error:
+                return None
+            if change_digest in metadata.values():
+                return True
+        try:
+            return hashlib.sha256(target.read_bytes()).hexdigest() == change_digest
+        except OSError:
+            return None
+
+    def _update_pending_receipt(self, record, payload: Mapping[str, object]) -> None:
+        write = self._store.prepare_put(
+            "request-authorization-receipts",
+            str(payload["receipt_id"]),
+            payload,
+            expected_revision=record.revision,
+            project_id=(
+                str(payload["project_id"])
+                if isinstance(payload.get("project_id"), str)
+                else None
+            ),
+        )
+        authorization = authorize_mutation(
+            write.mutation,
+            dry_run=DryRunEvidence(write.mutation.plan_id, True),
+        )
+        self._store.apply_put(write, authorization)
+
+    def _persist_authorization_receipt(
+        self,
+        authorization: RequestBoundAuthorization,
+        response: ServiceResponse,
+    ) -> None:
+        payload = build_consumed_receipt(
+            authorization,
+            request_id=response.request_id,
+            response=response.as_dict(),
+        )
+        current = self._store.read(
+            "request-authorization-receipts", authorization.authorization_id
+        )
+        if current is not None:
+            if current.payload != payload:
+                parsed = parse_consumed_receipt(current.payload)
+                if parsed["status"] != "pending":
+                    raise ApplicationServiceError(
+                        "request authorization receipt conflicts with prior consumption"
+                    )
+            else:
+                return
+        write = self._store.prepare_put(
+            "request-authorization-receipts",
+            authorization.authorization_id,
+            payload,
+            expected_revision=current.revision if current is not None else 0,
+            project_id=authorization.project_id,
+        )
+        applied = authorize_mutation(
+            write.mutation,
+            dry_run=DryRunEvidence(write.mutation.plan_id, True),
+        )
+        self._store.apply_put(write, applied)
+
+    def _claim_request_authorization(
+        self,
+        request: ServiceRequest,
+        authorization: RequestBoundAuthorization,
+    ) -> None:
+        self._persist_pending_authorization(request, authorization)
+        with self._request_authorization_lock:
+            consumed_by = self._consumed_request_authorizations.get(
+                authorization.authorization_id
+            )
+            if consumed_by is not None and consumed_by != request.request_id:
+                raise ApplicationServiceError(
+                    "request authorization is already consumed by another request"
+                )
+            pending = self._pending_request_authorizations.get(request.request_id)
+            if pending is not None and pending != authorization:
+                raise ApplicationServiceError(
+                    "request authorization scope changed during apply"
+                )
+            self._pending_request_authorizations[request.request_id] = authorization
+
+    def _persist_pending_authorization(
+        self,
+        request: ServiceRequest,
+        authorization: RequestBoundAuthorization,
+    ) -> None:
+        payload = build_pending_receipt(
+            authorization,
+            request_id=request.request_id,
+        )
+        current = self._store.read(
+            "request-authorization-receipts", authorization.authorization_id
+        )
+        if current is not None:
+            if current.payload != payload:
+                raise ApplicationServiceError(
+                    "request authorization claim conflicts with prior use"
+                )
+            return
+        write = self._store.prepare_put(
+            "request-authorization-receipts",
+            authorization.authorization_id,
+            payload,
+            expected_revision=0,
+            project_id=authorization.project_id,
+        )
+        applied = authorize_mutation(
+            write.mutation,
+            dry_run=DryRunEvidence(write.mutation.plan_id, True),
+        )
+        self._store.apply_put(write, applied)
+
+    def _trusted_initiating_request(self, request: ServiceRequest):
+        if self._trusted_request_evidence_provider is None:
+            return None
+        payload = self._trusted_request_evidence_provider(request)
+        if payload is None:
+            return None
+        evidence = parse_initiating_request_evidence(payload)
+        if evidence.intent_request_id != request.intent_request_id:
+            raise ApplicationServiceError(
+                "trusted initiating request belongs to another request"
+            )
+        return evidence
 
     def _coordinate_execution(
         self,
@@ -999,6 +1315,28 @@ class KrcnApplicationService:
         self,
         request: ServiceRequest,
     ) -> tuple[str, Mapping[str, object]]:
+        expected_revision = request.arguments.get("expected_revision")
+        if expected_revision is not None:
+            if (
+                not isinstance(expected_revision, int)
+                or isinstance(expected_revision, bool)
+                or expected_revision < 0
+            ):
+                raise ApplicationServiceError(
+                    "work item expected revision must be non-negative"
+                )
+            work_item_id = request.arguments.get("work_item_id")
+            current = (
+                self._store.read("work-items", work_item_id)
+                if isinstance(work_item_id, str)
+                else None
+            )
+            current_revision = current.revision if current is not None else 0
+            if current_revision != expected_revision:
+                raise ApplicationServiceError(
+                    "create-only work item identity already exists; use an exact "
+                    "update request that preserves unspecified fields"
+                )
         plan = prepare_work_item(
             self._store,
             self._ownership,
@@ -5037,8 +5375,8 @@ class KrcnApplicationService:
         )
         return "applied", {"plan": plan.public_summary(), **result.public_summary()}
 
-    @staticmethod
     def _authorize_effect_plans(
+        self,
         request: ServiceRequest,
         plan_id: str,
         effects: tuple[MutationPlan, ...],
@@ -5048,16 +5386,49 @@ class KrcnApplicationService:
             raise ApplicationServiceError(
                 "apply requires the exact plan id returned by a prior dry-run"
             )
-        if request.approval_id is None:
-            raise ApplicationServiceError(f"{label} requires approval id")
+        persistent_explicit = request.operation in {
+            "implementation.apply",
+            "client.bootstrap",
+        }
+        required = tuple(
+            effect
+            for effect in effects
+            if effect.approval_required or persistent_explicit
+        )
+        request_authorization = None
+        if required and request.approval_id is None:
+            evidence = self._trusted_initiating_request(request)
+            if evidence is None:
+                raise ApplicationServiceError(f"{label} requires approval id")
+            try:
+                request_authorization = authorize_explicit_local_request(
+                    evidence=evidence,
+                    intent_request_id=request.intent_request_id,
+                    operation=request.operation,
+                    plan_id=plan_id,
+                    project_id=(
+                        str(request.arguments["project_id"])
+                        if isinstance(request.arguments.get("project_id"), str)
+                        else None
+                    ),
+                    effects=effects,
+                )
+            except RequestAuthorizationError as exc:
+                raise ApplicationServiceError(str(exc)) from exc
+            self._claim_request_authorization(request, request_authorization)
         return {
             mutation.plan_id: authorize_mutation(
                 mutation,
                 dry_run=DryRunEvidence(mutation.plan_id, verified=True),
-                approval=ApprovalEvidence(
-                    mutation.plan_id,
-                    request.approval_id,
-                    approved=True,
+                approval=(
+                    ApprovalEvidence(
+                        mutation.plan_id,
+                        request.approval_id
+                        or request_authorization.authorization_id,
+                        approved=True,
+                    )
+                    if mutation.approval_required
+                    else None
                 ),
             )
             for mutation in effects
@@ -5629,8 +6000,8 @@ class KrcnApplicationService:
             "grants_authority": False,
         }
 
-    @staticmethod
     def _authorize_record_plans(
+        self,
         request: ServiceRequest,
         plan_id: str,
         record_plans: tuple[RecordWritePlan, ...],
@@ -5639,10 +6010,28 @@ class KrcnApplicationService:
             raise ApplicationServiceError(
                 "apply requires the exact plan id returned by a prior dry-run"
             )
-        if any(item.mutation.approval_required for item in record_plans) and (
-            request.approval_id is None
-        ):
-            raise ApplicationServiceError("user-data mutation requires approval id")
+        effects = tuple(item.mutation for item in record_plans)
+        request_authorization = None
+        if any(effect.approval_required for effect in effects) and request.approval_id is None:
+            evidence = self._trusted_initiating_request(request)
+            if evidence is None:
+                raise ApplicationServiceError("user-data mutation requires approval id")
+            try:
+                request_authorization = authorize_explicit_local_request(
+                    evidence=evidence,
+                    intent_request_id=request.intent_request_id,
+                    operation=request.operation,
+                    plan_id=plan_id,
+                    project_id=(
+                        str(request.arguments["project_id"])
+                        if isinstance(request.arguments.get("project_id"), str)
+                        else None
+                    ),
+                    effects=effects,
+                )
+            except RequestAuthorizationError as exc:
+                raise ApplicationServiceError(str(exc)) from exc
+            self._claim_request_authorization(request, request_authorization)
         authorizations = {}
         for item in record_plans:
             mutation = item.mutation
@@ -5650,7 +6039,10 @@ class KrcnApplicationService:
             if mutation.approval_required:
                 approval = ApprovalEvidence(
                     plan_id=mutation.plan_id,
-                    approval_id=request.approval_id or "",
+                    approval_id=(
+                        request.approval_id
+                        or request_authorization.authorization_id
+                    ),
                     approved=True,
                 )
             authorizations[mutation.plan_id] = authorize_mutation(

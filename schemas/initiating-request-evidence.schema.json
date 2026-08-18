@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:initiating-request-evidence:1",
+  "title": "KRCN trusted current-user-turn evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "session_id",
+    "intent_request_id",
+    "user_turn_digest",
+    "source",
+    "issued_at",
+    "expires_at",
+    "evidence_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/initiating-request-evidence.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "intent_request_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "user_turn_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "source": {
+      "enum": [
+        "typed-cli",
+        "trusted-host"
+      ]
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "evidence_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

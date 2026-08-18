@@ -127,6 +127,11 @@ COLLECTIONS = {
         "runtime/work-completion-attestations",
         "runtime",
     ),
+    "request-authorization-receipts": (
+        "receipt_id",
+        "runtime/request-authorization-receipts",
+        "runtime",
+    ),
     "route-decisions": (
         "route_decision_record_id",
         "runtime/routing-decisions",
@@ -339,6 +344,14 @@ def _validate_record_identity(
 
         try:
             parse_work_completion_attestation(payload)
+        except ValueError as exc:
+            raise LocalStoreError(str(exc)) from exc
+        return None
+    if record_type == "request-authorization-receipts":
+        from .request_authorization import parse_consumed_receipt
+
+        try:
+            parse_consumed_receipt(payload)
         except ValueError as exc:
             raise LocalStoreError(str(exc)) from exc
         return None

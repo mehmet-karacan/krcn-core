@@ -25,7 +25,8 @@ class WorkIntentTests(unittest.TestCase):
         self.assertEqual("gpu-fusion-request-893614", intent.work_item_id)
         self.assertEqual("proposed", intent.status)
         self.assertTrue(intent.public_summary()["exact_plan_required"])
-        self.assertTrue(intent.public_summary()["user_data_approval_required"])
+        self.assertTrue(intent.public_summary()["same_request_apply_supported"])
+        self.assertFalse(intent.public_summary()["second_approval_required"])
 
     def test_project_first_defect_request_is_supported(self) -> None:
         intent = parse_work_create_intent(

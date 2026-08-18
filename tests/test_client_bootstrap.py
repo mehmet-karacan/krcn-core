@@ -29,6 +29,7 @@ from krcn_core.mutation_gate import (  # noqa: E402
     OwnershipResolver,
     authorize_mutation,
 )
+from krcn_core.request_authorization import mint_initiating_request_evidence  # noqa: E402
 
 
 class ClientBootstrapTests(unittest.TestCase):
@@ -244,6 +245,41 @@ class ClientBootstrapTests(unittest.TestCase):
                 self.assertEqual("planned", response.status)
                 plans.append(response.data["plan"])
         self.assertTrue(all(plan == plans[0] for plan in plans))
+
+    def test_trusted_current_request_applies_bootstrap_without_second_approval(self) -> None:
+        evidence = {}
+
+        def trusted_host(request):
+            evidence.setdefault(
+                request.intent_request_id,
+                mint_initiating_request_evidence(
+                    session_id="codex-bootstrap-session",
+                    intent_request_id=request.intent_request_id,
+                    user_turn_digest="9" * 64,
+                    source="trusted-host",
+                ).as_dict(),
+            )
+            return evidence[request.intent_request_id]
+
+        store = LocalWorkspaceStore(self.data_root, self.ownership)
+        service = KrcnApplicationService(
+            REPO_ROOT,
+            store,
+            trusted_request_evidence_provider=trusted_host,
+        )
+        with patch("krcn_core.application.Path.home", return_value=self.profile):
+            planned = service.execute(ServiceRequest("codex", "client.bootstrap", {}))
+            applied = service.execute(ServiceRequest(
+                "codex",
+                "client.bootstrap",
+                {},
+                apply=True,
+                expected_plan_id=planned.data["plan"]["plan_id"],
+            ))
+        self.assertEqual("applied", applied.status)
+        self.assertEqual(
+            "consumed", applied.data["authorization_receipt"]["status"]
+        )
 
 
 if __name__ == "__main__":

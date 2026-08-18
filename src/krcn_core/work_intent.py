@@ -81,6 +81,7 @@ class WorkCreateIntent:
                 "source_kind": "user",
                 "source_ref": f"natural-language:{self.external_id}",
             },
+            "expected_revision": 0,
         }
 
     def public_summary(self) -> dict[str, object]:
@@ -92,7 +93,8 @@ class WorkCreateIntent:
             "work_item_id": self.work_item_id,
             "default_status": self.status,
             "exact_plan_required": True,
-            "user_data_approval_required": True,
+            "same_request_apply_supported": True,
+            "second_approval_required": False,
             "intent_digest": self.intent_digest,
         }
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -11,7 +12,7 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Mapping
 
-from krcn_core.application import create_application_service
+from krcn_core.application import create_application_service as _create_application_service
 from krcn_core.application_contract import (
     ApplicationServiceError,
     ServiceRequest,
@@ -29,6 +30,7 @@ from krcn_core.project_home import (
 )
 from krcn_core.project_learning_intent import parse_project_learning_intent
 from krcn_core.research_intent import ResearchIntentError, parse_research_intent
+from krcn_core.request_authorization import mint_initiating_request_evidence
 from krcn_core.project_navigation import (
     ProjectNavigationError,
     parse_project_navigation_intent,
@@ -55,6 +57,39 @@ from .renderers.table import (
 
 
 KRCN_CORE_HOME_ENV = "KRCN_CORE_HOME"
+
+
+def _interactive_cli_evidence(request: ServiceRequest):
+    """Mint authority only at the human-owned interactive CLI boundary."""
+
+    if (
+        request.client_kind != "cli"
+        or not request.apply
+        or request.expected_plan_id is None
+        or request.approval_id is not None
+        or not sys.stdin.isatty()
+    ):
+        return None
+    turn_digest = hashlib.sha256(
+        json.dumps(
+            {"argv": sys.argv[1:], "operation": request.operation},
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    return mint_initiating_request_evidence(
+        session_id=os.environ.get("KRCN_SESSION_ID", "interactive-cli"),
+        intent_request_id=request.intent_request_id,
+        user_turn_digest=turn_digest,
+        source="typed-cli",
+    ).as_dict()
+
+
+def create_application_service(repo_root, data_root=None, **options):
+    options.setdefault(
+        "trusted_request_evidence_provider", _interactive_cli_evidence
+    )
+    return _create_application_service(repo_root, data_root, **options)
 
 
 def _is_krcn_core_root(candidate: Path) -> bool:
@@ -106,7 +141,11 @@ def _print_error(exc: Exception) -> None:
     elif "secret" in normalized:
         guidance = "Configure the referenced value in the active local secret provider, then retry."
     elif "approval" in normalized or "exact plan" in normalized:
-        guidance = "Run the command without `--apply`, review its plan, then apply that exact plan with the requested approval."
+        guidance = (
+            "Use the exact dry-run plan. A directly typed interactive apply reuses the "
+            "current explicit request only for reviewed local effects; otherwise supply "
+            "the requested dedicated approval."
+        )
     elif "not found" in normalized or "was not found" in normalized:
         guidance = "Check the active project home and inspect the registered project or task identifiers."
     elif "choice" in normalized or "project-home" in normalized:
@@ -1800,16 +1839,56 @@ def _run_ask_command(args: argparse.Namespace) -> int:
             work_intent = None
         if work_intent is not None:
             data_root = _active_project_data_root(args.data_root)
-            response = create_application_service(repo_root, data_root).execute(
-                ServiceRequest(
-                    client_kind="cli",
-                    operation="work.item.put",
-                    arguments=work_intent.service_arguments(),
-                    apply=args.apply,
-                    expected_plan_id=args.expected_plan,
-                    approval_id=args.approval_id,
+            client_kind = os.environ.get("KRCN_CLIENT_ID", "cli")
+            arguments = work_intent.service_arguments()
+            if args.apply and args.expected_plan is None and args.approval_id is None:
+                evidence_by_request = {}
+
+                def explicit_ask_evidence(request: ServiceRequest):
+                    evidence_by_request.setdefault(
+                        request.intent_request_id,
+                        mint_initiating_request_evidence(
+                            session_id=os.environ.get(
+                                "KRCN_SESSION_ID",
+                                f"ask-{client_kind}-{hashlib.sha256(args.request.encode('utf-8')).hexdigest()[:16]}",
+                            ),
+                            intent_request_id=request.intent_request_id,
+                            user_turn_digest=hashlib.sha256(
+                                args.request.encode("utf-8")
+                            ).hexdigest(),
+                            source="trusted-host",
+                        ).as_dict(),
+                    )
+                    return evidence_by_request[request.intent_request_id]
+
+                service = _create_application_service(
+                    repo_root,
+                    data_root,
+                    trusted_request_evidence_provider=explicit_ask_evidence,
                 )
-            )
+                planned = service.execute(ServiceRequest(
+                    client_kind=client_kind,
+                    operation="work.item.put",
+                    arguments=arguments,
+                ))
+                response = service.execute(ServiceRequest(
+                    client_kind=client_kind,
+                    operation="work.item.put",
+                    arguments=arguments,
+                    apply=True,
+                    expected_plan_id=str(planned.data["plan"]["plan_id"]),
+                ))
+            else:
+                response = create_application_service(repo_root, data_root).execute(
+                    ServiceRequest(
+                        client_kind=client_kind,
+                        operation="work.item.put",
+                        arguments=arguments,
+                        apply=args.apply,
+                        expected_plan_id=args.expected_plan,
+                        approval_id=args.approval_id,
+                    )
+                )
             response = ServiceResponse(
                 request_id=response.request_id,
                 operation=response.operation,

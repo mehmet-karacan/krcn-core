@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:krcn:schemas:request-authorization-receipt:1",
+  "title": "KRCN request-bound authorization journal receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_ref",
+    "schema_version",
+    "receipt_id",
+    "authorization_id",
+    "request_id",
+    "intent_request_id",
+    "session_id",
+    "user_turn_digest",
+    "evidence_digest",
+    "issued_at",
+    "expires_at",
+    "operation",
+    "project_id",
+    "plan_id",
+    "scope_digest",
+    "effect_digest",
+    "effects",
+    "status",
+    "single_use",
+    "response",
+    "result_digest",
+    "receipt_digest"
+  ],
+  "properties": {
+    "schema_ref": {
+      "const": "schemas/request-authorization-receipt.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "receipt_id": {
+      "$ref": "#/$defs/id"
+    },
+    "authorization_id": {
+      "$ref": "#/$defs/id"
+    },
+    "request_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "intent_request_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "user_turn_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "evidence_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "operation": {
+      "type": "string",
+      "minLength": 1
+    },
+    "project_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "plan_id": {
+      "$ref": "#/$defs/digest"
+    },
+    "scope_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "effect_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "effects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "mutation-plan.schema.json"
+      }
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "consumed"
+      ]
+    },
+    "single_use": {
+      "const": true
+    },
+    "response": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "result_digest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "receipt_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^request-auth-[a-f0-9]{64}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

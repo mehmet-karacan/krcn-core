@@ -178,13 +178,27 @@ class ServiceRequest:
             ) from exc
 
     @property
-    def request_id(self) -> str:
+    def intent_request_id(self) -> str:
         identity = {
             "client_kind": self.client_kind,
             "operation": self.operation,
             "arguments": dict(self.arguments),
-            "apply": self.apply,
             "expected_plan_id": self.expected_plan_id,
+        }
+        return hashlib.sha256(
+            json.dumps(
+                identity,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()
+
+    @property
+    def request_id(self) -> str:
+        identity = {
+            "intent_request_id": self.intent_request_id,
+            "apply": self.apply,
             "approval_supplied": self.approval_id is not None,
         }
         return hashlib.sha256(
