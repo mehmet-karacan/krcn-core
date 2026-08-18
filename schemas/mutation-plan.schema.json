@@ -55,6 +55,12 @@
     "approval_required": {
       "type": "boolean"
     },
+    "approval_scope": {
+      "enum": [
+        "standard",
+        "local-observation-reconciliation"
+      ]
+    },
     "reversible": {
       "type": "boolean"
     }

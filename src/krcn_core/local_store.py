@@ -164,6 +164,13 @@ INFORMATION_COLLECTIONS = {
     "knowledge": "knowledge",
     "memory": "memory",
 }
+LOCAL_RECONCILIATION_COLLECTIONS = {
+    "projects",
+    "source-states",
+    "project-integrations",
+    "authoritative-sources",
+    "knowledge",
+}
 
 
 class LocalStoreError(ValueError):
@@ -808,6 +815,7 @@ class LocalWorkspaceStore:
         *,
         expected_revision: int,
         project_id: str | None = None,
+        approval_scope: str = "standard",
     ) -> RecordWritePlan:
         if not isinstance(payload, Mapping):
             raise LocalStoreError("record payload must be an object")
@@ -823,6 +831,13 @@ class LocalWorkspaceStore:
             raise RevisionConflictError("record revision changed before planning")
         if record_type in {"route-decisions", "workflow-step-receipts"} and current is not None:
             raise LocalStoreError(f"{record_type} records are append-only")
+        if (
+            approval_scope == "local-observation-reconciliation"
+            and record_type not in LOCAL_RECONCILIATION_COLLECTIONS
+        ):
+            raise LocalStoreError(
+                "record collection is outside local observation reconciliation"
+            )
         next_revision = current_revision + 1
         if information_revision is not None and information_revision != next_revision:
             raise LocalStoreError(
@@ -850,6 +865,7 @@ class LocalWorkspaceStore:
             expected_ownership=COLLECTIONS[record_type][2],
             change_digest=payload_sha256,
             reversible=True,
+            approval_scope=approval_scope,
         )
         return RecordWritePlan(
             record_type=record_type,

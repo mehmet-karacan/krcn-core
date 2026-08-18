@@ -670,6 +670,8 @@ def _desired_information_plan(
     store: LocalWorkspaceStore,
     collection: str,
     desired: InformationRecord,
+    *,
+    reconcile_without_approval: bool = False,
 ) -> RecordWritePlan | None:
     current = store.read(collection, desired.record_id)
     if not _needs_information_update(current, desired):
@@ -679,6 +681,11 @@ def _desired_information_plan(
         desired.record_id,
         desired.as_payload(),
         expected_revision=current.revision if current else 0,
+        approval_scope=(
+            "local-observation-reconciliation"
+            if reconcile_without_approval
+            else "standard"
+        ),
     )
 
 
@@ -952,6 +959,11 @@ def prepare_project_integration(
                 project_id,
                 desired_project,
                 expected_revision=current_project.revision if current_project else 0,
+                approval_scope=(
+                    "local-observation-reconciliation"
+                    if already_registered
+                    else "standard"
+                ),
             )
         )
     state_record = store.read("source-states", binding.binding_id)
@@ -974,6 +986,11 @@ def prepare_project_integration(
                 binding.binding_id,
                 state_payload,
                 expected_revision=state_record.revision if state_record else 0,
+                approval_scope=(
+                    "local-observation-reconciliation"
+                    if already_registered
+                    else "standard"
+                ),
             )
         )
 
@@ -1030,7 +1047,12 @@ def prepare_project_integration(
         ("authoritative-sources", source_record),
         *(("knowledge", record) for record in knowledge_records),
     ):
-        record_plan = _desired_information_plan(store, collection, desired)
+        record_plan = _desired_information_plan(
+            store,
+            collection,
+            desired,
+            reconcile_without_approval=already_registered,
+        )
         if record_plan is not None:
             base_plans.append(record_plan)
             effective_information.append(desired)
@@ -1051,7 +1073,7 @@ def prepare_project_integration(
     )
     should_update_integration = bool(
         integration_record is None
-        or scan_required
+        or (scan_required and scan_reason != "explicit-integration-request")
         or current_integration is None
         or current_integration.source_digest != discovery.root_digest
         or current_integration.knowledge_digest != knowledge_digest
@@ -1084,6 +1106,11 @@ def prepare_project_integration(
                 project_id,
                 integration_state.as_payload(),
                 expected_revision=integration_record.revision if integration_record else 0,
+                approval_scope=(
+                    "local-observation-reconciliation"
+                    if already_registered
+                    else "standard"
+                ),
             )
         )
 

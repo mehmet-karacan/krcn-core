@@ -147,6 +147,43 @@ class MutationGateTests(unittest.TestCase):
                 approval=ApprovalEvidence(first.plan_id, "approval-4", True),
             )
 
+    def test_local_observation_reconciliation_is_bounded_and_serialized(self) -> None:
+        plan = plan_mutation(
+            self.resolver,
+            operation="update",
+            target_ref=".krcn/projects/sample/knowledge/records/sample-overview.json",
+            expected_ownership="user-data",
+            change_digest="c" * 64,
+            reversible=True,
+            approval_scope="local-observation-reconciliation",
+        )
+        self.assertFalse(plan.approval_required)
+        self.assertEqual(
+            "local-observation-reconciliation",
+            plan.as_dict()["approval_scope"],
+        )
+        authorization = authorize_mutation(
+            plan,
+            dry_run=DryRunEvidence(plan.plan_id, verified=True),
+        )
+        self.assertFalse(authorization.approval_verified)
+
+    def test_local_observation_scope_rejects_policy_and_destructive_targets(self) -> None:
+        for operation, target in (
+            ("update", ".krcn/projects/sample/policies/default.json"),
+            ("delete", ".krcn/projects/sample/knowledge/records/sample-overview.json"),
+        ):
+            with self.subTest(operation=operation, target=target):
+                with self.assertRaises(MutationGateError):
+                    plan_mutation(
+                        self.resolver,
+                        operation=operation,
+                        target_ref=target,
+                        change_digest="d" * 64,
+                        reversible=True,
+                        approval_scope="local-observation-reconciliation",
+                    )
+
 
 if __name__ == "__main__":
     unittest.main()

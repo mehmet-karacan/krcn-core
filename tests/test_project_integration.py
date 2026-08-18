@@ -394,6 +394,83 @@ class CompleteProjectIntegrationTests(unittest.TestCase):
         )
         self.assertEqual(2, state.scan_sequence)
 
+    def test_registered_project_refresh_reconciles_source_changes_without_second_approval(self) -> None:
+        self._apply(self._plan())
+        project_before = self.store.read("projects", "complete-sample")
+        (self.source / "src" / "index.js").write_text(
+            "export const value = 2;\n",
+            encoding="utf-8",
+        )
+        (self.source / "src" / "added.js").write_text(
+            "export const added = true;\n",
+            encoding="utf-8",
+        )
+        (self.source / "tests" / "index.test.js").unlink()
+        source_after_user_change = source_snapshot(self.source)
+
+        planned = self.service.execute(
+            ServiceRequest(
+                "opencode",
+                "project.integrate",
+                {"project_id": "complete-sample", "scan_mode": "manual"},
+            )
+        )
+        self.assertEqual("planned", planned.status)
+        stored_before_apply = self.store.read(
+            "source-states",
+            str(project_before.payload["source_refs"][0]),
+        )
+        self.assertNotIn(
+            "src/added.js",
+            {item["relative_path"] for item in stored_before_apply.payload["files"]},
+        )
+
+        refreshed = self.service.execute(
+            ServiceRequest(
+                "opencode",
+                "project.integrate",
+                {"project_id": "complete-sample", "scan_mode": "manual"},
+                apply=True,
+            )
+        )
+
+        self.assertEqual("applied", refreshed.status)
+        self.assertTrue(refreshed.data["local_reconciliation"])
+        self.assertEqual(source_after_user_change, source_snapshot(self.source))
+        self.assertTrue(
+            all(
+                not item["mutation"]["approval_required"]
+                for item in refreshed.data["plan"]["record_plans"]
+            )
+        )
+        source_index_plan = refreshed.data["plan"]["source_code_index"]["plan"]
+        self.assertGreaterEqual(source_index_plan["processed_file_count"], 2)
+        self.assertEqual(1, source_index_plan["removed_file_count"])
+        project_after = self.store.read("projects", "complete-sample")
+        source_state = self.store.read(
+            "source-states",
+            str(project_after.payload["source_refs"][0]),
+        )
+        observed_paths = {
+            item["relative_path"] for item in source_state.payload["files"]
+        }
+        self.assertIn("src/added.js", observed_paths)
+        self.assertNotIn("tests/index.test.js", observed_paths)
+        for field in ("project_id", "name", "description", "status", "source_refs"):
+            self.assertEqual(project_before.payload[field], project_after.payload[field])
+
+        unchanged = self.service.execute(
+            ServiceRequest(
+                "opencode",
+                "project.integrate",
+                {"project_id": "complete-sample", "scan_mode": "manual"},
+                apply=True,
+            )
+        )
+        self.assertEqual("ok", unchanged.status)
+        self.assertTrue(unchanged.data["no_op"])
+        self.assertFalse(unchanged.data["applied"])
+
     def test_missing_knowledge_record_triggers_complete_repair(self) -> None:
         self._apply(self._plan())
         missing = self.data_root / "knowledge" / "records" / "complete-sample-overview.json"

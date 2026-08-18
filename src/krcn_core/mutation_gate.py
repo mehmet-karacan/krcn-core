@@ -16,6 +16,19 @@ MutationOperation = Literal["create", "update", "delete", "move"]
 OwnershipClass = Literal[
     "core", "runtime", "user-data", "derived", "secrets", "unmanaged"
 ]
+ApprovalScope = Literal["standard", "local-observation-reconciliation"]
+
+_LOCAL_RECONCILIATION_TARGETS = (
+    re.compile(r"^\.krcn/projects/[a-z][a-z0-9-]*\.json$"),
+    re.compile(r"^\.krcn/projects/integration-states/[a-z][a-z0-9-]*\.json$"),
+    re.compile(r"^\.krcn/derived/source-states/[a-z][a-z0-9-]*\.json$"),
+    re.compile(r"^\.krcn/knowledge/(?:authoritative-sources|records)/[a-z][a-z0-9-]*\.json$"),
+    re.compile(r"^\.krcn/projects/[a-z][a-z0-9-]*/project\.json$"),
+    re.compile(r"^\.krcn/projects/[a-z][a-z0-9-]*/integration/[a-z][a-z0-9-]*\.json$"),
+    re.compile(r"^\.krcn/projects/[a-z][a-z0-9-]*/derived/source-states/[a-z][a-z0-9-]*\.json$"),
+    re.compile(r"^\.krcn/projects/[a-z][a-z0-9-]*/knowledge/(?:authoritative-sources|records)/[a-z][a-z0-9-]*\.json$"),
+    re.compile(r"^\.krcn/global/derived/source-states/[a-z][a-z0-9-]*\.json$"),
+)
 
 
 class MutationGateError(ValueError):
@@ -32,9 +45,10 @@ class MutationPlan:
     dry_run_required: bool
     approval_required: bool
     reversible: bool
+    approval_scope: ApprovalScope = "standard"
 
     def as_dict(self) -> dict[str, object]:
-        return {
+        payload = {
             "schema_version": 1,
             "plan_id": self.plan_id,
             "operation": self.operation,
@@ -45,6 +59,9 @@ class MutationPlan:
             "approval_required": self.approval_required,
             "reversible": self.reversible,
         }
+        if self.approval_scope != "standard":
+            payload["approval_scope"] = self.approval_scope
+        return payload
 
 
 @dataclass(frozen=True)
@@ -128,11 +145,14 @@ def plan_mutation(
     expected_ownership: OwnershipClass | None = None,
     change_digest: str,
     reversible: bool,
+    approval_scope: ApprovalScope = "standard",
 ) -> MutationPlan:
     """Create a deterministic plan before any filesystem mutation."""
 
     if operation not in {"create", "update", "delete", "move"}:
         raise MutationGateError("mutation operation is invalid")
+    if approval_scope not in {"standard", "local-observation-reconciliation"}:
+        raise MutationGateError("mutation approval scope is invalid")
     portable_ref = _portable_target_ref(target_ref)
     if not re.fullmatch(r"[a-f0-9]{64}", change_digest):
         raise MutationGateError("change digest must be a SHA-256 value")
@@ -143,6 +163,20 @@ def plan_mutation(
         "delete",
         "move",
     }
+    if approval_scope == "local-observation-reconciliation":
+        if operation not in {"create", "update"}:
+            raise MutationGateError(
+                "local observation reconciliation cannot delete or move data"
+            )
+        if ownership not in {"user-data", "derived", "runtime"} or not reversible:
+            raise MutationGateError(
+                "local observation reconciliation must be reversible KRCN-owned state"
+            )
+        if not any(pattern.fullmatch(portable_ref) for pattern in _LOCAL_RECONCILIATION_TARGETS):
+            raise MutationGateError(
+                "target is outside local observation reconciliation bookkeeping"
+            )
+        approval_required = False
     identity = {
         "operation": operation,
         "target_ref": portable_ref,
@@ -150,6 +184,8 @@ def plan_mutation(
         "change_digest": change_digest,
         "reversible": reversible,
     }
+    if approval_scope != "standard":
+        identity["approval_scope"] = approval_scope
     plan_id = hashlib.sha256(
         json.dumps(identity, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
@@ -162,6 +198,7 @@ def plan_mutation(
         dry_run_required=True,
         approval_required=approval_required,
         reversible=reversible,
+        approval_scope=approval_scope,
     )
 
 

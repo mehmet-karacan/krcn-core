@@ -4224,18 +4224,42 @@ class KrcnApplicationService:
             raise ApplicationServiceError(str(exc)) from exc
         summary = plan.public_summary()
         if plan.no_op:
-            if request.apply or request.expected_plan_id is not None:
+            if request.expected_plan_id is not None:
                 raise ApplicationServiceError(
                     "current project integration has no changes to apply"
                 )
             return "ok", {"plan": summary, "applied": False, "no_op": True}
+        local_reconciliation = bool(
+            plan.already_registered
+            and all(
+                not item.mutation.approval_required
+                for item in plan.record_plans
+            )
+            and (
+                plan.index_plan is None
+                or not plan.index_plan.mutation.approval_required
+            )
+            and (
+                plan.source_code_index_plan is None
+                or not plan.source_code_index_plan.mutation.approval_required
+            )
+        )
         if not request.apply:
             return "planned", {"plan": summary, "applied": False, "no_op": False}
-        record_authorizations = self._authorize_record_plans(
-            request,
-            plan.plan_id,
-            plan.record_plans,
-        )
+        if local_reconciliation:
+            record_authorizations = {
+                item.mutation.plan_id: authorize_mutation(
+                    item.mutation,
+                    dry_run=DryRunEvidence(item.mutation.plan_id, verified=True),
+                )
+                for item in plan.record_plans
+            }
+        else:
+            record_authorizations = self._authorize_record_plans(
+                request,
+                plan.plan_id,
+                plan.record_plans,
+            )
         index_authorization = None
         if plan.index_plan is not None:
             index_authorization = authorize_mutation(
@@ -4270,6 +4294,7 @@ class KrcnApplicationService:
             **result.public_summary(),
             "applied": True,
             "no_op": False,
+            "local_reconciliation": local_reconciliation,
         }
 
     def _registered_project_source(self, project_id: str):

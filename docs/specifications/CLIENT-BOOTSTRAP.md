@@ -19,7 +19,7 @@ KRCN owns only the content between `KRCN-CORE:BEGIN` and `KRCN-CORE:END` markers
 The guidance tells a client to:
 
 1. Use `krcn project current` before project work.
-2. After a match, use automatic `krcn project integrate` mode to check the 24-hour freshness window and missing stages. A current integration is a no-op; any mutation remains exact-plan and approval gated.
+2. After a match, use automatic `krcn project integrate` mode to check the 24-hour freshness window and missing stages. A current integration is a no-op. A registered project's reversible local observation reconciliation may continue with `--apply` without a second approval prompt; explicit refresh uses manual scan mode. Registration and mutations outside the bounded reconciliation contract remain exact-plan and approval gated.
 3. Use `krcn project resume` before answering a where-we-stopped question.
 4. Use an explicit registered project selection when the user names another project.
 5. Treat returned context as information rather than mutation authority.
